@@ -1,0 +1,681 @@
+'use client';
+
+import React, { useState, useEffect, useRef } from 'react';
+import { FaHeart, FaComment, FaShare, FaShoppingCart, FaFilter, FaStar, FaTimes, FaPaperPlane, FaBars, FaChevronRight, FaSearch } from 'react-icons/fa';
+import axios from 'axios';
+import { motion, AnimatePresence, PanInfo } from 'framer-motion';
+import DishDetails from './DishDetails';
+import RestaurantProfile from './RestaurantProfile';
+import CartDrawer from './CartDrawer';
+import NavDrawer from './NavDrawer';
+import OrderTracking from './OrderTracking';
+import LocationPermission from './LocationPermission';
+import ProfileModal from './ProfileModal';
+import { useCart } from '../context/CartContext';
+
+interface Dish {
+    _id: string;
+    name: string;
+    description: string;
+    price: number;
+    videoUrl: string;
+    imageUrl: string;
+    restaurant: {
+        _id: string;
+        name: string;
+        logo: string;
+        rating: number;
+        address: string;
+        contact: string;
+        location?: {
+            type: string;
+            coordinates: [number, number];
+        };
+    };
+}
+
+const VideoCard = ({
+    dish,
+    isActive,
+    onOpenDetails,
+    onOpenProfile,
+    distance
+}: {
+    dish: Dish;
+    isActive: boolean;
+    onOpenDetails: (dish: Dish) => void;
+    onOpenProfile: (restaurant: any) => void;
+    distance?: number;
+}) => {
+    const videoRef = useRef<HTMLVideoElement>(null);
+    const [isLiked, setIsLiked] = useState(false);
+    const [showComments, setShowComments] = useState(false);
+    const { addToCart } = useCart();
+    const [commentText, setCommentText] = useState('');
+    const [comments, setComments] = useState([
+        { user: 'Ali', text: 'Looks delicious! 😍' },
+        { user: 'Sara', text: 'Need to try this ASAP 🔥' },
+    ]);
+
+    useEffect(() => {
+        if (isActive) {
+            videoRef.current?.play().catch((error) => console.log('Autoplay prevented:', error));
+        } else {
+            videoRef.current?.pause();
+            if (videoRef.current) videoRef.current.currentTime = 0;
+        }
+    }, [isActive]);
+
+    const touchStart = useRef(0);
+    const touchEnd = useRef(0);
+    const isDragging = useRef(false);
+
+    const handlePointerDown = (e: React.PointerEvent) => {
+        // Ignore if clicking a button or interactive element
+        if ((e.target as HTMLElement).closest('button, a, input, textarea, [role="button"]')) {
+            console.log('🚫 Pointer Down ignored (interactive element)');
+            return;
+        }
+
+        console.log('👇 Pointer Down at:', e.clientX);
+        isDragging.current = true;
+        touchStart.current = e.clientX;
+        touchEnd.current = e.clientX; // Initialize to start position
+    };
+
+    const handlePointerMove = (e: React.PointerEvent) => {
+        if (isDragging.current) {
+            touchEnd.current = e.clientX;
+            console.log('👉 Moving to:', e.clientX);
+        }
+    };
+
+    const handlePointerUp = (e: React.PointerEvent) => {
+        console.log('👆 Pointer Up');
+        if (!isDragging.current) {
+            console.log('⚠️ Not dragging, ignoring');
+            return;
+        }
+
+        isDragging.current = false;
+
+        const start = touchStart.current;
+        const end = touchEnd.current;
+        const distance = start - end;
+
+        console.log('📊 Start:', start, 'End:', end, 'Distance:', distance);
+
+        const isSwipe = Math.abs(distance) > 50;
+
+        if (isSwipe) {
+            console.log('✅ SWIPE DETECTED! Opening profile...');
+            onOpenProfile(dish.restaurant);
+        } else {
+            console.log('❌ Not a swipe (distance:', Math.abs(distance), '< 50)');
+        }
+
+        // Reset
+        touchStart.current = 0;
+        touchEnd.current = 0;
+    };
+
+    const handleShare = () => {
+        navigator.clipboard.writeText(`Check out this amazing dish: ${dish.name} at ${dish.restaurant.name}`);
+        alert('Link copied to clipboard!');
+    };
+
+    const handleAddComment = (e: React.FormEvent) => {
+        e.preventDefault();
+        if (commentText.trim()) {
+            setComments([...comments, { user: 'You', text: commentText }]);
+            setCommentText('');
+        }
+    };
+
+    return (
+        <div
+            className="relative h-screen w-full bg-black snap-start flex items-center justify-center overflow-hidden touch-pan-y"
+        >
+            <video
+                ref={videoRef}
+                src={dish.videoUrl}
+                className="absolute top-0 left-0 w-full h-full object-cover pointer-events-none"
+                loop
+                muted
+                playsInline
+            />
+
+            {/* Clickable Overlay for Video Details */}
+            <div
+                className="absolute inset-0 z-0"
+                onPointerDown={handlePointerDown}
+                onPointerMove={handlePointerMove}
+                onPointerUp={handlePointerUp}
+                onPointerLeave={handlePointerUp}
+                onClick={() => {
+                    // Only trigger if not a swipe
+                    if (!isDragging.current && Math.abs(touchStart.current - touchEnd.current) < 10) {
+                        onOpenDetails(dish);
+                    }
+                }}
+            />
+
+            <div className="absolute inset-0 bg-gradient-to-b from-black/30 via-transparent to-black/60 pointer-events-none z-10" />
+
+            {/* Top Restaurant Info */}
+            <div className="absolute top-16 left-4 z-20 pointer-events-auto">
+                <div
+                    className="flex items-center gap-3 cursor-pointer"
+                    onClick={(e) => { e.stopPropagation(); onOpenProfile(dish.restaurant); }}
+                >
+                    <img
+                        src={dish.restaurant.logo || '/placeholder-logo.png'}
+                        alt={dish.restaurant.name}
+                        className="w-12 h-12 rounded-full border-2 border-white shadow-lg object-cover"
+                    />
+                    <div>
+                        <h3 className="font-bold text-white text-base">{dish.restaurant.name}</h3>
+                        <p className="text-xs text-white/90">American</p>
+                    </div>
+                </div>
+            </div>
+
+            {/* Right Side Action Buttons - Vertical Stack */}
+            <div className="absolute right-4 bottom-24 flex flex-col items-center gap-5 z-20 pointer-events-auto">
+                {/* Like Button */}
+                <div className="flex flex-col items-center gap-1.5">
+                    <button
+                        onClick={() => setIsLiked(!isLiked)}
+                        className="w-11 h-11 rounded-full bg-white/10 backdrop-blur-sm flex items-center justify-center text-white hover:bg-white/20 transition-all active:scale-90"
+                    >
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill={isLiked ? "#ff0000" : "none"} stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                            <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
+                        </svg>
+                    </button>
+                    <span className="text-white text-[11px] font-medium drop-shadow-lg">12,453</span>
+                </div>
+
+                {/* Comment Button */}
+                <div className="flex flex-col items-center gap-1.5">
+                    <button
+                        onClick={() => setShowComments(true)}
+                        className="w-11 h-11 rounded-full bg-white/10 backdrop-blur-sm flex items-center justify-center text-white hover:bg-white/20 transition-all active:scale-90"
+                    >
+                        <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                            <circle cx="12" cy="12" r="10"></circle>
+                            <path d="M8 14s1.5 2 4 2 4-2 4-2"></path>
+                            <line x1="9" y1="9" x2="9.01" y2="9"></line>
+                            <line x1="15" y1="9" x2="15.01" y2="9"></line>
+                        </svg>
+                    </button>
+                    <span className="text-white text-[11px] font-medium drop-shadow-lg">234</span>
+                </div>
+
+                {/* Share Button */}
+                <div className="flex flex-col items-center gap-1.5">
+                    <button
+                        onClick={handleShare}
+                        className="w-11 h-11 rounded-full bg-white/10 backdrop-blur-sm flex items-center justify-center text-white hover:bg-white/20 transition-all active:scale-90"
+                    >
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                            <path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"></path>
+                            <polyline points="16 6 12 2 8 6"></polyline>
+                            <line x1="12" y1="2" x2="12" y2="15"></line>
+                        </svg>
+                    </button>
+                    <span className="text-white text-[11px] font-medium drop-shadow-lg">Share</span>
+                </div>
+
+                {/* Menu Button - Orange Gradient */}
+                <div className="flex flex-col items-center gap-1.5 mt-1 z-50">
+                    <button
+                        onClick={() => {
+                            console.log('🍊 Menu button clicked!', dish.restaurant);
+                            onOpenProfile(dish.restaurant);
+                        }}
+                        className="w-12 h-12 rounded-full bg-gradient-to-br from-orange-500 to-red-500 flex items-center justify-center text-white shadow-lg shadow-orange-500/50 hover:scale-105 transition-all active:scale-95 cursor-pointer"
+                        type="button"
+                    >
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+                            <polyline points="9 18 15 12 9 6"></polyline>
+                        </svg>
+                    </button>
+                    <span className="text-white text-[11px] font-medium drop-shadow-lg pointer-events-none">Menu</span>
+                </div>
+            </div>
+
+            {/* Bottom Info Section */}
+            <div className="absolute bottom-0 left-0 w-full p-6 pb-8 text-white z-20 pointer-events-auto">
+                <div className="flex items-end justify-between pr-20">
+                    <div className="flex-1">
+                        {/* Dish Info */}
+                        <h2 className="text-2xl font-bold mb-1 leading-tight">{dish.name}</h2>
+                        <p className="text-xs text-white/80 mb-4">98,234 views</p>
+
+                        {/* Menu Button */}
+                        <button
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                onOpenProfile(dish.restaurant);
+                            }}
+                            className="bg-gradient-orange-red text-white px-6 py-3 rounded-full font-bold text-sm shadow-lg active:scale-95 transition-transform flex items-center gap-2"
+                        >
+                            Menu
+                            <FaChevronRight size={14} />
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <AnimatePresence>
+                {showComments && (
+                    <motion.div initial={{ y: '100%' }} animate={{ y: 0 }} exit={{ y: '100%' }} className="absolute bottom-0 left-0 w-full h-2/3 bg-gray-900 rounded-t-3xl z-30 p-4 flex flex-col">
+                        <div className="flex justify-between items-center mb-4 border-b border-gray-700 pb-2">
+                            <h3 className="text-lg font-bold text-white">Comments ({comments.length})</h3>
+                            <button onClick={() => setShowComments(false)} className="text-gray-400 hover:text-white"><FaTimes /></button>
+                        </div>
+                        <div className="flex-1 overflow-y-auto mb-4 space-y-3">
+                            {comments.map((c, i) => (
+                                <div key={i} className="flex gap-3">
+                                    <div className="w-8 h-8 rounded-full bg-gray-700 flex items-center justify-center text-xs font-bold text-white">{c.user[0]}</div>
+                                    <div>
+                                        <p className="text-sm font-bold text-gray-300">{c.user}</p>
+                                        <p className="text-sm text-gray-400">{c.text}</p>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                        <form onSubmit={handleAddComment} className="flex gap-2">
+                            <input type="text" value={commentText} onChange={(e) => setCommentText(e.target.value)} placeholder="Add a comment..." className="flex-1 bg-gray-800 rounded-full px-4 py-2 text-white outline-none focus:ring-1 focus:ring-primary" />
+                            <button type="submit" className="p-3 bg-primary rounded-full text-white"><FaPaperPlane /></button>
+                        </form>
+                    </motion.div>
+                )}
+            </AnimatePresence>
+        </div>
+    );
+};
+
+export default function VideoFeed() {
+    const [dishes, setDishes] = useState<Dish[]>([]);
+    const [currentVideoIndex, setCurrentVideoIndex] = useState(0);
+    const [selectedDish, setSelectedDish] = useState<Dish | null>(null);
+    const [selectedRestaurant, setSelectedRestaurant] = useState<any | null>(null);
+    const [isCartOpen, setIsCartOpen] = useState(false);
+    const [isNavOpen, setIsNavOpen] = useState(false);
+    const [isProfileOpen, setIsProfileOpen] = useState(false);
+    const [user, setUser] = useState<any>(null);
+    const [userLocation, setUserLocation] = useState<{ latitude: number, longitude: number } | null>(null);
+    const [showLocationPrompt, setShowLocationPrompt] = useState(false);
+    const { cartCount } = useCart();
+
+    useEffect(() => {
+        const fetchDishes = async () => {
+            try {
+                const res = await axios.get('http://localhost:5000/api/videos');
+                setDishes(res.data);
+            } catch (error) {
+                console.error('Error fetching dishes:', error);
+            }
+        };
+
+        fetchDishes();
+        const refreshInterval = setInterval(() => {
+            fetchDishes();
+            console.log('📡 Feed refreshed - checking for new dishes');
+        }, 30000);
+
+        const userInfo = localStorage.getItem('userInfo');
+        if (userInfo) setUser(JSON.parse(userInfo));
+
+        const savedLocation = localStorage.getItem('userLocation');
+        const hasAskedBefore = localStorage.getItem('locationAsked');
+
+        if (savedLocation) {
+            setUserLocation(JSON.parse(savedLocation));
+        } else if (!hasAskedBefore) {
+            setTimeout(() => setShowLocationPrompt(true), 1500);
+        }
+
+        return () => clearInterval(refreshInterval);
+    }, []);
+
+    const handleAllowLocation = () => {
+        setShowLocationPrompt(false);
+        if ('geolocation' in navigator) {
+            const watchId = navigator.geolocation.watchPosition(
+                (position) => {
+                    const location = { latitude: position.coords.latitude, longitude: position.coords.longitude };
+                    setUserLocation(location);
+                    localStorage.setItem('userLocation', JSON.stringify(location));
+                    localStorage.setItem('locationAsked', 'true');
+                },
+                (error) => { console.log('Location denied'); localStorage.setItem('locationAsked', 'true'); },
+                { enableHighAccuracy: true, maximumAge: 10000, timeout: 5000 }
+            );
+
+            // Store watchId in a ref or cleanup function if needed, 
+            // but for now we just want to start watching. 
+            // Ideally we should store this in a ref to clear it on unmount,
+            // but the component structure suggests we might want to keep tracking while the feed is active.
+            // Let's add a cleanup in useEffect to be safe.
+            return () => navigator.geolocation.clearWatch(watchId);
+        }
+    };
+
+    const handleDenyLocation = () => {
+        setShowLocationPrompt(false);
+        localStorage.setItem('locationAsked', 'true');
+    };
+
+    // Add effect to clean up watcher if it was started
+    useEffect(() => {
+        let watchId: number | null = null;
+
+        if (userLocation && 'geolocation' in navigator) {
+            // If we already have location, start watching to keep it updated
+            watchId = navigator.geolocation.watchPosition(
+                (position) => {
+                    const location = { latitude: position.coords.latitude, longitude: position.coords.longitude };
+                    setUserLocation(location);
+                    localStorage.setItem('userLocation', JSON.stringify(location));
+                },
+                (error) => console.error('Location watch error:', error),
+                { enableHighAccuracy: true, maximumAge: 10000, timeout: 5000 }
+            );
+        }
+
+        return () => {
+            if (watchId !== null) navigator.geolocation.clearWatch(watchId);
+        };
+    }, []); // Run once on mount to set up watcher if location is already known
+
+    {/* Comment Button */ }
+    <div className="flex flex-col items-center gap-1.5">
+        <button
+            onClick={() => setShowComments(true)}
+            className="w-11 h-11 rounded-full bg-white/10 backdrop-blur-sm flex items-center justify-center text-white hover:bg-white/20 transition-all active:scale-90"
+        >
+            <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <circle cx="12" cy="12" r="10"></circle>
+                <path d="M8 14s1.5 2 4 2 4-2 4-2"></path>
+                <line x1="9" y1="9" x2="9.01" y2="9"></line>
+                <line x1="15" y1="9" x2="15.01" y2="9"></line>
+            </svg>
+        </button>
+        <span className="text-white text-[11px] font-medium drop-shadow-lg">234</span>
+    </div>
+
+    {/* Share Button */ }
+    <div className="flex flex-col items-center gap-1.5">
+        <button
+            onClick={handleShare}
+            className="w-11 h-11 rounded-full bg-white/10 backdrop-blur-sm flex items-center justify-center text-white hover:bg-white/20 transition-all active:scale-90"
+        >
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"></path>
+                <polyline points="16 6 12 2 8 6"></polyline>
+                <line x1="12" y1="2" x2="12" y2="15"></line>
+            </svg>
+        </button>
+        <span className="text-white text-[11px] font-medium drop-shadow-lg">Share</span>
+    </div>
+
+    {/* Menu Button - Orange Gradient */ }
+    <div className="flex flex-col items-center gap-1.5 mt-1 z-50">
+        <button
+            onClick={() => {
+                console.log('🍊 Menu button clicked!', dish.restaurant);
+                onOpenProfile(dish.restaurant);
+            }}
+            className="w-12 h-12 rounded-full bg-gradient-to-br from-orange-500 to-red-500 flex items-center justify-center text-white shadow-lg shadow-orange-500/50 hover:scale-105 transition-all active:scale-95 cursor-pointer"
+            type="button"
+        >
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+                <polyline points="9 18 15 12 9 6"></polyline>
+            </svg>
+        </button>
+        <span className="text-white text-[11px] font-medium drop-shadow-lg pointer-events-none">Menu</span>
+    </div>
+            </div >
+
+        {/* Bottom Info Section */ }
+        < div className = "absolute bottom-0 left-0 w-full p-6 pb-8 text-white z-20 pointer-events-auto" >
+            <div className="flex items-end justify-between pr-20">
+                <div className="flex-1">
+                    {/* Dish Info */}
+                    <h2 className="text-2xl font-bold mb-1 leading-tight">{dish.name}</h2>
+                    <p className="text-xs text-white/80 mb-4">98,234 views</p>
+
+                    {/* Menu Button */}
+                    <button
+                        onClick={(e) => {
+                            e.stopPropagation();
+                            onOpenProfile(dish.restaurant);
+                        }}
+                        className="bg-gradient-orange-red text-white px-6 py-3 rounded-full font-bold text-sm shadow-lg active:scale-95 transition-transform flex items-center gap-2"
+                    >
+                        Menu
+                        <FaChevronRight size={14} />
+                    </button>
+                </div>
+            </div>
+            </div >
+
+        <AnimatePresence>
+            {showComments && (
+                <motion.div initial={{ y: '100%' }} animate={{ y: 0 }} exit={{ y: '100%' }} className="absolute bottom-0 left-0 w-full h-2/3 bg-gray-900 rounded-t-3xl z-30 p-4 flex flex-col">
+                    <div className="flex justify-between items-center mb-4 border-b border-gray-700 pb-2">
+                        <h3 className="text-lg font-bold text-white">Comments ({comments.length})</h3>
+                        <button onClick={() => setShowComments(false)} className="text-gray-400 hover:text-white"><FaTimes /></button>
+                    </div>
+                    <div className="flex-1 overflow-y-auto mb-4 space-y-3">
+                        {comments.map((c, i) => (
+                            <div key={i} className="flex gap-3">
+                                <div className="w-8 h-8 rounded-full bg-gray-700 flex items-center justify-center text-xs font-bold text-white">{c.user[0]}</div>
+                                <div>
+                                    <p className="text-sm font-bold text-gray-300">{c.user}</p>
+                                    <p className="text-sm text-gray-400">{c.text}</p>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                    <form onSubmit={handleAddComment} className="flex gap-2">
+                        <input type="text" value={commentText} onChange={(e) => setCommentText(e.target.value)} placeholder="Add a comment..." className="flex-1 bg-gray-800 rounded-full px-4 py-2 text-white outline-none focus:ring-1 focus:ring-primary" />
+                        <button type="submit" className="p-3 bg-primary rounded-full text-white"><FaPaperPlane /></button>
+                    </form>
+                </motion.div>
+            )}
+        </AnimatePresence>
+        </div >
+    );
+};
+
+export default function VideoFeed() {
+    const [dishes, setDishes] = useState<Dish[]>([]);
+    const [currentVideoIndex, setCurrentVideoIndex] = useState(0);
+    const [selectedDish, setSelectedDish] = useState<Dish | null>(null);
+    const [selectedRestaurant, setSelectedRestaurant] = useState<any | null>(null);
+    const [isCartOpen, setIsCartOpen] = useState(false);
+    const [isNavOpen, setIsNavOpen] = useState(false);
+    const [isProfileOpen, setIsProfileOpen] = useState(false);
+    const [user, setUser] = useState<any>(null);
+    const [userLocation, setUserLocation] = useState<{ latitude: number, longitude: number } | null>(null);
+    const [showLocationPrompt, setShowLocationPrompt] = useState(false);
+    const { cartCount } = useCart();
+
+    useEffect(() => {
+        const fetchDishes = async () => {
+            try {
+                const res = await axios.get('http://localhost:5000/api/videos');
+                setDishes(res.data);
+            } catch (error) {
+                console.error('Error fetching dishes:', error);
+            }
+        };
+
+        fetchDishes();
+        const refreshInterval = setInterval(() => {
+            fetchDishes();
+            console.log('📡 Feed refreshed - checking for new dishes');
+        }, 30000);
+
+        const userInfo = localStorage.getItem('userInfo');
+        if (userInfo) setUser(JSON.parse(userInfo));
+
+        const savedLocation = localStorage.getItem('userLocation');
+        const hasAskedBefore = localStorage.getItem('locationAsked');
+
+        if (savedLocation) {
+            setUserLocation(JSON.parse(savedLocation));
+        } else if (!hasAskedBefore) {
+            setTimeout(() => setShowLocationPrompt(true), 1500);
+        }
+
+        return () => clearInterval(refreshInterval);
+    }, []);
+
+    const handleAllowLocation = () => {
+        setShowLocationPrompt(false);
+        if ('geolocation' in navigator) {
+            const watchId = navigator.geolocation.watchPosition(
+                (position) => {
+                    const location = { latitude: position.coords.latitude, longitude: position.coords.longitude };
+                    setUserLocation(location);
+                    localStorage.setItem('userLocation', JSON.stringify(location));
+                    localStorage.setItem('locationAsked', 'true');
+                },
+                (error) => { console.log('Location denied'); localStorage.setItem('locationAsked', 'true'); },
+                { enableHighAccuracy: true, maximumAge: 10000, timeout: 5000 }
+            );
+
+            // Store watchId in a ref or cleanup function if needed, 
+            // but for now we just want to start watching. 
+            // Ideally we should store this in a ref to clear it on unmount,
+            // but the component structure suggests we might want to keep tracking while the feed is active.
+            // Let's add a cleanup in useEffect to be safe.
+            return () => navigator.geolocation.clearWatch(watchId);
+        }
+    };
+
+    const handleDenyLocation = () => {
+        setShowLocationPrompt(false);
+        localStorage.setItem('locationAsked', 'true');
+    };
+
+    // Add effect to clean up watcher if it was started
+    useEffect(() => {
+        let watchId: number | null = null;
+
+        if (userLocation && 'geolocation' in navigator) {
+            // If we already have location, start watching to keep it updated
+            watchId = navigator.geolocation.watchPosition(
+                (position) => {
+                    const location = { latitude: position.coords.latitude, longitude: position.coords.longitude };
+                    setUserLocation(location);
+                    localStorage.setItem('userLocation', JSON.stringify(location));
+                },
+                (error) => console.error('Location watch error:', error),
+                { enableHighAccuracy: true, maximumAge: 10000, timeout: 5000 }
+            );
+        }
+
+        return () => {
+            if (watchId !== null) navigator.geolocation.clearWatch(watchId);
+        };
+    }, []); // Run once on mount to set up watcher if location is already known
+
+    const calculateDistance = (lat1: number, lon1: number, lat2: number, lon2: number): number => {
+        const R = 6371;
+        const dLat = (lat2 - lat1) * Math.PI / 180;
+        const dLon = (lon2 - lon1) * Math.PI / 180;
+        const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) + Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * Math.sin(dLon / 2) * Math.sin(dLon / 2);
+        const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+        return Math.round(R * c * 10) / 10;
+    };
+
+    const handleScroll = (e: React.UIEvent<HTMLDivElement>) => {
+        const container = e.currentTarget;
+        const index = Math.round(container.scrollTop / container.clientHeight);
+        if (index !== currentVideoIndex) setCurrentVideoIndex(index);
+    };
+
+    return (
+        <div className="relative h-screen w-full bg-black">
+            {/* Header with Search Bar */}
+            <div className="absolute top-0 left-0 w-full p-3 flex items-center gap-3 z-50 bg-gradient-to-b from-black/60 to-transparent">
+                {/* Hamburger Menu */}
+                <button
+                    onClick={() => setIsNavOpen(true)}
+                    className="p-2.5 rounded-lg text-white transition flex-shrink-0 z-50"
+                >
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                        <line x1="3" y1="6" x2="21" y2="6" />
+                        <line x1="3" y1="12" x2="21" y2="12" />
+                        <line x1="3" y1="18" x2="21" y2="18" />
+                    </svg>
+                </button>
+
+                {/* Search Bar */}
+                <div className="flex-1 relative">
+                    <input
+                        type="text"
+                        placeholder="Search restaurants or dishes"
+                        className="w-full bg-white/10 backdrop-blur-sm text-white placeholder-gray-400 rounded-lg px-4 py-2.5 pl-10 outline-none focus:bg-white/15 transition text-sm"
+                    />
+                    <FaSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={14} />
+                </div>
+
+                {/* Cart Icon */}
+                <button
+                    onClick={() => {
+                        console.log('\ud83d\uded2 Cart clicked!');
+                        setIsCartOpen(true);
+                    }}
+                    className="relative p-2 text-white flex-shrink-0 cursor-pointer z-50"
+                    type="button"
+                >
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M6 2L3 6v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V6l-3-4z" />
+                        <line x1="3" y1="6" x2="21" y2="6" />
+                        <path d="M16 10a4 4 0 0 1-8 0" />
+                    </svg>
+                    {cartCount > 0 && <span className="absolute -top-1 -right-1 bg-primary text-white text-xs font-bold w-5 h-5 flex items-center justify-center rounded-full">{cartCount}</span>}
+                </button>
+            </div>
+
+            <div className="h-full w-full overflow-y-scroll snap-y snap-mandatory scroll-smooth no-scrollbar" onScroll={handleScroll}>
+                {dishes.map((dish, index) => {
+                    let distance: number | undefined;
+                    if (userLocation && dish.restaurant.location?.coordinates) {
+                        const [restLng, restLat] = dish.restaurant.location.coordinates;
+                        distance = calculateDistance(userLocation.latitude, userLocation.longitude, restLat, restLng);
+                    }
+                    return <VideoCard key={dish._id} dish={dish} isActive={index === currentVideoIndex} onOpenDetails={setSelectedDish} onOpenProfile={setSelectedRestaurant} distance={distance} />;
+                })}
+                {dishes.length === 0 && (
+                    <div className="h-screen flex flex-col items-center justify-center text-white bg-gray-900">
+                        <div className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin mb-4"></div>
+                        <p className="text-lg font-medium animate-pulse">Finding delicious food...</p>
+                    </div>
+                )}
+            </div>
+
+            <AnimatePresence>
+                {selectedDish && <DishDetails dish={selectedDish} onClose={() => setSelectedDish(null)} />}
+                {selectedRestaurant && <RestaurantProfile restaurant={selectedRestaurant} onBack={() => setSelectedRestaurant(null)} />}
+            </AnimatePresence>
+
+            <CartDrawer isOpen={isCartOpen} onClose={() => setIsCartOpen(false)} />
+            <NavDrawer
+                isOpen={isNavOpen}
+                onClose={() => setIsNavOpen(false)}
+                user={user}
+                onOpenProfile={() => setIsProfileOpen(true)}
+            />
+            <ProfileModal isOpen={isProfileOpen} onClose={() => setIsProfileOpen(false)} user={user} />
+
+            {showLocationPrompt && <LocationPermission onAllow={handleAllowLocation} onDeny={handleDenyLocation} />}
+        </div>
+    );
+}

@@ -1,0 +1,99 @@
+'use client';
+
+import React, { useState, useEffect } from 'react';
+import axios from 'axios';
+import RiderRegistration from './RiderRegistration';
+import RiderDocumentUpload from './RiderDocumentUpload';
+import RiderDashboard from './RiderDashboard';
+
+export default function RiderPortal() {
+    const [riderId, setRiderId] = useState<string | null>(null);
+    const [verificationStatus, setVerificationStatus] = useState<'pending' | 'approved' | 'rejected'>('pending');
+    const [loading, setLoading] = useState(true);
+    const [step, setStep] = useState<'registration' | 'documents' | 'dashboard'>('registration');
+
+    useEffect(() => {
+        // Check if rider profile already exists
+        const checkRiderProfile = async () => {
+            try {
+                const token = JSON.parse(localStorage.getItem("userInfo") || "{}").token;
+                const res = await axios.get('http://localhost:5000/api/riders/my-profile', {
+                    headers: { Authorization: `Bearer ${token}` }
+                });
+
+                if (res.data) {
+                    setRiderId(res.data._id);
+                    setVerificationStatus(res.data.verificationStatus);
+
+                    // If already approved, go straight to dashboard
+                    if (res.data.verificationStatus === 'approved') {
+                        setStep('dashboard');
+                    }
+                    // If has basic info but no documents, show document upload
+                    else if (res.data.fullName && !res.data.documents?.cnicFront) {
+                        setStep('documents');
+                    }
+                    // If documents submitted, show document upload (to check status)
+                    else if (res.data.documents?.cnicFront) {
+                        setStep('documents');
+                    }
+                    // Otherwise show registration
+                    else {
+                        setStep('registration');
+                    }
+                } else {
+                    // No profile found
+                    setStep('registration');
+                }
+            } catch (error: any) {
+                if (error.response?.status === 404) {
+                    // No rider profile exists, start registration
+                    setStep('registration');
+                }
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        checkRiderProfile();
+    }, []);
+
+    const handleRegistrationComplete = (newRiderId: string) => {
+        setRiderId(newRiderId);
+        setStep('documents');
+    };
+
+    const handleVerified = () => {
+        setVerificationStatus('approved');
+        setStep('dashboard');
+    };
+
+    if (loading) {
+        return (
+            <div className="h-screen w-full bg-gray-50 flex items-center justify-center">
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-500"></div>
+            </div>
+        );
+    }
+
+    if (step === 'registration') {
+        return <RiderRegistration onComplete={handleRegistrationComplete} />;
+    }
+
+    if (step === 'documents' && riderId) {
+        return <RiderDocumentUpload riderId={riderId} onVerified={handleVerified} />;
+    }
+
+    if (step === 'dashboard' && riderId) {
+        return <RiderDashboard riderId={riderId} />;
+    }
+
+    return (
+        <div className="h-screen w-full bg-gray-50 flex items-center justify-center">
+            <div className="text-center">
+                <h1 className="text-2xl font-bold text-gray-900 mb-2">Rider Portal</h1>
+                <p className="text-gray-600">Loading...</p>
+            </div>
+        </div>
+    );
+}

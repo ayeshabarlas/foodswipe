@@ -1,0 +1,82 @@
+const mongoose = require('mongoose');
+const bcrypt = require('bcryptjs');
+
+const userSchema = mongoose.Schema(
+    {
+        name: {
+            type: String,
+            required: true,
+        },
+        email: {
+            type: String,
+            required: true,
+        },
+        password: {
+            type: String,
+            required: false, // Password is optional for OTP users
+        },
+        role: {
+            type: String,
+            enum: ['customer', 'restaurant', 'rider', 'admin'],
+            default: 'customer',
+        },
+        phone: {
+            type: String,
+            required: false,
+            unique: false, // Changed from true to false to allow same phone for different roles
+            sparse: true, // Allow multiple users with no phone number
+        },
+        phoneNumber: {
+            type: String,
+            default: null,
+            sparse: true,
+        },
+        phoneVerified: {
+            type: Boolean,
+            default: false,
+        },
+        phoneVerifiedAt: {
+            type: Date,
+            default: null,
+        },
+        address: {
+            type: String,
+            default: '',
+        },
+        avatar: {
+            type: String,
+            default: '',
+        },
+    },
+    {
+        timestamps: true,
+    }
+);
+
+// Compound unique index: same email can exist for different roles
+userSchema.index({ email: 1, role: 1 }, { unique: true });
+// Compound unique index: same phone can exist for different roles
+userSchema.index({ phone: 1, role: 1 }, { unique: true, partialFilterExpression: { phone: { $exists: true } } });
+// Index for phoneNumber+role uniqueness
+userSchema.index({ phoneNumber: 1, role: 1 }, { unique: true, partialFilterExpression: { phoneNumber: { $exists: true, $ne: null } } });
+
+// Match user entered password to hashed password in database
+userSchema.methods.matchPassword = async function (enteredPassword) {
+    return await bcrypt.compare(enteredPassword, this.password);
+};
+
+// Encrypt password using bcrypt
+userSchema.pre('save', async function (next) {
+    // Skip hashing if password wasn't modified or is empty
+    if (!this.isModified('password') || !this.password || this.password === '') {
+        return next();
+    }
+
+    const salt = await bcrypt.genSalt(10);
+    this.password = await bcrypt.hash(this.password, salt);
+    next();
+});
+
+const User = mongoose.model('User', userSchema);
+
+module.exports = User;

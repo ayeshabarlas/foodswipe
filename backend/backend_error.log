@@ -1,0 +1,24 @@
+Error: Order validation failed: orderItems.0.image: Path `image` is required.
+Stack: ValidationError: Order validation failed: orderItems.0.image: Path `image` is required.
+    at Document.invalidate (C:\Users\PMLS\Desktop\foodswipe\backend\node_modules\mongoose\lib\document.js:3362:32)
+    at Subdocument.invalidate (C:\Users\PMLS\Desktop\foodswipe\backend\node_modules\mongoose\lib\types\subdocument.js:257:12)
+    at C:\Users\PMLS\Desktop\foodswipe\backend\node_modules\mongoose\lib\document.js:3123:17
+    at C:\Users\PMLS\Desktop\foodswipe\backend\node_modules\mongoose\lib\schemaType.js:1446:9
+    at process.processTicksAndRejections (node:internal/process/task_queues:77:11)
+Body: {
+  "restaurant": "6921ad61418a3cb440f6a832",
+  "items": [
+    {
+      "dish": "6921ad61418a3cb440f6a83d",
+      "name": "Makhni Handi",
+      "quantity": 1,
+      "price": 1200
+    }
+  ],
+  "deliveryAddress": "254 ",
+  "totalAmount": 1346,
+  "paymentMethod": "cod",
+  "deliveryInstructions": "",
+  "promoCode": ""
+}
+User: {"_id":"6921c42cc258cd321e73e053","name":"ayesha barlas ","email":"ayeshabarlas92@gmail.com","role":"restaurant","phone":"1234567890","address":"","createdAt":"2025-11-22T14:09:48.473Z","updatedAt":"2025-11-22T14:28:53.742Z","__v":0}

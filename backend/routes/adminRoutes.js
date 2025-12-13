@@ -1,0 +1,49 @@
+const express = require('express');
+const router = express.Router();
+const { protect, requireAdmin } = require('../middleware/authMiddleware');
+const {
+    getPendingRestaurants,
+    approveRestaurant,
+    rejectRestaurant,
+    getAllOrders,
+    getDashboardStats,
+    getAllRestaurants,
+    getAllRiders,
+    getRestaurantSales,
+    getDailyStats,
+    updateSystemSettings,
+    getUsers
+} = require('../controllers/adminController');
+
+// All routes require admin authentication
+router.use(protect);
+router.use(requireAdmin);
+
+// Restaurant management
+router.get('/restaurants/pending', getPendingRestaurants);
+router.get('/restaurants', getAllRestaurants);
+router.put('/restaurants/:id/approve', approveRestaurant);
+router.put('/restaurants/:id/reject', rejectRestaurant);
+
+// Order management
+router.get('/orders', getAllOrders);
+
+// Rider management
+router.get('/riders', getAllRiders);
+
+// User management
+router.get('/users', getUsers);
+
+// Payments & Commission
+router.get('/payments', getRestaurantSales);
+
+// Reports
+router.get('/reports/daily', getDailyStats);
+
+// Settings
+router.put('/settings', updateSystemSettings);
+
+// Dashboard stats
+router.get('/stats', getDashboardStats);
+
+module.exports = router;
