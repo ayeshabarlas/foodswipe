@@ -34,6 +34,18 @@ const nextConfig: NextConfig = {
       },
     ];
   },
+  async rewrites() {
+    return [
+      {
+        source: '/login',
+        destination: '/',
+      },
+      {
+        source: '/admin-login',
+        destination: '/admin/login',
+      },
+    ];
+  },
 };
 
 export default nextConfig;
