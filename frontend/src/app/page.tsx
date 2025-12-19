@@ -19,15 +19,6 @@ export default function Home() {
   const [userRole, setUserRole] = useState<string>("");
   const [hasRestaurant, setHasRestaurant] = useState(false);
   const [checkingRestaurant, setCheckingRestaurant] = useState(false);
- useEffect(() => {
-    const userInfo = localStorage.getItem("userInfo");
-    const token = localStorage.getItem("token");
-
-    // Agar direct "/" visit hua aur user logged in nahi, redirect to /login
-    if (!userInfo || !token) {
-      router.replace("/login");
-    }
-  }, []);
   useEffect(() => {
     const checkAuth = async () => {
       const userInfo = localStorage.getItem("userInfo");
