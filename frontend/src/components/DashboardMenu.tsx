@@ -9,6 +9,7 @@ import {
 import AddDishModal from './AddDishModal';
 import axios from 'axios';
 import { getImageUrl } from '../utils/imageUtils';
+import { API_BASE_URL } from '../utils/config';
 
 interface Dish {
     _id: string;
@@ -41,10 +42,10 @@ export default function DashboardMenu() {
             if (!userInfo.token) return;
             const config = { headers: { Authorization: `Bearer ${userInfo.token}` } };
 
-            const restaurantRes = await axios.get('http://localhost:5000/api/restaurants/my-restaurant', config);
+            const restaurantRes = await axios.get(`${API_BASE_URL}/api/restaurants/my-restaurant`, config);
             setRestaurant(restaurantRes.data);
 
-            const response = await axios.get('http://localhost:5000/api/dishes/my-dishes', config);
+            const response = await axios.get(`${API_BASE_URL}/api/dishes/my-dishes`, config);
             setDishes(response.data);
         } catch (error) {
             console.error('Error fetching dishes:', error);
@@ -60,7 +61,7 @@ export default function DashboardMenu() {
             const userInfo = JSON.parse(localStorage.getItem('userInfo') || '{}');
             const config = { headers: { Authorization: `Bearer ${userInfo.token}` } };
 
-            const restaurantRes = await axios.get('http://localhost:5000/api/restaurants/my-restaurant', config);
+            const restaurantRes = await axios.get(`${API_BASE_URL}/api/restaurants/my-restaurant`, config);
 
             const payload = {
                 ...data,
@@ -68,9 +69,9 @@ export default function DashboardMenu() {
             };
 
             if (editingDish) {
-                await axios.put(`http://localhost:5000/api/dishes/${editingDish._id}`, payload, config);
+                await axios.put(`${API_BASE_URL}/api/dishes/${editingDish._id}`, payload, config);
             } else {
-                await axios.post('http://localhost:5000/api/dishes', payload, config);
+                await axios.post(`${API_BASE_URL}/api/dishes`, payload, config);
             }
 
             setShowModal(false);
@@ -87,7 +88,7 @@ export default function DashboardMenu() {
 
         try {
             const userInfo = JSON.parse(localStorage.getItem('userInfo') || '{}');
-            await axios.delete(`http://localhost:5000/api/dishes/${id}`, {
+            await axios.delete(`${API_BASE_URL}/api/dishes/${id}`, {
                 headers: { Authorization: `Bearer ${userInfo.token}` }
             });
             fetchDishes();

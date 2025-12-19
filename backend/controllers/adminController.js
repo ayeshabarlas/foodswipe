@@ -9,7 +9,7 @@ const Rider = require('../models/Rider');
 const getPendingRestaurants = async (req, res) => {
     try {
         const restaurants = await Restaurant.find({ verificationStatus: 'pending' })
-            .populate('owner', 'name email')
+            .populate('owner', 'name email status')
             .sort({ createdAt: -1 });
 
         res.json(restaurants);
@@ -35,6 +35,11 @@ const approveRestaurant = async (req, res) => {
 
         await restaurant.save();
 
+        // Notify admins about status update
+        if (req.app.get('io')) {
+            req.app.get('io').to('admin').emit('restaurant_updated', restaurant);
+        }
+
         res.json({ message: 'Restaurant approved successfully', restaurant });
     } catch (error) {
         res.status(500).json({ message: 'Server error', error: error.message });
@@ -59,6 +64,11 @@ const rejectRestaurant = async (req, res) => {
         restaurant.isActive = false;
 
         await restaurant.save();
+
+        // Notify admins about status update
+        if (req.app.get('io')) {
+            req.app.get('io').to('admin').emit('restaurant_updated', restaurant);
+        }
 
         res.json({ message: 'Restaurant rejected', restaurant });
     } catch (error) {
@@ -101,12 +111,24 @@ const getDashboardStats = async (req, res) => {
             createdAt: { $gte: todayStart }
         });
 
-        // Calculate Revenue (Total & Today)
-        const totalRevenueResult = await Order.aggregate([
+        // Calculate Revenue & Commission (Total & Today)
+        const totalStatsResult = await Order.aggregate([
             { $match: { status: { $in: ['Delivered', 'Completed'] } } },
-            { $group: { _id: null, total: { $sum: '$totalAmount' } } }
+            {
+                $group: {
+                    _id: null,
+                    totalRevenue: { $sum: '$totalPrice' },
+                    totalCommission: { $sum: '$commissionAmount' },
+                    totalRiderEarnings: { $sum: '$riderEarning' },
+                    totalRestaurantEarnings: { $sum: '$restaurantEarning' }
+                }
+            }
         ]);
-        const totalRevenue = totalRevenueResult[0]?.total || 0;
+
+        const totalRevenue = totalStatsResult[0]?.totalRevenue || 0;
+        const totalCommission = totalStatsResult[0]?.totalCommission || 0;
+        const totalRiderEarnings = totalStatsResult[0]?.totalRiderEarnings || 0;
+        const totalRestaurantEarnings = totalStatsResult[0]?.totalRestaurantEarnings || 0;
 
         const todayRevenueResult = await Order.aggregate([
             {
@@ -115,7 +137,7 @@ const getDashboardStats = async (req, res) => {
                     createdAt: { $gte: todayStart }
                 }
             },
-            { $group: { _id: null, total: { $sum: '$totalAmount' } } }
+            { $group: { _id: null, total: { $sum: '$totalPrice' } } }
         ]);
         const todayRevenue = todayRevenueResult[0]?.total || 0;
 
@@ -201,17 +223,16 @@ const getDashboardStats = async (req, res) => {
         ]);
 
         // Recent Activity (Orders, New Restaurants, New Riders)
-        // We'll fetch a few recent items from each and mix them
         const recentOrders = await Order.find().sort({ createdAt: -1 }).limit(5).populate('restaurant', 'name');
-        const recentRestaurants = await Restaurant.find().sort({ createdAt: -1 }).limit(3);
-        const recentRiders = await Rider.find().sort({ createdAt: -1 }).limit(3).populate('user', 'name');
+        const recentRestaurants = await Restaurant.find().sort({ createdAt: -1 }).limit(3).populate('owner', 'name email status');
+        const recentRiders = await Rider.find().sort({ createdAt: -1 }).limit(3).populate('user', 'name email status');
 
         const recentActivity = [
             ...recentOrders.map(o => ({
                 id: o._id,
                 type: 'order',
                 text: `New order completed`,
-                subtext: `Order #${o._id.toString().slice(-5)} delivered successfully`, // Simplified
+                subtext: `Order #${o._id.toString().slice(-5)} delivered successfully`,
                 time: o.createdAt
             })),
             ...recentRestaurants.map(r => ({
@@ -252,11 +273,13 @@ const getDashboardStats = async (req, res) => {
             todayOrders,
             totalRevenue,
             todayRevenue,
+            totalCommission,
+            totalRiderEarnings,
+            totalRestaurantEarnings,
             revenueStats,
             orderStatusDist,
             topRestaurants,
             recentActivity,
-            // Rider Stats
             totalRiders,
             pendingRiders,
             onlineRiders,
@@ -268,22 +291,13 @@ const getDashboardStats = async (req, res) => {
     }
 };
 
-
-
-// ... existing imports ...
-
 // @desc    Get all restaurants (active & pending)
-// @route   GET /api/admin/restaurants
-// @access  Private/Admin
 const getAllRestaurants = async (req, res) => {
     try {
-        // Use find() to ensure populate works correctly, avoiding lookup issues
         const restaurants = await Restaurant.find()
-            .populate('owner', 'name email')
+            .populate('owner', 'name email status')
             .lean();
 
-        // Enrich with order stats using aggregation per restaurant
-        // Note: For production with thousands of restaurants, this should be optimized
         const enrichedRestaurants = await Promise.all(restaurants.map(async (restaurant) => {
             const stats = await Order.aggregate([
                 { $match: { restaurant: restaurant._id } },
@@ -309,7 +323,6 @@ const getAllRestaurants = async (req, res) => {
             };
         }));
 
-        // Sort by newest first
         enrichedRestaurants.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
 
         res.json(enrichedRestaurants);
@@ -320,8 +333,6 @@ const getAllRestaurants = async (req, res) => {
 };
 
 // @desc    Get all riders
-// @route   GET /api/admin/riders
-// @access  Private/Admin
 const getAllRiders = async (req, res) => {
     try {
         const riders = await Rider.aggregate([
@@ -330,12 +341,15 @@ const getAllRiders = async (req, res) => {
                     from: 'users',
                     localField: 'user',
                     foreignField: '_id',
+                    pipeline: [
+                        { $project: { name: 1, email: 1, phone: 1, status: 1 } }
+                    ],
                     as: 'userDetails'
                 }
             },
             {
                 $addFields: {
-                    user: { $arrayElemAt: ['$userDetails', 0] }
+                    user: { $ifNull: [{ $arrayElemAt: ['$userDetails', 0] }, {}] }
                 }
             },
             {
@@ -364,7 +378,6 @@ const getAllRiders = async (req, res) => {
                     cashCollected: { $ifNull: ['$earnings.thisWeek', 0] }
                 }
             },
-            // We need to calculate todayOrders manually or add another lookup
             { $sort: { createdAt: -1 } }
         ]);
 
@@ -372,12 +385,11 @@ const getAllRiders = async (req, res) => {
         today.setHours(0, 0, 0, 0);
 
         const ridersWithStats = riders.map(rider => {
-            // Count today's orders from the allOrders array we fetched
             const todayOrders = rider.allOrders.filter(o => new Date(o.createdAt) >= today).length;
             return {
                 ...rider,
                 todayOrders,
-                allOrders: undefined // Remove heavy array
+                allOrders: undefined
             };
         });
 
@@ -388,11 +400,8 @@ const getAllRiders = async (req, res) => {
 };
 
 // @desc    Get restaurant sales and commission
-// @route   GET /api/admin/payments
-// @access  Private/Admin
 const getRestaurantSales = async (req, res) => {
     try {
-        // Aggregate completed orders by restaurant
         const sales = await Order.aggregate([
             { $match: { status: { $in: ['Delivered', 'Completed'] } } },
             {
@@ -416,7 +425,7 @@ const getRestaurantSales = async (req, res) => {
                     restaurantName: '$restaurantInfo.name',
                     totalSales: 1,
                     orderCount: 1,
-                    commission: { $multiply: ['$totalSales', 0.10] }, // 10% commission
+                    commission: { $multiply: ['$totalSales', 0.10] },
                     netPayable: { $multiply: ['$totalSales', 0.90] }
                 }
             }
@@ -429,8 +438,6 @@ const getRestaurantSales = async (req, res) => {
 };
 
 // @desc    Get daily stats for reports
-// @route   GET /api/admin/reports/daily
-// @access  Private/Admin
 const getDailyStats = async (req, res) => {
     try {
         const sevenDaysAgo = new Date();
@@ -455,12 +462,8 @@ const getDailyStats = async (req, res) => {
 };
 
 // @desc    Update system settings
-// @route   PUT /api/admin/settings
-// @access  Private/Admin
 const updateSystemSettings = async (req, res) => {
     try {
-        // In a real app, we'd save this to a Settings model
-        // For MVP, we'll just return success
         res.json({ message: 'Settings updated successfully', settings: req.body });
     } catch (error) {
         res.status(500).json({ message: 'Server error', error: error.message });
@@ -468,8 +471,6 @@ const updateSystemSettings = async (req, res) => {
 };
 
 // @desc    Get all users (customers) with stats
-// @route   GET /api/admin/users
-// @access  Private/Admin
 const getUsers = async (req, res) => {
     try {
         const role = req.query.role || 'customer';
@@ -513,16 +514,65 @@ const getUsers = async (req, res) => {
                     totalSpent: 1,
                     lastOrderDate: 1,
                     cancellations: 1,
-                    status: {
-                        // Simple logic to flag high cancellations
-                        $cond: { if: { $gte: ['$cancellations', 5] }, then: 'flagged', else: 'active' }
-                    }
+                    status: 1
                 }
             },
             { $sort: { createdAt: -1 } }
         ]);
 
         res.json(users);
+    } catch (error) {
+        res.status(500).json({ message: 'Server error', error: error.message });
+    }
+};
+
+// @desc    Suspend a user
+const suspendUser = async (req, res) => {
+    try {
+        const user = await User.findById(req.params.id);
+        if (!user) {
+            return res.status(404).json({ message: 'User not found' });
+        }
+        user.status = 'suspended';
+        await user.save();
+        res.json({ message: 'User suspended successfully', user });
+    } catch (error) {
+        res.status(500).json({ message: 'Server error', error: error.message });
+    }
+};
+
+// @desc    Unsuspend a user
+const unsuspendUser = async (req, res) => {
+    try {
+        const user = await User.findById(req.params.id);
+        if (!user) {
+            return res.status(404).json({ message: 'User not found' });
+        }
+        user.status = 'active';
+        await user.save();
+        res.json({ message: 'User unsuspended successfully', user });
+    } catch (error) {
+        res.status(500).json({ message: 'Server error', error: error.message });
+    }
+};
+
+// @desc    Delete a user
+const deleteUser = async (req, res) => {
+    try {
+        const user = await User.findById(req.params.id);
+        if (!user) {
+            return res.status(404).json({ message: 'User not found' });
+        }
+
+        if (user.role === 'restaurant') {
+            await Restaurant.findOneAndDelete({ owner: user._id });
+        }
+        if (user.role === 'rider') {
+            await Rider.findOneAndDelete({ user: user._id });
+        }
+
+        await User.findByIdAndDelete(req.params.id);
+        res.json({ message: 'User deleted successfully' });
     } catch (error) {
         res.status(500).json({ message: 'Server error', error: error.message });
     }
@@ -539,5 +589,8 @@ module.exports = {
     getRestaurantSales,
     getDailyStats,
     updateSystemSettings,
-    getUsers
+    getUsers,
+    suspendUser,
+    unsuspendUser,
+    deleteUser
 };

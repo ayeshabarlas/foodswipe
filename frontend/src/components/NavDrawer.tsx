@@ -23,6 +23,7 @@ import MyProfile from './MyProfile';
 import MyOrders from './MyOrders';
 import dynamic from 'next/dynamic';
 import axios from 'axios';
+import { API_BASE_URL } from '../utils/config';
 
 const OrderTracking = dynamic(() => import('./OrderTracking'), { ssr: false });
 import DiscountsVouchers from './DiscountsVouchers';
@@ -58,7 +59,7 @@ export default function NavDrawer({ isOpen, onClose, user, onOpenProfile }: NavD
 
                 // We'll fetch all vouchers and filter client-side for active ones to get the count
                 // Or create a specific endpoint. For now reusing existing endpoint.
-                const { data } = await axios.get('http://localhost:5000/api/vouchers', {
+                const { data } = await axios.get(`${API_BASE_URL}/api/vouchers`, {
                     headers: { Authorization: `Bearer ${token}` }
                 });
 

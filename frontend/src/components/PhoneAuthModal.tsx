@@ -6,6 +6,7 @@ import { FaTimes, FaPhone, FaLock } from 'react-icons/fa';
 import { sendOTP, verifyOTP, initRecaptcha, cleanupRecaptcha } from '../utils/firebase-phone-auth';
 import { ConfirmationResult } from 'firebase/auth';
 import axios from 'axios';
+import { API_BASE_URL } from '../utils/config';
 import toast from 'react-hot-toast';
 
 interface PhoneAuthModalProps {
@@ -209,7 +210,7 @@ export default function PhoneAuthModal({ isOpen, onClose, onSuccess }: PhoneAuth
             console.log('Calling backend verify-phone with:', { fullNumber, hasToken: !!token });
 
             await axios.post(
-                'http://localhost:5000/api/auth/verify-phone',
+                `${API_BASE_URL}/api/auth/verify-phone`,
                 { phoneNumber: fullNumber },
                 { headers: { Authorization: `Bearer ${token}` } }
             );

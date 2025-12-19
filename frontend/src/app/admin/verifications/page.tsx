@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
+import { API_BASE_URL } from '@/utils/config';
 import { FaCheckCircle, FaTimesCircle, FaEye, FaSpinner } from 'react-icons/fa';
 
 export default function AdminVerifications() {
@@ -25,8 +26,8 @@ export default function AdminVerifications() {
             };
 
             const [restaurantsRes, ridersRes] = await Promise.all([
-                axios.get('http://localhost:5000/api/verifications/restaurants', config),
-                axios.get('http://localhost:5000/api/verifications/riders', config)
+                axios.get(`${API_BASE_URL}/api/verifications/restaurants`, config),
+                axios.get(`${API_BASE_URL}/api/verifications/riders`, config)
             ]);
 
             setRestaurants(restaurantsRes.data);
@@ -53,8 +54,8 @@ export default function AdminVerifications() {
             };
 
             const endpoint = type === 'restaurant'
-                ? `http://localhost:5000/api/verifications/restaurants/${id}`
-                : `http://localhost:5000/api/verifications/riders/${id}`;
+                ? `${API_BASE_URL}/api/verifications/restaurants/${id}`
+                : `${API_BASE_URL}/api/verifications/riders/${id}`;
 
             await axios.put(endpoint, { action, rejectionReason }, config);
 
@@ -233,8 +234,8 @@ export default function AdminVerifications() {
                     <button
                         onClick={() => setActiveTab('restaurants')}
                         className={`px-6 py-3 rounded-lg font-medium transition ${activeTab === 'restaurants'
-                                ? 'bg-orange-500 text-white'
-                                : 'bg-white text-gray-700 hover:bg-gray-100'
+                            ? 'bg-orange-500 text-white'
+                            : 'bg-white text-gray-700 hover:bg-gray-100'
                             }`}
                     >
                         Restaurants ({restaurants.length})
@@ -242,8 +243,8 @@ export default function AdminVerifications() {
                     <button
                         onClick={() => setActiveTab('riders')}
                         className={`px-6 py-3 rounded-lg font-medium transition ${activeTab === 'riders'
-                                ? 'bg-orange-500 text-white'
-                                : 'bg-white text-gray-700 hover:bg-gray-100'
+                            ? 'bg-orange-500 text-white'
+                            : 'bg-white text-gray-700 hover:bg-gray-100'
                             }`}
                     >
                         Riders ({riders.length})

@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { FaStar, FaUser, FaQuoteLeft, FaChartLine, FaComment, FaHeart } from 'react-icons/fa';
 import axios from 'axios';
+import { API_BASE_URL } from '../utils/config';
 
 interface Review {
     _id: string;
@@ -21,11 +22,11 @@ export default function DashboardReviews() {
     const fetchReviews = async () => {
         try {
             const userInfo = JSON.parse(localStorage.getItem('userInfo') || '{}');
-            const restaurantRes = await axios.get('http://localhost:5000/api/restaurants/my-restaurant', {
+            const restaurantRes = await axios.get(`${API_BASE_URL}/api/restaurants/my-restaurant`, {
                 headers: { Authorization: `Bearer ${userInfo.token}` }
             });
 
-            const reviewsRes = await axios.get(`http://localhost:5000/api/restaurants/${restaurantRes.data._id}/reviews`);
+            const reviewsRes = await axios.get(`${API_BASE_URL}/api/restaurants/${restaurantRes.data._id}/reviews`);
             setReviews(reviewsRes.data);
         } catch (error) {
             console.error('Error fetching reviews:', error);

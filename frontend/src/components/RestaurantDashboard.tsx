@@ -17,6 +17,7 @@ import DashboardSettings from './DashboardSettings';
 import DashboardSupport from './DashboardSupport';
 import { io } from 'socket.io-client';
 import { getImageUrl } from '../utils/imageUtils';
+import { API_BASE_URL, SOCKET_URL } from '../utils/config';
 
 export default function RestaurantDashboard() {
     const [restaurant, setRestaurant] = useState<any>(null);
@@ -37,7 +38,7 @@ export default function RestaurantDashboard() {
     const [socket, setSocket] = useState<any>(null);
 
     useEffect(() => {
-        const newSocket = io('http://localhost:5000');
+        const newSocket = io(SOCKET_URL);
         setSocket(newSocket);
         return () => { newSocket.disconnect(); };
     }, []);
@@ -48,8 +49,8 @@ export default function RestaurantDashboard() {
             const headers = { Authorization: `Bearer ${token}` };
 
             const [restaurantRes, statsRes] = await Promise.all([
-                axios.get('http://localhost:5000/api/restaurants/my-restaurant', { headers }),
-                axios.get('http://localhost:5000/api/dashboard/stats', { headers })
+                axios.get(`${API_BASE_URL}/api/restaurants/my-restaurant`, { headers }),
+                axios.get(`${API_BASE_URL}/api/dashboard/stats`, { headers })
             ]);
 
             setRestaurant(restaurantRes.data);
@@ -64,7 +65,7 @@ export default function RestaurantDashboard() {
     const fetchNotifications = async () => {
         try {
             const token = JSON.parse(localStorage.getItem('userInfo') || '{}').token;
-            const res = await axios.get('http://localhost:5000/api/notifications', {
+            const res = await axios.get(`${API_BASE_URL}/api/notifications`, {
                 headers: { Authorization: `Bearer ${token}` }
             });
             setNotifications(res.data);
@@ -114,7 +115,7 @@ export default function RestaurantDashboard() {
     const markAsRead = async (id: string) => {
         try {
             const token = JSON.parse(localStorage.getItem('userInfo') || '{}').token;
-            await axios.put(`http://localhost:5000/api/notifications/${id}/read`, {}, {
+            await axios.put(`${API_BASE_URL}/api/notifications/${id}/read`, {}, {
                 headers: { Authorization: `Bearer ${token}` }
             });
             setNotifications(notifications.map(n => n._id === id ? { ...n, read: true } : n));
@@ -131,7 +132,7 @@ export default function RestaurantDashboard() {
             formData.append('file', e.target.files[0]);
 
             const userInfo = JSON.parse(localStorage.getItem('userInfo') || '{}');
-            const res = await axios.post('http://localhost:5000/api/upload', formData, {
+            const res = await axios.post(`${API_BASE_URL}/api/upload`, formData, {
                 headers: {
                     'Content-Type': 'multipart/form-data',
                     Authorization: `Bearer ${userInfo.token}`
@@ -139,7 +140,7 @@ export default function RestaurantDashboard() {
             });
 
             // Update restaurant logo in backend
-            await axios.put(`http://localhost:5000/api/restaurants/${restaurant._id}`,
+            await axios.put(`${API_BASE_URL}/api/restaurants/${restaurant._id}`,
                 { logo: res.data.imageUrl },
                 { headers: { Authorization: `Bearer ${userInfo.token}` } }
             );

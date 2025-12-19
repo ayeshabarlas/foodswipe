@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { FaSave, FaPlus, FaTrash, FaClock, FaMapMarkerAlt, FaInfoCircle, FaUniversity, FaCamera, FaCheck } from 'react-icons/fa';
 import axios from 'axios';
+import { API_BASE_URL } from '../utils/config';
 
 interface SettingsTabProps {
     restaurant: any;
@@ -93,8 +94,8 @@ export default function SettingsTab({ restaurant, onUpdate }: SettingsTabProps) 
                 },
             };
 
-            const { data } = await axios.post('http://localhost:5000/api/upload', uploadData, config);
-            const fullUrl = `http://localhost:5000${data.imageUrl}`;
+            const { data } = await axios.post(`${API_BASE_URL}/api/upload`, uploadData, config);
+            const fullUrl = `${API_BASE_URL}${data.imageUrl}`;
             setFormData(prev => ({ ...prev, logo: fullUrl }));
         } catch (error) {
             console.error('Logo upload error:', error);
@@ -111,7 +112,7 @@ export default function SettingsTab({ restaurant, onUpdate }: SettingsTabProps) 
         setSaving(true);
         try {
             const token = JSON.parse(localStorage.getItem("userInfo") || "{}").token;
-            await axios.put(`http://localhost:5000/api/restaurants/${restaurant._id}`, formData, {
+            await axios.put(`${API_BASE_URL}/api/restaurants/${restaurant._id}`, formData, {
                 headers: { Authorization: `Bearer ${token}` }
             });
             onUpdate();

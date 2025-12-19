@@ -12,10 +12,17 @@ const {
     getRestaurantSales,
     getDailyStats,
     updateSystemSettings,
-    getUsers
+    getUsers,
+    suspendUser,
+    unsuspendUser,
+    deleteUser
 } = require('../controllers/adminController');
+const { loginAdmin, getAdminMe } = require('../controllers/adminAuthController');
 
-// All routes require admin authentication
+// Public route
+router.post('/login', loginAdmin);
+
+// All other routes require admin authentication
 router.use(protect);
 router.use(requireAdmin);
 
@@ -33,6 +40,9 @@ router.get('/riders', getAllRiders);
 
 // User management
 router.get('/users', getUsers);
+router.put('/users/:id/suspend', suspendUser);
+router.put('/users/:id/unsuspend', unsuspendUser);
+router.delete('/users/:id', deleteUser);
 
 // Payments & Commission
 router.get('/payments', getRestaurantSales);

@@ -4,6 +4,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { FaTimes, FaPaperPlane, FaRobot } from 'react-icons/fa';
 import axios from 'axios';
+import { API_BASE_URL } from '../utils/config';
 
 interface Message {
     id: number;
@@ -68,7 +69,7 @@ export default function ChatbotSupport({ isOpen, onClose }: ChatbotSupportProps)
 
         try {
             // Real-time API call to backend
-            const response = await axios.post('http://localhost:5000/api/chat', {
+            const response = await axios.post(`${API_BASE_URL}/api/chat`, {
                 message: text,
                 conversationHistory: messages
             });
@@ -157,8 +158,8 @@ export default function ChatbotSupport({ isOpen, onClose }: ChatbotSupportProps)
                                 >
                                     <div className={`max-w-[80%] ${message.sender === 'user' ? 'order-2' : 'order-1'}`}>
                                         <div className={`rounded-2xl p-3 ${message.sender === 'user'
-                                                ? 'bg-gradient-orange-red text-white'
-                                                : 'bg-white text-gray-800 border border-gray-200'
+                                            ? 'bg-gradient-orange-red text-white'
+                                            : 'bg-white text-gray-800 border border-gray-200'
                                             }`}>
                                             <p className="text-sm whitespace-pre-line">{message.text}</p>
                                         </div>

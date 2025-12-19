@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { motion } from 'framer-motion';
 import axios from 'axios';
+import { API_BASE_URL } from '../../utils/config';
 
 export default function SettingsView() {
     const [commission, setCommission] = useState(10);
@@ -13,7 +14,7 @@ export default function SettingsView() {
         try {
             const token = JSON.parse(localStorage.getItem('userInfo') || '{}').token;
             await axios.put(
-                'http://localhost:5000/api/admin/settings',
+                `${API_BASE_URL}/api/admin/settings`,
                 { commission, supportEmail, announcement },
                 { headers: { Authorization: `Bearer ${token}` } }
             );

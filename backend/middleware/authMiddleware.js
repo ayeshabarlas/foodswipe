@@ -1,27 +1,32 @@
 const jwt = require('jsonwebtoken');
 const User = require('../models/User');
+const Admin = require('../models/Admin');
 
-// Protect routes - general authentication
+// Protect routes - general authentication for common users (Customer, Restaurant, Rider)
 const protect = async (req, res, next) => {
     let token;
-
-    // Debug logging
-    console.log('Auth Middleware - Headers:', req.headers);
-    console.log('Auth Middleware - Authorization:', req.headers.authorization);
 
     if (req.headers.authorization && req.headers.authorization.startsWith('Bearer')) {
         try {
             token = req.headers.authorization.split(' ')[1];
             const decoded = jwt.verify(token, process.env.JWT_SECRET || 'your_jwt_secret');
+
+            // First check User collection
             req.user = await User.findById(decoded.id).select('-password');
+
+            // If not in User, check Admin collection (for common routes like upload)
             if (!req.user) {
-                console.log('Auth failed: User not found in DB');
+                req.admin = await Admin.findById(decoded.id).select('-password');
+                if (req.admin) {
+                    req.user = { _id: req.admin._id, role: req.admin.role, name: req.admin.name };
+                }
+            }
+
+            if (!req.user && !req.admin) {
                 return res.status(401).json({ message: 'Not authorized, user not found' });
             }
             return next();
         } catch (error) {
-            console.error('Auth failed:', error.message);
-            // Return specific error message for debugging
             return res.status(401).json({ message: 'Not authorized, token failed', error: error.message });
         }
     }
@@ -31,13 +36,19 @@ const protect = async (req, res, next) => {
     }
 };
 
-// Admin only middleware
+// Admin only middleware - strict check against Admin collection
 const requireAdmin = async (req, res, next) => {
-    if (req.user && req.user.role === 'admin') {
-        next();
-    } else {
-        console.log(`Admin access denied. User Role: ${req.user?.role}, ID: ${req.user?._id}`);
-        res.status(403).json({ message: `Access denied. Admin only. Current role: ${req.user?.role}` });
+    // Re-verify against Admin model to be absolutely sure
+    try {
+        const adminUser = await Admin.findById(req.admin?._id || req.user?._id);
+        if (adminUser) {
+            req.admin = adminUser;
+            next();
+        } else {
+            res.status(403).json({ message: 'Access denied. Admin only.' });
+        }
+    } catch (error) {
+        res.status(403).json({ message: 'Access denied. Admin only.' });
     }
 };
 

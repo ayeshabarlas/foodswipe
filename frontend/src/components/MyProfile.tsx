@@ -4,6 +4,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { FaTimes, FaUser, FaEnvelope, FaPhone, FaMapMarkerAlt, FaCalendar, FaEdit, FaCamera, FaSpinner } from 'react-icons/fa';
 import axios from 'axios';
+import { API_BASE_URL } from '../utils/config';
 
 interface MyProfileProps {
     isOpen: boolean;
@@ -41,16 +42,16 @@ export default function MyProfile({ isOpen, onClose, user }: MyProfileProps) {
 
         setUploading(true);
         try {
-            const uploadRes = await axios.post('http://localhost:5000/api/upload', formData, {
+            const uploadRes = await axios.post(`${API_BASE_URL}/api/upload`, formData, {
                 headers: { 'Content-Type': 'multipart/form-data' }
             });
 
-            const imageUrl = `http://localhost:5000${uploadRes.data}`;
+            const imageUrl = `${API_BASE_URL}${uploadRes.data}`;
 
             // Immediately update profile with new image
             const token = localStorage.getItem('token');
             const updateRes = await axios.put(
-                'http://localhost:5000/api/auth/profile',
+                `${API_BASE_URL}/api/auth/profile`,
                 { ...editedUser, avatar: imageUrl },
                 { headers: { Authorization: `Bearer ${token}` } }
             );
@@ -72,7 +73,7 @@ export default function MyProfile({ isOpen, onClose, user }: MyProfileProps) {
         try {
             const token = localStorage.getItem('token');
             const res = await axios.put(
-                'http://localhost:5000/api/auth/profile',
+                `${API_BASE_URL}/api/auth/profile`,
                 editedUser,
                 { headers: { Authorization: `Bearer ${token}` } }
             );

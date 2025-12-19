@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import axios from 'axios';
+import { API_BASE_URL } from '../../utils/config';
 import { FaWallet, FaStore, FaMoneyBillWave, FaHistory } from 'react-icons/fa';
 
 interface Wallet {
@@ -39,7 +40,7 @@ export default function RestaurantWalletsView() {
                 },
             };
 
-            const res = await axios.get('http://localhost:5000/api/finance/restaurant-wallets', config);
+            const res = await axios.get(`${API_BASE_URL}/api/finance/restaurant-wallets`, config);
             setWallets(res.data);
         } catch (err: any) {
             console.error('Error fetching restaurant wallets:', err);

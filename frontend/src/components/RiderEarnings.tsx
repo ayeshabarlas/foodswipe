@@ -2,6 +2,7 @@
 
 import React, { useState } from 'react';
 import axios from 'axios';
+import { API_BASE_URL } from '../utils/config';
 import { FaDollarSign, FaStar, FaDownload, FaWallet, FaHistory } from 'react-icons/fa';
 
 interface RiderEarningsProps {
@@ -33,7 +34,7 @@ export default function RiderEarnings({ riderId }: RiderEarningsProps) {
         const fetchEarnings = async () => {
             try {
                 const token = JSON.parse(localStorage.getItem("userInfo") || "{}").token;
-                const res = await axios.get(`http://localhost:5000/api/riders/${riderId}/earnings`, {
+                const res = await axios.get(`${API_BASE_URL}/api/riders/${riderId}/earnings`, {
                     headers: { Authorization: `Bearer ${token}` }
                 });
                 setEarnings(res.data);
@@ -45,7 +46,7 @@ export default function RiderEarnings({ riderId }: RiderEarningsProps) {
         const fetchTransactions = async () => {
             try {
                 const token = JSON.parse(localStorage.getItem("userInfo") || "{}").token;
-                const res = await axios.get(`http://localhost:5000/api/riders/${riderId}/transactions`, {
+                const res = await axios.get(`${API_BASE_URL}/api/riders/${riderId}/transactions`, {
                     headers: { Authorization: `Bearer ${token}` }
                 });
                 setTransactions(res.data);
@@ -57,7 +58,7 @@ export default function RiderEarnings({ riderId }: RiderEarningsProps) {
         const fetchRiderDetails = async () => {
             try {
                 const token = JSON.parse(localStorage.getItem("userInfo") || "{}").token;
-                const res = await axios.get(`http://localhost:5000/api/riders/${riderId}`, {
+                const res = await axios.get(`${API_BASE_URL}/api/riders/${riderId}`, {
                     headers: { Authorization: `Bearer ${token}` }
                 });
                 if (res.data.bankDetails) {
@@ -84,7 +85,7 @@ export default function RiderEarnings({ riderId }: RiderEarningsProps) {
         setSavingBank(true);
         try {
             const token = JSON.parse(localStorage.getItem("userInfo") || "{}").token;
-            await axios.put(`http://localhost:5000/api/riders/${riderId}/bank-details`, bankDetails, {
+            await axios.put(`${API_BASE_URL}/api/riders/${riderId}/bank-details`, bankDetails, {
                 headers: { Authorization: `Bearer ${token}` }
             });
             setIsEditingBank(false);
@@ -110,12 +111,12 @@ export default function RiderEarnings({ riderId }: RiderEarningsProps) {
 
         try {
             const token = JSON.parse(localStorage.getItem("userInfo") || "{}").token;
-            await axios.post(`http://localhost:5000/api/riders/${riderId}/cashout`, {}, {
+            await axios.post(`${API_BASE_URL}/api/riders/${riderId}/cashout`, {}, {
                 headers: { Authorization: `Bearer ${token}` }
             });
             alert('Cashout request submitted successfully!');
             // Refresh data
-            const res = await axios.get(`http://localhost:5000/api/riders/${riderId}/earnings`, {
+            const res = await axios.get(`${API_BASE_URL}/api/riders/${riderId}/earnings`, {
                 headers: { Authorization: `Bearer ${token}` }
             });
             setEarnings(res.data);

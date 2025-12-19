@@ -6,6 +6,7 @@ import { FaMoneyBillWave, FaHistory, FaFileInvoiceDollar, FaCheckCircle, FaClock
 import axios from 'axios';
 import { io } from 'socket.io-client';
 import PaymentProofModal from './PaymentProofModal';
+import { API_BASE_URL, SOCKET_URL } from '../utils/config';
 
 interface Payout {
     _id: string;
@@ -32,8 +33,8 @@ export default function PaymentHistory() {
             const headers = { Authorization: `Bearer ${token}` };
 
             const [currentRes, historyRes] = await Promise.all([
-                axios.get('http://localhost:5000/api/payouts/current', { headers }),
-                axios.get('http://localhost:5000/api/payouts/history', { headers })
+                axios.get(`${API_BASE_URL}/api/payouts/current`, { headers }),
+                axios.get(`${API_BASE_URL}/api/payouts/history`, { headers })
             ]);
 
             setCurrentPayout(currentRes.data);
@@ -49,14 +50,14 @@ export default function PaymentHistory() {
         fetchPaymentData();
 
         // Socket.io connection
-        const newSocket = io('http://localhost:5000');
+        const newSocket = io(SOCKET_URL);
         setSocket(newSocket);
 
         const userInfo = JSON.parse(localStorage.getItem('userInfo') || '{}');
         if (userInfo.restaurantId || userInfo._id) {
             // Assuming we can get restaurant ID from userInfo or fetch it. 
             // For now, let's fetch my-restaurant to get ID if not in local storage
-            axios.get('http://localhost:5000/api/restaurants/my-restaurant', {
+            axios.get(`${API_BASE_URL}/api/restaurants/my-restaurant`, {
                 headers: { Authorization: `Bearer ${userInfo.token}` }
             }).then(res => {
                 if (res.data) {
@@ -203,7 +204,7 @@ export default function PaymentHistory() {
                                         <td className="px-6 py-4">
                                             {payout.proofUrl ? (
                                                 <a
-                                                    href={`http://localhost:5000${payout.proofUrl}`}
+                                                    href={`${API_BASE_URL}${payout.proofUrl}`}
                                                     target="_blank"
                                                     rel="noopener noreferrer"
                                                     className="text-blue-600 hover:text-blue-800 text-sm font-medium flex items-center gap-1"

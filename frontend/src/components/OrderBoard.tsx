@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
+import { API_BASE_URL } from '../utils/config';
 import { motion, AnimatePresence } from 'framer-motion';
 import { FaTimes, FaCheck, FaClock, FaMapMarkerAlt, FaCommentDots, FaBan, FaMotorcycle } from 'react-icons/fa';
 import CancelOrderModal from './CancelOrderModal';
@@ -43,7 +44,7 @@ export default function OrderBoard({ restaurant }: OrderBoardProps) {
     const fetchOrders = async () => {
         try {
             const token = JSON.parse(localStorage.getItem('userInfo') || '{}').token;
-            const res = await axios.get('http://localhost:5000/api/orders/restaurant/my-orders', {
+            const res = await axios.get(`${API_BASE_URL}/api/orders/restaurant/my-orders`, {
                 headers: { Authorization: `Bearer ${token}` }
             });
             setOrders(res.data);
@@ -99,7 +100,7 @@ export default function OrderBoard({ restaurant }: OrderBoardProps) {
         try {
             const token = JSON.parse(localStorage.getItem('userInfo') || '{}').token;
             await axios.put(
-                `http://localhost:5000/api/orders/${orderId}/status`,
+                `${API_BASE_URL}/api/orders/${orderId}/status`,
                 { status, ...extraData },
                 { headers: { Authorization: `Bearer ${token}` } }
             );

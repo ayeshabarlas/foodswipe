@@ -9,6 +9,7 @@ import RestaurantDashboard from "@/components/RestaurantDashboard";
 import CreateRestaurant from "@/components/CreateRestaurant";
 import RiderPortal from "@/components/RiderPortal";
 import axios from "axios";
+import { API_BASE_URL } from "@/utils/config";
 
 export default function Home() {
   const router = useRouter();
@@ -35,7 +36,7 @@ export default function Home() {
       if (userInfo && token) {
         try {
           // Verify token with backend
-          const response = await axios.get("http://localhost:5000/api/auth/me", {
+          const response = await axios.get(`${API_BASE_URL}/api/auth/me`, {
             headers: { Authorization: `Bearer ${token}` },
             timeout: 5000 // 5 second timeout
           });
@@ -58,7 +59,7 @@ export default function Home() {
             console.log('Checking for restaurant for user:', user.email);
             setCheckingRestaurant(true);
             try {
-              const restaurantResponse = await axios.get("http://localhost:5000/api/restaurants/my-restaurant", {
+              const restaurantResponse = await axios.get(`${API_BASE_URL}/api/restaurants/my-restaurant`, {
                 headers: { Authorization: `Bearer ${token}` },
               });
               console.log('Restaurant found:', restaurantResponse.data.name);
@@ -120,7 +121,7 @@ export default function Home() {
           setCheckingRestaurant(true);
           const token = localStorage.getItem("token");
           try {
-            const restaurantResponse = await axios.get("http://localhost:5000/api/restaurants/my-restaurant", {
+            const restaurantResponse = await axios.get(`${API_BASE_URL}/api/restaurants/my-restaurant`, {
               headers: { Authorization: `Bearer ${token}` },
             });
             if (restaurantResponse.data) {
@@ -159,24 +160,6 @@ export default function Home() {
     return <RiderPortal />;
   }
 
-  if (userRole === "admin") {
-    // Force reset checking restaurant to false as admins don't need it
-    if (checkingRestaurant) setCheckingRestaurant(false);
-
-    // Allow admin to see the main feed, maybe add an Admin Dashboard button overlap later?
-    // For now, just render the feed.
-    return (
-      <main className="h-screen w-full bg-black overflow-hidden relative">
-        <div className="absolute top-4 right-4 z-50">
-          <button onClick={() => router.push('/admin')} className="bg-orange-500 text-white px-4 py-2 rounded-lg shadow-lg font-bold text-sm">
-            Go to Admin Dashboard
-          </button>
-        </div>
-        <VideoFeed />
-      </main>
-    );
-  }
-
   // Customer feed for customers
   if (userRole === "customer") {
     return (
@@ -186,24 +169,22 @@ export default function Home() {
     );
   }
 
-  // Fallback for debugging - prevent silent failure
+  // Fallback for unknown roles or session cleanup
   return (
     <div className="h-screen w-full bg-gray-900 text-white flex flex-col items-center justify-center p-4">
       <div className="mb-4 text-xl font-bold text-red-500">Navigation Error</div>
-      <p className="mb-4">Logged in but no matching view found.</p>
-      <div className="bg-gray-800 p-4 rounded-lg mb-6 font-mono text-sm border border-gray-700">
-        <p>Current Role: <span className="text-yellow-400">"{userRole || 'undefined'}"</span></p>
-        <p>Has Restaurant: <span className="text-blue-400">{hasRestaurant ? 'Yes' : 'No'}</span></p>
-      </div>
+      <p className="mb-4 text-center text-gray-400 max-w-md">
+        You are logged in, but the system couldn't find a matching dashboard for your role.
+      </p>
       <button
         onClick={() => {
           localStorage.removeItem("userInfo");
           localStorage.removeItem("token");
           window.location.reload();
         }}
-        className="px-6 py-3 bg-red-600 rounded-full font-bold hover:bg-red-700 transition"
+        className="px-8 py-3 bg-red-600 rounded-full font-bold hover:bg-red-700 transition shadow-lg shadow-red-500/20 active:scale-95"
       >
-        Logout & Retry
+        Logout & Reset Session
       </button>
     </div>
   );

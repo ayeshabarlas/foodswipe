@@ -103,8 +103,8 @@ const submitForVerification = async (req, res) => {
             return res.status(404).json({ message: 'Rider not found' });
         }
 
-        // For demo purposes, auto-approve
-        rider.verificationStatus = 'approved';
+        // Submission for review
+        rider.verificationStatus = 'pending';
         await rider.save();
 
         res.json(rider);

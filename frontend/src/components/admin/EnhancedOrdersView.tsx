@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import axios from 'axios';
+import { API_BASE_URL } from '../../utils/config';
 import { FaSearch, FaFilter, FaCalendarAlt, FaDownload, FaReceipt } from 'react-icons/fa';
 
 interface Order {
@@ -27,7 +28,7 @@ export default function EnhancedOrdersView() {
         try {
             const token = JSON.parse(localStorage.getItem('userInfo') || '{}').token;
             // Fetch all orders
-            const res = await axios.get('http://localhost:5000/api/admin/orders', {
+            const res = await axios.get(`${API_BASE_URL}/api/admin/orders`, {
                 headers: { Authorization: `Bearer ${token}` }
             });
             setOrders(res.data);

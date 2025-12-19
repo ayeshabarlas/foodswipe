@@ -31,9 +31,10 @@ export default function AdminPage() {
             // Verify admin role
             if (user.role !== 'admin') {
                 console.error('Unauthorized: User role is', user.role, 'but expected admin');
-                setError(`Access denied. Your role is "${user.role}" but admin access is required.`);
-                setIsLoading(false);
-                // Don't auto-redirect, show error
+                // Clear stale non-admin session if we're in the admin area
+                localStorage.removeItem('userInfo');
+                localStorage.removeItem('token');
+                router.push('/admin/login');
                 return;
             }
 

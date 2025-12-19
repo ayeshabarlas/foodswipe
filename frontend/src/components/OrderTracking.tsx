@@ -4,6 +4,7 @@ import React, { useEffect, useState } from 'react';
 import { FaMotorcycle, FaPhone } from 'react-icons/fa';
 import { initSocket } from '../utils/socket';
 import axios from 'axios';
+import { API_BASE_URL } from '../utils/config';
 import dynamic from 'next/dynamic';
 
 // Dynamically import MapComponent to avoid SSR and module instantiation issues
@@ -35,7 +36,7 @@ export default function OrderTracking({ order: initialOrder, userRole = 'user', 
             const fetchOrder = async () => {
                 try {
                     const token = JSON.parse(localStorage.getItem('userInfo') || '{}').token;
-                    const { data } = await axios.get(`http://localhost:5000/api/orders/${targetOrderId}`, {
+                    const { data } = await axios.get(`${API_BASE_URL}/api/orders/${targetOrderId}`, {
                         headers: { Authorization: `Bearer ${token}` }
                     });
                     setOrder(data);

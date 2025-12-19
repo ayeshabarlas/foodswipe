@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import axios from 'axios';
+import { API_BASE_URL } from '../../utils/config';
 import { FaHeadset, FaSearch, FaFilter, FaClock, FaCheck, FaDollarSign, FaExclamationCircle } from 'react-icons/fa';
 
 export default function SupportView() {
@@ -16,7 +17,7 @@ export default function SupportView() {
             const config = {
                 headers: { Authorization: `Bearer ${userInfo.token}` }
             };
-            const { data } = await axios.get('http://localhost:5000/api/tickets', config);
+            const { data } = await axios.get(`${API_BASE_URL}/api/tickets`, config);
             setTickets(data);
         } catch (error) {
             console.error('Error fetching tickets:', error);

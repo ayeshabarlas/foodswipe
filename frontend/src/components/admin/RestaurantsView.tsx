@@ -4,11 +4,13 @@ import { motion } from 'framer-motion';
 import { FaCheckCircle, FaTimesCircle, FaMapMarkerAlt, FaFileImage, FaEye, FaSearch, FaFilter, FaStar, FaStore, FaClock, FaDollarSign } from 'react-icons/fa';
 import axios from 'axios';
 import { io } from 'socket.io-client';
+import { API_BASE_URL, SOCKET_URL } from '../../utils/config';
+import { getImageUrl } from '../../utils/imageUtils';
 
 interface Restaurant {
     _id: string;
     name: string;
-    owner: { name: string; email: string };
+    owner: { _id: string; name: string; email: string; status: string };
     address: string;
     contact: string;
     logo: string;
@@ -45,7 +47,7 @@ export default function RestaurantsView() {
         fetchRestaurants();
 
         // Socket.io connection
-        const socket = io('http://localhost:5000');
+        const socket = io(SOCKET_URL);
 
         socket.on('connect', () => {
             console.log('Connected to socket for restaurant updates');
@@ -53,11 +55,11 @@ export default function RestaurantsView() {
 
         socket.on('restaurant_registered', (newRestaurant) => {
             console.log('New restaurant registered:', newRestaurant);
-            // Refresh the list to show the new restaurant (especially for pending approvals)
             fetchRestaurants();
         });
 
         socket.on('restaurant_updated', () => {
+            console.log('Restaurant updated, refreshing...');
             fetchRestaurants();
         });
 
@@ -73,7 +75,7 @@ export default function RestaurantsView() {
 
             if (!token) return;
 
-            const res = await axios.get('http://localhost:5000/api/admin/restaurants', {
+            const res = await axios.get(`${API_BASE_URL}/api/admin/restaurants`, {
                 headers: { Authorization: `Bearer ${token}` }
             });
             setRestaurants(res.data);
@@ -88,7 +90,7 @@ export default function RestaurantsView() {
         e.stopPropagation();
         try {
             const token = JSON.parse(localStorage.getItem('userInfo') || '{}').token;
-            await axios.put(`http://localhost:5000/api/admin/restaurants/${id}/approve`, {}, {
+            await axios.put(`${API_BASE_URL}/api/admin/restaurants/${id}/approve`, {}, {
                 headers: { Authorization: `Bearer ${token}` }
             });
             fetchRestaurants();
@@ -104,12 +106,53 @@ export default function RestaurantsView() {
 
         try {
             const token = JSON.parse(localStorage.getItem('userInfo') || '{}').token;
-            await axios.put(`http://localhost:5000/api/admin/restaurants/${id}/reject`, { reason }, {
+            await axios.put(`${API_BASE_URL}/api/admin/restaurants/${id}/reject`, { reason }, {
                 headers: { Authorization: `Bearer ${token}` }
             });
             fetchRestaurants();
         } catch (error) {
             console.error('Error rejecting restaurant:', error);
+        }
+    };
+
+    const handleSuspend = async (id: string, e: React.MouseEvent) => {
+        e.stopPropagation();
+        if (!window.confirm('Are you sure you want to suspend this user?')) return;
+        try {
+            const token = JSON.parse(localStorage.getItem('userInfo') || '{}').token;
+            await axios.put(`${API_BASE_URL}/api/admin/users/${id}/suspend`, {}, {
+                headers: { Authorization: `Bearer ${token}` }
+            });
+            fetchRestaurants();
+        } catch (error) {
+            console.error('Error suspending user:', error);
+        }
+    };
+
+    const handleUnsuspend = async (id: string, e: React.MouseEvent) => {
+        e.stopPropagation();
+        try {
+            const token = JSON.parse(localStorage.getItem('userInfo') || '{}').token;
+            await axios.put(`${API_BASE_URL}/api/admin/users/${id}/unsuspend`, {}, {
+                headers: { Authorization: `Bearer ${token}` }
+            });
+            fetchRestaurants();
+        } catch (error) {
+            console.error('Error unsuspending user:', error);
+        }
+    };
+
+    const handleDeleteUser = async (id: string, e: React.MouseEvent) => {
+        e.stopPropagation();
+        if (!window.confirm('WARNING: This will permanently delete the user and their restaurant. Proceed?')) return;
+        try {
+            const token = JSON.parse(localStorage.getItem('userInfo') || '{}').token;
+            await axios.delete(`${API_BASE_URL}/api/admin/users/${id}`, {
+                headers: { Authorization: `Bearer ${token}` }
+            });
+            fetchRestaurants();
+        } catch (error) {
+            console.error('Error deleting user:', error);
         }
     };
 
@@ -247,6 +290,13 @@ export default function RestaurantsView() {
                                 >
                                     <td className="px-6 py-4">
                                         <div className="flex items-center gap-3">
+                                            {restaurant.logo ? (
+                                                <img src={getImageUrl(restaurant.logo)} alt={restaurant.name} className="w-10 h-10 rounded-full object-cover border border-gray-100" />
+                                            ) : (
+                                                <div className="w-10 h-10 rounded-full bg-orange-100 flex items-center justify-center text-orange-600 font-bold">
+                                                    {restaurant.name?.charAt(0) || 'R'}
+                                                </div>
+                                            )}
                                             <div className="text-left">
                                                 <p className="font-bold text-gray-800">{restaurant.name}</p>
                                                 <p className="text-xs text-gray-500">{restaurant.contact}</p>
@@ -307,9 +357,35 @@ export default function RestaurantsView() {
                                                 </button>
                                             </div>
                                         ) : (
-                                            <button className="text-gray-400 hover:text-orange-500">
-                                                <FaEye />
-                                            </button>
+                                            <div className="flex justify-end gap-2">
+                                                {restaurant.owner?.status === 'suspended' ? (
+                                                    <button
+                                                        onClick={(e) => handleUnsuspend(restaurant.owner?._id, e)}
+                                                        className="p-2 bg-green-100 text-green-600 rounded-lg hover:bg-green-200"
+                                                        title="Unsuspend User"
+                                                    >
+                                                        <FaCheckCircle />
+                                                    </button>
+                                                ) : (
+                                                    <button
+                                                        onClick={(e) => handleSuspend(restaurant.owner?._id, e)}
+                                                        className="p-2 bg-yellow-100 text-yellow-600 rounded-lg hover:bg-yellow-200"
+                                                        title="Suspend User"
+                                                    >
+                                                        <FaTimesCircle />
+                                                    </button>
+                                                )}
+                                                <button
+                                                    onClick={(e) => handleDeleteUser(restaurant.owner?._id, e)}
+                                                    className="p-2 bg-red-100 text-red-600 rounded-lg hover:bg-red-200"
+                                                    title="Delete User & Restaurant"
+                                                >
+                                                    <FaTimesCircle className="transform rotate-45" />
+                                                </button>
+                                                <button className="text-gray-400 hover:text-orange-500 p-2">
+                                                    <FaEye />
+                                                </button>
+                                            </div>
                                         )}
                                     </td>
                                 </tr>
@@ -347,7 +423,7 @@ export default function RestaurantsView() {
                                     value && (
                                         <div key={key} className="border rounded-lg p-2">
                                             <p className="text-xs font-bold text-gray-500 uppercase mb-2">{key.replace(/([A-Z])/g, ' $1').trim()}</p>
-                                            <img src={value} alt={key} className="w-full h-32 object-cover rounded" />
+                                            <img src={getImageUrl(value)} alt={key} className="w-full h-32 object-cover rounded" />
                                         </div>
                                     )
                                 ))}

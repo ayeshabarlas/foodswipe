@@ -18,7 +18,10 @@ const initSocket = (server) => {
         socket.on('join', (data) => {
             const { userId, role, restaurantId, riderId } = data;
 
-            if (role === 'restaurant' && restaurantId) {
+            if (role === 'admin') {
+                socket.join('admin');
+                console.log(`Admin ${userId} joined room`);
+            } else if (role === 'restaurant' && restaurantId) {
                 socket.join(`restaurant_${restaurantId}`);
                 console.log(`Restaurant ${restaurantId} joined room`);
             } else if (role === 'rider' && riderId) {

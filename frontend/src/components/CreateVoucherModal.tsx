@@ -4,6 +4,7 @@ import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { FaTimes, FaTicketAlt } from 'react-icons/fa';
 import axios from 'axios';
+import { API_BASE_URL } from '../utils/config';
 
 interface CreateVoucherModalProps {
     isOpen: boolean;
@@ -28,7 +29,7 @@ export default function CreateVoucherModal({ isOpen, onClose, onSuccess }: Creat
         try {
             const token = JSON.parse(localStorage.getItem('userInfo') || '{}').token;
             await axios.post(
-                'http://localhost:5000/api/vouchers/restaurant',
+                `${API_BASE_URL}/api/vouchers/restaurant`,
                 {
                     ...formData,
                     discount: parseFloat(formData.discount),

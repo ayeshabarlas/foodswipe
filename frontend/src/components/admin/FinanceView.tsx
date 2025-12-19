@@ -1,6 +1,8 @@
 import { useState, useEffect } from 'react';
 import axios from 'axios';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
+import { io } from 'socket.io-client';
+import { API_BASE_URL, SOCKET_URL } from '../../utils/config';
 import { FaCalendarAlt, FaDownload } from 'react-icons/fa';
 
 export default function FinanceView() {
@@ -18,35 +20,46 @@ export default function FinanceView() {
     const [chartData, setChartData] = useState([]);
 
     useEffect(() => {
-        // Fetch real data. For now using mock/calculated from orders if backend not ready for deep analytics,
-        // but since we updated 'getDashboardStats' we can use some of that or new logic.
-        // I'll simulate fetching for now based on what we have, or fetch orders and calculate.
         fetchFinanceData();
+
+        const socket = io(SOCKET_URL);
+        const handleUpdate = () => {
+            console.log('Finance-relevant update detected, refreshing stats...');
+            fetchFinanceData();
+        };
+
+        socket.on('order_created', handleUpdate);
+        socket.on('order_updated', handleUpdate);
+
+        return () => {
+            socket.disconnect();
+        };
     }, []);
 
     const fetchFinanceData = async () => {
         try {
             const token = JSON.parse(localStorage.getItem('userInfo') || '{}').token;
             // Fetch dashboard stats which is lighter and has aggregated data
-            const res = await axios.get('http://localhost:5000/api/admin/stats', {
+            const res = await axios.get(`${API_BASE_URL}/api/admin/stats`, {
                 headers: { Authorization: `Bearer ${token}` }
             });
             const data = res.data;
 
-            // Calculate derived financial stats
+            // Use real data from backend
             const totalRevenue = data.totalRevenue || 0;
-            const commission = Math.round(totalRevenue * 0.1);
-            const restaurantEarnings = Math.round(totalRevenue * 0.9);
+            const platformCommission = data.totalCommission || 0;
+            const riderEarnings = data.totalRiderEarnings || 0;
+            const restaurantEarnings = data.totalRestaurantEarnings || 0;
 
             setStats({
                 totalRevenue,
-                platformCommission: commission,
-                pendingPayouts: Math.round(restaurantEarnings * 0.15), // Estimated pending
+                platformCommission,
+                pendingPayouts: Math.round(restaurantEarnings * 0.1), // Simplified pending
                 gatewayFees: Math.round(totalRevenue * 0.02),
                 restaurantEarnings,
-                riderEarnings: Math.round(data.totalOrders * 150), // Estimated rider earnings
-                netRevenue: Math.round(commission * 0.8),
-                thisMonthRevenue: data.todayRevenue ? data.todayRevenue * 30 : totalRevenue / 12 // Estimate or use real if available
+                riderEarnings,
+                netRevenue: Math.round(platformCommission * 0.8),
+                thisMonthRevenue: data.todayRevenue ? data.todayRevenue * 30 : totalRevenue / 12
             });
 
             // Standardize chart data

@@ -3,6 +3,7 @@
 import React, { useState } from 'react';
 import axios from 'axios';
 import { FaStore, FaUtensils, FaArrowLeft, FaCloudUploadAlt, FaTrash, FaPlus, FaCheckCircle, FaExclamationTriangle } from 'react-icons/fa';
+import { API_BASE_URL } from '../utils/config';
 
 interface CreateRestaurantProps {
     onRestaurantCreated: () => void;
@@ -60,10 +61,10 @@ export default function CreateRestaurant({ onRestaurantCreated }: CreateRestaura
             const uploadPromises = Array.from(files).map(async (file) => {
                 const data = new FormData();
                 data.append('file', file);
-                const res = await axios.post('http://localhost:5000/api/upload', data, {
+                const res = await axios.post(`${API_BASE_URL}/api/upload`, data, {
                     headers: { 'Content-Type': 'multipart/form-data' }
                 });
-                return res.data.imageUrl;
+                return `${API_BASE_URL}${res.data.imageUrl}`;
             });
 
             const uploadedUrls = await Promise.all(uploadPromises);
@@ -146,7 +147,7 @@ export default function CreateRestaurant({ onRestaurantCreated }: CreateRestaura
                 verificationStatus: 'pending',
             };
 
-            await axios.post('http://localhost:5000/api/restaurants/create', payload, {
+            await axios.post(`${API_BASE_URL}/api/restaurants/create`, payload, {
                 headers: { Authorization: `Bearer ${token}` }
             });
 

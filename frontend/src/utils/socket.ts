@@ -1,4 +1,5 @@
 import { io, Socket } from 'socket.io-client';
+import { SOCKET_URL } from './config';
 
 let socket: Socket | null = null;
 
@@ -7,7 +8,7 @@ export const initSocket = (userId: string, role: string, restaurantId?: string, 
         return socket;
     }
 
-    socket = io('http://localhost:5000', {
+    socket = io(SOCKET_URL, {
         transports: ['websocket', 'polling'],
         reconnection: true,
         reconnectionDelay: 1000,

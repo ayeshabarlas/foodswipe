@@ -4,6 +4,7 @@ import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { FaTimes, FaTicketAlt } from 'react-icons/fa';
 import axios from 'axios';
+import { API_BASE_URL } from '../../utils/config';
 
 interface AdminCreateVoucherModalProps {
     isOpen: boolean;
@@ -70,9 +71,9 @@ export default function AdminCreateVoucherModal({ isOpen, onClose, onSuccess, in
             };
 
             if (initialData) {
-                await axios.put(`http://localhost:5000/api/vouchers/${initialData._id}`, payload, config);
+                await axios.put(`${API_BASE_URL}/api/vouchers/${initialData._id}`, payload, config);
             } else {
-                await axios.post('http://localhost:5000/api/vouchers/admin', payload, config);
+                await axios.post(`${API_BASE_URL}/api/vouchers/admin`, payload, config);
             }
 
             setFormData({

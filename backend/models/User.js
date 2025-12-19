@@ -17,7 +17,7 @@ const userSchema = mongoose.Schema(
         },
         role: {
             type: String,
-            enum: ['customer', 'restaurant', 'rider', 'admin'],
+            enum: ['customer', 'restaurant', 'rider'],
             default: 'customer',
         },
         phone: {
@@ -46,6 +46,11 @@ const userSchema = mongoose.Schema(
         avatar: {
             type: String,
             default: '',
+        },
+        status: {
+            type: String,
+            enum: ['active', 'suspended'],
+            default: 'active',
         },
     },
     {

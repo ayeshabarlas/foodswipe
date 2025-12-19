@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
+import { API_BASE_URL } from '../utils/config';
 import RiderRegistration from './RiderRegistration';
 import RiderDocumentUpload from './RiderDocumentUpload';
 import RiderDashboard from './RiderDashboard';
@@ -17,7 +18,7 @@ export default function RiderPortal() {
         const checkRiderProfile = async () => {
             try {
                 const token = JSON.parse(localStorage.getItem("userInfo") || "{}").token;
-                const res = await axios.get('http://localhost:5000/api/riders/my-profile', {
+                const res = await axios.get(`${API_BASE_URL}/api/riders/my-profile`, {
                     headers: { Authorization: `Bearer ${token}` }
                 });
 

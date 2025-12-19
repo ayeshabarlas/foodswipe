@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
+import { API_BASE_URL } from '../utils/config';
 import { FaBox, FaCheckCircle, FaClock, FaTimes, FaMapMarkerAlt, FaPhone } from 'react-icons/fa';
 import { initSocket, disconnectSocket } from '../utils/socket';
 import toast, { Toaster } from 'react-hot-toast';
@@ -30,7 +31,7 @@ export default function RiderOrders({ riderId }: RiderOrdersProps) {
                 try {
                     const token = JSON.parse(localStorage.getItem("userInfo") || "{}").token;
                     await axios.put(
-                        `http://localhost:5000/api/riders/${riderId}/location`,
+                        `${API_BASE_URL}/api/riders/${riderId}/location`,
                         {
                             lat: location.lat,
                             lng: location.lng,
@@ -49,7 +50,7 @@ export default function RiderOrders({ riderId }: RiderOrdersProps) {
     const fetchOrders = async () => {
         try {
             const token = JSON.parse(localStorage.getItem("userInfo") || "{}").token;
-            const res = await axios.get(`http://localhost:5000/api/riders/${riderId}/orders`, {
+            const res = await axios.get(`${API_BASE_URL}/api/riders/${riderId}/orders`, {
                 headers: { Authorization: `Bearer ${token}` }
             });
             if (res.data) {
@@ -119,7 +120,7 @@ export default function RiderOrders({ riderId }: RiderOrdersProps) {
         try {
             const token = JSON.parse(localStorage.getItem("userInfo") || "{}").token;
             await axios.post(
-                `http://localhost:5000/api/riders/${riderId}/accept-order`,
+                `${API_BASE_URL}/api/riders/${riderId}/accept-order`,
                 { orderId },
                 { headers: { Authorization: `Bearer ${token}` } }
             );
@@ -135,7 +136,7 @@ export default function RiderOrders({ riderId }: RiderOrdersProps) {
         try {
             const token = JSON.parse(localStorage.getItem("userInfo") || "{}").token;
             await axios.put(
-                `http://localhost:5000/api/riders/${riderId}/orders/${orderId}/pickup`,
+                `${API_BASE_URL}/api/riders/${riderId}/orders/${orderId}/pickup`,
                 {},
                 { headers: { Authorization: `Bearer ${token}` } }
             );

@@ -62,6 +62,11 @@ const createRestaurant = async (req, res) => {
             await User.findByIdAndUpdate(req.user._id, { role: 'restaurant' });
         }
 
+        // Notify admins about new registration
+        if (req.app.get('io')) {
+            req.app.get('io').to('admin').emit('restaurant_registered', restaurant);
+        }
+
         res.status(201).json(restaurant);
     } catch (error) {
         console.error('Create restaurant error:', error);

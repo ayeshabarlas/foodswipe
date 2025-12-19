@@ -6,6 +6,7 @@ import { useCart } from '../context/CartContext';
 import { useRouter } from 'next/navigation';
 import { useSwipeBack } from '../hooks/useSwipeBack';
 import PhoneAuthModal from './PhoneAuthModal';
+import { API_BASE_URL } from '../utils/config';
 
 interface CheckoutModalProps {
     isOpen: boolean;
@@ -108,7 +109,7 @@ export default function CheckoutModal({ isOpen, onClose, cart, total, subtotal, 
             }
 
             const response = await axios.post(
-                'http://localhost:5000/api/vouchers/verify',
+                `${API_BASE_URL}/api/vouchers/verify`,
                 { code: promoCode.toUpperCase(), amount: subtotal },
                 { headers: { Authorization: `Bearer ${token}` } }
             );
@@ -280,7 +281,7 @@ export default function CheckoutModal({ isOpen, onClose, cart, total, subtotal, 
             };
 
             const response = await axios.post(
-                'http://localhost:5000/api/orders',
+                `${API_BASE_URL}/api/orders`,
                 orderData,
                 { headers: { Authorization: `Bearer ${token}` } }
             );
@@ -302,7 +303,7 @@ export default function CheckoutModal({ isOpen, onClose, cart, total, subtotal, 
 
                     // Update backend
                     await axios.put(
-                        'http://localhost:5000/api/auth/profile',
+                        `${API_BASE_URL}/api/auth/profile`,
                         { address: deliveryAddress },
                         { headers: { Authorization: `Bearer ${token}` } }
                     );

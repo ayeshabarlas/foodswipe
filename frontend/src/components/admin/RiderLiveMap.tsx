@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import dynamic from 'next/dynamic';
 import axios from 'axios';
 import { io } from 'socket.io-client';
+import { API_BASE_URL, SOCKET_URL } from '../../utils/config';
 import { FaMotorcycle, FaSyncAlt } from 'react-icons/fa';
 
 // Dynamically import the map content to avoid SSR issues
@@ -40,7 +41,7 @@ export default function RiderLiveMap() {
     useEffect(() => {
         fetchRiders();
 
-        const socket = io('http://localhost:5000');
+        const socket = io(SOCKET_URL);
 
         socket.on('connect', () => {
             console.log('Connected to socket for live map');
@@ -82,7 +83,7 @@ export default function RiderLiveMap() {
             if (!userInfoStr) return;
             const userInfo = JSON.parse(userInfoStr);
 
-            const res = await axios.get('http://localhost:5000/api/admin/riders', {
+            const res = await axios.get(`${API_BASE_URL}/api/admin/riders`, {
                 headers: { Authorization: `Bearer ${userInfo.token}` }
             });
 

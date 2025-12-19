@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
+import { API_BASE_URL } from '../utils/config';
 import { FaStar, FaCheckCircle, FaUser, FaPhone, FaEnvelope, FaBicycle, FaMapMarkerAlt, FaBell, FaCog, FaSignOutAlt, FaChevronRight, FaTimes } from 'react-icons/fa';
 
 interface RiderProfileProps {
@@ -19,7 +20,7 @@ export default function RiderProfile({ riderId }: RiderProfileProps) {
         const fetchRiderData = async () => {
             try {
                 const token = JSON.parse(localStorage.getItem("userInfo") || "{}").token;
-                const res = await axios.get(`http://localhost:5000/api/riders/${riderId}`, {
+                const res = await axios.get(`${API_BASE_URL}/api/riders/${riderId}`, {
                     headers: { Authorization: `Bearer ${token}` }
                 });
                 setRiderData(res.data);
@@ -222,7 +223,7 @@ export default function RiderProfile({ riderId }: RiderProfileProps) {
                                             const newCity = citySelect.value;
 
                                             const token = JSON.parse(localStorage.getItem("userInfo") || "{}").token;
-                                            const res = await axios.put(`http://localhost:5000/api/riders/${riderId}/profile`,
+                                            const res = await axios.put(`${API_BASE_URL}/api/riders/${riderId}/profile`,
                                                 { city: newCity },
                                                 { headers: { Authorization: `Bearer ${token}` } }
                                             );
@@ -255,7 +256,7 @@ function NotificationsModal({ onClose }: { onClose: () => void }) {
         const fetchNotifications = async () => {
             try {
                 const token = JSON.parse(localStorage.getItem("userInfo") || "{}").token;
-                const res = await axios.get('http://localhost:5000/api/notifications', {
+                const res = await axios.get(`${API_BASE_URL}/api/notifications`, {
                     headers: { Authorization: `Bearer ${token}` }
                 });
                 setNotifications(res.data);
@@ -272,7 +273,7 @@ function NotificationsModal({ onClose }: { onClose: () => void }) {
     const markAsRead = async (id: string) => {
         try {
             const token = JSON.parse(localStorage.getItem("userInfo") || "{}").token;
-            await axios.put(`http://localhost:5000/api/notifications/${id}/read`, {}, {
+            await axios.put(`${API_BASE_URL}/api/notifications/${id}/read`, {}, {
                 headers: { Authorization: `Bearer ${token}` }
             });
             setNotifications(notifications.map(n => n._id === id ? { ...n, read: true } : n));

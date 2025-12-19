@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { FaEnvelope, FaUser, FaPhone, FaGoogle, FaArrowLeft, FaStore, FaMotorcycle } from "react-icons/fa";
 import axios from "axios";
+import { API_BASE_URL } from "@/utils/config";
 import { useRouter } from "next/navigation";
 import { signInWithPopup } from "firebase/auth";
 import { auth, googleProvider } from "../config/firebase";
@@ -49,7 +50,7 @@ export default function LoginScreen({ onLogin }: LoginScreenProps) {
             const idToken = await user.getIdToken();
 
             console.log('Sending token to backend...');
-            const response = await axios.post('http://localhost:5000/api/auth/verify-firebase-token', {
+            const response = await axios.post(`${API_BASE_URL}/api/auth/verify-firebase-token`, {
                 idToken,
                 name: user.displayName || 'Google User',
                 email: user.email || '',
@@ -108,7 +109,7 @@ export default function LoginScreen({ onLogin }: LoginScreenProps) {
         setError("");
         setLoading(true);
         try {
-            const res = await axios.post("http://localhost:5000/api/auth/verify-otp", {
+            const res = await axios.post(`${API_BASE_URL}/api/auth/verify-otp`, {
                 phone: formData.phone,
                 otp: formData.otp,
                 name: `${formData.firstName} ${formData.lastName}`,
@@ -135,7 +136,7 @@ export default function LoginScreen({ onLogin }: LoginScreenProps) {
         setError("");
         setLoading(true);
         try {
-            await axios.post("http://localhost:5000/api/auth/send-otp", {
+            await axios.post(`${API_BASE_URL}/api/auth/send-otp`, {
                 phone: formData.phone,
             });
             setResendTimer(30);
@@ -164,7 +165,7 @@ export default function LoginScreen({ onLogin }: LoginScreenProps) {
                 return;
             }
             // Direct register without OTP
-            const res = await axios.post("http://localhost:5000/api/auth/register", {
+            const res = await axios.post(`${API_BASE_URL}/api/auth/register`, {
                 name: `${formData.firstName} ${formData.lastName}`,
                 email: formData.email,
                 password: formData.password,
@@ -203,7 +204,7 @@ export default function LoginScreen({ onLogin }: LoginScreenProps) {
                 setError(`Please provide ${loginMethod === "email" ? "email" : "phone number"}`);
                 return;
             }
-            const res = await axios.post("http://localhost:5000/api/auth/login", {
+            const res = await axios.post(`${API_BASE_URL}/api/auth/login`, {
                 identifier,
                 password: formData.password,
                 role: selectedRole,
@@ -459,8 +460,8 @@ export default function LoginScreen({ onLogin }: LoginScreenProps) {
                                 <div className="text-center mb-2">
                                     <span className="text-xs text-gray-500 uppercase tracking-wider font-semibold">Logging in as</span>
                                     <div className={`mt-1 inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-sm font-bold ${selectedRole === 'restaurant' ? 'bg-orange-100 text-orange-600' :
-                                            selectedRole === 'rider' ? 'bg-blue-100 text-blue-600' :
-                                                'bg-gray-100 text-gray-600'
+                                        selectedRole === 'rider' ? 'bg-blue-100 text-blue-600' :
+                                            'bg-gray-100 text-gray-600'
                                         }`}>
                                         {selectedRole === 'restaurant' && <FaStore />}
                                         {selectedRole === 'rider' && <FaMotorcycle />}

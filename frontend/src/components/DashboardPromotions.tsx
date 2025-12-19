@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { FaChartLine, FaUsers, FaDollarSign, FaPercent, FaPlus, FaTrash, FaTicketAlt, FaTags, FaToggleOn, FaToggleOff } from 'react-icons/fa';
 import axios from 'axios';
+import { API_BASE_URL } from '../utils/config';
 import CreateVoucherModal from './CreateVoucherModal';
 import CreateDealModal from './CreateDealModal';
 
@@ -42,8 +43,8 @@ export default function DashboardPromotions() {
             const headers = { Authorization: `Bearer ${token}` };
 
             const [vouchersRes, dealsRes] = await Promise.all([
-                axios.get('http://localhost:5000/api/vouchers/restaurant/my-vouchers', { headers }),
-                axios.get('http://localhost:5000/api/deals/my-deals', { headers })
+                axios.get(`${API_BASE_URL}/api/vouchers/restaurant/my-vouchers`, { headers }),
+                axios.get(`${API_BASE_URL}/api/deals/my-deals`, { headers })
             ]);
 
             setVouchers(vouchersRes.data);
@@ -64,7 +65,7 @@ export default function DashboardPromotions() {
     const toggleVoucherStatus = async (id: string) => {
         try {
             const token = JSON.parse(localStorage.getItem('userInfo') || '{}').token;
-            await axios.put(`http://localhost:5000/api/vouchers/${id}/toggle`, {}, {
+            await axios.put(`${API_BASE_URL}/api/vouchers/${id}/toggle`, {}, {
                 headers: { Authorization: `Bearer ${token}` }
             });
             fetchData();
@@ -76,7 +77,7 @@ export default function DashboardPromotions() {
     const toggleDealStatus = async (id: string) => {
         try {
             const token = JSON.parse(localStorage.getItem('userInfo') || '{}').token;
-            await axios.put(`http://localhost:5000/api/deals/${id}/toggle`, {}, {
+            await axios.put(`${API_BASE_URL}/api/deals/${id}/toggle`, {}, {
                 headers: { Authorization: `Bearer ${token}` }
             });
             fetchData();
@@ -90,7 +91,7 @@ export default function DashboardPromotions() {
 
         try {
             const token = JSON.parse(localStorage.getItem('userInfo') || '{}').token;
-            await axios.delete(`http://localhost:5000/api/deals/${id}`, {
+            await axios.delete(`${API_BASE_URL}/api/deals/${id}`, {
                 headers: { Authorization: `Bearer ${token}` }
             });
             fetchData();

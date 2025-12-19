@@ -1,6 +1,8 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import axios from 'axios';
+import { io } from 'socket.io-client';
+import { API_BASE_URL, SOCKET_URL } from '../../utils/config';
 import { FaClock, FaMotorcycle, FaStore, FaUser, FaPhone, FaMapMarkerAlt, FaSyncAlt, FaShoppingBag } from 'react-icons/fa';
 
 interface Order {
@@ -24,16 +26,28 @@ export default function OrdersView() {
 
     useEffect(() => {
         fetchOrders();
-        const interval = setInterval(() => {
-            if (autoRefresh) fetchOrders();
-        }, 10000);
-        return () => clearInterval(interval);
+
+        const socket = io(SOCKET_URL);
+
+        const handleUpdate = () => {
+            if (autoRefresh) {
+                console.log('Order update detected, refreshing list...');
+                fetchOrders();
+            }
+        };
+
+        socket.on('order_created', handleUpdate);
+        socket.on('order_updated', handleUpdate);
+
+        return () => {
+            socket.disconnect();
+        };
     }, [autoRefresh]);
 
     const fetchOrders = async () => {
         try {
             const token = JSON.parse(localStorage.getItem('userInfo') || '{}').token;
-            const res = await axios.get('http://localhost:5000/api/admin/orders', {
+            const res = await axios.get(`${API_BASE_URL}/api/admin/orders`, {
                 headers: { Authorization: `Bearer ${token}` }
             });
             // Filter only live orders

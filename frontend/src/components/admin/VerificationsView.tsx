@@ -2,8 +2,10 @@
 
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
+import { API_BASE_URL } from '../../utils/config';
 import { FaCheckCircle, FaTimesCircle, FaEye, FaSpinner, FaStore, FaMotorcycle, FaFileAlt } from 'react-icons/fa';
 import { motion, AnimatePresence } from 'framer-motion';
+import { getImageUrl } from '../../utils/imageUtils';
 
 export default function VerificationsView() {
     const [restaurants, setRestaurants] = useState<any[]>([]);
@@ -26,8 +28,8 @@ export default function VerificationsView() {
             };
 
             const [restaurantsRes, ridersRes] = await Promise.all([
-                axios.get('http://localhost:5000/api/verifications/restaurants', config),
-                axios.get('http://localhost:5000/api/verifications/riders', config)
+                axios.get(`${API_BASE_URL}/api/verifications/restaurants`, config),
+                axios.get(`${API_BASE_URL}/api/verifications/riders`, config)
             ]);
 
             setRestaurants(restaurantsRes.data);
@@ -53,8 +55,8 @@ export default function VerificationsView() {
             };
 
             const endpoint = type === 'restaurant'
-                ? `http://localhost:5000/api/verifications/restaurants/${id}`
-                : `http://localhost:5000/api/verifications/riders/${id}`;
+                ? `${API_BASE_URL}/api/verifications/restaurants/${id}`
+                : `${API_BASE_URL}/api/verifications/riders/${id}`;
 
             await axios.put(endpoint, { action, rejectionReason }, config);
 
@@ -198,23 +200,19 @@ export default function VerificationsView() {
                                 <div className="mb-6">
                                     <h4 className="text-md font-bold text-gray-800 mb-4 border-b border-gray-100 pb-2">Official Documents</h4>
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                        {['cnicFront', 'cnicBack', 'license'].map((docKey) => (
+                                        {(selectedItem.name ? ['cnicFront', 'cnicBack', 'license'] : ['cnicFront', 'cnicBack', 'drivingLicense', 'vehicleRegistration', 'profileSelfie']).map((docKey) => (
                                             selectedItem.documents?.[docKey] && (
                                                 <div key={docKey} className="group relative">
                                                     <p className="text-sm font-bold text-gray-700 mb-2 capitalize">{docKey.replace(/([A-Z])/g, ' $1').trim()}</p>
                                                     <div className="aspect-video bg-gray-100 rounded-xl overflow-hidden border border-gray-200 relative">
                                                         <img
-                                                            src={selectedItem.documents[docKey]?.startsWith('http')
-                                                                ? selectedItem.documents[docKey]
-                                                                : `http://localhost:5000/${selectedItem.documents[docKey]}`}
+                                                            src={getImageUrl(selectedItem.documents[docKey])}
                                                             alt={docKey}
                                                             className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
                                                         />
                                                         <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors" />
                                                         <a
-                                                            href={selectedItem.documents[docKey]?.startsWith('http')
-                                                                ? selectedItem.documents[docKey]
-                                                                : `http://localhost:5000/${selectedItem.documents[docKey]}`}
+                                                            href={getImageUrl(selectedItem.documents[docKey])}
                                                             target="_blank"
                                                             rel="noreferrer"
                                                             className="absolute bottom-3 right-3 bg-white/90 p-2 rounded-lg text-xs font-bold shadow-sm opacity-0 group-hover:opacity-100 transition-opacity"
@@ -234,9 +232,7 @@ export default function VerificationsView() {
                                         <h4 className="text-md font-bold text-gray-800 mb-4 border-b border-gray-100 pb-2">Storefront</h4>
                                         <div className="aspect-video bg-gray-100 rounded-xl overflow-hidden border border-gray-200 relative max-w-md">
                                             <img
-                                                src={selectedItem.storefrontPhoto.startsWith('http')
-                                                    ? selectedItem.storefrontPhoto
-                                                    : `http://localhost:5000/${selectedItem.storefrontPhoto}`}
+                                                src={getImageUrl(selectedItem.storefrontPhoto)}
                                                 alt="Storefront"
                                                 className="w-full h-full object-cover"
                                             />
@@ -252,12 +248,12 @@ export default function VerificationsView() {
                                             {selectedItem.menuPhotos.map((photo: string, index: number) => (
                                                 <div key={index} className="aspect-square bg-gray-100 rounded-xl overflow-hidden border border-gray-200 relative group">
                                                     <img
-                                                        src={photo.startsWith('http') ? photo : `http://localhost:5000/${photo}`}
+                                                        src={getImageUrl(photo)}
                                                         alt={`Menu ${index + 1}`}
                                                         className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
                                                     />
                                                     <a
-                                                        href={photo.startsWith('http') ? photo : `http://localhost:5000/${photo}`}
+                                                        href={getImageUrl(photo)}
                                                         target="_blank"
                                                         rel="noreferrer"
                                                         className="absolute bottom-2 right-2 bg-white/90 p-1.5 rounded-lg text-xs font-bold shadow-sm opacity-0 group-hover:opacity-100 transition-opacity"

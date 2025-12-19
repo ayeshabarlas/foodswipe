@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import axios from 'axios';
+import { API_BASE_URL } from '../../utils/config';
 import { FaCheckCircle } from 'react-icons/fa';
 
 export default function PaymentsView() {
@@ -16,7 +17,7 @@ export default function PaymentsView() {
             const config = {
                 headers: { Authorization: `Bearer ${userInfo.token}` }
             };
-            const { data } = await axios.get('http://localhost:5000/api/payouts/all', config);
+            const { data } = await axios.get(`${API_BASE_URL}/api/payouts/all`, config);
             setPayouts(data);
         } catch (error) {
             console.error('Error fetching payouts:', error);

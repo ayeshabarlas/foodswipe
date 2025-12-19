@@ -246,14 +246,16 @@ const updateVoucher = async (req, res) => {
         }
 
         // Check ownership
-        if (voucher.createdBy === 'restaurant') {
-            const Restaurant = require('../models/Restaurant');
-            const restaurant = await Restaurant.findOne({ owner: req.user._id });
-            if (!restaurant || voucher.restaurant.toString() !== restaurant._id.toString()) {
+        if (req.user.role !== 'admin') {
+            if (voucher.createdBy === 'restaurant') {
+                const Restaurant = require('../models/Restaurant');
+                const restaurant = await Restaurant.findOne({ owner: req.user._id });
+                if (!restaurant || voucher.restaurant.toString() !== restaurant._id.toString()) {
+                    return res.status(403).json({ message: 'Not authorized' });
+                }
+            } else {
                 return res.status(403).json({ message: 'Not authorized' });
             }
-        } else if (req.user.role !== 'admin') {
-            return res.status(403).json({ message: 'Not authorized' });
         }
 
         const { code, discount, description, expiryDate, minimumAmount, usageLimit, name, isActive } = req.body;
@@ -287,14 +289,16 @@ const deleteVoucher = async (req, res) => {
         }
 
         // Check ownership
-        if (voucher.createdBy === 'restaurant') {
-            const Restaurant = require('../models/Restaurant');
-            const restaurant = await Restaurant.findOne({ owner: req.user._id });
-            if (!restaurant || voucher.restaurant.toString() !== restaurant._id.toString()) {
+        if (req.user.role !== 'admin') {
+            if (voucher.createdBy === 'restaurant') {
+                const Restaurant = require('../models/Restaurant');
+                const restaurant = await Restaurant.findOne({ owner: req.user._id });
+                if (!restaurant || voucher.restaurant.toString() !== restaurant._id.toString()) {
+                    return res.status(403).json({ message: 'Not authorized' });
+                }
+            } else {
                 return res.status(403).json({ message: 'Not authorized' });
             }
-        } else if (req.user.role !== 'admin') {
-            return res.status(403).json({ message: 'Not authorized' });
         }
 
         await voucher.deleteOne();

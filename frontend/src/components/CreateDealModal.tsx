@@ -4,6 +4,7 @@ import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { FaTimes, FaTags } from 'react-icons/fa';
 import axios from 'axios';
+import { API_BASE_URL } from '../utils/config';
 
 interface CreateDealModalProps {
     isOpen: boolean;
@@ -30,7 +31,7 @@ export default function CreateDealModal({ isOpen, onClose, onSuccess }: CreateDe
         try {
             const token = JSON.parse(localStorage.getItem('userInfo') || '{}').token;
             await axios.post(
-                'http://localhost:5000/api/deals',
+                `${API_BASE_URL}/api/deals`,
                 {
                     ...formData,
                     discount: parseFloat(formData.discount),

@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
+import { API_BASE_URL } from '../utils/config';
 import { FaHome, FaDollarSign, FaClipboardList, FaHeadset, FaUser, FaStar, FaRoute, FaWallet, FaTrophy } from 'react-icons/fa';
 import OrderNotificationModal from './OrderNotificationModal';
 import RiderEarnings from './RiderEarnings';
@@ -38,7 +39,7 @@ export default function RiderDashboard({ riderId }: RiderDashboardProps) {
         const fetchRiderData = async () => {
             try {
                 const token = JSON.parse(localStorage.getItem("userInfo") || "{}").token;
-                const res = await axios.get(`http://localhost:5000/api/riders/${riderId}`, {
+                const res = await axios.get(`${API_BASE_URL}/api/riders/${riderId}`, {
                     headers: { Authorization: `Bearer ${token}` }
                 });
                 setRiderData(res.data);
@@ -51,7 +52,7 @@ export default function RiderDashboard({ riderId }: RiderDashboardProps) {
         const fetchDeliveries = async () => {
             try {
                 const token = JSON.parse(localStorage.getItem("userInfo") || "{}").token;
-                const res = await axios.get(`http://localhost:5000/api/riders/${riderId}/deliveries`, {
+                const res = await axios.get(`${API_BASE_URL}/api/riders/${riderId}/deliveries`, {
                     headers: { Authorization: `Bearer ${token}` }
                 });
                 if (res.data) {
@@ -65,7 +66,7 @@ export default function RiderDashboard({ riderId }: RiderDashboardProps) {
         const checkForNewOrders = async () => {
             try {
                 const token = JSON.parse(localStorage.getItem("userInfo") || "{}").token;
-                const res = await axios.get(`http://localhost:5000/api/riders/${riderId}/available-orders`, {
+                const res = await axios.get(`${API_BASE_URL}/api/riders/${riderId}/available-orders`, {
                     headers: { Authorization: `Bearer ${token}` }
                 });
                 if (res.data && res.data.length > 0 && !pendingOrder) {
@@ -94,7 +95,7 @@ export default function RiderDashboard({ riderId }: RiderDashboardProps) {
     const handleAcceptOrder = async () => {
         try {
             const token = JSON.parse(localStorage.getItem("userInfo") || "{}").token;
-            await axios.post(`http://localhost:5000/api/riders/${riderId}/accept-order`, {
+            await axios.post(`${API_BASE_URL}/api/riders/${riderId}/accept-order`, {
                 orderId: pendingOrder._id
             }, {
                 headers: { Authorization: `Bearer ${token}` }
@@ -108,7 +109,7 @@ export default function RiderDashboard({ riderId }: RiderDashboardProps) {
     const handleRejectOrder = async () => {
         try {
             const token = JSON.parse(localStorage.getItem("userInfo") || "{}").token;
-            await axios.post(`http://localhost:5000/api/riders/${riderId}/reject-order`, {
+            await axios.post(`${API_BASE_URL}/api/riders/${riderId}/reject-order`, {
                 orderId: pendingOrder._id
             }, {
                 headers: { Authorization: `Bearer ${token}` }
@@ -123,7 +124,7 @@ export default function RiderDashboard({ riderId }: RiderDashboardProps) {
         try {
             const token = JSON.parse(localStorage.getItem("userInfo") || "{}").token;
             const newStatus = !isOnline;
-            await axios.put(`http://localhost:5000/api/riders/${riderId}/status`, {
+            await axios.put(`${API_BASE_URL}/api/riders/${riderId}/status`, {
                 isOnline: newStatus
             }, {
                 headers: { Authorization: `Bearer ${token}` }
@@ -146,7 +147,7 @@ export default function RiderDashboard({ riderId }: RiderDashboardProps) {
     if (activeTab === 'earnings') {
         return (
             <>
-                <RiderEarnings riderId={riderId} />
+                <RiderEarnings riderId={effectiveRiderId} />
                 <BottomNav activeTab={activeTab} setActiveTab={setActiveTab} />
             </>
         );
@@ -155,7 +156,7 @@ export default function RiderDashboard({ riderId }: RiderDashboardProps) {
     if (activeTab === 'profile') {
         return (
             <>
-                <RiderProfile riderId={riderId} />
+                <RiderProfile riderId={effectiveRiderId} />
                 <BottomNav activeTab={activeTab} setActiveTab={setActiveTab} />
             </>
         );
@@ -173,7 +174,7 @@ export default function RiderDashboard({ riderId }: RiderDashboardProps) {
     if (activeTab === 'orders') {
         return (
             <>
-                <RiderOrders riderId={riderId} />
+                <RiderOrders riderId={effectiveRiderId} />
                 <BottomNav activeTab={activeTab} setActiveTab={setActiveTab} />
             </>
         );

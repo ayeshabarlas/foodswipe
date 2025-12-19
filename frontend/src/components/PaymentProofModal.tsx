@@ -4,6 +4,7 @@ import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { FaTimes, FaCloudUploadAlt, FaCheckCircle } from 'react-icons/fa';
 import axios from 'axios';
+import { API_BASE_URL } from '../utils/config';
 
 interface PaymentProofModalProps {
     isOpen: boolean;
@@ -37,7 +38,7 @@ export default function PaymentProofModal({ isOpen, onClose, payoutId, totalAmou
             const formData = new FormData();
             formData.append('image', file);
 
-            const uploadRes = await axios.post('http://localhost:5000/api/upload', formData, {
+            const uploadRes = await axios.post(`${API_BASE_URL}/api/upload`, formData, {
                 headers: {
                     'Content-Type': 'multipart/form-data',
                     Authorization: `Bearer ${token}`
@@ -48,7 +49,7 @@ export default function PaymentProofModal({ isOpen, onClose, payoutId, totalAmou
 
             // 2. Submit proof
             await axios.post(
-                'http://localhost:5000/api/payouts/upload-proof',
+                `${API_BASE_URL}/api/payouts/upload-proof`,
                 {
                     payoutId,
                     transactionId,

@@ -15,6 +15,7 @@ import LocationPermission from './LocationPermission';
 import ProfileModal from './ProfileModal';
 import { getImageUrl } from '../utils/imageUtils';
 import { useCart } from '@/context/CartContext';
+import { API_BASE_URL } from '../utils/config';
 
 interface Dish {
     _id: string;
@@ -90,7 +91,7 @@ const VideoCard = ({
     const fetchComments = async () => {
         setLoadingComments(true);
         try {
-            const res = await axios.get(`http://localhost:5000/api/videos/${dish._id}/comments`);
+            const res = await axios.get(`${API_BASE_URL}/api/videos/${dish._id}/comments`);
             setComments(res.data);
         } catch (error) {
             console.error('Error fetching comments:', error);
@@ -111,7 +112,7 @@ const VideoCard = ({
             const userInfo = JSON.parse(localStorage.getItem('userInfo') || '{}');
             if (!userInfo.token) return alert('Please login to like');
 
-            const res = await axios.post(`http://localhost:5000/api/videos/${dish._id}/like`, {}, {
+            const res = await axios.post(`${API_BASE_URL}/api/videos/${dish._id}/like`, {}, {
                 headers: { Authorization: `Bearer ${userInfo.token}` }
             });
 
@@ -125,7 +126,7 @@ const VideoCard = ({
     const handleShare = async (e: React.MouseEvent) => {
         e.stopPropagation();
         try {
-            await axios.post(`http://localhost:5000/api/videos/${dish._id}/share`);
+            await axios.post(`${API_BASE_URL}/api/videos/${dish._id}/share`);
             setSharesCount(prev => prev + 1);
 
             if (navigator.share) {
@@ -150,7 +151,7 @@ const VideoCard = ({
             const userInfo = JSON.parse(localStorage.getItem('userInfo') || '{}');
             if (!userInfo.token) return alert('Please login to comment');
 
-            const res = await axios.post(`http://localhost:5000/api/videos/${dish._id}/comment`, {
+            const res = await axios.post(`${API_BASE_URL}/api/videos/${dish._id}/comment`, {
                 text: commentText,
                 rating: 5
             }, {
@@ -346,7 +347,7 @@ export default function VideoFeed() {
     useEffect(() => {
         const fetchDishes = async () => {
             try {
-                const res = await axios.get('http://localhost:5000/api/videos/feed');
+                const res = await axios.get(`${API_BASE_URL}/api/videos/feed`);
                 setDishes(res.data.videos);
             } catch (error) {
                 console.error('Error fetching dishes:', error);
@@ -377,16 +378,19 @@ export default function VideoFeed() {
     const handleAllowLocation = () => {
         setShowLocationPrompt(false);
         if ('geolocation' in navigator) {
-            const watchId = navigator.geolocation.watchPosition(
+            navigator.geolocation.getCurrentPosition(
                 (position) => {
-                    const location = { latitude: position.coords.latitude, longitude: position.coords.longitude };
+                    const { latitude, longitude } = position.coords;
+                    console.log('📍 Initial location:', latitude, longitude);
+                    const location = { latitude, longitude };
                     setUserLocation(location);
                     localStorage.setItem('userLocation', JSON.stringify(location));
                 },
-                (error) => { console.log('Location denied'); },
-                { enableHighAccuracy: true, maximumAge: 10000, timeout: 5000 }
+                (error) => {
+                    console.error('Location error:', error);
+                },
+                { enableHighAccuracy: true, timeout: 5000 }
             );
-            return () => navigator.geolocation.clearWatch(watchId);
         }
     };
 
@@ -396,34 +400,49 @@ export default function VideoFeed() {
 
     useEffect(() => {
         let watchId: number | null = null;
-        if (userLocation && 'geolocation' in navigator) {
-            watchId = navigator.geolocation.watchPosition(
-                (position) => {
-                    const location = { latitude: position.coords.latitude, longitude: position.coords.longitude };
-                    setUserLocation(location);
-                    localStorage.setItem('userLocation', JSON.stringify(location));
-                },
-                (error) => console.error('Location watch error:', error),
-                { enableHighAccuracy: true, maximumAge: 10000, timeout: 5000 }
-            );
+
+        const startWatching = () => {
+            if ('geolocation' in navigator) {
+                watchId = navigator.geolocation.watchPosition(
+                    (position) => {
+                        const { latitude, longitude } = position.coords;
+                        console.log('📍 Location updated:', latitude, longitude);
+                        const location = { latitude, longitude };
+                        setUserLocation(location);
+                        localStorage.setItem('userLocation', JSON.stringify(location));
+                    },
+                    (error) => {
+                        console.error('Location watch error:', error);
+                    },
+                    { enableHighAccuracy: true, maximumAge: 10000, timeout: 10000 }
+                );
+            }
+        };
+
+        if (userLocation || localStorage.getItem('userLocation')) {
+            startWatching();
         }
+
         return () => {
             if (watchId !== null) navigator.geolocation.clearWatch(watchId);
         };
-    }, []);
+    }, []); // Run on mount to catch saved location or after first fix
 
     const calculateDistance = (lat1: number, lon1: number, lat2: number, lon2: number): string => {
-        const R = 6371;
+        const R = 6371; // km
         const dLat = (lat2 - lat1) * Math.PI / 180;
         const dLon = (lon2 - lon1) * Math.PI / 180;
-        const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) + Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * Math.sin(dLon / 2) * Math.sin(dLon / 2);
+        const a =
+            Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+            Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+            Math.sin(dLon / 2) * Math.sin(dLon / 2);
         const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
         const distance = R * c;
 
-        if (distance >= 1000) {
-            return (distance / 1000).toFixed(1) + 'k';
+        if (distance >= 1) {
+            return distance.toFixed(1) + ' km';
         }
-        return distance.toFixed(1);
+        return (distance * 1000).toFixed(0) + ' m';
     };
 
     const handleScroll = (e: React.UIEvent<HTMLDivElement>) => {

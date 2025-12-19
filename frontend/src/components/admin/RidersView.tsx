@@ -1,10 +1,12 @@
 import { useState, useEffect } from 'react';
 import axios from 'axios';
+import { io } from 'socket.io-client';
+import { API_BASE_URL, SOCKET_URL } from '../../utils/config';
 import { FaUser, FaMotorcycle, FaSearch, FaFilter, FaMapMarkerAlt, FaStar, FaEye } from 'react-icons/fa';
 
 interface Rider {
     _id: string;
-    user: { name: string; email: string; phone: string };
+    user: { _id: string; name: string; email: string; phone: string; status: string };
     vehicleType: string;
     vehicleNumber: string;
     status: string;
@@ -24,12 +26,26 @@ export default function RidersView() {
 
     useEffect(() => {
         fetchRiders();
+
+        const socket = io(SOCKET_URL);
+        socket.on('rider_updated', () => {
+            console.log('Rider status updated, refreshing...');
+            fetchRiders();
+        });
+        socket.on('order_updated', () => {
+            console.log('Order status updated (rider may be affected), refreshing...');
+            fetchRiders();
+        });
+
+        return () => {
+            socket.disconnect();
+        };
     }, []);
 
     const fetchRiders = async () => {
         try {
             const token = JSON.parse(localStorage.getItem('userInfo') || '{}').token;
-            const res = await axios.get('http://localhost:5000/api/admin/riders', {
+            const res = await axios.get(`${API_BASE_URL}/api/admin/riders`, {
                 headers: { Authorization: `Bearer ${token}` }
             });
             setRiders(res.data);
@@ -37,6 +53,44 @@ export default function RidersView() {
             console.error('Error fetching riders:', error);
         } finally {
             setLoading(false);
+        }
+    };
+
+    const handleSuspend = async (id: string) => {
+        if (!window.confirm('Are you sure you want to suspend this rider?')) return;
+        try {
+            const token = JSON.parse(localStorage.getItem('userInfo') || '{}').token;
+            await axios.put(`${API_BASE_URL}/api/admin/users/${id}/suspend`, {}, {
+                headers: { Authorization: `Bearer ${token}` }
+            });
+            fetchRiders();
+        } catch (error) {
+            console.error('Error suspending rider:', error);
+        }
+    };
+
+    const handleUnsuspend = async (id: string) => {
+        try {
+            const token = JSON.parse(localStorage.getItem('userInfo') || '{}').token;
+            await axios.put(`${API_BASE_URL}/api/admin/users/${id}/unsuspend`, {}, {
+                headers: { Authorization: `Bearer ${token}` }
+            });
+            fetchRiders();
+        } catch (error) {
+            console.error('Error unsuspending rider:', error);
+        }
+    };
+
+    const handleDeleteUser = async (id: string) => {
+        if (!window.confirm('WARNING: This will permanently delete the rider account and profile. Proceed?')) return;
+        try {
+            const token = JSON.parse(localStorage.getItem('userInfo') || '{}').token;
+            await axios.delete(`${API_BASE_URL}/api/admin/users/${id}`, {
+                headers: { Authorization: `Bearer ${token}` }
+            });
+            fetchRiders();
+        } catch (error) {
+            console.error('Error deleting rider:', error);
         }
     };
 
@@ -48,8 +102,8 @@ export default function RidersView() {
     };
 
     const filteredRiders = riders.filter(rider => {
-        const matchesSearch = rider.user?.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            rider.user?.phone.includes(searchTerm);
+        const matchesSearch = rider.user?.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            rider.user?.phone?.includes(searchTerm);
         const matchesFilter = filter === 'All' ||
             (filter === 'Online' && rider.isOnline) ||
             (filter === 'Offline' && !rider.isOnline);
@@ -155,8 +209,8 @@ export default function RidersView() {
                             <tr key={rider._id} className="hover:bg-gray-50 transition">
                                 <td className="px-6 py-4">
                                     <div>
-                                        <p className="font-bold text-gray-800">{rider.user.name}</p>
-                                        <p className="text-xs text-gray-500">{rider.user.phone}</p>
+                                        <p className="font-bold text-gray-800">{rider.user?.name || 'Unknown User'}</p>
+                                        <p className="text-xs text-gray-500">{rider.user?.phone || 'No Phone'}</p>
                                     </div>
                                 </td>
                                 <td className="px-6 py-4 text-sm text-gray-600">{rider.vehicleType}</td>
@@ -182,9 +236,35 @@ export default function RidersView() {
                                     Rs {(rider.cashCollected || 0).toLocaleString()}
                                 </td>
                                 <td className="px-6 py-4 text-right">
-                                    <button className="text-orange-500 hover:text-orange-600 font-medium text-sm flex items-center justify-end gap-1 w-full">
-                                        <FaEye /> View
-                                    </button>
+                                    <div className="flex justify-end gap-2">
+                                        {rider.user?.status === 'suspended' ? (
+                                            <button
+                                                onClick={() => handleUnsuspend(rider.user?._id)}
+                                                className="p-2 bg-green-100 text-green-600 rounded-lg hover:bg-green-200"
+                                                title="Unsuspend"
+                                            >
+                                                <FaSearch className="transform rotate-90" /> {/* Placeholder for Resume/Unsuspend icon if not imported */}
+                                            </button>
+                                        ) : (
+                                            <button
+                                                onClick={() => handleSuspend(rider.user?._id)}
+                                                className="p-2 bg-yellow-100 text-yellow-600 rounded-lg hover:bg-yellow-200"
+                                                title="Suspend"
+                                            >
+                                                <FaFilter /> {/* Placeholder for Suspend icon if not imported */}
+                                            </button>
+                                        )}
+                                        <button
+                                            onClick={() => handleDeleteUser(rider.user?._id)}
+                                            className="p-2 bg-red-100 text-red-600 rounded-lg hover:bg-red-200"
+                                            title="Delete"
+                                        >
+                                            <FaMotorcycle className="transform rotate-45" /> {/* Placeholder for Delete icon if not imported */}
+                                        </button>
+                                        <button className="text-orange-500 hover:text-orange-600 p-2">
+                                            <FaEye />
+                                        </button>
+                                    </div>
                                 </td>
                             </tr>
                         ))}

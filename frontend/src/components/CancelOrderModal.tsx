@@ -4,6 +4,7 @@ import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { FaTimes } from 'react-icons/fa';
 import axios from 'axios';
+import { API_BASE_URL } from '../utils/config';
 
 interface CancelOrderModalProps {
     isOpen: boolean;
@@ -34,7 +35,7 @@ export default function CancelOrderModal({ isOpen, onClose, orderId, onCancelSuc
             const token = JSON.parse(localStorage.getItem('userInfo') || '{}').token;
 
             await axios.patch(
-                `http://localhost:5000/api/orders/${orderId}/cancel`,
+                `${API_BASE_URL}/api/orders/${orderId}/cancel`,
                 { reason: selectedReason },
                 { headers: { Authorization: `Bearer ${token}` } }
             );
@@ -89,8 +90,8 @@ export default function CancelOrderModal({ isOpen, onClose, orderId, onCancelSuc
                                     key={reason.id}
                                     onClick={() => setSelectedReason(reason.id)}
                                     className={`w-full text-left px-5 py-4 rounded-xl border-2 transition-all ${selectedReason === reason.id
-                                            ? 'border-red-500 bg-red-50 text-red-700'
-                                            : 'border-gray-200 hover:border-gray-300 text-gray-700'
+                                        ? 'border-red-500 bg-red-50 text-red-700'
+                                        : 'border-gray-200 hover:border-gray-300 text-gray-700'
                                         }`}
                                 >
                                     <div className="flex items-center justify-between">

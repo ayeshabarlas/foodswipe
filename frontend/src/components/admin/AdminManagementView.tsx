@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import axios from 'axios';
+import { API_BASE_URL } from '../../utils/config';
 import { FaUserShield, FaPlus, FaSearch, FaEllipsisV, FaShieldAlt } from 'react-icons/fa';
 
 export default function AdminManagementView() {
@@ -17,7 +18,7 @@ export default function AdminManagementView() {
                 headers: { Authorization: `Bearer ${userInfo.token}` }
             };
             // Use the getUsers endpoint with role=admin
-            const { data } = await axios.get('http://localhost:5000/api/admin/users?role=admin', config);
+            const { data } = await axios.get(`${API_BASE_URL}/api/admin/users?role=admin`, config);
             setAdmins(data);
         } catch (error) {
             console.error('Error fetching admins:', error);

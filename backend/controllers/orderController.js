@@ -64,9 +64,11 @@ const createOrder = async (req, res) => {
             .populate('user', 'name email phone')
             .populate('restaurant', 'name address contact');
 
-        // Emit socket event for real-time update to restaurant
+        // Emit socket event for real-time update to restaurant and admin
         if (req.app.get('io')) {
-            req.app.get('io').to(`restaurant_${restaurant}`).emit('newOrder', populatedOrder);
+            const io = req.app.get('io');
+            io.to(`restaurant_${restaurant}`).emit('newOrder', populatedOrder);
+            io.to('admin').emit('order_created', populatedOrder);
         }
 
         res.status(201).json(populatedOrder);
@@ -178,6 +180,9 @@ const updateOrderStatus = async (req, res) => {
 
             // Notify restaurant about order update
             io.to(`restaurant_${order.restaurant._id}`).emit('orderStatusUpdate', updatedOrder);
+
+            // Always notify admin about any order status update
+            io.to('admin').emit('order_updated', updatedOrder);
 
             // When order is ready and handed to rider, notify all available riders
             if (status === 'OnTheWay') {

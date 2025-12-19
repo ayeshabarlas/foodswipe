@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
+import { API_BASE_URL } from '../utils/config';
 import { FaCheckCircle, FaCloudUploadAlt, FaFileAlt, FaImage } from 'react-icons/fa';
 
 interface RiderDocumentUploadProps {
@@ -27,7 +28,7 @@ export default function RiderDocumentUpload({ riderId, onVerified }: RiderDocume
         const fetchDocuments = async () => {
             try {
                 const token = JSON.parse(localStorage.getItem("userInfo") || "{}").token;
-                const res = await axios.get(`http://localhost:5000/api/riders/${riderId}`, {
+                const res = await axios.get(`${API_BASE_URL}/api/riders/${riderId}`, {
                     headers: { Authorization: `Bearer ${token}` }
                 });
 
@@ -63,14 +64,14 @@ export default function RiderDocumentUpload({ riderId, onVerified }: RiderDocume
             const formData = new FormData();
             formData.append('image', file);
 
-            const uploadRes = await axios.post('http://localhost:5000/api/upload', formData, {
+            const uploadRes = await axios.post(`${API_BASE_URL}/api/upload`, formData, {
                 headers: { 'Content-Type': 'multipart/form-data' }
             });
 
             const imageUrl = uploadRes.data.imageUrl;
 
             const token = JSON.parse(localStorage.getItem("userInfo") || "{}").token;
-            await axios.put(`http://localhost:5000/api/riders/${riderId}/documents`, {
+            await axios.put(`${API_BASE_URL}/api/riders/${riderId}/documents`, {
                 [field]: imageUrl
             }, {
                 headers: { Authorization: `Bearer ${token}` }
@@ -98,14 +99,11 @@ export default function RiderDocumentUpload({ riderId, onVerified }: RiderDocume
         setSubmitting(true);
         try {
             const token = JSON.parse(localStorage.getItem("userInfo") || "{}").token;
-            await axios.put(`http://localhost:5000/api/riders/${riderId}/submit-verification`, {}, {
+            await axios.put(`${API_BASE_URL}/api/riders/${riderId}/submit-verification`, {}, {
                 headers: { Authorization: `Bearer ${token}` }
             });
 
-            // For demo purposes, auto-approve
-            setTimeout(() => {
-                setVerified(true);
-            }, 2000);
+            // Verification status is polled by useEffect
         } catch (error) {
             console.error('Submission error:', error);
             alert('Failed to submit for review');

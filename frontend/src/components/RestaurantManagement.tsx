@@ -15,6 +15,7 @@ import {
 } from 'react-icons/fa';
 import axios from 'axios';
 import { useRouter } from 'next/navigation';
+import { API_BASE_URL } from '../utils/config';
 
 interface Dish {
     _id: string;
@@ -68,14 +69,14 @@ export default function RestaurantManagement() {
 
             // Fetch restaurant owned by this user
             const restaurantRes = await axios.get(
-                'http://localhost:5000/api/restaurants/my-restaurant',
+                `${API_BASE_URL}/api/restaurants/my-restaurant`,
                 config
             );
             setRestaurant(restaurantRes.data);
 
             // Fetch dishes for this restaurant
             const dishesRes = await axios.get(
-                `http://localhost:5000/api/dishes/restaurant/${restaurantRes.data._id}`
+                `${API_BASE_URL}/api/dishes/restaurant/${restaurantRes.data._id}`
             );
             setDishes(dishesRes.data);
         } catch (error) {
@@ -90,7 +91,7 @@ export default function RestaurantManagement() {
 
         try {
             const userInfo = JSON.parse(localStorage.getItem('userInfo') || '{}');
-            await axios.delete(`http://localhost:5000/api/dishes/${dishId}`, {
+            await axios.delete(`${API_BASE_URL}/api/dishes/${dishId}`, {
                 headers: {
                     Authorization: `Bearer ${userInfo.token}`,
                 },
@@ -128,14 +129,14 @@ export default function RestaurantManagement() {
             if (editingDish) {
                 // Update existing dish
                 await axios.put(
-                    `http://localhost:5000/api/dishes/${editingDish._id}`,
+                    `${API_BASE_URL}/api/dishes/${editingDish._id}`,
                     formData,
                     config
                 );
             } else {
                 // Create new dish
                 await axios.post(
-                    'http://localhost:5000/api/dishes',
+                    `${API_BASE_URL}/api/dishes`,
                     { ...formData, restaurant: restaurant?._id },
                     config
                 );
@@ -162,7 +163,7 @@ export default function RestaurantManagement() {
 
         try {
             const userInfo = JSON.parse(localStorage.getItem('userInfo') || '{}');
-            await axios.delete(`http://localhost:5000/api/restaurants/${restaurant?._id}`, {
+            await axios.delete(`${API_BASE_URL}/api/restaurants/${restaurant?._id}`, {
                 headers: {
                     Authorization: `Bearer ${userInfo.token}`,
                 },

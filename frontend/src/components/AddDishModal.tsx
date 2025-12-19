@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { FaPlus, FaTrash, FaTimes, FaSave } from 'react-icons/fa';
 import axios from 'axios';
+import { API_BASE_URL } from '@/utils/config';
 import { getImageUrl } from '@/utils/imageUtils';
 
 interface Variant {
@@ -96,11 +97,9 @@ export default function AddDishModal({ isOpen, onClose, onSubmit, editingDish }:
                 },
             };
 
-            const { data } = await axios.post('http://localhost:5000/api/upload', uploadData, config);
-            // Backend returns { imageUrl: '/uploads/file-123.jpg' }
-            // We save the relative path so getImageUrl can handle it properly
-            const relativeUrl = data.imageUrl;
-            setFormData(prev => ({ ...prev, [field]: relativeUrl }));
+            const { data } = await axios.post(`${API_BASE_URL}/api/upload`, uploadData, config);
+            const absoluteUrl = `${API_BASE_URL}${data.imageUrl}`;
+            setFormData(prev => ({ ...prev, [field]: absoluteUrl }));
         } catch (error) {
             console.error('File upload error:', error);
             alert('Failed to upload file');

@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { FaShoppingBag, FaLock, FaEnvelope } from 'react-icons/fa';
 import axios from 'axios';
+import { API_BASE_URL } from '../utils/config';
 
 export default function AdminLoginForm() {
     const [email, setEmail] = useState('');
@@ -19,13 +20,12 @@ export default function AdminLoginForm() {
         setError('');
 
         try {
-            const { data } = await axios.post('http://localhost:5000/api/auth/login', {
+            const { data } = await axios.post(`${API_BASE_URL}/api/admin/login`, {
                 identifier: email,
-                password,
-                role: 'admin'
+                password
             });
 
-            if (data.isAdmin || data.role === 'admin') {
+            if (data.isAdmin || data.role.includes('admin')) {
                 localStorage.setItem('userInfo', JSON.stringify(data));
                 localStorage.setItem('token', data.token);
                 router.push('/admin');

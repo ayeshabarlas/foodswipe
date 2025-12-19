@@ -68,28 +68,18 @@ const loginUser = async (req, res) => {
             }
             return res.json({ _id: user._id, name: user.name, email: user.email, phone: user.phone, phoneVerified: user.phoneVerified, role: user.role, token: generateToken(user._id) });
         }
-        // Try to find user with specific role first
-        const query = { $or: [{ email: identifier }, { phone: identifier }] };
-        if (role) query.role = role;
+        // Strict Role-Based Login: identifier + role must match in User collection
+        // Admins are now in their own Admin collection and will use /api/admin/login
+        const query = {
+            $or: [{ email: identifier }, { phone: identifier }],
+            role: role || 'customer'
+        };
 
-        let user = await User.findOne(query);
-
-        // Usage for Admin: Admins can login from any portal (Customer/Restaurant/Rider)
-        // If specific role not found, check if an Admin exists with this identifier
-        if (!user && role !== 'admin') {
-            const adminQuery = { $or: [{ email: identifier }, { phone: identifier }], role: 'admin' };
-            user = await User.findOne(adminQuery);
-        }
+        const user = await User.findOne(query);
 
         if (!user) {
-            // Check for friendly error message if account exists with DIFFERENT role
-            const anyUser = await User.findOne({ $or: [{ email: identifier }, { phone: identifier }] });
-            if (anyUser) {
-                return res.status(400).json({
-                    message: `Account exists as '${anyUser.role}'. Please select '${anyUser.role.charAt(0).toUpperCase() + anyUser.role.slice(1)}' tab to login.`
-                });
-            }
-            return res.status(400).json({ message: 'Invalid credentials' });
+            console.log(`Login failed: No user found for ${identifier} with role ${role}`);
+            return res.status(401).json({ message: 'Account not found for this role' });
         }
 
         // If a password is stored, verify it; otherwise allow login (e.g., OTP‑only accounts)
@@ -99,6 +89,12 @@ const loginUser = async (req, res) => {
                 return res.status(400).json({ message: 'Invalid credentials' });
             }
         }
+
+        // Check user status
+        if (user.status === 'suspended') {
+            return res.status(403).json({ message: 'Your account has been suspended. Please contact support.' });
+        }
+
         return res.json({ _id: user._id, name: user.name, email: user.email, phone: user.phone, phoneVerified: user.phoneVerified, phoneNumber: user.phoneNumber, role: user.role, token: generateToken(user._id) });
     } catch (err) {
         return res.status(500).json({ message: err.message });

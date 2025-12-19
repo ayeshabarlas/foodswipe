@@ -4,6 +4,7 @@ import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import axios from 'axios';
+import { API_BASE_URL } from '@/utils/config';
 import { FaUtensils, FaStore, FaMapMarkerAlt, FaPhone, FaUser } from 'react-icons/fa';
 
 export default function RestaurantRegister() {
@@ -28,7 +29,7 @@ export default function RestaurantRegister() {
             console.log('Registering restaurant owner:', formData);
 
             // 1. Register the user first
-            const { data } = await axios.post('http://localhost:5000/api/auth/register', {
+            const { data } = await axios.post(`${API_BASE_URL}/api/auth/register`, {
                 name: formData.name,
                 email: formData.email,
                 password: formData.password,
@@ -41,7 +42,7 @@ export default function RestaurantRegister() {
             // 3. Create the restaurant profile automatically
             // We use the token we just got to authenticate this request
             await axios.post(
-                'http://localhost:5000/api/restaurants',
+                `${API_BASE_URL}/api/restaurants`,
                 {
                     name: formData.restaurantName,
                     address: formData.address,

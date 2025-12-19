@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { FaChartLine, FaEye, FaHeart, FaShare, FaShoppingBag, FaMousePointer, FaArrowUp, FaArrowDown } from 'react-icons/fa';
 import axios from 'axios';
+import { API_BASE_URL } from '../utils/config';
 
 interface AnalyticsData {
     overview: {
@@ -36,7 +37,7 @@ export default function DashboardAnalytics({ restaurantId }: { restaurantId: str
 
         try {
             const token = JSON.parse(localStorage.getItem('userInfo') || '{}').token;
-            const analyticsRes = await axios.get(`http://localhost:5000/api/restaurants/${restaurantId}/analytics`, {
+            const analyticsRes = await axios.get(`${API_BASE_URL}/api/restaurants/${restaurantId}/analytics`, {
                 headers: { Authorization: `Bearer ${token}` }
             });
             setData(analyticsRes.data);

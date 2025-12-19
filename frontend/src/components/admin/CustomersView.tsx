@@ -1,6 +1,8 @@
 import { useState, useEffect } from 'react';
 import axios from 'axios';
-import { FaUser, FaSearch, FaFilter, FaEye, FaFlag, FaBan } from 'react-icons/fa';
+import { io } from 'socket.io-client';
+import { API_BASE_URL, SOCKET_URL } from '../../utils/config';
+import { FaUser, FaSearch, FaFilter, FaEye, FaFlag, FaBan, FaCheckCircle, FaTimesCircle } from 'react-icons/fa';
 
 interface Customer {
     _id: string;
@@ -32,7 +34,7 @@ export default function CustomersView() {
             const token = JSON.parse(localStorage.getItem('userInfo') || '{}').token;
             // Assuming we have an endpoint for this, if not we might need to use existing users endpoint and aggregate on client or server
             // Using a hypothetical endpoint that returns aggregated customer stats
-            const res = await axios.get('http://localhost:5000/api/admin/users?role=customer', {
+            const res = await axios.get(`${API_BASE_URL}/api/admin/users?role=customer`, {
                 headers: { Authorization: `Bearer ${token}` }
             });
             setCustomers(res.data);
@@ -43,6 +45,58 @@ export default function CustomersView() {
             setLoading(false);
         }
     };
+
+    const handleSuspend = async (id: string, e: React.MouseEvent) => {
+        e.stopPropagation();
+        if (!window.confirm('Are you sure you want to suspend this customer?')) return;
+        try {
+            const token = JSON.parse(localStorage.getItem('userInfo') || '{}').token;
+            await axios.put(`${API_BASE_URL}/api/admin/users/${id}/suspend`, {}, {
+                headers: { Authorization: `Bearer ${token}` }
+            });
+            fetchCustomers();
+        } catch (error) {
+            console.error('Error suspending customer:', error);
+        }
+    };
+
+    const handleUnsuspend = async (id: string, e: React.MouseEvent) => {
+        e.stopPropagation();
+        try {
+            const token = JSON.parse(localStorage.getItem('userInfo') || '{}').token;
+            await axios.put(`${API_BASE_URL}/api/admin/users/${id}/unsuspend`, {}, {
+                headers: { Authorization: `Bearer ${token}` }
+            });
+            fetchCustomers();
+        } catch (error) {
+            console.error('Error unsuspending customer:', error);
+        }
+    };
+
+    const handleDeleteUser = async (id: string, e: React.MouseEvent) => {
+        e.stopPropagation();
+        if (!window.confirm('WARNING: This will permanently delete the customer account. Proceed?')) return;
+        try {
+            const token = JSON.parse(localStorage.getItem('userInfo') || '{}').token;
+            await axios.delete(`${API_BASE_URL}/api/admin/users/${id}`, {
+                headers: { Authorization: `Bearer ${token}` }
+            });
+            fetchCustomers();
+        } catch (error) {
+            console.error('Error deleting customer:', error);
+        }
+    };
+
+    useEffect(() => {
+        const socket = io(SOCKET_URL);
+        socket.on('user_registered', () => {
+            console.log('New user registered, refreshing...');
+            fetchCustomers();
+        });
+        return () => {
+            socket.disconnect();
+        };
+    }, []);
 
     const stats = {
         total: customers.length,
@@ -180,8 +234,31 @@ export default function CustomersView() {
                                     </td>
                                     <td className="px-6 py-4 text-right">
                                         <div className="flex justify-end gap-2 text-gray-500">
-                                            <button className="hover:text-orange-500"><FaEye /></button>
-                                            <button className="hover:text-red-500"><FaBan /></button>
+                                            {customer.status === 'suspended' ? (
+                                                <button
+                                                    onClick={(e) => handleUnsuspend(customer._id, e)}
+                                                    className="p-2 bg-green-100 text-green-600 rounded-lg hover:bg-green-200"
+                                                    title="Unsuspend"
+                                                >
+                                                    <FaCheckCircle className="text-xl" />
+                                                </button>
+                                            ) : (
+                                                <button
+                                                    onClick={(e) => handleSuspend(customer._id, e)}
+                                                    className="p-2 bg-yellow-100 text-yellow-600 rounded-lg hover:bg-yellow-200"
+                                                    title="Suspend"
+                                                >
+                                                    <FaBan className="text-xl" />
+                                                </button>
+                                            )}
+                                            <button
+                                                onClick={(e) => handleDeleteUser(customer._id, e)}
+                                                className="p-2 bg-red-100 text-red-600 rounded-lg hover:bg-red-200"
+                                                title="Delete"
+                                            >
+                                                <FaTimesCircle className="text-xl" />
+                                            </button>
+                                            <button className="hover:text-orange-500 p-2"><FaEye className="text-xl" /></button>
                                         </div>
                                     </td>
                                 </tr>

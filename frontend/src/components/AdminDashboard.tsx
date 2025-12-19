@@ -22,6 +22,8 @@ import AdminManagementView from './admin/AdminManagementView';
 import SupportView from './admin/SupportView';
 
 import axios from 'axios';
+import { io } from 'socket.io-client';
+import { API_BASE_URL, SOCKET_URL } from '../utils/config';
 
 interface Stats {
     totalUsers: number;
@@ -42,7 +44,12 @@ interface Stats {
 }
 
 export default function AdminDashboard() {
-    const [activeTab, setActiveTab] = useState('dashboard');
+    const [activeTab, setActiveTab] = useState(() => {
+        if (typeof window !== 'undefined') {
+            return localStorage.getItem('adminActiveTab') || 'dashboard';
+        }
+        return 'dashboard';
+    });
     const [stats, setStats] = useState<Stats | null>(null);
     const [loading, setLoading] = useState(true);
     const router = useRouter();
@@ -66,6 +73,33 @@ export default function AdminDashboard() {
         }
 
         fetchStats();
+
+        // Join admin room for real-time updates
+        const socket = io(SOCKET_URL);
+        if (userInfo) {
+            try {
+                const user = JSON.parse(userInfo);
+                socket.emit('join', { userId: user._id, role: 'admin' });
+                console.log('Joined admin room for real-time updates');
+            } catch (e) {
+                console.error('Error joining admin room:', e);
+            }
+        }
+
+        // Standard listeners for dashboard-wide updates
+        const updateStats = () => {
+            console.log('Real-time update received: fetching new stats');
+            fetchStats();
+        };
+
+        socket.on('order_created', updateStats);
+        socket.on('order_updated', updateStats);
+        socket.on('restaurant_registered', updateStats);
+        socket.on('restaurant_updated', updateStats);
+
+        return () => {
+            socket.disconnect();
+        };
     }, []);
 
     const fetchStats = async () => {
@@ -77,7 +111,7 @@ export default function AdminDashboard() {
                 },
             };
 
-            const res = await axios.get('http://localhost:5000/api/admin/stats', config);
+            const res = await axios.get(`${API_BASE_URL}/api/admin/stats`, config);
             setStats(res.data);
         } catch (error) {
             console.error('Error fetching admin stats:', error);
@@ -150,9 +184,14 @@ export default function AdminDashboard() {
         );
     }
 
+    const handleTabChange = (tab: string) => {
+        setActiveTab(tab);
+        localStorage.setItem('adminActiveTab', tab);
+    };
+
     return (
         <div className="min-h-screen bg-gray-100 flex">
-            <Sidebar activeTab={activeTab} setActiveTab={setActiveTab} onLogout={handleLogout} />
+            <Sidebar activeTab={activeTab} setActiveTab={handleTabChange} onLogout={handleLogout} />
             <div className="flex-1 w-full md:ml-64 pt-16 md:pt-0">
                 {renderView()}
             </div>

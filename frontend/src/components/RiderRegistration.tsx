@@ -2,6 +2,7 @@
 
 import React, { useState } from 'react';
 import axios from 'axios';
+import { API_BASE_URL } from '../utils/config';
 import { FaBicycle, FaArrowLeft } from 'react-icons/fa';
 
 interface RiderRegistrationProps {
@@ -39,7 +40,7 @@ export default function RiderRegistration({ onComplete }: RiderRegistrationProps
             const token = JSON.parse(localStorage.getItem("userInfo") || "{}").token;
             if (!token) throw new Error('Please login again.');
 
-            const res = await axios.post('http://localhost:5000/api/riders/register', formData, {
+            const res = await axios.post(`${API_BASE_URL}/api/riders/register`, formData, {
                 headers: { Authorization: `Bearer ${token}` }
             });
 

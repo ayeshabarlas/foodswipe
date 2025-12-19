@@ -5,6 +5,7 @@ import { motion } from "framer-motion";
 import { FaTimes, FaStar, FaMinus, FaPlus, FaShoppingCart, FaPlay, FaPause } from "react-icons/fa";
 import { useCart } from "../context/CartContext";
 import axios from "axios";
+import { API_BASE_URL } from "../utils/config";
 import { useSwipeBack } from "../hooks/useSwipeBack";
 
 import { getImageUrl } from "../utils/imageUtils";
@@ -64,7 +65,7 @@ export default function DishDetails({ dish, onClose }: DishDetailsProps) {
     const fetchReviews = async () => {
         setLoadingReviews(true);
         try {
-            const res = await axios.get(`http://localhost:5000/api/videos/${dish._id}/comments`);
+            const res = await axios.get(`${API_BASE_URL}/api/videos/${dish._id}/comments`);
             setReviews(res.data);
         } catch (error) {
             console.error('Error fetching reviews:', error);
