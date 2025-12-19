@@ -177,7 +177,7 @@ export default function RestaurantRegister() {
                 <div className="mt-6 text-center">
                     <p className="text-gray-400">
                         Already a partner?{' '}
-                        <Link href="/login" className="text-primary hover:underline">
+                        <Link href="/" className="text-primary hover:underline">
                             Login here
                         </Link>
                     </p>

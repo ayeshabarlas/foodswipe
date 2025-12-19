@@ -139,7 +139,7 @@ export default function RiderRegister() {
                 <div className="mt-6 text-center">
                     <p className="text-gray-400">
                         Already a rider?{' '}
-                        <Link href="/login" className="text-blue-400 hover:underline">
+                        <Link href="/" className="text-blue-400 hover:underline">
                             Login here
                         </Link>
                     </p>
