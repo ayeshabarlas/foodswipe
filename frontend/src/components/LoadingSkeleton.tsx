@@ -18,7 +18,7 @@ export default function LoadingSkeleton({ type = 'card', count = 1 }: LoadingSke
             repeat: Infinity,
             ease: 'linear',
         },
-    };
+    } as const;
 
     const VideoSkeleton = () => (
         <div className="aspect-[9/16] bg-gray-800 rounded-xl overflow-hidden">
