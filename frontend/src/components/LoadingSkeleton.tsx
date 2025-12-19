@@ -1,3 +1,4 @@
+// Final deployment fix verification
 'use client';
 
 import React from 'react';
