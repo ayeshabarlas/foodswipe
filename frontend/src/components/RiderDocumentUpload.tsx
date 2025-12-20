@@ -62,7 +62,7 @@ export default function RiderDocumentUpload({ riderId, onVerified }: RiderDocume
 
         try {
             const formData = new FormData();
-            formData.append('image', file);
+            formData.append('file', file);
 
             const uploadRes = await axios.post(`${API_BASE_URL}/api/upload`, formData, {
                 headers: { 'Content-Type': 'multipart/form-data' }
