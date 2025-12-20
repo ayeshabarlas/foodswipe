@@ -13,6 +13,9 @@ import { API_BASE_URL } from "@/utils/config";
 
 export default function Home() {
   const router = useRouter();
+  useEffect(() => {
+    console.log("Foodswipe Main Page - Deployment Version 2.0 (Proxy Fixed)");
+  }, []);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [loading, setLoading] = useState(true);
   const [showSplash, setShowSplash] = useState(true);

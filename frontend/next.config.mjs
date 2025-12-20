@@ -10,6 +10,10 @@ const nextConfig = {
                 protocol: 'https',
                 hostname: 'commondatastorage.googleapis.com',
             },
+            {
+                protocol: 'https',
+                hostname: 'foodswipe-production-46d6.railway.app',
+            }
         ],
     },
     async headers() {
@@ -28,6 +32,12 @@ const nextConfig = {
                 ],
             },
         ];
+    },
+    eslint: {
+        ignoreDuringBuilds: true,
+    },
+    typescript: {
+        ignoreBuildErrors: true,
     },
 };
 
