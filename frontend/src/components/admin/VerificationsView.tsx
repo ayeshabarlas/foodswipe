@@ -7,11 +7,11 @@ import { FaCheckCircle, FaTimesCircle, FaEye, FaSpinner, FaStore, FaMotorcycle, 
 import { motion, AnimatePresence } from 'framer-motion';
 import { getImageUrl } from '../../utils/imageUtils';
 
-export default function VerificationsView() {
+export default function VerificationsView({ initialTab = 'restaurants' }: { initialTab?: string }) {
     const [restaurants, setRestaurants] = useState<any[]>([]);
     const [riders, setRiders] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
-    const [activeTab, setActiveTab] = useState('restaurants');
+    const [activeTab, setActiveTab] = useState(initialTab);
     const [selectedItem, setSelectedItem] = useState<any>(null);
     const [rejectionReason, setRejectionReason] = useState('');
     const [processing, setProcessing] = useState(false);

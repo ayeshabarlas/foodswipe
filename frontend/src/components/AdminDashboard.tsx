@@ -136,7 +136,9 @@ export default function AdminDashboard() {
             case 'restaurants-all':
                 return <RestaurantsView />;
             case 'restaurants-pending':
-                return <VerificationsView />;
+                return <VerificationsView initialTab="restaurants" />;
+            case 'riders-pending':
+                return <VerificationsView initialTab="riders" />;
 
             // Rider Sub-menus
             case 'riders': // Default fallback
