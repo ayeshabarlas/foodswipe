@@ -52,6 +52,7 @@ export default function Sidebar({ activeTab, setActiveTab, onLogout }: SidebarPr
             icon: FaMotorcycle,
             subItems: [
                 { id: 'riders-all', label: 'All Riders' },
+                { id: 'restaurants-pending', label: 'Rider Approvals' },
                 { id: 'riders-map', label: 'Live Map' }
             ]
         },

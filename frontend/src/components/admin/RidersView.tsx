@@ -102,8 +102,9 @@ export default function RidersView() {
     };
 
     const filteredRiders = riders.filter(rider => {
-        const matchesSearch = rider.user?.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            rider.user?.phone?.includes(searchTerm);
+        const matchesSearch =
+            (rider.user?.name?.toLowerCase() || '').includes(searchTerm.toLowerCase()) ||
+            (rider.user?.phone || '').includes(searchTerm);
         const matchesFilter = filter === 'All' ||
             (filter === 'Online' && rider.isOnline) ||
             (filter === 'Offline' && !rider.isOnline);
@@ -272,7 +273,13 @@ export default function RidersView() {
                 </table>
                 {filteredRiders.length === 0 && (
                     <div className="py-12 text-center text-gray-500">
-                        No riders found matching your criteria
+                        <p className="mb-4">No riders found matching your criteria</p>
+                        <p className="text-sm">
+                            Tip: If you've just signed up as a rider, check the
+                            <span className="text-orange-500 font-bold ml-1 cursor-pointer hover:underline">
+                                Approvals
+                            </span> section.
+                        </p>
                     </div>
                 )}
             </div>
