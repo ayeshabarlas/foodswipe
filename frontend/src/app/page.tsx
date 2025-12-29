@@ -36,10 +36,26 @@ export default function Home() {
           });
 
           const user = response.data;
-          // Update localStorage with fresh data (including address)
-          localStorage.setItem("userInfo", JSON.stringify(user));
 
-          setUserRole(user.role || "customer");
+          // CRITICAL FIX: Merge fresh data with existing userInfo to preserve the token
+          const existingUserInfo = JSON.parse(userInfo || '{}');
+          const updatedUserInfo = { ...existingUserInfo, ...user };
+
+          // Update localStorage with merged data
+          localStorage.setItem("userInfo", JSON.stringify(updatedUserInfo));
+          console.log("✅ Session recovered for:", updatedUserInfo.email, "Role:", updatedUserInfo.role);
+
+          if (!updatedUserInfo.role) {
+            console.error("CRITICAL: Role missing in checkAuth response", updatedUserInfo);
+            // Do not default to customer if we want strict role handling
+            // But if it's genuinely missing, we might be stuck. 
+            // For now, let's just log it and NOT set a default, 
+            // which might trigger the 'Navigation Error' screen if userRole remains empty.
+            setUserRole("");
+          } else {
+            setUserRole(updatedUserInfo.role);
+          }
+
           setIsLoggedIn(true);
 
           // If admin, allow access to main app (don't redirect)
@@ -97,16 +113,33 @@ export default function Home() {
   }
 
   if (!isLoggedIn) {
-    return <LoginScreen onLogin={async () => {
-      // Immediately load user role from localStorage
-      const userInfo = localStorage.getItem("userInfo");
+    return <LoginScreen onLogin={async (userInfoFromLogin) => {
+      // Use passed info directly as the primary source of truth
+      // Fallback to localStorage ONLY if userInfoFromLogin is missing
+      const userInfoStr = localStorage.getItem("userInfo");
+      const userInfo = userInfoFromLogin || (userInfoStr ? JSON.parse(userInfoStr) : null);
+
       console.log("Login successful, checking redirection for:", userInfo);
 
       if (userInfo) {
-        const user = JSON.parse(userInfo);
-        const role = user.role || "customer";
+        // Ensure we strictly use the role from the login response
+        const role = userInfo.role;
+
+        if (!role) {
+          console.error("CRITICAL ERROR: No role found in userInfo:", userInfo);
+          // More descriptive alert for debugging
+          alert(`Login Error: No user role found in response.\nUser Info: ${JSON.stringify(userInfo, null, 2)}\nPlease contact support.`);
+          return;
+        }
+
         console.log("Setting user role to:", role);
         setUserRole(role);
+
+        // Also update the state used for session checks
+        const existingUserInfo = userInfoStr ? JSON.parse(userInfoStr) : {};
+        const updatedUserInfo = { ...existingUserInfo, ...userInfo };
+        localStorage.setItem("userInfo", JSON.stringify(updatedUserInfo));
+
         setIsLoggedIn(true);
 
         // If restaurant owner, check for profile
@@ -136,22 +169,42 @@ export default function Home() {
     }} />;
   }
 
+  // Debugging log to track rendering
+  console.log("Rendering Home - Role:", userRole, "Logged In:", isLoggedIn, "Has Restaurant:", hasRestaurant);
+
   // Restaurant owner flow
   if (userRole === "restaurant") {
     if (checkingRestaurant) {
-      return <div className="h-screen w-full bg-black flex items-center justify-center text-white">Loading restaurant...</div>;
+      return (
+        <div className="h-screen w-full bg-black flex flex-col items-center justify-center text-white">
+          <div className="w-12 h-12 border-4 border-orange-500 border-t-transparent rounded-full animate-spin mb-4"></div>
+          <p className="animate-pulse">Loading restaurant dashboard...</p>
+        </div>
+      );
     }
 
     if (!hasRestaurant) {
-      return <CreateRestaurant onRestaurantCreated={handleRestaurantCreated} />;
+      return (
+        <div className="h-screen w-full bg-black overflow-y-auto">
+          <CreateRestaurant onRestaurantCreated={handleRestaurantCreated} />
+        </div>
+      );
     }
 
-    return <RestaurantDashboard />;
+    return (
+      <div className="h-screen w-full bg-black overflow-hidden">
+        <RestaurantDashboard />
+      </div>
+    );
   }
 
   // Rider flow
   if (userRole === "rider") {
-    return <RiderPortal />;
+    return (
+      <div className="h-screen w-full bg-black overflow-y-auto">
+        <RiderPortal />
+      </div>
+    );
   }
 
   // Customer feed for customers
@@ -168,18 +221,19 @@ export default function Home() {
     <div className="h-screen w-full bg-gray-900 text-white flex flex-col items-center justify-center p-4">
       <div className="mb-4 text-xl font-bold text-red-500">Navigation Error</div>
       <p className="mb-4 text-center text-gray-400 max-w-md">
-        You are logged in, but the system couldn't find a matching dashboard for your role.
+        You are logged in as <span className="text-yellow-400 font-mono">{userRole || "Unknown Role"}</span>,
+        but the system couldn't find a matching dashboard.
       </p>
       <button
         onClick={() => {
-          localStorage.removeItem("userInfo");
-          localStorage.removeItem("token");
+          localStorage.clear();
           window.location.reload();
         }}
-        className="px-8 py-3 bg-red-600 rounded-full font-bold hover:bg-red-700 transition shadow-lg shadow-red-500/20 active:scale-95"
+        className="px-6 py-2 bg-red-600 hover:bg-red-700 rounded-lg font-medium transition-colors"
       >
-        Logout & Reset Session
+        Logout & Retry
       </button>
     </div>
   );
 }
+

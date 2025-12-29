@@ -22,6 +22,7 @@ export default function RiderDocumentUpload({ riderId, onVerified }: RiderDocume
     const [uploadedCount, setUploadedCount] = useState(0);
     const [submitting, setSubmitting] = useState(false);
     const [verified, setVerified] = useState(false);
+    const [verificationStatus, setVerificationStatus] = useState('new');
 
     useEffect(() => {
         // Fetch existing documents
@@ -36,6 +37,10 @@ export default function RiderDocumentUpload({ riderId, onVerified }: RiderDocume
                     setDocuments(res.data.documents);
                     const count = Object.values(res.data.documents).filter(doc => doc).length;
                     setUploadedCount(count);
+                }
+
+                if (res.data.verificationStatus) {
+                    setVerificationStatus(res.data.verificationStatus);
                 }
 
                 // Check if already verified
@@ -103,7 +108,8 @@ export default function RiderDocumentUpload({ riderId, onVerified }: RiderDocume
                 headers: { Authorization: `Bearer ${token}` }
             });
 
-            // Verification status is polled by useEffect
+            setVerificationStatus('pending');
+            alert('Documents submitted successfully!');
         } catch (error) {
             console.error('Submission error:', error);
             alert('Failed to submit for review');
@@ -128,6 +134,28 @@ export default function RiderDocumentUpload({ riderId, onVerified }: RiderDocume
                         className="w-full bg-gradient-to-r from-orange-500 to-pink-600 hover:from-orange-600 hover:to-pink-700 text-white font-semibold py-3.5 rounded-xl transition shadow-md"
                     >
                         Get Started
+                    </button>
+                </div>
+            </div>
+        );
+    }
+
+    if (verificationStatus === 'pending') {
+        return (
+            <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
+                <div className="bg-white rounded-3xl p-8 shadow-lg text-center max-w-sm w-full">
+                    <div className="w-20 h-20 bg-orange-100 rounded-full flex items-center justify-center mx-auto mb-6">
+                        <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-orange-500"></div>
+                    </div>
+                    <h2 className="text-2xl font-bold text-gray-900 mb-3">Under Review</h2>
+                    <p className="text-gray-600 font-light mb-8">
+                        Your documents have been submitted and are under review. We will notify you once your account is approved.
+                    </p>
+                    <button
+                        disabled
+                        className="w-full bg-gray-100 text-gray-400 font-semibold py-3.5 rounded-xl cursor-not-allowed"
+                    >
+                        Check Status Again Later
                     </button>
                 </div>
             </div>

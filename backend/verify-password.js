@@ -1,37 +1,35 @@
 const mongoose = require('mongoose');
-const User = require('./models/User');
-const dotenv = require('dotenv');
+const Admin = require('./models/Admin');
+const bcrypt = require('bcryptjs');
+require('dotenv').config();
 
-dotenv.config();
-
-const verifyAndReset = async () => {
+async function verifyPassword() {
     try {
-        await mongoose.connect(process.env.MONGO_URI || 'mongodb://localhost:27017/foodswipe');
-        console.log('MongoDB Connected');
+        await mongoose.connect(process.env.MONGO_URI);
 
-        // Target specifically the admin user
-        const adminUser = await User.findOne({ email: 'ayeshabarlas92@gmail.com', role: 'admin' });
+        const admin = await Admin.findOne({ email: 'ayeshabarlas636@gmail.com' });
 
-        if (!adminUser) {
-            console.log('Admin user not found!');
-        } else {
-            console.log('Admin user found.');
-            // Force reset
-            adminUser.password = '123456';
-            await adminUser.save();
-            console.log('Password reset to 123456.');
-
-            // Verify immediately
-            const freshUser = await User.findOne({ email: 'ayeshabarlas92@gmail.com', role: 'admin' });
-            const isMatch = await freshUser.matchPassword('123456');
-            console.log('Immediate Password Match Check:', isMatch ? 'SUCCESS' : 'FAILED');
+        if (!admin) {
+            console.log('Admin not found');
+            await mongoose.disconnect();
+            return;
         }
 
-        process.exit();
-    } catch (error) {
-        console.error('Error:', error);
-        process.exit(1);
-    }
-};
+        console.log('Admin found:', admin.email);
+        console.log('Stored password hash:', admin.password);
 
-verifyAndReset();
+        // Test password
+        const testPassword = 'admin123';
+        const isMatch = await bcrypt.compare(testPassword, admin.password);
+
+        console.log('\nPassword test:');
+        console.log('Testing password:', testPassword);
+        console.log('Match result:', isMatch ? '✅ CORRECT' : '❌ WRONG');
+
+        await mongoose.disconnect();
+    } catch (error) {
+        console.error('Error:', error.message);
+    }
+}
+
+verifyPassword();

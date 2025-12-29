@@ -67,13 +67,13 @@ export default function DashboardHome({ stats }: DashboardHomeProps) {
         avgRiderRating: 0
     };
 
-    const displayStats = stats || defaultStats;
+    const displayStats = { ...defaultStats, ...(stats || {}) };
 
     const widgets = [
         {
             label: 'Total Revenue (Today)',
-            value: `Rs ${displayStats.todayRevenue.toLocaleString()}`,
-            subValue: `Rs ${displayStats.totalRevenue.toLocaleString()}`,
+            value: `Rs ${(displayStats.todayRevenue || 0).toLocaleString()}`,
+            subValue: `Rs ${(displayStats.totalRevenue || 0).toLocaleString()}`,
             subLabel: 'Total Revenue',
             icon: FaMoneyBillWave,
             color: 'bg-green-100 text-green-600',
@@ -110,9 +110,9 @@ export default function DashboardHome({ stats }: DashboardHomeProps) {
     ];
 
     const pieData = [
-        { name: 'Delivered', value: displayStats.orderStatusDist.delivered },
-        { name: 'In Progress', value: displayStats.orderStatusDist.inProgress },
-        { name: 'Cancelled', value: displayStats.orderStatusDist.cancelled },
+        { name: 'Delivered', value: displayStats.orderStatusDist?.delivered || 0 },
+        { name: 'In Progress', value: displayStats.orderStatusDist?.inProgress || 0 },
+        { name: 'Cancelled', value: displayStats.orderStatusDist?.cancelled || 0 },
     ];
 
     return (
@@ -161,7 +161,7 @@ export default function DashboardHome({ stats }: DashboardHomeProps) {
                     </div>
                     <div className="h-80">
                         <ResponsiveContainer width="100%" height="100%">
-                            <LineChart data={displayStats.revenueStats}>
+                            <LineChart data={displayStats.revenueStats || []}>
                                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#E5E7EB" />
                                 <XAxis
                                     dataKey="date"
@@ -219,7 +219,7 @@ export default function DashboardHome({ stats }: DashboardHomeProps) {
                         <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
                             <div className="text-center">
                                 <p className="text-2xl font-bold text-gray-800">
-                                    {Math.round((displayStats.orderStatusDist.delivered / (displayStats.totalOrders || 1)) * 100)}%
+                                    {Math.round(((displayStats.orderStatusDist?.delivered || 0) / (displayStats.totalOrders || 1)) * 100)}%
                                 </p>
                                 <p className="text-xs text-gray-500">Completed</p>
                             </div>
@@ -236,7 +236,7 @@ export default function DashboardHome({ stats }: DashboardHomeProps) {
                         <button className="text-sm text-orange-500 font-medium hover:text-orange-600">View All</button>
                     </div>
                     <div className="space-y-4">
-                        {displayStats.topRestaurants.map((restaurant, index) => (
+                        {(displayStats.topRestaurants || []).map((restaurant, index) => (
                             <div key={index} className="flex items-center justify-between p-3 hover:bg-gray-50 rounded-xl transition-colors">
                                 <div className="flex items-center gap-4">
                                     <div className={`w-8 h-8 rounded-lg flex items-center justify-center text-white font-bold text-sm
@@ -256,7 +256,7 @@ export default function DashboardHome({ stats }: DashboardHomeProps) {
                                 </div>
                             </div>
                         ))}
-                        {displayStats.topRestaurants.length === 0 && (
+                        {(displayStats.topRestaurants || []).length === 0 && (
                             <div className="text-center py-8 text-gray-500">No data available</div>
                         )}
                     </div>
@@ -269,7 +269,7 @@ export default function DashboardHome({ stats }: DashboardHomeProps) {
                         <button className="text-sm text-orange-500 font-medium hover:text-orange-600">View All</button>
                     </div>
                     <div className="space-y-6">
-                        {displayStats.recentActivity.map((activity, index) => (
+                        {(displayStats.recentActivity || []).map((activity, index) => (
                             <div key={index} className="flex gap-4">
                                 <div className={`w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0
                                     ${activity.type === 'order' ? 'bg-green-100 text-green-500' :

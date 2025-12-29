@@ -7,11 +7,25 @@ const path = require('path');
 // or we can parse the JSON content from an env var if they prefer.
 
 const serviceAccountPath = process.env.FIREBASE_SERVICE_ACCOUNT_PATH;
+const serviceAccountJson = process.env.FIREBASE_SERVICE_ACCOUNT_JSON;
 
 console.log('🔥 Firebase Admin SDK Initialization:');
 console.log('  FIREBASE_SERVICE_ACCOUNT_PATH:', serviceAccountPath);
 
-if (serviceAccountPath) {
+if (serviceAccountJson) {
+    try {
+        const serviceAccount = JSON.parse(serviceAccountJson);
+        admin.initializeApp({
+            credential: admin.credential.cert(serviceAccount)
+        });
+        console.log('✅ Firebase Admin SDK initialized from JSON env');
+    } catch (error) {
+        console.error("❌ Error parsing Firebase service account JSON env:");
+        console.error("  Error message:", error.message);
+        console.error("  Error stack:", error.stack);
+        console.warn("Server will start without Firebase authentication.");
+    }
+} else if (serviceAccountPath) {
     try {
         // Resolve the path relative to the backend directory
         const resolvedPath = path.resolve(__dirname, '..', serviceAccountPath);

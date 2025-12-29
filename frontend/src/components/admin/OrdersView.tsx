@@ -51,7 +51,8 @@ export default function OrdersView() {
                 headers: { Authorization: `Bearer ${token}` }
             });
             // Filter only live orders
-            const live = res.data.filter((o: any) =>
+            const data = Array.isArray(res.data) ? res.data : (res.data?.orders || []);
+            const live = data.filter((o: any) =>
                 ['Pending', 'Confirmed', 'Preparing', 'Ready', 'Picked Up', 'On the Way'].includes(o.status)
             );
             setOrders(live);
@@ -63,10 +64,10 @@ export default function OrdersView() {
     };
 
     const stats = {
-        live: orders.length,
-        preparing: orders.filter(o => o.status === 'Preparing' || o.status === 'Confirmed').length,
-        outForDelivery: orders.filter(o => o.status === 'On the Way' || o.status === 'Picked Up').length,
-        totalValue: orders.reduce((acc, curr) => acc + (curr.totalAmount || 0), 0)
+        live: orders?.length || 0,
+        preparing: Array.isArray(orders) ? orders.filter(o => o.status === 'Preparing' || o.status === 'Confirmed').length : 0,
+        outForDelivery: Array.isArray(orders) ? orders.filter(o => o.status === 'On the Way' || o.status === 'Picked Up').length : 0,
+        totalValue: Array.isArray(orders) ? orders.reduce((acc, curr) => acc + (curr.totalAmount || 0), 0) : 0
     };
 
     const getStatusColor = (status: string) => {

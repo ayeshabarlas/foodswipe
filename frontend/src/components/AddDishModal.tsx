@@ -100,9 +100,10 @@ export default function AddDishModal({ isOpen, onClose, onSubmit, editingDish }:
             const { data } = await axios.post(`${API_BASE_URL}/api/upload`, uploadData, config);
             const absoluteUrl = `${API_BASE_URL}${data.imageUrl}`;
             setFormData(prev => ({ ...prev, [field]: absoluteUrl }));
-        } catch (error) {
+        } catch (error: any) {
             console.error('File upload error:', error);
-            alert('Failed to upload file');
+            const msg = error.response?.data?.message || 'Failed to upload file';
+            alert(msg);
         } finally {
             setUploading(false);
         }

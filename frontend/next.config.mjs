@@ -16,6 +16,18 @@ const nextConfig = {
             }
         ],
     },
+    async redirects() {
+        if (process.env.ADMIN_ONLY === 'true') {
+            return [
+                {
+                    source: '/',
+                    destination: '/admin',
+                    permanent: false,
+                },
+            ];
+        }
+        return [];
+    },
     async headers() {
         return [
             {

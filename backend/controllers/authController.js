@@ -22,8 +22,8 @@ const generateToken = (id) => {
  */
 const registerUser = async (req, res) => {
     const { name, email, password, phone, role } = req.body;
-    if (!name || !email || !phone) {
-        return res.status(400).json({ message: 'Name, email and phone are required' });
+    if (!name || !email) {
+        return res.status(400).json({ message: 'Name and email are required' });
     }
     try {
         if (useMock) {
@@ -32,15 +32,22 @@ const registerUser = async (req, res) => {
             if (emailExists || phoneExists) {
                 return res.status(400).json({ message: 'User with given email or phone already exists' });
             }
-            const user = await User.create({ name, email, password: password || '', phone, role: role || 'customer' });
+            const user = await mockDb.users.create({ name, email, password: password || '', phone, role: role || 'customer' });
             return res.status(201).json({ _id: user._id, name: user.name, email: user.email, phone: user.phone, role: user.role, token: generateToken(user._id) });
         }
         const emailExists = await User.findOne({ email, role: role || 'customer' });
-        const phoneExists = await User.findOne({ phone, role: role || 'customer' });
-        if (emailExists || phoneExists) {
-            return res.status(400).json({ message: 'User with given email or phone already exists for this role' });
+        if (emailExists) {
+            console.log(`Registration failed: User exists for role ${role || 'customer'}`, { email });
+            return res.status(400).json({ message: 'User with given email already exists for this role' });
+        }
+        if (phone) {
+            const phoneExists = await User.findOne({ phone, role: role || 'customer' });
+            if (phoneExists) {
+                return res.status(400).json({ message: 'User with given phone already exists for this role' });
+            }
         }
         const user = await User.create({ name, email, password: password || '', phone, role: role || 'customer' });
+        console.log(`User registered: id=${user._id}, role=${user.role}`);
         return res.status(201).json({ _id: user._id, name: user.name, email: user.email, phone: user.phone, phoneVerified: user.phoneVerified, role: user.role, token: generateToken(user._id) });
     } catch (err) {
         return res.status(500).json({ message: err.message });
@@ -71,16 +78,28 @@ const loginUser = async (req, res) => {
         // Strict Role-Based Login: identifier + role must match in User collection
         // Admins are now in their own Admin collection and will use /api/admin/login
         const query = {
-            $or: [{ email: identifier }, { phone: identifier }],
-            role: role || 'customer'
+            $or: [
+                { email: identifier },
+                { phone: identifier },
+                { phoneNumber: identifier }
+            ],
+            role: role // Mandatory role match
         };
 
+        // If no role provided, default to 'customer' but strictly enforce it
+        if (!role) {
+            query.role = 'customer';
+        }
+
+        console.log('Login attempt query:', JSON.stringify(query));
         const user = await User.findOne(query);
 
         if (!user) {
             console.log(`Login failed: No user found for ${identifier} with role ${role}`);
-            return res.status(401).json({ message: 'Account not found for this role' });
+            return res.status(401).json({ message: 'Account not found for this role. If you registered as a different role, please select it and try again.' });
         }
+
+        console.log('User found for login:', { id: user._id, email: user.email, role: user.role });
 
         // If a password is stored, verify it; otherwise allow login (e.g., OTP‑only accounts)
         if (user.password && user.password.length > 0) {
@@ -113,6 +132,11 @@ const getMe = async (req, res) => {
             return res.status(200).json(user);
         }
         const user = await User.findById(req.user.id);
+        if (!user) {
+            console.log(`getMe: User not found for ID ${req.user.id}`);
+            return res.status(404).json({ message: 'User not found' });
+        }
+        console.log('getMe returning user:', { id: user._id, email: user.email, role: user.role });
         return res.status(200).json(user);
     } catch (err) {
         return res.status(500).json({ message: err.message });
@@ -155,18 +179,29 @@ const verifyOtp = async (req, res) => {
             return res.status(400).json({ message: 'Invalid or expired OTP' });
         }
         await Otp.deleteOne({ phone });
-        let user = await User.findOne({ phone });
+
+        const requestedRole = role || 'customer';
+        // Check for existing user with this phone AND requested role
+        let user = await User.findOne({
+            $or: [{ phone }, { phoneNumber: phone }],
+            role: requestedRole
+        });
+
         let type = 'login';
         if (!user) {
             if (!name || !email) {
+                console.log(`VerifyOtp failed: Signup incomplete for ${phone} role ${requestedRole}`);
                 return res.status(400).json({ message: 'Name and email required for signup' });
             }
-            const emailExists = await User.findOne({ email, role: role || 'customer' });
+            const emailExists = await User.findOne({ email, role: requestedRole });
             if (emailExists) {
-                return res.status(400).json({ message: 'Email already in use' });
+                return res.status(400).json({ message: 'Email already in use for this role' });
             }
-            user = await User.create({ name, email, phone, password: password || '', role: role || 'customer' });
+            user = await User.create({ name, email, phone, password: password || '', role: requestedRole });
+            console.log(`User created via OTP: id=${user._id}, role=${user.role}`);
             type = 'signup';
+        } else {
+            console.log(`User logged in via OTP: id=${user._id}, role=${user.role}`);
         }
         return res.json({ verified: true, type, token: generateToken(user._id), user: { _id: user._id, name: user.name, email: user.email, phone: user.phone, role: user.role } });
     } catch (err) {
@@ -194,6 +229,7 @@ const verifyPhone = async (req, res) => {
 
         // Update user's phone verification status
         user.phoneNumber = phoneNumber;
+        user.phone = phoneNumber; // Sync both fields
         user.phoneVerified = true;
         user.phoneVerifiedAt = new Date();
         await user.save();
@@ -225,19 +261,19 @@ const verifyFirebaseToken = async (req, res) => {
         const decoded = await admin.auth().verifyIdToken(idToken);
         console.log('Token decoded:', decoded);
         const verifiedPhone = decoded.phone_number || phone;
+        const requestedRole = req.body.role || 'customer';
+
         // Try to find user by phone if available, otherwise by email (and role if provided)
         let user = null;
         if (verifiedPhone) {
-            // If role is provided, look for user with that phone AND role
-            if (req.body.role) {
-                user = await User.findOne({ phone: verifiedPhone, role: req.body.role });
-            } else {
-                // Fallback for legacy/unspecified role - might be ambiguous
-                user = await User.findOne({ phone: verifiedPhone });
-            }
+            // Check both phone and phoneNumber fields
+            user = await User.findOne({
+                $or: [{ phone: verifiedPhone }, { phoneNumber: verifiedPhone }],
+                role: requestedRole
+            });
         }
         if (!user && email) {
-            user = await User.findOne({ email, role: req.body.role || 'customer' });
+            user = await User.findOne({ email, role: requestedRole });
         }
         let type = 'login';
         if (!user) {

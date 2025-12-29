@@ -8,14 +8,15 @@ import { API_BASE_URL } from "@/utils/config";
 import { useRouter } from "next/navigation";
 import { signInWithPopup } from "firebase/auth";
 import { auth, googleProvider } from "../config/firebase";
-import PhoneInput from './PhoneInput';
+// Removed PhoneInput import as we are removing phone requirement
+// import PhoneInput from './PhoneInput';
 
 interface LoginScreenProps {
-    onLogin: () => void;
+    onLogin: (data: any) => void;
 }
 
 type Step = "method" | "signup" | "login" | "otp";
-type LoginMethod = "phone" | "email";
+type LoginMethod = "email"; // Removed 'phone' method for simplicity as per request
 type Role = "customer" | "restaurant" | "rider";
 
 export default function LoginScreen({ onLogin }: LoginScreenProps) {
@@ -26,16 +27,18 @@ export default function LoginScreen({ onLogin }: LoginScreenProps) {
         firstName: "",
         lastName: "",
         email: "",
-        phone: "",
         password: "",
-        confirmPassword: "",
-        otp: "",
+        // Removed phone, confirmPassword, otp
     });
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState("");
-    const [resendTimer, setResendTimer] = useState(30);
-    const [canResend, setCanResend] = useState(false);
     const router = useRouter();
+
+    useEffect(() => {
+        // Clear any stale session data when login screen appears
+        localStorage.removeItem("userInfo");
+        localStorage.removeItem("token");
+    }, []);
 
     const handleGoogleSignIn = async () => {
         try {
@@ -58,95 +61,30 @@ export default function LoginScreen({ onLogin }: LoginScreenProps) {
                 role: selectedRole
             });
 
-            console.log('Backend response:', response.data);
+            const userResponse = response.data.user;
+            const userInfo = { ...userResponse, token: response.data.token };
 
-            // Backend returns: { verified, type, token, user }
-            const userInfo = { ...response.data.user, token: response.data.token };
+            if (!userInfo.role && selectedRole) {
+                userInfo.role = selectedRole;
+            }
+
             localStorage.setItem('userInfo', JSON.stringify(userInfo));
             localStorage.setItem('token', response.data.token);
 
-            console.log('✅ Google sign-in successful. Token stored:', response.data.token);
-            console.log('Calling onLogin()...');
-            onLogin();
+            setTimeout(() => onLogin(userInfo), 100);
         } catch (error: any) {
             console.error('Google sign-in error:', error);
             setLoading(false);
-
-            if (error.code === 'auth/popup-blocked') {
-                setError('Popup was blocked! Please allow popups for this site and try again.');
-                alert('⚠️ POPUP BLOCKED\n\nPlease allow popups for this site:\n1. Click the popup blocker icon in your address bar\n2. Select "Always allow popups from localhost:3000"\n3. Try signing in again');
-            } else if (error.code === 'auth/cancelled-popup-request' || error.code === 'auth/popup-closed-by-user') {
-                setError('Sign-in was cancelled. Please try again.');
-            } else if (error.response?.data?.message) {
+            if (error.response?.data?.message) {
                 setError(error.response.data.message);
-                alert('Backend Error: ' + error.response.data.message);
             } else {
-                setError(error.message || 'Google sign-in failed. Please try again.');
-                alert('Google Sign-In Error: ' + (error.message || 'Unknown error'));
+                setError(error.message || 'Google sign-in failed.');
             }
         }
     };
 
-    // OTP resend timer
-    useEffect(() => {
-        let interval: NodeJS.Timeout | null = null;
-        if (step === "otp" && resendTimer > 0) {
-            interval = setInterval(() => setResendTimer((t) => t - 1), 1000);
-        } else if (resendTimer === 0) {
-            setCanResend(true);
-        }
-        return () => {
-            if (interval) clearInterval(interval);
-        };
-    }, [step, resendTimer]);
-
     const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         setFormData({ ...formData, [e.target.name]: e.target.value });
-    };
-
-    const handleVerifyOtp = async (e: React.FormEvent) => {
-        e.preventDefault();
-        setError("");
-        setLoading(true);
-        try {
-            const res = await axios.post(`${API_BASE_URL}/api/auth/verify-otp`, {
-                phone: formData.phone,
-                otp: formData.otp,
-                name: `${formData.firstName} ${formData.lastName}`,
-                email: formData.email,
-                role: selectedRole,
-            });
-
-            // Backend returns: { verified, type, token, user }
-            const userInfo = { ...res.data.user, token: res.data.token };
-            localStorage.setItem("userInfo", JSON.stringify(userInfo));
-            localStorage.setItem("token", res.data.token);
-
-            console.log("✅ OTP verified. Token stored:", res.data.token);
-            onLogin();
-        } catch (err: any) {
-            console.error("OTP verification error:", err);
-            setError(err.response?.data?.message || "Failed to verify OTP");
-        } finally {
-            setLoading(false);
-        }
-    };
-
-    const handleResendOtp = async () => {
-        setError("");
-        setLoading(true);
-        try {
-            await axios.post(`${API_BASE_URL}/api/auth/send-otp`, {
-                phone: formData.phone,
-            });
-            setResendTimer(30);
-            setCanResend(false);
-        } catch (err: any) {
-            console.error("Resend OTP error:", err);
-            setError(err.response?.data?.message || "Failed to resend OTP");
-        } finally {
-            setLoading(false);
-        }
     };
 
     const handleSignup = async (e: React.FormEvent) => {
@@ -154,34 +92,28 @@ export default function LoginScreen({ onLogin }: LoginScreenProps) {
         setError("");
         setLoading(true);
         try {
-            if (!formData.password || !formData.confirmPassword) {
-                setError("Password and confirmation are required.");
+            if (!formData.password) {
+                setError("Password is required.");
                 setLoading(false);
                 return;
             }
-            if (formData.password !== formData.confirmPassword) {
-                setError("Passwords do not match.");
-                setLoading(false);
-                return;
-            }
-            // Direct register without OTP
+
+            // Direct register without OTP or Phone
             const res = await axios.post(`${API_BASE_URL}/api/auth/register`, {
                 name: `${formData.firstName} ${formData.lastName}`,
                 email: formData.email,
                 password: formData.password,
-                phone: formData.phone,
                 role: selectedRole,
             });
 
-            // Backend returns: { _id, name, email, phone, role, token }
             const { token, ...userData } = res.data;
             const userInfo = { ...userData, token };
 
             localStorage.setItem("userInfo", JSON.stringify(userInfo));
             localStorage.setItem("token", token);
 
-            console.log("✅ Signup successful. Token stored:", token);
-            onLogin();
+            console.log("✅ Signup successful.");
+            onLogin(userInfo);
         } catch (err: any) {
             console.error("Signup error:", err);
             setError(err.response?.data?.message || "Failed to sign up");
@@ -199,27 +131,20 @@ export default function LoginScreen({ onLogin }: LoginScreenProps) {
                 setError("Password is required for login");
                 return;
             }
-            const identifier = loginMethod === "email" ? formData.email : formData.phone;
-            if (!identifier) {
-                setError(`Please provide ${loginMethod === "email" ? "email" : "phone number"}`);
-                return;
-            }
             const res = await axios.post(`${API_BASE_URL}/api/auth/login`, {
-                identifier,
+                identifier: formData.email,
                 password: formData.password,
                 role: selectedRole,
             });
 
-            // Backend returns: { _id, name, email, phone, role, token }
-            // We need to store it properly
             const { token, ...userData } = res.data;
             const userInfo = { ...userData, token };
 
             localStorage.setItem("userInfo", JSON.stringify(userInfo));
             localStorage.setItem("token", token);
 
-            console.log("✅ Login successful. Token stored:", token);
-            onLogin();
+            console.log("✅ Login successful.");
+            setTimeout(() => onLogin(userInfo), 100);
         } catch (err: any) {
             console.error("Login error:", err);
             setError(err.response?.data?.message || "Failed to login");
@@ -237,30 +162,20 @@ export default function LoginScreen({ onLogin }: LoginScreenProps) {
                 className="w-full max-w-md"
             >
                 {/* Header */}
-                {step !== "otp" && (
-                    <div className="text-center text-white mb-8">
-                        <h1 className="text-4xl font-bold mb-2">
-                            {step === "method" ? "Welcome Back!" : step === "signup" ? "Sign Up" : "Login"}
-                        </h1>
-                        <p className="text-white/90 text-sm">
-                            {step === "method" ? "Login to continue" : step === "signup" ? "Create your account" : "Enter your credentials"}
-                        </p>
-                    </div>
-                )}
+                <div className="text-center text-white mb-8">
+                    <h1 className="text-4xl font-bold mb-2">
+                        {step === "method" ? "Welcome Back!" : step === "signup" ? "Sign Up" : "Login"}
+                    </h1>
+                    <p className="text-white/90 text-sm">
+                        {step === "method" ? "Login to continue" : step === "signup" ? "Create your account" : "Enter your credentials"}
+                    </p>
+                </div>
 
                 {/* Main Card */}
                 <div className="bg-white rounded-3xl shadow-2xl overflow-hidden p-8">
-                    {step !== "method" && step !== "otp" && (
+                    {step !== "method" && (
                         <button
-                            onClick={() => setStep(step === "signup" ? "method" : "signup")}
-                            className="mb-4 text-gray-400 hover:text-gray-600 flex items-center gap-2 text-sm"
-                        >
-                            <FaArrowLeft /> Back
-                        </button>
-                    )}
-                    {step === "otp" && (
-                        <button
-                            onClick={() => setStep("signup")}
+                            onClick={() => setStep("method")}
                             className="mb-4 text-gray-400 hover:text-gray-600 flex items-center gap-2 text-sm"
                         >
                             <FaArrowLeft /> Back
@@ -342,7 +257,7 @@ export default function LoginScreen({ onLogin }: LoginScreenProps) {
                                         </button>
                                         <button
                                             type="button"
-                                            onClick={() => setStep("signup")}
+                                            onClick={() => setStep("login")}
                                             className="w-full flex items-center justify-center gap-3 py-3 px-4 bg-white border border-gray-200 text-gray-700 font-medium rounded-full hover:bg-gray-50 transition shadow-sm"
                                         >
                                             <FaEnvelope className="text-gray-500" /> Continue with Email
@@ -398,29 +313,12 @@ export default function LoginScreen({ onLogin }: LoginScreenProps) {
                                         required
                                     />
                                 </div>
-                                <PhoneInput
-                                    value={formData.phone}
-                                    onChange={(value) => setFormData({ ...formData, phone: value })}
-                                    placeholder="300 1234567"
-                                    required
-                                />
                                 <div className="relative group">
                                     <input
                                         type="password"
                                         name="password"
                                         placeholder="Password"
                                         value={formData.password}
-                                        onChange={handleChange}
-                                        className="w-full rounded-full border border-gray-200 bg-white pl-4 pr-4 py-3 text-gray-700 placeholder-gray-400 outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-500 transition-all"
-                                        required
-                                    />
-                                </div>
-                                <div className="relative group">
-                                    <input
-                                        type="password"
-                                        name="confirmPassword"
-                                        placeholder="Confirm Password"
-                                        value={formData.confirmPassword}
                                         onChange={handleChange}
                                         className="w-full rounded-full border border-gray-200 bg-white pl-4 pr-4 py-3 text-gray-700 placeholder-gray-400 outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-500 transition-all"
                                         required
@@ -470,57 +368,19 @@ export default function LoginScreen({ onLogin }: LoginScreenProps) {
                                     </div>
                                 </div>
 
-                                <div className="flex gap-2 bg-gray-100 p-1 rounded-full">
-                                    <button
-                                        type="button"
-                                        onClick={() => setLoginMethod("email")}
-                                        className={`flex-1 py-2 px-4 rounded-full text-sm font-medium transition-all ${loginMethod === "email"
-                                            ? "bg-white text-orange-500 shadow-sm"
-                                            : "text-gray-600 hover:text-gray-800"
-                                            }`}
-                                    >
-                                        Email
-                                    </button>
-                                    <button
-                                        type="button"
-                                        onClick={() => setLoginMethod("phone")}
-                                        className={`flex-1 py-2 px-4 rounded-full text-sm font-medium transition-all ${loginMethod === "phone"
-                                            ? "bg-white text-orange-500 shadow-sm"
-                                            : "text-gray-600 hover:text-gray-800"
-                                            }`}
-                                    >
-                                        Phone
-                                    </button>
-                                </div>
-
                                 <form onSubmit={handleLogin} className="flex flex-col gap-4">
-                                    {loginMethod === "email" ? (
-                                        <div className="relative group">
-                                            <FaEnvelope className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-orange-500 transition-colors" />
-                                            <input
-                                                type="email"
-                                                name="email"
-                                                placeholder="Email address"
-                                                value={formData.email}
-                                                onChange={handleChange}
-                                                className="w-full rounded-full border border-gray-200 bg-white pl-12 pr-4 py-3 text-gray-700 placeholder-gray-400 outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-500 transition-all"
-                                                required
-                                            />
-                                        </div>
-                                    ) : (
-                                        <div className="relative group">
-                                            <FaPhone className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-orange-500 transition-colors" />
-                                            <input
-                                                type="tel"
-                                                name="phone"
-                                                placeholder="Phone Number (e.g. 03xx)"
-                                                value={formData.phone}
-                                                onChange={handleChange}
-                                                className="w-full rounded-full border border-gray-200 bg-white pl-12 pr-4 py-3 text-gray-700 placeholder-gray-400 outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-500 transition-all"
-                                                required
-                                            />
-                                        </div>
-                                    )}
+                                    <div className="relative group">
+                                        <FaEnvelope className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-orange-500 transition-colors" />
+                                        <input
+                                            type="email"
+                                            name="email"
+                                            placeholder="Email address"
+                                            value={formData.email}
+                                            onChange={handleChange}
+                                            className="w-full rounded-full border border-gray-200 bg-white pl-12 pr-4 py-3 text-gray-700 placeholder-gray-400 outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-500 transition-all"
+                                            required
+                                        />
+                                    </div>
                                     <div className="relative group">
                                         <input
                                             type="password"
@@ -554,73 +414,8 @@ export default function LoginScreen({ onLogin }: LoginScreenProps) {
                                 </form>
                             </motion.div>
                         )}
-
-                        {step === "otp" && (
-                            <motion.form
-                                key="otp"
-                                initial={{ opacity: 0, x: 20 }}
-                                animate={{ opacity: 1, x: 0 }}
-                                exit={{ opacity: 0, x: -20 }}
-                                onSubmit={handleVerifyOtp}
-                                className="flex flex-col gap-4"
-                            >
-                                <div className="text-center mb-2">
-                                    <h2 className="text-2xl font-bold text-gray-800 mb-2">Verification</h2>
-                                    <p className="text-sm text-gray-500">Enter the code sent to {formData.phone}</p>
-                                </div>
-                                <div className="text-center mb-2">
-                                    <input
-                                        type="text"
-                                        name="otp"
-                                        placeholder="• • • •"
-                                        maxLength={4}
-                                        value={formData.otp}
-                                        onChange={handleChange}
-                                        className="w-full text-center text-3xl tracking-[1em] font-bold py-4 border-b-2 border-gray-200 focus:border-orange-500 outline-none bg-transparent transition-all"
-                                        autoFocus
-                                        required
-                                    />
-                                </div>
-                                <button
-                                    type="submit"
-                                    disabled={loading}
-                                    className="w-full py-3 bg-gradient-to-r from-orange-500 to-pink-500 text-white font-bold rounded-full shadow-lg hover:shadow-xl active:scale-95 transition-all disabled:opacity-50 mt-2"
-                                >
-                                    {loading ? "Verifying..." : "Verify & Login"}
-                                </button>
-                                <div className="text-center mt-4">
-                                    <p className="text-sm text-gray-500">
-                                        Didn't receive code?{" "}
-                                        {canResend ? (
-                                            <button
-                                                type="button"
-                                                onClick={handleResendOtp}
-                                                className="text-orange-500 font-bold hover:underline"
-                                            >
-                                                Resend
-                                            </button>
-                                        ) : (
-                                            <span className="text-gray-400">Resend in {resendTimer}s</span>
-                                        )}
-                                    </p>
-                                </div>
-                            </motion.form>
-                        )}
                     </AnimatePresence>
                 </div>
-
-                {step === "method" && (
-                    <motion.p
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                        transition={{ delay: 0.3 }}
-                        className="text-center text-white/90 text-xs mt-6"
-                    >
-                        By continuing, you agree to our{" "}
-                        <span className="underline cursor-pointer">Terms</span> &{" "}
-                        <span className="underline cursor-pointer">Privacy Policy</span>
-                    </motion.p>
-                )}
             </motion.div>
         </div>
     );

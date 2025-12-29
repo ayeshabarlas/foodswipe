@@ -78,7 +78,12 @@ export default function RestaurantsView() {
             const res = await axios.get(`${API_BASE_URL}/api/admin/restaurants`, {
                 headers: { Authorization: `Bearer ${token}` }
             });
-            setRestaurants(res.data);
+            const data = res.data;
+            // Handle if data is wrapped in an object or is the array directly
+            const restaurantList = Array.isArray(data) ? data : (Array.isArray(data.restaurants) ? data.restaurants : []);
+
+            console.log('Fetched restaurants:', restaurantList);
+            setRestaurants(restaurantList);
         } catch (error) {
             console.error('Error fetching restaurants:', error);
         } finally {
@@ -157,13 +162,13 @@ export default function RestaurantsView() {
     };
 
     const stats = {
-        total: restaurants.length,
-        online: restaurants.filter(r => r.isActive && r.verificationStatus === 'approved').length,
-        pending: restaurants.filter(r => r.verificationStatus === 'pending').length,
-        commission: restaurants.reduce((acc, curr) => acc + (curr.revenue * 0.1), 0)
+        total: restaurants?.length || 0,
+        online: Array.isArray(restaurants) ? restaurants.filter(r => r.isActive && r.verificationStatus === 'approved').length : 0,
+        pending: Array.isArray(restaurants) ? restaurants.filter(r => r.verificationStatus === 'pending').length : 0,
+        commission: Array.isArray(restaurants) ? restaurants.reduce((acc, curr) => acc + (curr.revenue * 0.1), 0) : 0
     };
 
-    const filteredRestaurants = restaurants.filter(r => {
+    const filteredRestaurants = Array.isArray(restaurants) ? restaurants.filter(r => {
         const matchesSearch = r.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
             r.owner?.name.toLowerCase().includes(searchTerm.toLowerCase());
 
@@ -173,7 +178,7 @@ export default function RestaurantsView() {
         if (filter === 'offline') matchesFilter = !r.isActive || r.verificationStatus !== 'approved';
 
         return matchesSearch && matchesFilter;
-    });
+    }) : [];
 
     if (loading) {
         return (

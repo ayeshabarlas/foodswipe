@@ -57,8 +57,8 @@ const createRestaurant = async (req, res) => {
             verificationStatus: 'pending' // Set to pending immediately upon creation
         });
 
-        // Update user role to restaurant
-        if (req.user.role !== 'restaurant') {
+        // Update user role to restaurant (preserve admin role)
+        if (req.user.role !== 'restaurant' && req.user.role !== 'admin') {
             await User.findByIdAndUpdate(req.user._id, { role: 'restaurant' });
         }
 

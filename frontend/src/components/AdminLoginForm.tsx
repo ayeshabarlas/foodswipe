@@ -20,19 +20,32 @@ export default function AdminLoginForm() {
         setError('');
 
         try {
+            console.log('=== ADMIN LOGIN ATTEMPT ===');
+            console.log('Email:', email);
+            console.log('Password length:', password.length);
             const { data } = await axios.post(`${API_BASE_URL}/api/admin/login`, {
-                identifier: email,
+                identifier: email.trim(),
                 password
             });
 
-            if (data.isAdmin || data.role.includes('admin')) {
+            console.log('Login response:', data);
+
+            // Safer check for admin role
+            const isAdmin = data.isAdmin || (data.role && data.role.includes && data.role.includes('admin')) || data.role === 'admin' || data.role === 'super-admin';
+
+            if (isAdmin) {
                 localStorage.setItem('userInfo', JSON.stringify(data));
                 localStorage.setItem('token', data.token);
                 router.push('/admin');
             } else {
-                setError('You are not authorized as an admin');
+                console.error('Authorization failed. Data:', data);
+                // Debugging: show what we got
+                const debugInfo = JSON.stringify(data);
+                setError(`Not authorized. Got: ${debugInfo.substring(0, 100)}...`);
             }
         } catch (err: any) {
+            console.error('Login error:', err);
+            console.error('Error response:', err.response?.data);
             setError(err.response?.data?.message || 'Invalid email or password');
         } finally {
             setLoading(false);
@@ -109,6 +122,15 @@ export default function AdminLoginForm() {
                         {loading ? 'Signing In...' : 'Sign In'}
                     </button>
                 </form>
+
+                <div className="mt-6 text-center">
+                    <p className="text-gray-600 text-sm">
+                        Don't have an admin account?{' '}
+                        <Link href="/admin/register" className="text-orange-500 font-bold hover:text-orange-600">
+                            Create Account
+                        </Link>
+                    </p>
+                </div>
 
                 <div className="mt-8 pt-6 border-t border-gray-100">
                     <p className="text-xs text-gray-500 font-medium mb-3">Admin Roles:</p>

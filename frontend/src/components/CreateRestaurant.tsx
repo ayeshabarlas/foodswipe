@@ -61,8 +61,12 @@ export default function CreateRestaurant({ onRestaurantCreated }: CreateRestaura
             const uploadPromises = Array.from(files).map(async (file) => {
                 const data = new FormData();
                 data.append('file', file);
+                const token = JSON.parse(localStorage.getItem('userInfo') || '{}').token;
                 const res = await axios.post(`${API_BASE_URL}/api/upload`, data, {
-                    headers: { 'Content-Type': 'multipart/form-data' }
+                    headers: {
+                        'Content-Type': 'multipart/form-data',
+                        Authorization: `Bearer ${token}`
+                    }
                 });
                 return `${API_BASE_URL}${res.data.imageUrl}`;
             });

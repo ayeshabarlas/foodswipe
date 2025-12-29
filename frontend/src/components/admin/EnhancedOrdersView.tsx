@@ -31,7 +31,7 @@ export default function EnhancedOrdersView() {
             const res = await axios.get(`${API_BASE_URL}/api/admin/orders`, {
                 headers: { Authorization: `Bearer ${token}` }
             });
-            setOrders(res.data);
+            setOrders(Array.isArray(res.data) ? res.data : (res.data?.orders || []));
         } catch (error) {
             console.error('Error fetching orders:', error);
         } finally {
@@ -40,18 +40,18 @@ export default function EnhancedOrdersView() {
     };
 
     const stats = {
-        totalOrders: orders.length,
-        totalRevenue: orders.reduce((acc, curr) => acc + curr.totalAmount, 0),
-        commission: orders.reduce((acc, curr) => acc + Math.round(curr.totalAmount * 0.1), 0),
-        avgOrderValue: orders.length > 0 ? Math.round(orders.reduce((acc, curr) => acc + curr.totalAmount, 0) / orders.length) : 0
+        totalOrders: orders?.length || 0,
+        totalRevenue: Array.isArray(orders) ? orders.reduce((acc, curr) => acc + (curr.totalAmount || 0), 0) : 0,
+        commission: Array.isArray(orders) ? orders.reduce((acc, curr) => acc + Math.round((curr.totalAmount || 0) * 0.1), 0) : 0,
+        avgOrderValue: (Array.isArray(orders) && orders.length > 0) ? Math.round(orders.reduce((acc, curr) => acc + (curr.totalAmount || 0), 0) / orders.length) : 0
     };
 
-    const filteredOrders = orders.filter(o => {
+    const filteredOrders = Array.isArray(orders) ? orders.filter(o => {
         const term = searchTerm.toLowerCase();
         return o._id.includes(term) ||
             o.user?.name.toLowerCase().includes(term) ||
             o.restaurant?.name.toLowerCase().includes(term);
-    });
+    }) : [];
 
     return (
         <div className="p-6">

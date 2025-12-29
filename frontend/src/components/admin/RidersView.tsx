@@ -48,7 +48,9 @@ export default function RidersView() {
             const res = await axios.get(`${API_BASE_URL}/api/admin/riders`, {
                 headers: { Authorization: `Bearer ${token}` }
             });
-            setRiders(res.data);
+            const data = res.data;
+            const ridersList = Array.isArray(data) ? data : (Array.isArray(data.riders) ? data.riders : []);
+            setRiders(ridersList);
         } catch (error) {
             console.error('Error fetching riders:', error);
         } finally {
@@ -95,13 +97,13 @@ export default function RidersView() {
     };
 
     const stats = {
-        total: riders.length,
-        online: riders.filter(r => r.isOnline).length,
-        deliveriesToday: riders.reduce((acc, curr) => acc + (curr.todayOrders || 0), 0),
-        cashCollected: riders.reduce((acc, curr) => acc + (curr.cashCollected || 0), 0)
+        total: riders?.length || 0,
+        online: Array.isArray(riders) ? riders.filter(r => r.isOnline).length : 0,
+        deliveriesToday: Array.isArray(riders) ? riders.reduce((acc, curr) => acc + (curr.todayOrders || 0), 0) : 0,
+        cashCollected: Array.isArray(riders) ? riders.reduce((acc, curr) => acc + (curr.cashCollected || 0), 0) : 0
     };
 
-    const filteredRiders = riders.filter(rider => {
+    const filteredRiders = Array.isArray(riders) ? riders.filter(rider => {
         const matchesSearch =
             (rider.user?.name?.toLowerCase() || '').includes(searchTerm.toLowerCase()) ||
             (rider.user?.phone || '').includes(searchTerm);
@@ -109,7 +111,7 @@ export default function RidersView() {
             (filter === 'Online' && rider.isOnline) ||
             (filter === 'Offline' && !rider.isOnline);
         return matchesSearch && matchesFilter;
-    });
+    }) : [];
 
     return (
         <div className="p-6">

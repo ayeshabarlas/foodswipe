@@ -37,8 +37,15 @@ export default function RiderRegistration({ onComplete }: RiderRegistrationProps
         setError('');
 
         try {
-            const token = JSON.parse(localStorage.getItem("userInfo") || "{}").token;
-            if (!token) throw new Error('Please login again.');
+            const userInfo = JSON.parse(localStorage.getItem("userInfo") || "{}");
+            const token = userInfo.token;
+
+            if (!token) {
+                // If we are in a registration flow, we might have just registered.
+                // But this component seems to expect an existing token.
+                // If the user hasn't registered (email/pass) yet, this component is being used prematurely.
+                throw new Error('Authentication required. Please create an account or login first.');
+            }
 
             const res = await axios.post(`${API_BASE_URL}/api/riders/register`, formData, {
                 headers: { Authorization: `Bearer ${token}` }

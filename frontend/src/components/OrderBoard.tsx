@@ -47,10 +47,12 @@ export default function OrderBoard({ restaurant }: OrderBoardProps) {
             const res = await axios.get(`${API_BASE_URL}/api/orders/restaurant/my-orders`, {
                 headers: { Authorization: `Bearer ${token}` }
             });
-            setOrders(res.data);
+            // Ensure we always set an array
+            setOrders(Array.isArray(res.data) ? res.data : []);
             setLoading(false);
         } catch (error) {
             console.error('Error fetching orders:', error);
+            setOrders([]); // Set empty array on error
             setLoading(false);
         }
     };
@@ -140,13 +142,14 @@ export default function OrderBoard({ restaurant }: OrderBoardProps) {
             case 'Cancelled': return 'bg-red-100 text-red-700';
             default: return 'bg-gray-100 text-gray-700';
         }
-    };
+    }
 
-    // Filter orders by status
-    const pendingOrders = orders.filter(o => o.status === 'Pending');
-    const preparingOrders = orders.filter(o => ['Accepted', 'Preparing'].includes(o.status));
-    const readyOrders = orders.filter(o => o.status === 'Ready');
-    const completedOrders = orders.filter(o => ['OnTheWay', 'Picked Up', 'Delivered'].includes(o.status));
+    // Filter orders by status - ensure orders is an array
+    const ordersArray = Array.isArray(orders) ? orders : [];
+    const pendingOrders = ordersArray.filter(o => o.status === 'Pending');
+    const preparingOrders = ordersArray.filter(o => ['Accepted', 'Preparing'].includes(o.status));
+    const readyOrders = ordersArray.filter(o => o.status === 'Ready');
+    const completedOrders = ordersArray.filter(o => ['OnTheWay', 'Picked Up', 'Delivered'].includes(o.status));
 
     const renderOrderCard = (order: Order) => {
         const initials = getInitials(order.user?.name || 'Guest');

@@ -32,8 +32,8 @@ export default function VerificationsView({ initialTab = 'restaurants' }: { init
                 axios.get(`${API_BASE_URL}/api/verifications/riders`, config)
             ]);
 
-            setRestaurants(restaurantsRes.data);
-            setRiders(ridersRes.data);
+            setRestaurants(Array.isArray(restaurantsRes.data) ? restaurantsRes.data : (restaurantsRes.data?.restaurants || []));
+            setRiders(Array.isArray(ridersRes.data) ? ridersRes.data : (ridersRes.data?.riders || []));
         } catch (error) {
             console.error('Error fetching verifications:', error);
         } finally {
@@ -149,7 +149,7 @@ export default function VerificationsView({ initialTab = 'restaurants' }: { init
             ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                     {activeTab === 'restaurants' ? (
-                        restaurants.length > 0 ? (
+                        (Array.isArray(restaurants) && restaurants.length > 0) ? (
                             restaurants.map(r => <Card key={r._id} item={r} type="restaurant" />)
                         ) : (
                             <div className="col-span-full flex flex-col items-center justify-center h-64 text-gray-400">
@@ -158,7 +158,7 @@ export default function VerificationsView({ initialTab = 'restaurants' }: { init
                             </div>
                         )
                     ) : (
-                        riders.length > 0 ? (
+                        (Array.isArray(riders) && riders.length > 0) ? (
                             riders.map(r => <Card key={r._id} item={r} type="rider" />)
                         ) : (
                             <div className="col-span-full flex flex-col items-center justify-center h-64 text-gray-400">

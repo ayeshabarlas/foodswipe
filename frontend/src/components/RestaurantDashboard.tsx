@@ -68,9 +68,16 @@ export default function RestaurantDashboard() {
             const res = await axios.get(`${API_BASE_URL}/api/notifications`, {
                 headers: { Authorization: `Bearer ${token}` }
             });
-            setNotifications(res.data);
+            // Ensure data is an array before setting
+            if (Array.isArray(res.data)) {
+                setNotifications(res.data);
+            } else {
+                console.warn("Notifications API returned non-array:", res.data);
+                setNotifications([]);
+            }
         } catch (error) {
             console.error('Error fetching notifications:', error);
+            setNotifications([]); // Safety fallback
         }
     };
 
@@ -282,7 +289,7 @@ export default function RestaurantDashboard() {
                                 </div>
                                 <div className="bg-gray-800/50 rounded-lg p-2.5 text-center">
                                     <p className="text-xs text-gray-400 mb-0.5">Today</p>
-                                    <p className="font-bold text-green-400 text-sm">{stats.ready + stats.outForDelivery} orders</p>
+                                    <p className="font-bold text-green-400 text-sm">{(stats?.ready || 0) + (stats?.outForDelivery || 0)} orders</p>
                                 </div>
                             </div>
                         )}
@@ -383,10 +390,10 @@ export default function RestaurantDashboard() {
                             <div className="flex items-center gap-3 self-end sm:self-auto">
                                 <button
                                     onClick={() => setShowNotifications(!showNotifications)}
-                                    className="relative p-3 bg-white border border-gray-200 rounded-xl text-gray-500 hover:text-orange-600 hover:bg-orange-50 transition shadow-sm"
+                                    className="p-3 bg-white border border-gray-200 text-gray-600 rounded-xl hover:bg-orange-50 hover:text-orange-600 hover:border-orange-200 transition relative shadow-sm"
                                 >
                                     <FaBell className="text-xl" />
-                                    {notifications.some(n => !n.read) && (
+                                    {Array.isArray(notifications) && notifications.some(n => !n.read) && (
                                         <span className="absolute top-2 right-2 w-2.5 h-2.5 bg-red-500 rounded-full ring-2 ring-white animate-pulse"></span>
                                     )}
                                 </button>

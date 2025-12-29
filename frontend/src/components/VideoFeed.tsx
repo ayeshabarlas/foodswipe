@@ -347,10 +347,17 @@ export default function VideoFeed() {
     useEffect(() => {
         const fetchDishes = async () => {
             try {
+                console.log('📡 Fetching videos from:', `${API_BASE_URL}/api/videos/feed`);
                 const res = await axios.get(`${API_BASE_URL}/api/videos/feed`);
-                setDishes(res.data.videos);
-            } catch (error) {
-                console.error('Error fetching dishes:', error);
+                console.log('📡 Feed Response:', res.status, 'Videos:', res.data?.videos?.length);
+                if (res.data && res.data.videos) {
+                    setDishes(res.data.videos);
+                } else {
+                    console.warn('No videos found in feed response:', res.data);
+                    setDishes([]);
+                }
+            } catch (error: any) {
+                console.error('❌ Error fetching dishes:', error.message, error.response?.data);
             }
         };
         fetchDishes();
@@ -475,9 +482,9 @@ export default function VideoFeed() {
                 </button>
             </div>
             <div className="h-full w-full overflow-y-scroll snap-y snap-mandatory scroll-smooth no-scrollbar" onScroll={handleScroll}>
-                {dishes.map((dish, index) => {
+                {Array.isArray(dishes) && dishes.map((dish, index) => {
                     let distance: string | undefined;
-                    if (userLocation && dish.restaurant.location?.coordinates) {
+                    if (userLocation && dish.restaurant?.location?.coordinates) {
                         const [restLng, restLat] = dish.restaurant.location.coordinates;
                         distance = calculateDistance(userLocation.latitude, userLocation.longitude, restLat, restLng);
                     }

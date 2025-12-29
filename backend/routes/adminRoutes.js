@@ -17,9 +17,10 @@ const {
     unsuspendUser,
     deleteUser
 } = require('../controllers/adminController');
-const { loginAdmin, getAdminMe } = require('../controllers/adminAuthController');
+const { loginAdmin, getAdminMe, registerAdmin } = require('../controllers/adminAuthController');
 
-// Public route
+// Public routes
+router.post('/register', registerAdmin);
 router.post('/login', loginAdmin);
 
 // All other routes require admin authentication

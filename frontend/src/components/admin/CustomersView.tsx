@@ -37,7 +37,7 @@ export default function CustomersView() {
             const res = await axios.get(`${API_BASE_URL}/api/admin/users?role=customer`, {
                 headers: { Authorization: `Bearer ${token}` }
             });
-            setCustomers(res.data);
+            setCustomers(Array.isArray(res.data) ? res.data : (res.data?.users || []));
         } catch (error) {
             console.error('Error fetching customers:', error);
             // Fallback mock data for demo if API isn't ready
@@ -99,18 +99,18 @@ export default function CustomersView() {
     }, []);
 
     const stats = {
-        total: customers.length,
-        active: customers.filter(c => (c.status === 'active' || !c.status)).length, // Default to active
-        flagged: customers.filter(c => c.status === 'flagged').length,
-        totalOrders: customers.reduce((acc, curr) => acc + (curr.totalOrders || 0), 0)
+        total: customers?.length || 0,
+        active: Array.isArray(customers) ? customers.filter(c => (c.status === 'active' || !c.status)).length : 0, // Default to active
+        flagged: Array.isArray(customers) ? customers.filter(c => c.status === 'flagged').length : 0,
+        totalOrders: Array.isArray(customers) ? customers.reduce((acc, curr) => acc + (curr.totalOrders || 0), 0) : 0
     };
 
-    const filteredCustomers = customers.filter(c => {
+    const filteredCustomers = Array.isArray(customers) ? customers.filter(c => {
         const matchesSearch = c.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
             c.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
             c.phone?.includes(searchTerm);
         return matchesSearch;
-    });
+    }) : [];
 
     return (
         <div className="p-6">
