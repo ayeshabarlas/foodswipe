@@ -4,6 +4,8 @@ const cors = require('cors');
 const mongoose = require('mongoose');
 const connectDB = require('./config/db');
 const path = require('path');
+const http = require('http');
+const { initSocket } = require('./socket');
 
 dotenv.config();
 
@@ -16,18 +18,10 @@ app.use(cors({
 }));
 app.use(express.json());
 
-// Connect Database
-if (process.env.USE_MOCK_DB !== 'true') {
-    connectDB().then((success) => {
-        if (success) {
-            require('./seederFunction')();
-        } else {
-            console.log('⚠️ Server starting without Database. Check MONGO_URI.');
-        }
-    });
-} else {
-    console.log('Using Mock Database');
-}
+// Routes
+app.get('/', (req, res) => {
+    res.send('Foodswipe API is running...');
+});
 
 // Health Check
 app.get('/health', (req, res) => {
@@ -38,21 +32,7 @@ app.get('/health', (req, res) => {
     });
 });
 
-// Routes
-app.get('/', (req, res) => {
-    res.send('Foodswipe API is running...');
-});
-
-const http = require('http');
-const { initSocket } = require('./socket');
-
-const server = http.createServer(app);
-const io = initSocket(server);
-
-// Make io accessible to our router
-app.set('io', io);
-
-// Define Routes
+// Define API Routes
 app.use('/api/auth', require('./routes/authRoutes'));
 app.use('/api/users', require('./routes/userRoutes'));
 app.use('/api/restaurants', require('./routes/restaurantRoutes'));
@@ -77,21 +57,40 @@ app.use('/api/tickets', require('./routes/ticketRoutes'));
 // Serve uploads
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
+const server = http.createServer(app);
+const io = initSocket(server);
+app.set('io', io);
+
 const PORT = process.env.PORT || 8080;
 
-// Connect to Database
-connectDB().then((dbConnected) => {
-    if (dbConnected) {
-        // Start Server only after DB is connected or attempted
-        server.listen(PORT, '0.0.0.0', () => {
-            console.log(`✅ SERVER IS LIVE ON PORT ${PORT}`);
-        });
+const startServer = async () => {
+    console.log('🚀 Starting Server Initialization...');
+    
+    // 1. Try to connect to DB first, but don't block forever
+    let dbConnected = false;
+    if (process.env.USE_MOCK_DB !== 'true') {
+        try {
+            console.log('⏳ Connecting to MongoDB...');
+            dbConnected = await connectDB();
+            if (dbConnected) {
+                console.log('✅ DB Connected. Running Seeder...');
+                // Run seeder but don't let it block the server start if it's slow
+                require('./seederFunction')().catch(err => console.error('Seeder failed:', err));
+            }
+        } catch (err) {
+            console.error('❌ DB Connection failed during startup:', err.message);
+        }
     } else {
-        // Still start server even if DB fails, so Railway doesn't show "Failed to respond"
-        server.listen(PORT, '0.0.0.0', () => {
-            console.log(`⚠️ SERVER STARTED ON PORT ${PORT} (DB CONNECTION FAILED)`);
-        });
+        console.log('💡 Using Mock Database');
     }
-});
+
+    // 2. Start the server regardless of DB status so Railway doesn't time out
+    server.listen(PORT, '0.0.0.0', () => {
+        console.log(`✅ SERVER IS OFFICIALLY LIVE ON PORT ${PORT}`);
+        console.log(`🔗 HEALTH CHECK: https://foodswipe-production-46d6.up.railway.app/health`);
+    });
+};
+
+startServer();
 
 module.exports = { io };
