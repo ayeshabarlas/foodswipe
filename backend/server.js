@@ -1,5 +1,14 @@
 const express = require('express');
 const http = require('http');
+
+process.on('uncaughtException', (err) => {
+    console.error('🔥 UNCAUGHT EXCEPTION:', err);
+});
+
+process.on('unhandledRejection', (err) => {
+    console.error('🔥 UNHANDLED REJECTION:', err);
+});
+
 const app = express();
 const server = http.createServer(app);
 const PORT = process.env.PORT || 8080;
@@ -10,7 +19,7 @@ server.listen(PORT, '0.0.0.0', () => {
 });
 
 app.get('/health', (req, res) => {
-    res.status(200).json({ status: 'ok', emergency: true });
+    res.status(200).json({ status: 'ok', timestamp: new Date().toISOString() });
 });
 
 const dotenv = require('dotenv');
