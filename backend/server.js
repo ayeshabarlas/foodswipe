@@ -21,6 +21,11 @@ if (process.env.USE_MOCK_DB !== 'true') {
     console.log('Using Mock Database');
 }
 
+// Health Check
+app.get('/health', (req, res) => {
+    res.status(200).json({ status: 'ok', timestamp: new Date().toISOString() });
+});
+
 // Routes
 app.get('/', (req, res) => {
     res.send('Foodswipe API is running...');
