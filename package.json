@@ -2,9 +2,9 @@
     "name": "foodswipe-root",
     "version": "1.0.0",
     "private": true,
-    "scripts": {
-        "build": "cd frontend && npm install --legacy-peer-deps && npm run build && cd .. && rm -rf .next public && cp -r frontend/.next .next && cp -r frontend/public public",
-        "install": "cd frontend && npm install --legacy-peer-deps",
-        "start": "cd frontend && npm start"
-    }
+  "scripts": {
+    "start": "node backend/server.js",
+    "install": "npm install --prefix backend",
+    "build": "echo 'Skipping frontend build on backend service'"
+  }
 }
