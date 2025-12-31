@@ -1,5 +1,10 @@
+require('dotenv').config();
 const express = require('express');
 const http = require('http');
+
+console.log('--- BACKEND STARTUP ---');
+console.log('PORT:', process.env.PORT);
+console.log('NODE_ENV:', process.env.NODE_ENV);
 
 process.on('uncaughtException', (err) => {
     console.error('🔥 UNCAUGHT EXCEPTION:', err);
@@ -19,17 +24,19 @@ server.listen(PORT, '0.0.0.0', () => {
 });
 
 app.get('/health', (req, res) => {
-    res.status(200).json({ status: 'ok', timestamp: new Date().toISOString() });
+    res.status(200).json({ 
+        status: 'ok', 
+        emergency: true,
+        timestamp: new Date().toISOString(),
+        port: PORT
+    });
 });
 
-const dotenv = require('dotenv');
 const cors = require('cors');
 const mongoose = require('mongoose');
 const connectDB = require('./config/db');
 const path = require('path');
 const { initSocket } = require('./socket');
-
-dotenv.config();
 
 // Middleware
 app.use(cors({
