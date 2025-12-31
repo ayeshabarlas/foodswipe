@@ -18,18 +18,13 @@ const app = express();
 const server = http.createServer(app);
 const PORT = process.env.PORT || 8080;
 
-// EMERGENCY START: Listen immediately
+// EMERGENCY START: Listen immediately and don't block
 server.listen(PORT, '0.0.0.0', () => {
-    console.log(`🚀 EMERGENCY START: Server listening on port ${PORT}`);
+    console.log(`🚀 SERVER IS LIVE ON PORT ${PORT}`);
 });
 
 app.get('/health', (req, res) => {
-    res.status(200).json({ 
-        status: 'ok', 
-        emergency: true,
-        timestamp: new Date().toISOString(),
-        port: PORT
-    });
+    res.status(200).send('OK');
 });
 
 const cors = require('cors');
