@@ -3,16 +3,20 @@ const mongoose = require('mongoose');
 const connectDB = async () => {
     try {
         let mongoUri = process.env.MONGO_URI;
+        if (!mongoUri) {
+            console.error('CRITICAL: MONGO_URI is not defined in environment variables!');
+            return false;
+        }
 
-        // Logic for MongoMemoryServer removed to ensure real database usage
-        // if (process.env.MONGO_URI === 'mongodb://localhost:27017/foodswipe') { ... }
+        const conn = await mongoose.connect(mongoUri, {
+            serverSelectionTimeoutMS: 5000
+        });
 
-        const conn = await mongoose.connect(mongoUri);
-
-        console.log(`MongoDB Connected: ${conn.connection.host}`);
+        console.log(`✅ MongoDB Connected: ${conn.connection.host}`);
+        return true;
     } catch (error) {
-        console.error(`Error: ${error.message}`);
-        process.exit(1);
+        console.error(`❌ MongoDB Connection Error: ${error.message}`);
+        return false;
     }
 };
 

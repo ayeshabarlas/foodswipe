@@ -10,8 +10,6 @@ COPY backend ./backend
 
 # Runtime env
 ENV NODE_ENV=production
-ENV PORT=5000
-EXPOSE 5000
 
 # Start backend server
 CMD ["node", "backend/server.js"]

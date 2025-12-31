@@ -1,6 +1,7 @@
 const express = require('express');
 const dotenv = require('dotenv');
 const cors = require('cors');
+const mongoose = require('mongoose');
 const connectDB = require('./config/db');
 const path = require('path');
 
@@ -14,8 +15,12 @@ app.use(express.json());
 
 // Connect Database
 if (process.env.USE_MOCK_DB !== 'true') {
-    connectDB().then(() => {
-        require('./seederFunction')();
+    connectDB().then((success) => {
+        if (success) {
+            require('./seederFunction')();
+        } else {
+            console.log('⚠️ Server starting without Database. Check MONGO_URI.');
+        }
     });
 } else {
     console.log('Using Mock Database');
@@ -23,7 +28,11 @@ if (process.env.USE_MOCK_DB !== 'true') {
 
 // Health Check
 app.get('/health', (req, res) => {
-    res.status(200).json({ status: 'ok', timestamp: new Date().toISOString() });
+    res.status(200).json({ 
+        status: 'ok', 
+        db: mongoose.connection.readyState === 1 ? 'connected' : 'disconnected',
+        timestamp: new Date().toISOString() 
+    });
 });
 
 // Routes
