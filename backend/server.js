@@ -79,13 +79,19 @@ app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 const PORT = process.env.PORT || 8080;
 
-console.log('🚀 Attempting to start server...');
-console.log('🌍 Environment:', process.env.NODE_ENV);
-console.log('📍 Port:', PORT);
-
-server.listen(PORT, '0.0.0.0', () => {
-    console.log(`✅ Server is officially running on port ${PORT}`);
-    console.log(`🔗 Health check available at: /health`);
+// Connect to Database
+connectDB().then((dbConnected) => {
+    if (dbConnected) {
+        // Start Server only after DB is connected or attempted
+        server.listen(PORT, '0.0.0.0', () => {
+            console.log(`✅ SERVER IS LIVE ON PORT ${PORT}`);
+        });
+    } else {
+        // Still start server even if DB fails, so Railway doesn't show "Failed to respond"
+        server.listen(PORT, '0.0.0.0', () => {
+            console.log(`⚠️ SERVER STARTED ON PORT ${PORT} (DB CONNECTION FAILED)`);
+        });
+    }
 });
 
 module.exports = { io };
