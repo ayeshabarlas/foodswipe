@@ -18,6 +18,10 @@ const app = express();
 const server = http.createServer(app);
 const PORT = process.env.PORT || 8080;
 
+// Initialize Socket.io
+const io = initSocket(server);
+app.set('io', io);
+
 // EMERGENCY START: Listen immediately and don't block
 server.listen(PORT, '0.0.0.0', () => {
     console.log(`🚀 SERVER IS LIVE ON PORT ${PORT}`);
@@ -45,15 +49,6 @@ app.get('/', (req, res) => {
     res.send('Foodswipe API is running...');
 });
 
-// Health Check
-app.get('/health', (req, res) => {
-    res.status(200).json({ 
-        status: 'ok', 
-        db: mongoose.connection.readyState === 1 ? 'connected' : 'disconnected',
-        timestamp: new Date().toISOString() 
-    });
-});
-
 // Define API Routes
 app.use('/api/auth', require('./routes/authRoutes'));
 app.use('/api/users', require('./routes/userRoutes'));
@@ -78,12 +73,6 @@ app.use('/api/tickets', require('./routes/ticketRoutes'));
 
 // Serve uploads
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
-
-const server = http.createServer(app);
-const io = initSocket(server);
-app.set('io', io);
-
-const PORT = process.env.PORT || 8080;
 
 const startServer = async () => {
     console.log('🚀 Starting Server Initialization...');
