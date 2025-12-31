@@ -3,8 +3,9 @@
     "version": "1.0.0",
     "private": true,
   "scripts": {
-    "start": "node backend/server.js",
-    "install": "npm install --prefix backend",
-    "build": "echo 'Skipping frontend build on backend service'"
+    "start": "npm start --prefix backend",
+    "preinstall": "echo 'Installing backend dependencies...'",
+    "postinstall": "npm install --prefix backend",
+    "build": "echo 'Building...'"
   }
 }
