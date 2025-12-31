@@ -1,15 +1,26 @@
 const express = require('express');
+const http = require('http');
+const app = express();
+const server = http.createServer(app);
+const PORT = process.env.PORT || 8080;
+
+// EMERGENCY START: Listen immediately
+server.listen(PORT, '0.0.0.0', () => {
+    console.log(`🚀 EMERGENCY START: Server listening on port ${PORT}`);
+});
+
+app.get('/health', (req, res) => {
+    res.status(200).json({ status: 'ok', emergency: true });
+});
+
 const dotenv = require('dotenv');
 const cors = require('cors');
 const mongoose = require('mongoose');
 const connectDB = require('./config/db');
 const path = require('path');
-const http = require('http');
 const { initSocket } = require('./socket');
 
 dotenv.config();
-
-const app = express();
 
 // Middleware
 app.use(cors({
@@ -84,11 +95,8 @@ const startServer = async () => {
         console.log('💡 Using Mock Database');
     }
 
-    // 2. Start the server regardless of DB status so Railway doesn't time out
-    server.listen(PORT, '0.0.0.0', () => {
-        console.log(`✅ SERVER IS OFFICIALLY LIVE ON PORT ${PORT}`);
-        console.log(`🔗 HEALTH CHECK: https://foodswipe-production-46d6.up.railway.app/health`);
-    });
+    // 2. We already started the server at the top
+    console.log(`💡 Initialization complete. Server should be responding on ${PORT}`);
 };
 
 startServer();
