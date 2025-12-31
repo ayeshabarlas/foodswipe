@@ -3,6 +3,7 @@ const restaurants = require('./data/restaurants');
 const dishes = require('./data/dishes');
 const vouchers = require('./data/vouchers');
 const User = require('./models/User');
+const Admin = require('./models/Admin');
 const Restaurant = require('./models/Restaurant');
 const Dish = require('./models/Dish');
 const Voucher = require('./models/Voucher');
@@ -19,19 +20,34 @@ const seedData = async () => {
 
         console.log('Seeding data...');
 
-        const usersWithHashedPasswords = await Promise.all(users.map(async (user) => {
+        // Split seeds: regular users vs admins
+        const userSeeds = users.filter(u => u.role !== 'admin');
+        const adminSeeds = users.filter(u => u.role === 'admin');
+
+        const usersWithHashedPasswords = await Promise.all(userSeeds.map(async (user) => {
             const salt = await bcrypt.genSalt(10);
             const hashedPassword = await bcrypt.hash(user.password, salt);
             return { ...user, password: hashedPassword };
         }));
 
         const createdUsers = await User.insertMany(usersWithHashedPasswords);
-        const adminUser = createdUsers[0]._id;
-        const restaurantOwner = createdUsers[1]._id;
+
+        // Create admin accounts in Admin collection (not User)
+        if (adminSeeds.length > 0) {
+            const adminsWithHashedPasswords = await Promise.all(adminSeeds.map(async (admin) => {
+                const salt = await bcrypt.genSalt(10);
+                const hashedPassword = await bcrypt.hash(admin.password, salt);
+                return { name: admin.name, email: admin.email, password: hashedPassword, role: 'admin' };
+            }));
+            await Admin.insertMany(adminsWithHashedPasswords);
+        }
+
+        // Determine restaurant owner from created users
+        const restaurantOwnerUser = createdUsers.find(u => u.role === 'restaurant') || createdUsers[0];
+        const fallbackOwnerUser = createdUsers.find(u => u.role === 'customer') || createdUsers[0];
 
         const sampleRestaurants = restaurants.map((restaurant, index) => {
-            // Assign first restaurant to the specific restaurant owner user
-            const owner = index === 0 ? restaurantOwner : adminUser;
+            const owner = index === 0 ? restaurantOwnerUser._id : (fallbackOwnerUser ? fallbackOwnerUser._id : restaurantOwnerUser._id);
             return { ...restaurant, owner };
         });
 

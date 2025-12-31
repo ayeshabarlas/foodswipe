@@ -108,7 +108,6 @@ const voucherSchema = mongoose.Schema(
 );
 
 // Index for efficient queries
-voucherSchema.index({ code: 1 });
 voucherSchema.index({ restaurant: 1, isActive: 1 });
 voucherSchema.index({ expiryDate: 1 });
 

@@ -3,9 +3,19 @@ const socketIO = require('socket.io');
 let io;
 
 const initSocket = (server) => {
+    const allowedOrigins = (() => {
+        if (process.env.FRONTEND_URLS) {
+            return process.env.FRONTEND_URLS.split(',').map(s => s.trim()).filter(Boolean);
+        }
+        if (process.env.FRONTEND_URL) {
+            return [process.env.FRONTEND_URL];
+        }
+        return ['http://localhost:3000', 'http://localhost:3001'];
+    })();
+
     io = socketIO(server, {
         cors: {
-            origin: process.env.FRONTEND_URL ? [process.env.FRONTEND_URL, 'http://localhost:3000', 'http://localhost:3001'] : '*',
+            origin: allowedOrigins,
             methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'],
             credentials: true
         }
