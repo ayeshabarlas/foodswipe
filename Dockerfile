@@ -10,7 +10,6 @@ COPY backend ./backend
 
 # Runtime env
 ENV NODE_ENV=production
-EXPOSE 8080
 
 # Start backend server
 CMD ["node", "backend/server.js"]
