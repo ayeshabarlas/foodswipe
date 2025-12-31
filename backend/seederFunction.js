@@ -24,10 +24,12 @@ const seedData = async () => {
         const userSeeds = users.filter(u => u.role !== 'admin');
         const adminSeeds = users.filter(u => u.role === 'admin');
 
+        const validRoles = ['customer', 'restaurant', 'rider'];
         const usersWithHashedPasswords = await Promise.all(userSeeds.map(async (user) => {
             const salt = await bcrypt.genSalt(10);
             const hashedPassword = await bcrypt.hash(user.password, salt);
-            return { ...user, password: hashedPassword };
+            const role = validRoles.includes(user.role) ? user.role : 'customer';
+            return { ...user, password: hashedPassword, role };
         }));
 
         const createdUsers = await User.insertMany(usersWithHashedPasswords);
