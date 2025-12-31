@@ -14,6 +14,9 @@ process.on('unhandledRejection', (err) => {
     console.error('🔥 UNHANDLED REJECTION:', err);
 });
 
+const path = require('path');
+const { initSocket } = require('./socket');
+
 const app = express();
 const server = http.createServer(app);
 const PORT = process.env.PORT || 8080;
@@ -34,8 +37,6 @@ app.get('/health', (req, res) => {
 const cors = require('cors');
 const mongoose = require('mongoose');
 const connectDB = require('./config/db');
-const path = require('path');
-const { initSocket } = require('./socket');
 
 // Middleware
 app.use(cors({
