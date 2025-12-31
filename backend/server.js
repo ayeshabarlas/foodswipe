@@ -74,7 +74,7 @@ app.use('/api/tickets', require('./routes/ticketRoutes'));
 // Serve uploads
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
-const PORT = process.env.PORT || 5000;
+const PORT = process.env.PORT || 8080;
 
 console.log('🚀 Attempting to start server...');
 console.log('🌍 Environment:', process.env.NODE_ENV);
@@ -82,7 +82,7 @@ console.log('📍 Port:', PORT);
 
 server.listen(PORT, '0.0.0.0', () => {
     console.log(`✅ Server is officially running on port ${PORT}`);
-    console.log(`🔗 Health check available at: http://0.0.0.0:${PORT}/health`);
+    console.log(`🔗 Health check available at: /health`);
 });
 
 module.exports = { io };
