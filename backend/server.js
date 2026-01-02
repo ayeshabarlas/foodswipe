@@ -14,7 +14,6 @@ app.get('/health', (req, res) => {
     console.log('📢 Health check received at:', new Date().toISOString());
     res.status(200).send('OK');
 });
-app.get('/', (req, res) => res.send('Foodswipe API is running...'));
 
 require('dotenv').config();
 console.log('--- BACKEND STARTUP ---');
@@ -43,6 +42,7 @@ const allowedOrigins = [
     'https://foodswipe-one.vercel.app',
     'https://foodswipe-admin.vercel.app',
     'https://foodswipe-backend.onrender.com',
+    'https://foodswipe-api.onrender.com',
     'http://localhost:3000',
     'http://localhost:3001'
 ];
