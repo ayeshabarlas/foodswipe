@@ -42,6 +42,7 @@ const connectDB = require('./config/db');
 const allowedOrigins = [
     'https://foodswipe-one.vercel.app',
     'https://foodswipe-admin.vercel.app',
+    'https://foodswipe-backend.onrender.com',
     'http://localhost:3000',
     'http://localhost:3001'
 ];
