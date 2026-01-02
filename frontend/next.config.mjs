@@ -12,7 +12,7 @@ const nextConfig = {
             },
             {
                 protocol: 'https',
-                hostname: 'foodswipe-production-46d6.railway.app',
+                hostname: 'foodswipe-production-46d6.up.railway.app',
             }
         ],
     },

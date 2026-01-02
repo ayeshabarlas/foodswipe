@@ -4,13 +4,14 @@ let io;
 
 const initSocket = (server) => {
     const allowedOrigins = (() => {
+        const origins = ['http://localhost:3000', 'http://localhost:3001', 'https://foodswipe-one.vercel.app'];
         if (process.env.FRONTEND_URLS) {
-            return process.env.FRONTEND_URLS.split(',').map(s => s.trim()).filter(Boolean);
+            process.env.FRONTEND_URLS.split(',').map(s => s.trim()).filter(Boolean).forEach(o => origins.push(o));
         }
         if (process.env.FRONTEND_URL) {
-            return [process.env.FRONTEND_URL];
+            origins.push(process.env.FRONTEND_URL);
         }
-        return ['http://localhost:3000', 'http://localhost:3001'];
+        return [...new Set(origins)];
     })();
 
     io = socketIO(server, {

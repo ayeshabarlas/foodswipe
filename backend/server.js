@@ -11,14 +11,30 @@ const app = express();
 const server = http.createServer(app);
 const PORT = process.env.PORT || 8080;
 
-// 🚀 1. IMMEDIATE PORT BINDING (Fixes Railway 502)
-server.listen(PORT, '0.0.0.0', () => {
-    console.log(`--- 🚀 FOODSWIPE BACKEND LIVE ON PORT ${PORT} ---`);
+// 🖥️ 1. REQUEST LOGGER (At the very top to see traffic)
+app.use((req, res, next) => {
+    console.log(`[${new Date().toISOString()}] 📡 ${req.method} ${req.url} - IP: ${req.ip}`);
+    next();
 });
 
-// 🚀 2. IMMEDIATE HEALTH CHECK (No Middleware to block it)
+// 🚀 2. IMMEDIATE PORT BINDING
+server.listen(PORT, '0.0.0.0', () => {
+    console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+    console.log(`🚀 FOODSWIPE BACKEND IS LIVE!`);
+    console.log(`📌 PORT: ${PORT}`);
+    console.log(`📌 NODE_ENV: ${process.env.NODE_ENV}`);
+    console.log(`📌 TIME: ${new Date().toISOString()}`);
+    console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+});
+
+// 🏥 3. IMMEDIATE HEALTH CHECK
 app.get('/health', (req, res) => {
-    res.status(200).json({ status: 'ok', timestamp: new Date().toISOString() });
+    console.log('🟢 [HEALTH CHECK] Requested');
+    res.status(200).json({
+        status: 'ok',
+        uptime: process.uptime(),
+        timestamp: new Date().toISOString()
+    });
 });
 
 // 3. MIDDLEWARE
