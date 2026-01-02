@@ -11,12 +11,19 @@ const app = express();
 const server = http.createServer(app);
 const PORT = process.env.PORT || 8080;
 
-console.log('--- 🚀 FOODSWIPE BACKEND STARTING ---');
-console.log('PORT:', PORT);
+// 🚀 1. IMMEDIATE PORT BINDING (Fixes Railway 502)
+server.listen(PORT, '0.0.0.0', () => {
+    console.log(`--- 🚀 FOODSWIPE BACKEND LIVE ON PORT ${PORT} ---`);
+});
 
-// 1. MIDDLEWARE FIRST
+// 🚀 2. IMMEDIATE HEALTH CHECK (No Middleware to block it)
+app.get('/health', (req, res) => {
+    res.status(200).json({ status: 'ok', timestamp: new Date().toISOString() });
+});
+
+// 3. MIDDLEWARE
 app.use(cors({
-    origin: true, // Allow all origins for debugging
+    origin: true, // Permissive for debugging
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization']
@@ -24,11 +31,8 @@ app.use(cors({
 app.use(express.json());
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
-// 2. BASIC ROUTES
-app.get('/health', (req, res) => res.status(200).send('OK'));
+// 4. API ROUTES
 app.get('/', (req, res) => res.send('Foodswipe API is Live and Running!'));
-
-// 3. API ROUTES
 app.use('/api/auth', require('./routes/authRoutes'));
 app.use('/api/users', require('./routes/userRoutes'));
 app.use('/api/restaurants', require('./routes/restaurantRoutes'));
@@ -50,31 +54,31 @@ app.use('/api/finance', require('./routes/financeRoutes'));
 app.use('/api/verifications', require('./routes/verificationRoutes'));
 app.use('/api/tickets', require('./routes/ticketRoutes'));
 
-// 4. STARTUP LOGIC
-const startServer = async () => {
+// 5. ASYNC INITIALIZATION (Doesn't block server startup)
+const initializeApp = async () => {
     try {
-        // Initialize Socket.io
+        // Init Socket.io
         const io = initSocket(server);
         app.set('io', io);
 
-        // Connect to DB (don't block server start)
+        // DB Connection
         if (process.env.USE_MOCK_DB !== 'true') {
-            connectDB().then(connected => {
-                if (connected) {
-                    console.log('✅ MongoDB Connected');
-                    require('./seederFunction')().catch(err => console.error('Seeder Error:', err));
-                }
-            });
+            const connected = await connectDB();
+            if (connected) {
+                console.log('✅ MongoDB Connected Successfully');
+                // Seeder (non-blocking)
+                require('./seederFunction')().catch(e => console.error('Seeder Error:', e));
+            }
         }
-
-        server.listen(PORT, '0.0.0.0', () => {
-            console.log(`🚀 SERVER IS LIVE ON PORT ${PORT}`);
-        });
     } catch (err) {
-        console.error('🔥 Startup Error:', err);
+        console.error('🔥 Initialization Error:', err);
     }
 };
 
-startServer();
+initializeApp();
+
+// Global Error Handlers
+process.on('uncaughtException', (err) => console.error('🔥 UNCAUGHT:', err));
+process.on('unhandledRejection', (err) => console.error('🔥 UNHANDLED:', err));
 
 module.exports = { io: () => app.get('io') };
