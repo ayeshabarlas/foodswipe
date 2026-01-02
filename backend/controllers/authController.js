@@ -59,7 +59,7 @@ const loginUser = async (req, res) => {
         // Admins are now in their own Admin collection and will use /api/admin/login
         const query = {
             $or: [
-                { email: identifier },
+                { email: { $regex: new RegExp(`^${identifier}$`, 'i') } },
                 { phone: identifier },
                 { phoneNumber: identifier }
             ],

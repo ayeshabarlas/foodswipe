@@ -28,18 +28,18 @@ export default function RiderDashboard({ riderId }: RiderDashboardProps) {
     const effectiveRiderId = getEffectiveRiderId();
 
     const [riderData, setRiderData] = useState<any>(null);
-    // ... remainder of file uses riderId, need to change to effectiveRiderId or just use variable
-
     const [isOnline, setIsOnline] = useState(false);
     const [activeTab, setActiveTab] = useState('home');
     const [pendingOrder, setPendingOrder] = useState<any>(null);
     const [recentDeliveries, setRecentDeliveries] = useState<any[]>([]);
 
     useEffect(() => {
+        if (!effectiveRiderId) return;
+
         const fetchRiderData = async () => {
             try {
                 const token = JSON.parse(localStorage.getItem("userInfo") || "{}").token;
-                const res = await axios.get(`${API_BASE_URL}/api/riders/${riderId}`, {
+                const res = await axios.get(`${API_BASE_URL}/api/riders/${effectiveRiderId}`, {
                     headers: { Authorization: `Bearer ${token}` }
                 });
                 setRiderData(res.data);
@@ -52,7 +52,7 @@ export default function RiderDashboard({ riderId }: RiderDashboardProps) {
         const fetchDeliveries = async () => {
             try {
                 const token = JSON.parse(localStorage.getItem("userInfo") || "{}").token;
-                const res = await axios.get(`${API_BASE_URL}/api/riders/${riderId}/deliveries`, {
+                const res = await axios.get(`${API_BASE_URL}/api/riders/${effectiveRiderId}/deliveries`, {
                     headers: { Authorization: `Bearer ${token}` }
                 });
                 if (res.data) {
@@ -66,7 +66,7 @@ export default function RiderDashboard({ riderId }: RiderDashboardProps) {
         const checkForNewOrders = async () => {
             try {
                 const token = JSON.parse(localStorage.getItem("userInfo") || "{}").token;
-                const res = await axios.get(`${API_BASE_URL}/api/riders/${riderId}/available-orders`, {
+                const res = await axios.get(`${API_BASE_URL}/api/riders/${effectiveRiderId}/available-orders`, {
                     headers: { Authorization: `Bearer ${token}` }
                 });
                 if (res.data && res.data.length > 0 && !pendingOrder) {
@@ -90,17 +90,18 @@ export default function RiderDashboard({ riderId }: RiderDashboardProps) {
         }, 5000);
 
         return () => clearInterval(interval);
-    }, [riderId, isOnline, pendingOrder]);
+    }, [effectiveRiderId, isOnline, pendingOrder]);
 
     const handleAcceptOrder = async () => {
         try {
             const token = JSON.parse(localStorage.getItem("userInfo") || "{}").token;
-            await axios.post(`${API_BASE_URL}/api/riders/${riderId}/accept-order`, {
+            await axios.post(`${API_BASE_URL}/api/riders/${effectiveRiderId}/accept-order`, {
                 orderId: pendingOrder._id
             }, {
                 headers: { Authorization: `Bearer ${token}` }
             });
             setPendingOrder(null);
+            setActiveTab('orders');
         } catch (error) {
             console.error('Error accepting order:', error);
         }
@@ -109,7 +110,7 @@ export default function RiderDashboard({ riderId }: RiderDashboardProps) {
     const handleRejectOrder = async () => {
         try {
             const token = JSON.parse(localStorage.getItem("userInfo") || "{}").token;
-            await axios.post(`${API_BASE_URL}/api/riders/${riderId}/reject-order`, {
+            await axios.post(`${API_BASE_URL}/api/riders/${effectiveRiderId}/reject-order`, {
                 orderId: pendingOrder._id
             }, {
                 headers: { Authorization: `Bearer ${token}` }
@@ -124,7 +125,7 @@ export default function RiderDashboard({ riderId }: RiderDashboardProps) {
         try {
             const token = JSON.parse(localStorage.getItem("userInfo") || "{}").token;
             const newStatus = !isOnline;
-            await axios.put(`${API_BASE_URL}/api/riders/${riderId}/status`, {
+            await axios.put(`${API_BASE_URL}/api/riders/${effectiveRiderId}/status`, {
                 isOnline: newStatus
             }, {
                 headers: { Authorization: `Bearer ${token}` }

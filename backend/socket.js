@@ -8,7 +8,8 @@ const initSocket = (server) => {
             'http://localhost:3000',
             'http://localhost:3001',
             'https://foodswipe-one.vercel.app',
-            'https://foodswipeadmin.vercel.app'
+            'https://foodswipeadmin.vercel.app',
+            'https://foodswipe-admin.vercel.app'
         ];
         if (process.env.FRONTEND_URLS) {
             process.env.FRONTEND_URLS.split(',').map(s => s.trim()).filter(Boolean).forEach(o => origins.push(o));

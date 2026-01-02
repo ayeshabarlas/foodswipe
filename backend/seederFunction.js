@@ -37,18 +37,21 @@ const seedData = async () => {
             ];
             if (r.contact && mockContacts.includes(r.contact)) shouldDelete = true;
 
-            // Pattern 3: Invalid or mock owners
-            if (!r.owner) shouldDelete = true;
-            if (r.owner && r.owner.email && r.owner.email.includes('example.com')) shouldDelete = true;
-            if (r.owner && typeof r.owner === 'string' && r.owner.match(/^owner\d+$/i)) shouldDelete = true;
-            
             // Pattern 4: Mock logos or generic URLs
-            if (r.logo && (r.logo.match(/mock|wikimedia|unsplash|placeholder|Good_Food_Display/i))) {
+            if (r.logo && (r.logo.match(/mock|wikimedia|unsplash|placeholder|Good_Food_Display|loremflickr|picsum/i))) {
                 shouldDelete = true;
             }
 
             // Pattern 5: Mock address patterns for unverified ones
-            if (!r.isVerified && r.address && r.address.match(/karachi|islamabad|lahore|Do Darya|Dastagir|Blue Area|Pir Sohawa|Lakshmi Chowk|Fort Road|F-7 Markaz|North Nazimabad|Mall Road|Liberty Market/i)) {
+            if (r.address && r.address.match(/karachi|islamabad|lahore|Do Darya|Dastagir|Blue Area|Pir Sohawa|Lakshmi Chowk|Fort Road|F-7 Markaz|North Nazimabad|Mall Road|Liberty Market|Main Boulevard/i)) {
+                // Only delete if it's one of the known mock restaurants or unverified
+                if (!r.isVerified || mockNameRegex.test(r.name)) {
+                    shouldDelete = true;
+                }
+            }
+
+            // Pattern 6: If owner is missing or has mock email
+            if (!r.owner || (r.owner.email && (r.owner.email.includes('example.com') || r.owner.email.includes('test.com')))) {
                 shouldDelete = true;
             }
 

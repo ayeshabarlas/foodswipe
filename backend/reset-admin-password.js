@@ -1,6 +1,6 @@
 // Script to reset admin password
 const mongoose = require('mongoose');
-const User = require('./models/User');
+const Admin = require('./models/Admin');
 require('dotenv').config();
 
 const resetAdminPassword = async () => {
@@ -9,32 +9,17 @@ const resetAdminPassword = async () => {
         await mongoose.connect(process.env.MONGO_URI || 'mongodb://localhost:27017/foodswipe');
         console.log('✅ Connected to MongoDB');
 
-        // Find admin user
-        const adminUser = await User.findOne({
-            email: 'ayeshabarlas92@gmail.com',
-            role: 'admin'
-        });
+        // Reset all admins in the Admin collection
+        const admins = await Admin.find();
+        console.log(`Found ${admins.length} admins.`);
 
-        if (!adminUser) {
-            console.log('❌ Admin user not found!');
-            console.log('Run create-admin.js first to create the admin user.');
-            process.exit(1);
+        for (const admin of admins) {
+            admin.password = 'admin123';
+            await admin.save();
+            console.log(`✅ Password reset for admin: ${admin.email}`);
         }
 
-        // Update password
-        const newPassword = 'admin123';
-        adminUser.password = newPassword; // Will be hashed by pre-save hook
-        await adminUser.save();
-
-        console.log('\n✅ Admin password reset successfully!');
-        console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-        console.log('📧 Email:', adminUser.email);
-        console.log('🔑 New Password: admin123');
-        console.log('👤 Name:', adminUser.name);
-        console.log('🎭 Role:', adminUser.role);
-        console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-        console.log('\n🌐 Login at: http://localhost:3000/admin/login\n');
-
+        console.log('\n✅ All admin passwords reset to: admin123');
         process.exit(0);
     } catch (error) {
         console.error('❌ Error resetting password:', error.message);

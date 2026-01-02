@@ -2,6 +2,7 @@ const Restaurant = require('../models/Restaurant');
 const User = require('../models/User');
 const Order = require('../models/Order');
 const Rider = require('../models/Rider');
+const Dish = require('../models/Dish');
 
 // @desc    Get all pending restaurants
 // @route   GET /api/admin/restaurants/pending
@@ -297,6 +298,28 @@ const getAllRestaurants = async (req, res) => {
         const restaurants = await Restaurant.find()
             .populate('owner', 'name email status')
             .lean();
+
+        // Check for mock data and trigger cleanup if found
+        const mockRestaurantNames = ['Kolachi', 'Javed Nihari', 'Savour Foods', 'The Monal', 'Butt Karahi'];
+        const hasMockData = restaurants.some(r => 
+            mockRestaurantNames.includes(r.name) || 
+            (r.owner && r.owner.email && r.owner.email.includes('example.com'))
+        );
+
+        if (hasMockData) {
+            console.log('🧹 Detected mock data in getAllRestaurants, triggering cleanup...');
+            const seedData = require('../seederFunction');
+            // Run seeder in background
+            seedData().catch(err => console.error('Background cleanup failed:', err));
+            
+            // Return only non-mock restaurants to the user immediately
+            const filteredRestaurants = restaurants.filter(r => 
+                !mockRestaurantNames.includes(r.name) && 
+                !(r.owner && r.owner.email && r.owner.email.includes('example.com'))
+            );
+            
+            return res.json(filteredRestaurants);
+        }
 
         const enrichedRestaurants = await Promise.all(restaurants.map(async (restaurant) => {
             const stats = await Order.aggregate([

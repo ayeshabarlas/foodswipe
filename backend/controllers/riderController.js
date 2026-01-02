@@ -53,7 +53,30 @@ const getMyProfile = async (req, res) => {
 // @access  Private
 const getRiderById = async (req, res) => {
     try {
-        const rider = await Rider.findById(req.params.id).populate('user', 'name email phone');
+        let rider = await Rider.findById(req.params.id).populate('user', 'name email phone');
+
+        // If not found by ID, try finding by user ID
+        if (!rider) {
+            rider = await Rider.findOne({ user: req.params.id }).populate('user', 'name email phone');
+        }
+
+        // If still not found, check if this is a user with rider role
+        if (!rider) {
+            const User = require('../models/User');
+            const user = await User.findOne({ _id: req.params.id, role: 'rider' });
+            
+            if (user) {
+                // Auto-create a basic rider profile if it doesn't exist
+                rider = await Rider.create({
+                    user: user._id,
+                    fullName: user.name,
+                    verificationStatus: 'new',
+                    status: 'Offline',
+                    isOnline: false
+                });
+                rider = await Rider.findById(rider._id).populate('user', 'name email phone');
+            }
+        }
 
         if (!rider) {
             return res.status(404).json({ message: 'Rider not found' });
