@@ -195,55 +195,55 @@ export default function RiderDashboard({ riderId }: RiderDashboardProps) {
             )}
 
             {/* Header */}
-            <div className="bg-gradient-to-br from-orange-500 via-orange-600 to-pink-600 px-6 pt-8 pb-24 rounded-b-3xl">
-                <div className="flex items-start justify-between mb-6">
+            <div className="bg-gradient-to-br from-orange-500 via-orange-600 to-pink-600 px-4 pt-6 pb-20 rounded-b-3xl">
+                <div className="flex items-start justify-between mb-4">
                     <div>
-                        <p className="text-white/90 text-sm font-light">Welcome back,</p>
-                        <h1 className="text-white text-2xl font-bold">{riderData.fullName?.split(' ')[0] || 'Rider'}</h1>
+                        <p className="text-white/90 text-xs font-medium uppercase tracking-wider">Welcome back,</p>
+                        <h1 className="text-white text-xl font-bold">{riderData.fullName?.split(' ')[0] || 'Rider'}</h1>
                     </div>
-                    <div className="w-12 h-12 bg-white rounded-full flex items-center justify-center text-orange-600 font-bold text-lg shadow-lg">
+                    <div className="w-10 h-10 bg-white rounded-full flex items-center justify-center text-orange-600 font-bold text-base shadow-lg">
                         {riderData.fullName?.[0] || 'R'}
                     </div>
                 </div>
 
                 {/* Online/Offline Toggle */}
-                <div className="bg-white/20 backdrop-blur-sm rounded-2xl p-4 flex items-center justify-between">
+                <div className="bg-white/20 backdrop-blur-sm rounded-2xl p-3 flex items-center justify-between">
                     <div>
-                        <p className="text-white font-semibold">{isOnline ? 'You are Online' : 'You are Offline'}</p>
-                        <p className="text-white/80 text-sm font-light">{isOnline ? 'Ready for orders' : 'Go online to start earning'}</p>
+                        <p className="text-white text-sm font-bold">{isOnline ? 'You are Online' : 'You are Offline'}</p>
+                        <p className="text-white/80 text-[10px] font-bold uppercase tracking-wider">{isOnline ? 'Ready for orders' : 'Go online to start earning'}</p>
                     </div>
                     <button
                         onClick={toggleOnlineStatus}
-                        className={`relative w-14 h-8 rounded-full transition ${isOnline ? 'bg-green-500' : 'bg-gray-300'}`}
+                        className={`relative w-12 h-7 rounded-full transition ${isOnline ? 'bg-green-500' : 'bg-gray-300'}`}
                     >
-                        <div className={`absolute top-1 w-6 h-6 bg-white rounded-full shadow-md transition-transform ${isOnline ? 'translate-x-7' : 'translate-x-1'}`} />
+                        <div className={`absolute top-1 w-5 h-5 bg-white rounded-full shadow-md transition-transform ${isOnline ? 'translate-x-6' : 'translate-x-1'}`} />
                     </button>
                 </div>
             </div>
 
             {/* Stats Grid */}
-            <div className="px-6 -mt-16 mb-6">
-                <div className="grid grid-cols-2 gap-4">
+            <div className="px-4 -mt-12 mb-6">
+                <div className="grid grid-cols-2 gap-3">
                     <StatCard
-                        icon={<FaDollarSign className="text-2xl" />}
+                        icon={<FaDollarSign className="text-lg" />}
                         label="Today's Earnings"
                         value={`PKR ${riderData.earnings?.today || 0}`}
                         bgColor="bg-green-500"
                     />
                     <StatCard
-                        icon={<FaClipboardList className="text-2xl" />}
+                        icon={<FaClipboardList className="text-lg" />}
                         label="Deliveries"
                         value={riderData.stats?.totalDeliveries || 0}
                         bgColor="bg-blue-500"
                     />
                     <StatCard
-                        icon={<FaStar className="text-2xl" />}
+                        icon={<FaStar className="text-lg" />}
                         label="Rating"
                         value={riderData.stats?.rating?.toFixed(1) || '0.0'}
                         bgColor="bg-yellow-500"
                     />
                     <StatCard
-                        icon={<FaTrophy className="text-2xl" />}
+                        icon={<FaTrophy className="text-lg" />}
                         label="This Week"
                         value={`PKR ${riderData.earnings?.thisWeek || 0}`}
                         bgColor="bg-purple-500"
@@ -252,9 +252,9 @@ export default function RiderDashboard({ riderId }: RiderDashboardProps) {
             </div>
 
             {/* Quick Actions */}
-            <div className="px-6 mb-6">
-                <h2 className="text-lg font-semibold text-gray-900 mb-4">Quick Actions</h2>
-                <div className="space-y-3">
+            <div className="px-4 mb-6">
+                <h2 className="text-base font-bold text-gray-800 mb-3 uppercase tracking-wider text-[10px]">Quick Actions</h2>
+                <div className="space-y-2.5">
                     <ActionItem
                         icon={<FaRoute className="text-orange-600" />}
                         title="Navigate to Order"
@@ -278,25 +278,25 @@ export default function RiderDashboard({ riderId }: RiderDashboardProps) {
             </div>
 
             {/* Recent Deliveries */}
-            <div className="px-6 mb-6">
-                <h2 className="text-lg font-semibold text-gray-900 mb-4">Recent Deliveries</h2>
-                <div className="bg-white rounded-2xl overflow-hidden">
+            <div className="px-4 mb-6">
+                <h2 className="text-base font-bold text-gray-800 mb-3 uppercase tracking-wider text-[10px]">Recent Deliveries</h2>
+                <div className="bg-white rounded-2xl overflow-hidden border border-gray-100">
                     {recentDeliveries.length === 0 ? (
-                        <div className="p-8 text-center text-gray-500">
-                            <p className="text-sm">No deliveries yet</p>
+                        <div className="p-6 text-center text-gray-500">
+                            <p className="text-xs">No deliveries yet</p>
                         </div>
                     ) : (
-                        <div className="divide-y divide-gray-100">
+                        <div className="divide-y divide-gray-50">
                             {recentDeliveries.map((delivery, idx) => (
-                                <div key={idx} className="p-4 flex items-center justify-between hover:bg-gray-50 transition">
+                                <div key={idx} className="p-3.5 flex items-center justify-between hover:bg-gray-50 transition">
                                     <div className="flex-1">
-                                        <p className="font-semibold text-gray-900">{delivery.restaurant?.name || 'Restaurant'} <span className="text-gray-400 font-normal text-sm">#{delivery.orderNumber}</span></p>
-                                        <p className="text-xs text-gray-500">{delivery.timeAgo}</p>
+                                        <p className="font-bold text-gray-800 text-sm">{delivery.restaurant?.name || 'Restaurant'} <span className="text-gray-400 font-normal text-[10px]">#{delivery.orderNumber}</span></p>
+                                        <p className="text-[10px] text-gray-500 font-medium uppercase tracking-wider">{delivery.timeAgo}</p>
                                     </div>
                                     <div className="text-right">
-                                        <p className="font-semibold text-green-600">+PKR {delivery.earnings}</p>
-                                        <div className="flex items-center gap-1 text-yellow-500 text-xs mt-1">
-                                            <FaStar size={10} />
+                                        <p className="font-bold text-green-600 text-sm">+PKR {delivery.earnings}</p>
+                                        <div className="flex items-center justify-end gap-1 text-yellow-500 text-[10px] mt-0.5 font-bold">
+                                            <FaStar size={8} />
                                             <span>{delivery.rating || '5.0'}</span>
                                         </div>
                                     </div>
@@ -315,7 +315,7 @@ export default function RiderDashboard({ riderId }: RiderDashboardProps) {
 
 function BottomNav({ activeTab, setActiveTab }: { activeTab: string; setActiveTab: (tab: string) => void }) {
     return (
-        <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 px-6 py-3 safe-area-pb">
+        <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-100 px-4 py-2 safe-area-pb shadow-[0_-4px_20px_rgba(0,0,0,0.05)]">
             <div className="flex items-center justify-around max-w-2xl mx-auto">
                 <NavItem icon={<FaHome />} label="Home" active={activeTab === 'home'} onClick={() => setActiveTab('home')} />
                 <NavItem icon={<FaDollarSign />} label="Earnings" active={activeTab === 'earnings'} onClick={() => setActiveTab('earnings')} />
@@ -329,29 +329,26 @@ function BottomNav({ activeTab, setActiveTab }: { activeTab: string; setActiveTa
 
 function StatCard({ icon, label, value, bgColor }: { icon: React.ReactNode; label: string; value: string | number; bgColor: string }) {
     return (
-        <div className="bg-white rounded-2xl p-4 shadow-sm">
-            <div className={`w-10 h-10 ${bgColor} rounded-xl flex items-center justify-center text-white mb-3`}>
+        <div className="bg-white rounded-2xl p-3.5 shadow-sm border border-gray-100">
+            <div className={`w-9 h-9 ${bgColor} rounded-xl flex items-center justify-center text-white mb-2.5 shadow-sm`}>
                 {icon}
             </div>
-            <p className="text-gray-500 text-xs font-light mb-1">{label}</p>
-            <p className="text-gray-900 text-xl font-bold">{value}</p>
+            <p className="text-gray-400 text-[10px] font-bold uppercase tracking-wider mb-0.5">{label}</p>
+            <p className="text-gray-800 text-lg font-bold">{value}</p>
         </div>
     );
 }
 
 function ActionItem({ icon, title, subtitle, bgColor, onClick }: { icon: React.ReactNode; title: string; subtitle: string; bgColor: string; onClick?: () => void }) {
     return (
-        <button onClick={onClick} className="w-full bg-white rounded-2xl p-4 shadow-sm hover:shadow-md transition flex items-center gap-4">
-            <div className={`w-12 h-12 ${bgColor} rounded-xl flex items-center justify-center text-xl`}>
+        <button onClick={onClick} className="w-full bg-white rounded-2xl p-3.5 shadow-sm hover:shadow-md transition flex items-center gap-3.5 border border-gray-100 group">
+            <div className={`w-10 h-10 ${bgColor} rounded-xl flex items-center justify-center text-lg transition-transform group-hover:scale-110`}>
                 {icon}
             </div>
             <div className="flex-1 text-left">
-                <h3 className="font-semibold text-gray-900 text-sm">{title}</h3>
-                <p className="text-gray-500 text-xs font-light">{subtitle}</p>
+                <h3 className="font-bold text-gray-800 text-sm">{title}</h3>
+                <p className="text-gray-400 text-[10px] font-medium">{subtitle}</p>
             </div>
-            <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-            </svg>
         </button>
     );
 }
@@ -360,11 +357,10 @@ function NavItem({ icon, label, active, onClick }: { icon: React.ReactNode; labe
     return (
         <button
             onClick={onClick}
-            className={`flex flex-col items-center gap-1 py-2 px-3 rounded-xl transition ${active ? 'text-orange-600' : 'text-gray-400'}`}
+            className={`flex flex-col items-center gap-1 transition-all ${active ? 'text-orange-600 scale-110' : 'text-gray-400 hover:text-gray-600'}`}
         >
-            <div className="text-xl">{icon}</div>
-            <span className="text-xs font-medium">{label}</span>
-            {active && <div className="w-1 h-1 bg-orange-600 rounded-full mt-0.5" />}
+            <span className="text-lg">{icon}</span>
+            <span className="text-[9px] font-bold uppercase tracking-widest">{label}</span>
         </button>
     );
 }

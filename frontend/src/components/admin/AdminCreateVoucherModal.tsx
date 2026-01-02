@@ -115,19 +115,24 @@ export default function AdminCreateVoucherModal({ isOpen, onClose, onSuccess, in
                         className="bg-white rounded-2xl w-full max-w-md overflow-hidden shadow-xl"
                     >
                         {/* Header */}
-                        <div className="flex items-center justify-between p-6 border-b border-gray-100 bg-gradient-to-r from-orange-500 to-red-500">
+                        <div className="flex items-center justify-between p-4 border-b border-gray-100 bg-gradient-to-r from-orange-500 to-red-500">
                             <div className="flex items-center gap-3">
-                                <FaTicketAlt className="text-2xl text-white" />
-                                <h3 className="text-xl font-bold text-white">{initialData ? 'Edit Platform Voucher' : 'Create Platform Voucher'}</h3>
+                                <div className="w-8 h-8 bg-white/20 rounded-lg flex items-center justify-center">
+                                    <FaTicketAlt className="text-base text-white" />
+                                </div>
+                                <div>
+                                    <h3 className="text-sm font-bold text-white">{initialData ? 'Edit Platform Voucher' : 'Create Platform Voucher'}</h3>
+                                    <p className="text-[9px] text-white/80 font-bold uppercase tracking-wider">Discount & Usage Settings</p>
+                                </div>
                             </div>
-                            <button onClick={onClose} className="text-white hover:text-gray-200">
-                                <FaTimes />
+                            <button onClick={onClose} className="p-1.5 hover:bg-white/10 rounded-lg transition text-white">
+                                <FaTimes className="text-xs" />
                             </button>
                         </div>
 
-                        <form onSubmit={handleSubmit} className="p-6 space-y-4">
+                        <form onSubmit={handleSubmit} className="p-5 space-y-4">
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-2">
+                                <label className="block text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1.5">
                                     Voucher Code
                                 </label>
                                 <input
@@ -137,13 +142,13 @@ export default function AdminCreateVoucherModal({ isOpen, onClose, onSuccess, in
                                     value={formData.code}
                                     onChange={handleChange}
                                     placeholder="e.g., WELCOME50"
-                                    className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-orange-500 focus:ring-2 focus:ring-orange-200 outline-none transition uppercase"
+                                    className="w-full px-4 py-2 text-xs rounded-xl border border-gray-200 focus:border-orange-500 focus:ring-2 focus:ring-orange-200 outline-none transition uppercase font-bold"
                                 />
                             </div>
 
                             <div className="grid grid-cols-2 gap-4">
                                 <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                                    <label className="block text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1.5">
                                         Discount (Rs.)
                                     </label>
                                     <input
@@ -155,11 +160,11 @@ export default function AdminCreateVoucherModal({ isOpen, onClose, onSuccess, in
                                         placeholder="500"
                                         step="0.01"
                                         min="0"
-                                        className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-orange-500 focus:ring-2 focus:ring-orange-200 outline-none transition"
+                                        className="w-full px-4 py-2 text-xs rounded-xl border border-gray-200 focus:border-orange-500 focus:ring-2 focus:ring-orange-200 outline-none transition font-bold"
                                     />
                                 </div>
                                 <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                                    <label className="block text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1.5">
                                         Usage Limit
                                     </label>
                                     <input
@@ -169,13 +174,13 @@ export default function AdminCreateVoucherModal({ isOpen, onClose, onSuccess, in
                                         onChange={handleChange}
                                         placeholder="1000"
                                         min="1"
-                                        className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-orange-500 focus:ring-2 focus:ring-orange-200 outline-none transition"
+                                        className="w-full px-4 py-2 text-xs rounded-xl border border-gray-200 focus:border-orange-500 focus:ring-2 focus:ring-orange-200 outline-none transition font-bold"
                                     />
                                 </div>
                             </div>
 
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-2">
+                                <label className="block text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1.5">
                                     Description
                                 </label>
                                 <textarea
@@ -185,45 +190,46 @@ export default function AdminCreateVoucherModal({ isOpen, onClose, onSuccess, in
                                     onChange={handleChange}
                                     placeholder="Brief description of the voucher"
                                     rows={2}
-                                    className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-orange-500 focus:ring-2 focus:ring-orange-200 outline-none transition"
+                                    className="w-full px-4 py-2 text-xs rounded-xl border border-gray-200 focus:border-orange-500 focus:ring-2 focus:ring-orange-200 outline-none transition"
                                 />
                             </div>
 
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-2">
-                                    Minimum Order Amount (Rs.)
-                                </label>
-                                <input
-                                    type="number"
-                                    name="minimumAmount"
-                                    value={formData.minimumAmount}
-                                    onChange={handleChange}
-                                    placeholder="0"
-                                    step="0.01"
-                                    min="0"
-                                    className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-orange-500 focus:ring-2 focus:ring-orange-200 outline-none transition"
-                                />
-                            </div>
-
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-2">
-                                    Expiry Date
-                                </label>
-                                <input
-                                    type="date"
-                                    name="expiryDate"
-                                    required
-                                    value={formData.expiryDate}
-                                    onChange={handleChange}
-                                    min={new Date().toISOString().split('T')[0]}
-                                    className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-orange-500 focus:ring-2 focus:ring-orange-200 outline-none transition"
-                                />
+                            <div className="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label className="block text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1.5">
+                                        Min Order (Rs.)
+                                    </label>
+                                    <input
+                                        type="number"
+                                        name="minimumAmount"
+                                        value={formData.minimumAmount}
+                                        onChange={handleChange}
+                                        placeholder="0"
+                                        step="0.01"
+                                        min="0"
+                                        className="w-full px-4 py-2 text-xs rounded-xl border border-gray-200 focus:border-orange-500 focus:ring-2 focus:ring-orange-200 outline-none transition font-bold"
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1.5">
+                                        Expiry Date
+                                    </label>
+                                    <input
+                                        type="date"
+                                        name="expiryDate"
+                                        required
+                                        value={formData.expiryDate}
+                                        onChange={handleChange}
+                                        min={new Date().toISOString().split('T')[0]}
+                                        className="w-full px-4 py-2 text-xs rounded-xl border border-gray-200 focus:border-orange-500 focus:ring-2 focus:ring-orange-200 outline-none transition font-bold"
+                                    />
+                                </div>
                             </div>
 
                             <button
                                 type="submit"
                                 disabled={loading}
-                                className="w-full py-3.5 bg-gradient-to-r from-orange-500 to-red-500 text-white font-bold rounded-xl hover:shadow-lg transition disabled:opacity-50 disabled:cursor-not-allowed"
+                                className="w-full py-2.5 bg-gradient-to-r from-orange-500 to-red-500 text-white text-xs font-bold rounded-xl hover:shadow-lg transition disabled:opacity-50 disabled:cursor-not-allowed uppercase tracking-wider"
                             >
                                 {loading ? 'Processing...' : (initialData ? 'Update Voucher' : 'Create Voucher')}
                             </button>

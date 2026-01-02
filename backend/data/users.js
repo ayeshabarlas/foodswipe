@@ -9,6 +9,20 @@ const users = [
         phone: '1234567890',
     },
     {
+        name: 'Ayesha Barlas',
+        email: 'ayeshabarlas92@gmail.com',
+        password: 'password123',
+        role: 'admin',
+        phone: '1234567891',
+    },
+    {
+        name: 'Ayesha Barlas 636',
+        email: 'ayeshabarlas636@gmail.com',
+        password: 'password123',
+        role: 'admin',
+        phone: '1234567892',
+    },
+    {
         name: 'Restaurant Owner',
         email: 'restaurant@example.com',
         password: 'password123',

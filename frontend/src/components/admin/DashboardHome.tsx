@@ -137,65 +137,63 @@ export default function DashboardHome({ stats, refreshStats }: DashboardHomeProp
     ];
 
     return (
-        <div className="p-6 space-y-6">
-            <div className="flex justify-between items-center">
+        <div className="p-4 space-y-4">
+            <div className="flex justify-between items-center mb-4">
                 <div>
-                    <h2 className="text-2xl font-bold text-gray-800">Dashboard Overview</h2>
-                    <p className="text-gray-500">Welcome back! Here's what's happening today.</p>
+                    <h2 className="text-lg font-bold text-gray-800">Platform Overview</h2>
+                    <p className="text-[10px] text-gray-500 uppercase tracking-wider font-bold">Real-time statistics and insights</p>
                 </div>
-                <div className="flex gap-4">
-                    <button 
+                <div className="flex gap-2">
+                    <button
                         onClick={handleCleanupMock}
-                        className="bg-red-50 text-red-600 px-4 py-2 rounded-xl text-sm font-semibold hover:bg-red-100 transition flex items-center gap-2 border border-red-100"
-                        title="Delete all mock data"
+                        className="flex items-center gap-2 px-3 py-1.5 bg-red-50 text-red-600 rounded-lg text-[10px] font-bold hover:bg-red-100 transition uppercase tracking-wider"
+                        title="Delete Mock Data"
                     >
-                        <FaTrashAlt /> Cleanup Mock Data
+                        <FaTrashAlt /> Clean Data
                     </button>
-                    <div className="bg-white px-4 py-2 rounded-xl shadow-sm border border-gray-100 flex items-center gap-2">
-                        <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></span>
-                        <span className="text-sm font-medium text-gray-600">Live Updates Active</span>
-                    </div>
+                    <button className="flex items-center gap-2 px-3 py-1.5 bg-white border border-gray-200 rounded-lg text-[10px] font-bold text-gray-600 hover:bg-gray-50 transition uppercase tracking-wider">
+                        Export Report
+                    </button>
                 </div>
             </div>
 
-            {/* Stats Widgets */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                {widgets.map((widget, index) => (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+                {widgets.map((w, i) => (
                     <motion.div
-                        key={index}
-                        initial={{ opacity: 0, y: 20 }}
+                        key={i}
+                        initial={{ opacity: 0, y: 10 }}
                         animate={{ opacity: 1, y: 0 }}
-                        transition={{ delay: index * 0.1 }}
-                        className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 hover:shadow-md transition-shadow"
+                        transition={{ delay: i * 0.1 }}
+                        className="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 flex items-center justify-between hover:shadow-md transition-shadow"
                     >
-                        <div className="flex justify-between items-start mb-4">
-                            <div className={`p-3 rounded-xl ${widget.color}`}>
-                                <widget.icon className="text-xl" />
+                        <div>
+                            <p className="text-gray-400 text-[10px] mb-1 font-bold uppercase tracking-wider">{w.label}</p>
+                            <h3 className="text-lg font-bold text-gray-800">{w.value}</h3>
+                            <div className="flex items-center gap-1 mt-1">
+                                <span className="text-[9px] font-bold text-gray-400 uppercase">{w.subLabel}:</span>
+                                <span className="text-[9px] font-bold text-gray-700">{w.subValue}</span>
                             </div>
-                            <span className={`text-xs font-bold ${widget.trendColor}`}>
-                                {widget.trend}
-                            </span>
                         </div>
-                        <h3 className="text-2xl font-bold text-gray-800 mb-1">{widget.value}</h3>
-                        <p className="text-sm text-gray-500 mb-2">{widget.label}</p>
-                        <p className="text-xs text-gray-400">{widget.subValue}</p>
+                        <div className={`w-9 h-9 ${w.color} rounded-xl flex items-center justify-center`}>
+                            <w.icon className="text-base" />
+                        </div>
                     </motion.div>
                 ))}
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                 {/* Revenue Chart */}
-                <div className="lg:col-span-2 bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
+                <div className="lg:col-span-2 bg-white p-4 rounded-2xl shadow-sm border border-gray-100">
                     <div className="flex justify-between items-center mb-6">
                         <div>
-                            <h3 className="text-lg font-bold text-gray-800">Revenue Overview</h3>
-                            <p className="text-sm text-gray-500">Last 7 days performance</p>
+                            <h3 className="text-base font-bold text-gray-800">Revenue Overview</h3>
+                            <p className="text-[10px] text-gray-500 uppercase font-bold tracking-wider">Last 7 days performance</p>
                         </div>
-                        <select className="px-3 py-1 border rounded-lg text-sm text-gray-600 outline-none">
+                        <select className="px-2 py-1 border rounded-lg text-xs text-gray-600 outline-none font-bold">
                             <option>Last 7 days</option>
                         </select>
                     </div>
-                    <div className="h-80">
+                    <div className="h-64">
                         <ResponsiveContainer width="100%" height="100%">
                             <LineChart data={displayStats.revenueStats || []}>
                                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#E5E7EB" />
@@ -204,24 +202,24 @@ export default function DashboardHome({ stats, refreshStats }: DashboardHomeProp
                                     tickFormatter={(val) => new Date(val).toLocaleDateString(undefined, { weekday: 'short' })}
                                     axisLine={false}
                                     tickLine={false}
-                                    tick={{ fill: '#9CA3AF', fontSize: 12 }}
+                                    tick={{ fill: '#9CA3AF', fontSize: 10 }}
                                     dy={10}
                                 />
                                 <YAxis
                                     axisLine={false}
                                     tickLine={false}
-                                    tick={{ fill: '#9CA3AF', fontSize: 12 }}
+                                    tick={{ fill: '#9CA3AF', fontSize: 10 }}
                                 />
                                 <Tooltip
-                                    contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
+                                    contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)', fontSize: '10px' }}
                                 />
                                 <Line
                                     type="monotone"
                                     dataKey="revenue"
                                     stroke="#F97316"
-                                    strokeWidth={3}
-                                    dot={{ fill: '#F97316', strokeWidth: 2, r: 4, stroke: '#fff' }}
-                                    activeDot={{ r: 6, strokeWidth: 0 }}
+                                    strokeWidth={2}
+                                    dot={{ fill: '#F97316', strokeWidth: 1, r: 3, stroke: '#fff' }}
+                                    activeDot={{ r: 5, strokeWidth: 0 }}
                                 />
                             </LineChart>
                         </ResponsiveContainer>
@@ -229,18 +227,18 @@ export default function DashboardHome({ stats, refreshStats }: DashboardHomeProp
                 </div>
 
                 {/* Order Status Pie Chart */}
-                <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
-                    <h3 className="text-lg font-bold text-gray-800 mb-1">Order Status</h3>
-                    <p className="text-sm text-gray-500 mb-6">This week distribution</p>
-                    <div className="h-64 relative">
+                <div className="bg-white p-4 rounded-2xl shadow-sm border border-gray-100">
+                    <h3 className="text-base font-bold text-gray-800 mb-0.5">Order Status</h3>
+                    <p className="text-[10px] text-gray-500 mb-6 uppercase font-bold tracking-wider">This week distribution</p>
+                    <div className="h-56 relative">
                         <ResponsiveContainer width="100%" height="100%">
                             <PieChart>
                                 <Pie
                                     data={pieData}
                                     cx="50%"
                                     cy="50%"
-                                    innerRadius={60}
-                                    outerRadius={80}
+                                    innerRadius={50}
+                                    outerRadius={70}
                                     paddingAngle={5}
                                     dataKey="value"
                                 >
@@ -249,15 +247,15 @@ export default function DashboardHome({ stats, refreshStats }: DashboardHomeProp
                                     ))}
                                 </Pie>
                                 <Tooltip />
-                                <Legend verticalAlign="bottom" height={36} />
+                                <Legend verticalAlign="bottom" height={36} wrapperStyle={{ fontSize: '10px' }} />
                             </PieChart>
                         </ResponsiveContainer>
                         <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
                             <div className="text-center">
-                                <p className="text-2xl font-bold text-gray-800">
+                                <p className="text-lg font-bold text-gray-800">
                                     {Math.round(((displayStats.orderStatusDist?.delivered || 0) / (displayStats.totalOrders || 1)) * 100)}%
                                 </p>
-                                <p className="text-xs text-gray-500">Completed</p>
+                                <p className="text-[10px] text-gray-500 uppercase font-bold">Completed</p>
                             </div>
                         </div>
                     </div>
@@ -266,48 +264,48 @@ export default function DashboardHome({ stats, refreshStats }: DashboardHomeProp
 
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 {/* Top Performing Restaurants */}
-                <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
+                <div className="bg-white p-4 rounded-2xl shadow-sm border border-gray-100">
                     <div className="flex justify-between items-center mb-6">
-                        <h3 className="text-lg font-bold text-gray-800">Top Performing Restaurants</h3>
-                        <button className="text-sm text-orange-500 font-medium hover:text-orange-600">View All</button>
+                        <h3 className="text-base font-bold text-gray-800">Top Performing Restaurants</h3>
+                        <button className="text-[10px] text-orange-500 font-bold hover:text-orange-600 uppercase tracking-wider">View All</button>
                     </div>
-                    <div className="space-y-4">
+                    <div className="space-y-3">
                         {(displayStats.topRestaurants || []).map((restaurant, index) => (
-                            <div key={index} className="flex items-center justify-between p-3 hover:bg-gray-50 rounded-xl transition-colors">
-                                <div className="flex items-center gap-4">
-                                    <div className={`w-8 h-8 rounded-lg flex items-center justify-center text-white font-bold text-sm
+                            <div key={index} className="flex items-center justify-between p-2.5 hover:bg-gray-50 rounded-xl transition-colors">
+                                <div className="flex items-center gap-3">
+                                    <div className={`w-7 h-7 rounded-lg flex items-center justify-center text-white font-bold text-xs
                                         ${index === 0 ? 'bg-orange-500' :
                                             index === 1 ? 'bg-orange-400' :
                                                 index === 2 ? 'bg-orange-300' : 'bg-gray-300'}`}>
                                         {index + 1}
                                     </div>
                                     <div>
-                                        <h4 className="font-bold text-gray-800">{restaurant.name}</h4>
-                                        <p className="text-xs text-gray-500">{restaurant.orders} orders</p>
+                                        <h4 className="font-bold text-gray-800 text-xs">{restaurant.name}</h4>
+                                        <p className="text-[10px] text-gray-500 font-bold uppercase">{restaurant.orders} orders</p>
                                     </div>
                                 </div>
                                 <div className="text-right">
-                                    <p className="font-bold text-gray-800">Rs {restaurant.revenue.toLocaleString()}</p>
-                                    <p className="text-xs text-gray-500 animate-pulse">â­ {restaurant.rating.toFixed(1)}</p>
+                                    <p className="font-bold text-gray-800 text-xs">Rs {restaurant.revenue.toLocaleString()}</p>
+                                    <p className="text-[10px] text-gray-500 font-bold uppercase">â­ {restaurant.rating.toFixed(1)}</p>
                                 </div>
                             </div>
                         ))}
                         {(displayStats.topRestaurants || []).length === 0 && (
-                            <div className="text-center py-8 text-gray-500">No data available</div>
+                            <div className="text-center py-6 text-[10px] text-gray-500 font-bold uppercase">No data available</div>
                         )}
                     </div>
                 </div>
 
                 {/* Recent Activity */}
-                <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
+                <div className="bg-white p-4 rounded-2xl shadow-sm border border-gray-100">
                     <div className="flex justify-between items-center mb-6">
-                        <h3 className="text-lg font-bold text-gray-800">Recent Activity</h3>
-                        <button className="text-sm text-orange-500 font-medium hover:text-orange-600">View All</button>
+                        <h3 className="text-base font-bold text-gray-800">Recent Activity</h3>
+                        <button className="text-[10px] text-orange-500 font-bold hover:text-orange-600 uppercase tracking-wider">View All</button>
                     </div>
-                    <div className="space-y-6">
+                    <div className="space-y-4">
                         {(displayStats.recentActivity || []).map((activity, index) => (
-                            <div key={index} className="flex gap-4">
-                                <div className={`w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0
+                            <div key={index} className="flex gap-3">
+                                <div className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 text-sm
                                     ${activity.type === 'order' ? 'bg-green-100 text-green-500' :
                                         activity.type === 'restaurant_approval' ? 'bg-blue-100 text-blue-500' :
                                             'bg-orange-100 text-orange-500'}`}>
@@ -315,16 +313,16 @@ export default function DashboardHome({ stats, refreshStats }: DashboardHomeProp
                                         activity.type === 'restaurant_approval' ? <FaStore /> : <FaMotorcycle />}
                                 </div>
                                 <div>
-                                    <h4 className="font-medium text-gray-800">{activity.text}</h4>
-                                    <p className="text-sm text-gray-500">{activity.subtext}</p>
-                                    <p className="text-xs text-gray-400 mt-1">
+                                    <h4 className="font-bold text-gray-800 text-xs">{activity.text}</h4>
+                                    <p className="text-[10px] text-gray-500 font-bold">{activity.subtext}</p>
+                                    <p className="text-[9px] text-gray-400 font-bold uppercase mt-0.5">
                                         {new Date(activity.time).toLocaleString()}
                                     </p>
                                 </div>
                             </div>
                         ))}
                         {displayStats.recentActivity.length === 0 && (
-                            <div className="text-center py-8 text-gray-500">No recent activity</div>
+                            <div className="text-center py-6 text-[10px] text-gray-500 font-bold uppercase">No recent activity</div>
                         )}
                     </div>
                 </div>

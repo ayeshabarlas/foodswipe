@@ -73,121 +73,144 @@ export default function EnhancedOrdersView() {
     }) : [];
 
     return (
-        <div className="p-6">
-            <div className="flex justify-between items-center mb-8">
+        <div className="p-4">
+            <div className="flex justify-between items-center mb-6">
                 <div>
-                    <h2 className="text-2xl font-bold text-gray-800">All Orders</h2>
-                    <p className="text-gray-500">Complete order history and management</p>
+                    <h2 className="text-lg font-bold text-gray-800">All Orders</h2>
+                    <p className="text-[10px] text-gray-400 font-bold uppercase tracking-wider">Complete order history and management</p>
                 </div>
-                <div className="flex gap-3">
-                    <button className="flex items-center gap-2 px-4 py-2 border border-gray-200 rounded-lg bg-white text-gray-600 hover:bg-gray-50">
+                <div className="flex gap-2">
+                    <button className="flex items-center gap-2 px-3 py-1.5 border border-gray-100 rounded-lg bg-white text-gray-500 text-xs font-bold uppercase tracking-wider hover:bg-gray-50">
                         <FaCalendarAlt /> Date Range
                     </button>
-                    <button className="flex items-center gap-2 px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 shadow-md">
+                    <button className="flex items-center gap-2 px-3 py-1.5 bg-green-500 text-white rounded-lg text-xs font-bold uppercase tracking-wider hover:bg-green-600 shadow-sm">
                         <FaDownload /> Export
                     </button>
                 </div>
             </div>
 
             {/* Stats Cards */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-                <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
-                    <p className="text-gray-500 text-sm mb-1">Total Orders</p>
-                    <h3 className="text-2xl font-bold text-gray-800">{stats.totalOrders}</h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+                <div className="bg-white p-4 rounded-2xl shadow-sm border border-gray-100">
+                    <p className="text-gray-400 text-[10px] mb-1 font-bold uppercase tracking-wider">Total Orders</p>
+                    <h3 className="text-lg font-bold text-gray-800">{stats.totalOrders}</h3>
                 </div>
-                <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
-                    <p className="text-gray-500 text-sm mb-1">Total Revenue</p>
-                    <h3 className="text-2xl font-bold text-gray-800">Rs {stats.totalRevenue.toLocaleString()}</h3>
+                <div className="bg-white p-4 rounded-2xl shadow-sm border border-gray-100">
+                    <p className="text-gray-400 text-[10px] mb-1 font-bold uppercase tracking-wider">Total Revenue</p>
+                    <h3 className="text-lg font-bold text-gray-800">Rs {stats.totalRevenue.toLocaleString()}</h3>
                 </div>
-                <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
-                    <p className="text-green-600 text-sm mb-1 font-medium">Platform Commission</p>
-                    <h3 className="text-2xl font-bold text-green-700">Rs {stats.commission.toLocaleString()}</h3>
+                <div className="bg-white p-4 rounded-2xl shadow-sm border border-gray-100">
+                    <p className="text-gray-400 text-[10px] mb-1 font-bold uppercase tracking-wider">Platform Commission</p>
+                    <h3 className="text-lg font-bold text-gray-800">Rs {stats.commission.toLocaleString()}</h3>
                 </div>
-                <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
-                    <p className="text-gray-500 text-sm mb-1">Average Order Value</p>
-                    <h3 className="text-2xl font-bold text-gray-800">Rs {stats.avgOrderValue.toLocaleString()}</h3>
+                <div className="bg-white p-4 rounded-2xl shadow-sm border border-gray-100">
+                    <p className="text-gray-400 text-[10px] mb-1 font-bold uppercase tracking-wider">Avg Order Value</p>
+                    <h3 className="text-lg font-bold text-gray-800">Rs {stats.avgOrderValue.toLocaleString()}</h3>
                 </div>
             </div>
 
             {/* Filters */}
-            <div className="flex flex-col md:flex-row gap-4 mb-6">
-                <div className="relative flex-1 max-w-lg">
-                    <FaSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+            <div className="bg-white p-3 rounded-2xl shadow-sm border border-gray-100 mb-6 flex flex-wrap gap-3 items-center">
+                <div className="relative flex-1 min-w-[200px]">
+                    <FaSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-xs" />
                     <input
                         type="text"
-                        placeholder="Search by order ID, customer, or restaurant..."
+                        placeholder="Search by ID, customer or restaurant..."
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
-                        className="w-full pl-10 pr-4 py-2.5 border border-gray-200 rounded-xl outline-none focus:ring-2 focus:ring-orange-500"
+                        className="w-full pl-9 pr-4 py-2 bg-gray-50 border-none rounded-xl text-xs focus:ring-2 focus:ring-orange-500/20"
                     />
                 </div>
-                <div className="flex gap-3">
-                    <select className="px-4 py-2.5 border border-gray-200 rounded-xl outline-none bg-white text-gray-600">
-                        <option>All Status</option>
-                        <option>Delivered</option>
-                        <option>Cancelled</option>
-                    </select>
-                    <select className="px-4 py-2.5 border border-gray-200 rounded-xl outline-none bg-white text-gray-600">
-                        <option>All Payments</option>
-                        <option>Cash</option>
-                        <option>Card</option>
-                    </select>
-                    <button className="flex items-center gap-2 px-4 py-2.5 border border-gray-200 rounded-xl hover:bg-gray-50 text-gray-600">
-                        <FaFilter /> More Filters
+                <div className="flex items-center gap-2">
+                    <button className="p-2 bg-gray-50 text-gray-400 rounded-lg hover:bg-gray-100">
+                        <FaFilter className="text-xs" />
+                    </button>
+                    <button
+                        onClick={() => fetchOrders()}
+                        disabled={loading}
+                        className={`p-2 bg-orange-50 text-orange-600 rounded-lg hover:bg-orange-100 transition-all ${loading ? 'animate-spin' : ''}`}
+                    >
+                        <FaSyncAlt className="text-xs" />
+                    </button>
+                </div>
+                <div className="flex items-center gap-2 ml-auto">
+                    <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Auto Refresh</span>
+                    <button
+                        onClick={() => setAutoRefresh(!autoRefresh)}
+                        className={`w-10 h-5 rounded-full transition-colors relative ${autoRefresh ? 'bg-green-500' : 'bg-gray-200'}`}
+                    >
+                        <div className={`absolute top-1 w-3 h-3 bg-white rounded-full transition-transform ${autoRefresh ? 'translate-x-6' : 'translate-x-1'}`} />
                     </button>
                 </div>
             </div>
 
-            {/* Table */}
+            {/* Orders Table */}
             <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
                 <div className="overflow-x-auto">
-                    <table className="w-full">
-                        <thead className="bg-gray-50 border-b border-gray-100">
-                            <tr>
-                                <th className="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase">Order ID</th>
-                                <th className="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase">Time</th>
-                                <th className="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase">Customer</th>
-                                <th className="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase">Restaurant</th>
-                                <th className="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase">Rider</th>
-                                <th className="px-6 py-4 text-center text-xs font-bold text-gray-500 uppercase">Items</th>
-                                <th className="px-6 py-4 text-right text-xs font-bold text-gray-500 uppercase">Subtotal</th>
-                                <th className="px-6 py-4 text-right text-xs font-bold text-gray-500 uppercase">Commission (10%)</th>
-                                <th className="px-6 py-4 text-right text-xs font-bold text-gray-500 uppercase">Total</th>
+                    <table className="w-full text-left border-collapse">
+                        <thead>
+                            <tr className="bg-gray-50/50 border-b border-gray-100">
+                                <th className="px-4 py-3 text-[10px] font-bold text-gray-400 uppercase tracking-wider">Order Info</th>
+                                <th className="px-4 py-3 text-[10px] font-bold text-gray-400 uppercase tracking-wider">Customer</th>
+                                <th className="px-4 py-3 text-[10px] font-bold text-gray-400 uppercase tracking-wider">Restaurant</th>
+                                <th className="px-4 py-3 text-[10px] font-bold text-gray-400 uppercase tracking-wider">Amount</th>
+                                <th className="px-4 py-3 text-[10px] font-bold text-gray-400 uppercase tracking-wider">Status</th>
+                                <th className="px-4 py-3 text-[10px] font-bold text-gray-400 uppercase tracking-wider text-right">Actions</th>
                             </tr>
                         </thead>
-                        <tbody className="divide-y divide-gray-100">
-                            {filteredOrders.map(order => (
-                                <tr key={order._id} className="hover:bg-gray-50 transition">
-                                    <td className="px-6 py-4 text-sm font-medium text-gray-600">
-                                        #{order.orderNumber || order._id.slice(-6)}
-                                    </td>
-                                    <td className="px-6 py-4 text-sm text-gray-500">
-                                        {new Date(order.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                                        <div className="text-xs text-gray-400">{new Date(order.createdAt).toLocaleDateString()}</div>
-                                    </td>
-                                    <td className="px-6 py-4 text-sm font-medium text-gray-800">
-                                        {order.user?.name || 'Guest'}
-                                    </td>
-                                    <td className="px-6 py-4 text-sm text-gray-600">
-                                        {order.restaurant?.name || 'N/A'}
-                                    </td>
-                                    <td className="px-6 py-4 text-sm text-gray-600">
-                                        {order.rider?.user?.name || 'Unassigned'}
-                                    </td>
-                                    <td className="px-6 py-4 text-center text-sm text-gray-600">
-                                        {order.items?.length || 0}
-                                    </td>
-                                    <td className="px-6 py-4 text-right text-sm text-gray-600">
-                                        Rs {Math.round(order.totalAmount * 0.9).toLocaleString()}
-                                    </td>
-                                    <td className="px-6 py-4 text-right text-sm font-medium text-green-600">
-                                        Rs {Math.round(order.totalAmount * 0.1).toLocaleString()}
-                                    </td>
-                                    <td className="px-6 py-4 text-right text-sm font-bold text-gray-900">
-                                        Rs {(order.totalAmount || 0).toLocaleString()}
-                                    </td>
+                        <tbody className="divide-y divide-gray-50">
+                            {loading ? (
+                                Array(5).fill(0).map((_, i) => (
+                                    <tr key={i} className="animate-pulse">
+                                        <td colSpan={6} className="px-4 py-4 h-16 bg-gray-50/20"></td>
+                                    </tr>
+                                ))
+                            ) : filteredOrders.length === 0 ? (
+                                <tr>
+                                    <td colSpan={6} className="px-4 py-12 text-center text-gray-400 text-xs">No orders found matching your search.</td>
                                 </tr>
-                            ))}
+                            ) : (
+                                filteredOrders.map((order) => (
+                                    <tr key={order._id} className="hover:bg-gray-50/50 transition-colors">
+                                        <td className="px-4 py-3">
+                                            <div className="flex items-center gap-3">
+                                                <div className="w-8 h-8 bg-orange-50 rounded-lg flex items-center justify-center text-orange-600">
+                                                    <FaReceipt className="text-xs" />
+                                                </div>
+                                                <div>
+                                                    <p className="text-xs font-bold text-gray-800">#{order.orderNumber || order._id.slice(-6)}</p>
+                                                    <p className="text-[10px] text-gray-400">{new Date(order.createdAt).toLocaleString([], { dateStyle: 'short', timeStyle: 'short' })}</p>
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td className="px-4 py-3">
+                                            <p className="text-xs font-bold text-gray-800">{order.user?.name || 'Guest'}</p>
+                                            <p className="text-[10px] text-gray-400">Customer</p>
+                                        </td>
+                                        <td className="px-4 py-3">
+                                            <p className="text-xs font-bold text-gray-800">{order.restaurant?.name || 'Restaurant'}</p>
+                                            <p className="text-[10px] text-gray-400">Partner</p>
+                                        </td>
+                                        <td className="px-4 py-3">
+                                            <p className="text-xs font-bold text-gray-800">Rs {order.totalAmount?.toLocaleString()}</p>
+                                            <p className="text-[10px] text-green-500 font-bold uppercase tracking-wider">Paid</p>
+                                        </td>
+                                        <td className="px-4 py-3">
+                                            <span className={`px-2 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-widest
+                                                ${order.status === 'delivered' ? 'bg-green-50 text-green-600' :
+                                                    order.status === 'cancelled' ? 'bg-red-50 text-red-600' :
+                                                        'bg-blue-50 text-blue-600'}`}>
+                                                {order.status}
+                                            </span>
+                                        </td>
+                                        <td className="px-4 py-3 text-right">
+                                            <button className="px-3 py-1 bg-gray-50 text-gray-500 text-[10px] font-bold uppercase tracking-widest rounded-lg hover:bg-gray-100 transition-all border border-gray-100">
+                                                Details
+                                            </button>
+                                        </td>
+                                    </tr>
+                                ))
+                            )}
                         </tbody>
                     </table>
                 </div>

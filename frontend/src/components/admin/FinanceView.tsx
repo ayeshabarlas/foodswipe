@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 import { useState, useEffect } from 'react';
 import axios from 'axios';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
@@ -90,17 +90,17 @@ export default function FinanceView() {
 
     return (
         <div className="p-6">
-            <div className="flex justify-between items-center mb-8">
+            <div className="flex justify-between items-center mb-6">
                 <div>
-                    <h2 className="text-2xl font-bold text-gray-800">Finance Overview</h2>
-                    <p className="text-gray-500">Complete financial management with 10% commission tracking</p>
+                    <h2 className="text-lg font-bold text-gray-800">Finance Overview</h2>
+                    <p className="text-[10px] text-gray-500 uppercase tracking-wider font-bold">Complete financial management with 10% commission tracking</p>
                 </div>
-                <div className="flex gap-3">
-                    <button className="flex items-center gap-2 px-4 py-2 border border-gray-200 rounded-lg bg-white text-gray-600 hover:bg-gray-50">
+                <div className="flex gap-2">
+                    <button className="flex items-center gap-2 px-3 py-1.5 border border-gray-200 rounded-lg bg-white text-gray-600 hover:bg-gray-50 text-xs">
                         <FaCalendarAlt /> Date Range
                     </button>
-                    <button className="flex items-center gap-2 px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 shadow-md">
-                        <FaDownload /> Export Report
+                    <button className="flex items-center gap-2 px-3 py-1.5 bg-green-500 text-white rounded-lg hover:bg-green-600 shadow-md text-xs font-bold uppercase tracking-wider">
+                        <FaDownload /> Export
                     </button>
                 </div>
             </div>
@@ -108,86 +108,89 @@ export default function FinanceView() {
             {/* Main Stats Cards */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
                 {/* Total Revenue */}
-                <div className="bg-blue-500 rounded-2xl p-6 text-white shadow-lg shadow-blue-500/20 relative overflow-hidden">
+                <div className="bg-blue-600 rounded-xl p-4 text-white shadow-lg shadow-blue-600/20 relative overflow-hidden">
                     <div className="relative z-10">
-                        <div className="flex justify-between items-start mb-4">
-                            <div className="bg-white/20 p-2 rounded-lg">
-                                <span className="text-xl font-bold">$</span>
+                        <div className="flex justify-between items-start mb-3">
+                            <div className="bg-white/20 p-1.5 rounded-lg">
+                                <span className="text-base font-bold">$</span>
                             </div>
-                            <span className="text-sm font-medium bg-white/20 px-2 py-1 rounded">+12.5%</span>
+                            <span className="text-[10px] font-bold bg-white/20 px-1.5 py-0.5 rounded uppercase">+12.5%</span>
                         </div>
-                        <p className="text-blue-100 text-sm mb-1">Total Revenue</p>
-                        <h3 className="text-2xl font-bold mb-1">Rs {stats.totalRevenue.toLocaleString()}</h3>
-                        <p className="text-blue-200 text-xs">This month</p>
+                        <p className="text-blue-100 text-[10px] font-bold uppercase tracking-wider mb-0.5">Total Revenue</p>
+                        <h3 className="text-xl font-bold">Rs {stats.totalRevenue.toLocaleString()}</h3>
+                        <p className="text-blue-200 text-[9px] font-medium uppercase tracking-tighter">This month</p>
                     </div>
                 </div>
 
                 {/* Platform Commission */}
-                <div className="bg-green-500 rounded-2xl p-6 text-white shadow-lg shadow-green-500/20 relative overflow-hidden">
+                <div className="bg-green-600 rounded-xl p-4 text-white shadow-lg shadow-green-600/20 relative overflow-hidden">
                     <div className="relative z-10">
-                        <div className="flex justify-between items-start mb-4">
-                            <div className="bg-white/20 p-2 rounded-lg">
-                                <span className="text-xl font-bold">â†—</span>
+                        <div className="flex justify-between items-start mb-3">
+                            <div className="bg-white/20 p-1.5 rounded-lg">
+                                <span className="text-base font-bold">↗</span>
                             </div>
-                            <span className="text-sm font-medium bg-white/20 px-2 py-1 rounded">10% Rate</span>
+                            <span className="text-[10px] font-bold bg-white/20 px-1.5 py-0.5 rounded uppercase">10% Rate</span>
                         </div>
-                        <p className="text-green-100 text-sm mb-1">Platform Commission</p>
-                        <h3 className="text-2xl font-bold mb-1">Rs {stats.platformCommission.toLocaleString()}</h3>
-                        <p className="text-green-200 text-xs">This month (10% of orders)</p>
+                        <p className="text-green-100 text-[10px] font-bold uppercase tracking-wider mb-0.5">Platform Commission</p>
+                        <h3 className="text-xl font-bold">Rs {stats.platformCommission.toLocaleString()}</h3>
+                        <p className="text-green-200 text-[9px] font-medium uppercase tracking-tighter">This month (10%)</p>
                     </div>
                 </div>
 
                 {/* Pending Payouts */}
-                <div className="bg-orange-500 rounded-2xl p-6 text-white shadow-lg shadow-orange-500/20 relative overflow-hidden">
+                <div className="bg-orange-500 rounded-xl p-4 text-white shadow-lg shadow-orange-500/20 relative overflow-hidden">
                     <div className="relative z-10">
-                        <div className="flex justify-between items-start mb-4">
-                            <div className="bg-white/20 p-2 rounded-lg">
-                                <span className="text-xl font-bold">â†˜</span>
+                        <div className="flex justify-between items-start mb-3">
+                            <div className="bg-white/20 p-1.5 rounded-lg">
+                                <span className="text-base font-bold">↘</span>
                             </div>
                         </div>
-                        <p className="text-orange-100 text-sm mb-1">Pending Payouts</p>
-                        <h3 className="text-2xl font-bold mb-1">Rs {stats.pendingPayouts.toLocaleString()}</h3>
-                        <p className="text-orange-200 text-xs">Restaurants & Riders</p>
+                        <p className="text-orange-100 text-[10px] font-bold uppercase tracking-wider mb-0.5">Pending Payouts</p>
+                        <h3 className="text-xl font-bold">Rs {stats.pendingPayouts.toLocaleString()}</h3>
+                        <p className="text-orange-200 text-[9px] font-medium uppercase tracking-tighter">Restaurants & Riders</p>
                     </div>
                 </div>
 
                 {/* Gateway Fees */}
-                <div className="bg-purple-500 rounded-2xl p-6 text-white shadow-lg shadow-purple-500/20 relative overflow-hidden">
+                <div className="bg-purple-600 rounded-xl p-4 text-white shadow-lg shadow-purple-600/20 relative overflow-hidden">
                     <div className="relative z-10">
-                        <div className="flex justify-between items-start mb-4">
-                            <div className="bg-white/20 p-2 rounded-lg">
-                                <span className="text-xl font-bold">ðŸ’³</span>
+                        <div className="flex justify-between items-start mb-3">
+                            <div className="bg-white/20 p-1.5 rounded-lg">
+                                <span className="text-base font-bold">💳</span>
                             </div>
                         </div>
-                        <p className="text-purple-100 text-sm mb-1">Gateway Fees</p>
-                        <h3 className="text-2xl font-bold mb-1">Rs {stats.gatewayFees.toLocaleString()}</h3>
-                        <p className="text-purple-200 text-xs">Payment processing</p>
+                        <p className="text-purple-100 text-[10px] font-bold uppercase tracking-wider mb-0.5">Gateway Fees</p>
+                        <h3 className="text-xl font-bold">Rs {stats.gatewayFees.toLocaleString()}</h3>
+                        <p className="text-purple-200 text-[9px] font-medium uppercase tracking-tighter">Processing fees</p>
                     </div>
                 </div>
             </div>
 
             {/* Sub Stats Row */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-                <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
-                    <p className="text-gray-500 text-sm mb-1">Restaurant Earnings (90%)</p>
+                <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-100">
+                    <p className="text-gray-500 text-[10px] font-bold uppercase tracking-wider mb-1">Restaurant Earnings (90%)</p>
                     <h3 className="text-xl font-bold text-gray-800">Rs {stats.restaurantEarnings.toLocaleString()}</h3>
                 </div>
-                <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
-                    <p className="text-gray-500 text-sm mb-1">Rider Earnings</p>
+                <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-100">
+                    <p className="text-gray-500 text-[10px] font-bold uppercase tracking-wider mb-1">Rider Earnings</p>
                     <h3 className="text-xl font-bold text-gray-800">Rs {stats.riderEarnings.toLocaleString()}</h3>
                 </div>
-                <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
-                    <p className="text-green-600 text-sm mb-1">Platform Net Revenue</p>
+                <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-100">
+                    <p className="text-green-600 text-[10px] font-bold uppercase tracking-wider mb-1">Platform Net Revenue</p>
                     <h3 className="text-xl font-bold text-green-700">Rs {stats.netRevenue.toLocaleString()}</h3>
-                    <p className="text-xs text-gray-400 mt-1">Commission - Gateway Fees</p>
+                    <p className="text-[9px] text-gray-400 mt-1 uppercase font-bold">Commission - Gateway Fees</p>
                 </div>
             </div>
 
             {/* Charts Section */}
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                <div className="lg:col-span-2 bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
-                    <h3 className="text-gray-600 font-semibold mb-6">Revenue & Commission Trend</h3>
-                    <div className="h-80">
+                <div className="lg:col-span-2 bg-white p-5 rounded-xl shadow-sm border border-gray-100">
+                    <h3 className="text-gray-800 text-xs font-bold uppercase tracking-wider mb-6 flex items-center gap-2">
+                        <div className="w-1 h-3 bg-blue-500 rounded-full"></div>
+                        Revenue & Commission Trend
+                    </h3>
+                    <div className="h-72">
                         <ResponsiveContainer width="100%" height="100%">
                             <AreaChart data={chartData}>
                                 <defs>
@@ -197,17 +200,33 @@ export default function FinanceView() {
                                     </linearGradient>
                                 </defs>
                                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#E5E7EB" />
-                                <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fill: '#6B7280' }} dy={10} />
-                                <YAxis axisLine={false} tickLine={false} tick={{ fill: '#6B7280' }} />
-                                <Tooltip />
+                                <XAxis 
+                                    dataKey="name" 
+                                    axisLine={false} 
+                                    tickLine={false} 
+                                    tick={{ fill: '#6B7280', fontSize: 10, fontWeight: 600 }} 
+                                    dy={10} 
+                                />
+                                <YAxis 
+                                    axisLine={false} 
+                                    tickLine={false} 
+                                    tick={{ fill: '#6B7280', fontSize: 10, fontWeight: 600 }} 
+                                />
+                                <Tooltip 
+                                    contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}
+                                    itemStyle={{ fontSize: '11px', fontWeight: 700 }}
+                                />
                                 <Area type="monotone" dataKey="revenue" stroke="#3B82F6" fillOpacity={1} fill="url(#colorRevenue)" strokeWidth={3} />
                             </AreaChart>
                         </ResponsiveContainer>
                     </div>
                 </div>
 
-                <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
-                    <h3 className="text-gray-600 font-semibold mb-6">Payment Methods</h3>
+                <div className="bg-white p-5 rounded-xl shadow-sm border border-gray-100">
+                    <h3 className="text-gray-800 text-xs font-bold uppercase tracking-wider mb-6 flex items-center gap-2">
+                        <div className="w-1 h-3 bg-orange-500 rounded-full"></div>
+                        Payment Methods
+                    </h3>
                     <div className="h-64 flex justify-center items-center">
                         <ResponsiveContainer width="100%" height="100%">
                             <PieChart>
@@ -216,7 +235,7 @@ export default function FinanceView() {
                                     cx="50%"
                                     cy="50%"
                                     innerRadius={60}
-                                    outerRadius={90}
+                                    outerRadius={85}
                                     fill="#8884d8"
                                     paddingAngle={5}
                                     dataKey="value"
@@ -229,9 +248,10 @@ export default function FinanceView() {
                             </PieChart>
                         </ResponsiveContainer>
                     </div>
-                    <div className="flex justify-center gap-4 text-sm text-gray-500 mt-4">
-                        <div className="flex items-center gap-1"><div className="w-3 h-3 rounded-full bg-blue-500"></div>Card 45%</div>
-                        <div className="flex items-center gap-1"><div className="w-3 h-3 rounded-full bg-green-500"></div>Cash 35%</div>
+                    <div className="flex flex-wrap justify-center gap-x-4 gap-y-2 text-[10px] font-bold uppercase text-gray-500 mt-4">
+                        <div className="flex items-center gap-1.5"><div className="w-2 h-2 rounded-full bg-blue-500"></div>Card 45%</div>
+                        <div className="flex items-center gap-1.5"><div className="w-2 h-2 rounded-full bg-green-500"></div>Cash 35%</div>
+                        <div className="flex items-center gap-1.5"><div className="w-2 h-2 rounded-full bg-yellow-500"></div>Wallet 15%</div>
                     </div>
                 </div>
             </div>

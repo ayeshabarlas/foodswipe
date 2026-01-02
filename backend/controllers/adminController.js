@@ -377,6 +377,14 @@ const getAllRiders = async (req, res) => {
             },
             {
                 $lookup: {
+                    from: 'riderwallets',
+                    localField: 'user',
+                    foreignField: 'rider',
+                    as: 'walletDetails'
+                }
+            },
+            {
+                $lookup: {
                     from: 'orders',
                     let: { riderId: '$_id' },
                     pipeline: [
@@ -396,9 +404,15 @@ const getAllRiders = async (req, res) => {
             },
             {
                 $addFields: {
-                    totalOrders: { $size: '$allOrders' },
-                    totalEarnings: { $ifNull: ['$earnings.total', 0] },
-                    cashCollected: { $ifNull: ['$earnings.thisWeek', 0] }
+                    wallet: { $ifNull: [{ $arrayElemAt: ['$walletDetails', 0] }, {}] },
+                    totalOrders: { $size: '$allOrders' }
+                }
+            },
+            {
+                $addFields: {
+                    totalEarnings: { $ifNull: ['$wallet.totalEarnings', { $ifNull: ['$earnings.total', 0] }] },
+                    cashCollected: { $ifNull: ['$wallet.cashCollected', 0] },
+                    availableWithdraw: { $ifNull: ['$wallet.availableWithdraw', 0] }
                 }
             },
             { $sort: { createdAt: -1 } }

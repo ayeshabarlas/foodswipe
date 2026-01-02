@@ -25,6 +25,37 @@ yarn-error.log*
 # local env files
 .env*.local
 .env
+serviceAccountKey.json
+*.json.bak
+*.bak
+*.log
+debug-*.js
+check-*.js
+test-*.js
+verify-*.js
+list-*.js
+fix-*.js
+create-*.js
+reset-*.js
+make_admin.js
+merge-accounts.js
+rename-accounts.js
+purge_restaurant.js
+restore-admin.js
+seeder*.js
+cleanup_users.js
+clearOrders.js
+count-*.js
+count_stats.js
+dropDb.js
+ensure-user.js
+update_users_remove_verification.js
+*.png
+*.jpg
+*.jpeg
+*.webp
+*.mp4
+*.svg
 
 # vercel
 .vercel

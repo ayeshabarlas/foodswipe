@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 import { useState, useEffect } from 'react';
 import axios from 'axios';
 import { io } from 'socket.io-client';
@@ -115,73 +115,75 @@ export default function CustomersView() {
 
     return (
         <div className="p-6">
-            <div className="mb-8">
-                <h2 className="text-2xl font-bold text-gray-800">Customers Management</h2>
-                <p className="text-gray-500">Manage customers and monitor behavior</p>
+            <div className="flex justify-between items-center mb-6">
+                <div>
+                    <h2 className="text-lg font-bold text-gray-800">Customers Management</h2>
+                    <p className="text-[10px] text-gray-500 uppercase tracking-wider font-bold">Manage customers and monitor behavior</p>
+                </div>
             </div>
 
             {/* Stats Cards */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-                <div className="bg-white p-5 rounded-2xl shadow-sm border border-gray-100">
-                    <p className="text-gray-500 text-sm mb-1">Total Customers</p>
-                    <div className="flex justify-between items-center">
-                        <h3 className="text-2xl font-bold text-gray-800">{stats.total}</h3>
-                        <div className="bg-orange-100 p-2 rounded-lg text-orange-600">
-                            <FaUser />
-                        </div>
+                <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-100 flex justify-between items-center">
+                    <div>
+                        <p className="text-gray-500 text-[10px] uppercase font-bold mb-1">Total Customers</p>
+                        <h3 className="text-xl font-bold text-gray-800">{stats.total}</h3>
+                    </div>
+                    <div className="bg-orange-50 p-2.5 rounded-lg text-orange-500">
+                        <FaUser className="text-lg" />
                     </div>
                 </div>
-                <div className="bg-white p-5 rounded-2xl shadow-sm border border-gray-100">
-                    <p className="text-gray-500 text-sm mb-1">Active Customers</p>
-                    <div className="flex justify-between items-center">
-                        <h3 className="text-2xl font-bold text-gray-800">{stats.active}</h3>
-                        <div className="bg-green-100 p-2 rounded-lg text-green-600">
-                            <span className="font-bold">A</span>
-                        </div>
+                <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-100 flex justify-between items-center">
+                    <div>
+                        <p className="text-gray-500 text-[10px] uppercase font-bold mb-1">Active Customers</p>
+                        <h3 className="text-xl font-bold text-gray-800">{stats.active}</h3>
+                    </div>
+                    <div className="bg-green-50 p-2.5 rounded-lg text-green-500 text-sm font-bold">
+                        ACT
                     </div>
                 </div>
-                <div className="bg-white p-5 rounded-2xl shadow-sm border border-gray-100">
-                    <p className="text-gray-500 text-sm mb-1">Flagged</p>
-                    <div className="flex justify-between items-center">
-                        <h3 className="text-2xl font-bold text-gray-800">{stats.flagged}</h3>
-                        <div className="bg-red-100 p-2 rounded-lg text-red-600">
-                            <FaFlag />
-                        </div>
+                <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-100 flex justify-between items-center">
+                    <div>
+                        <p className="text-gray-500 text-[10px] uppercase font-bold mb-1">Flagged</p>
+                        <h3 className="text-xl font-bold text-red-600">{stats.flagged}</h3>
+                    </div>
+                    <div className="bg-red-50 p-2.5 rounded-lg text-red-500">
+                        <FaFlag className="text-lg" />
                     </div>
                 </div>
-                <div className="bg-white p-5 rounded-2xl shadow-sm border border-gray-100">
-                    <p className="text-gray-500 text-sm mb-1">Total Orders</p>
-                    <div className="flex justify-between items-center">
-                        <h3 className="text-2xl font-bold text-gray-800">{stats.totalOrders}</h3>
-                        <div className="bg-blue-100 p-2 rounded-lg text-blue-600">
-                            <span className="font-bold">#</span>
-                        </div>
+                <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-100 flex justify-between items-center">
+                    <div>
+                        <p className="text-gray-500 text-[10px] uppercase font-bold mb-1">Total Orders</p>
+                        <h3 className="text-xl font-bold text-gray-800">{stats.totalOrders}</h3>
+                    </div>
+                    <div className="bg-blue-50 p-2.5 rounded-lg text-blue-500 text-sm font-bold">
+                        ORD
                     </div>
                 </div>
             </div>
 
             {/* Toolbar */}
             <div className="flex flex-col md:flex-row gap-4 mb-6 justify-between">
-                <div className="relative flex-1 max-w-md">
-                    <FaSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+                <div className="relative flex-1 max-w-lg">
+                    <FaSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 text-xs" />
                     <input
                         type="text"
                         placeholder="Search by name, phone, or email..."
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
-                        className="w-full pl-10 pr-4 py-2.5 border border-gray-200 rounded-xl outline-none focus:ring-2 focus:ring-orange-500"
+                        className="w-full pl-9 pr-4 py-2 border border-gray-200 rounded-lg outline-none focus:ring-2 focus:ring-orange-500 text-xs"
                     />
                 </div>
-                <div className="flex gap-3">
+                <div className="flex gap-2">
                     <select
-                        className="px-4 py-2.5 border border-gray-200 rounded-xl outline-none text-gray-600 bg-white"
+                        className="px-3 py-2 border border-gray-200 rounded-lg outline-none text-gray-600 bg-white text-xs font-bold uppercase"
                     >
                         <option>All Status</option>
                         <option>Active</option>
                         <option>Flagged</option>
                     </select>
-                    <button className="flex items-center gap-2 px-4 py-2.5 border border-gray-200 rounded-xl hover:bg-gray-50 text-gray-600">
-                        <FaFilter /> More Filters
+                    <button className="flex items-center gap-2 px-3 py-2 border border-gray-200 rounded-lg hover:bg-gray-50 text-gray-600 text-xs">
+                        <FaFilter /> Filters
                     </button>
                 </div>
             </div>
@@ -192,74 +194,74 @@ export default function CustomersView() {
                     <table className="w-full">
                         <thead className="bg-gray-50 border-b border-gray-100">
                             <tr>
-                                <th className="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase">Customer</th>
-                                <th className="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase">Contact</th>
-                                <th className="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase">Orders</th>
-                                <th className="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase">Total Spent</th>
-                                <th className="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase">Avg Order</th>
-                                <th className="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase">Cancellations</th>
-                                <th className="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase">Last Order</th>
-                                <th className="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase">Status</th>
-                                <th className="px-6 py-4 text-right text-xs font-bold text-gray-500 uppercase">Actions</th>
+                                <th className="px-6 py-3 text-left text-[10px] font-bold text-gray-500 uppercase tracking-wider">Customer</th>
+                                <th className="px-6 py-3 text-left text-[10px] font-bold text-gray-500 uppercase tracking-wider">Contact</th>
+                                <th className="px-6 py-3 text-left text-[10px] font-bold text-gray-500 uppercase tracking-wider">Orders</th>
+                                <th className="px-6 py-3 text-left text-[10px] font-bold text-gray-500 uppercase tracking-wider">Total Spent</th>
+                                <th className="px-6 py-3 text-left text-[10px] font-bold text-gray-500 uppercase tracking-wider">Avg Order</th>
+                                <th className="px-6 py-3 text-left text-[10px] font-bold text-gray-500 uppercase tracking-wider">Cancellations</th>
+                                <th className="px-6 py-3 text-left text-[10px] font-bold text-gray-500 uppercase tracking-wider">Last Order</th>
+                                <th className="px-6 py-3 text-left text-[10px] font-bold text-gray-500 uppercase tracking-wider">Status</th>
+                                <th className="px-6 py-3 text-right text-[10px] font-bold text-gray-500 uppercase tracking-wider">Actions</th>
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-gray-100">
                             {filteredCustomers.map((customer) => (
                                 <tr key={customer._id} className="hover:bg-gray-50 transition">
-                                    <td className="px-6 py-4">
-                                        <div className="font-bold text-gray-800">{customer.name}</div>
+                                    <td className="px-6 py-3">
+                                        <div className="text-xs font-bold text-gray-800">{customer.name}</div>
                                     </td>
-                                    <td className="px-6 py-4">
-                                        <div className="text-sm text-gray-600">{customer.phone}</div>
-                                        <div className="text-xs text-gray-400">{customer.email}</div>
+                                    <td className="px-6 py-3">
+                                        <div className="text-[11px] text-gray-600">{customer.phone}</div>
+                                        <div className="text-[10px] text-gray-400">{customer.email}</div>
                                     </td>
-                                    <td className="px-6 py-4 text-sm text-gray-600">{customer.totalOrders || 0}</td>
-                                    <td className="px-6 py-4 text-sm font-semibold text-gray-800">Rs {(customer.totalSpent || 0).toLocaleString()}</td>
-                                    <td className="px-6 py-4 text-sm text-gray-600">Rs {(currentUserAvg(customer)).toLocaleString()}</td>
-                                    <td className="px-6 py-4 text-sm text-gray-600">
+                                    <td className="px-6 py-3 text-[11px] text-gray-600">{customer.totalOrders || 0}</td>
+                                    <td className="px-6 py-3 text-[11px] font-bold text-gray-800">Rs {(customer.totalSpent || 0).toLocaleString()}</td>
+                                    <td className="px-6 py-3 text-[11px] text-gray-600">Rs {(currentUserAvg(customer)).toLocaleString()}</td>
+                                    <td className="px-6 py-3 text-[11px] text-gray-600">
                                         {customer.cancellations > 0 ? (
                                             <span className="text-red-500 font-bold">{customer.cancellations}</span>
                                         ) : '0'}
                                     </td>
-                                    <td className="px-6 py-4 text-sm text-gray-500">
-                                        {customer.lastOrderDate ? new Date(customer.lastOrderDate).toLocaleDateString() : 'Never'}
-                                        <div className="text-xs text-gray-400">
+                                    <td className="px-6 py-3">
+                                        <div className="text-[11px] text-gray-600">{customer.lastOrderDate ? new Date(customer.lastOrderDate).toLocaleDateString() : 'Never'}</div>
+                                        <div className="text-[10px] text-gray-400">
                                             {customer.lastOrderDate ? formatTimeAgo(customer.lastOrderDate) : ''}
                                         </div>
                                     </td>
-                                    <td className="px-6 py-4">
-                                        <span className={`px-3 py-1 rounded-full text-xs font-bold ${customer.status === 'flagged' ? 'bg-red-100 text-red-600' : 'bg-green-100 text-green-600'
+                                    <td className="px-6 py-3">
+                                        <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold ${customer.status === 'flagged' ? 'bg-red-100 text-red-600' : 'bg-green-100 text-green-600'
                                             }`}>
                                             {customer.status === 'flagged' ? 'Flagged' : 'Active'}
                                         </span>
                                     </td>
-                                    <td className="px-6 py-4 text-right">
-                                        <div className="flex justify-end gap-2 text-gray-500">
+                                    <td className="px-6 py-3 text-right">
+                                        <div className="flex justify-end gap-1.5 text-gray-500">
                                             {customer.status === 'suspended' ? (
                                                 <button
                                                     onClick={(e) => handleUnsuspend(customer._id, e)}
-                                                    className="p-2 bg-green-100 text-green-600 rounded-lg hover:bg-green-200"
+                                                    className="p-1.5 bg-green-50 text-green-600 rounded-lg hover:bg-green-100"
                                                     title="Unsuspend"
                                                 >
-                                                    <FaCheckCircle className="text-xl" />
+                                                    <FaCheckCircle className="text-xs" />
                                                 </button>
                                             ) : (
                                                 <button
                                                     onClick={(e) => handleSuspend(customer._id, e)}
-                                                    className="p-2 bg-yellow-100 text-yellow-600 rounded-lg hover:bg-yellow-200"
+                                                    className="p-1.5 bg-yellow-50 text-yellow-600 rounded-lg hover:bg-yellow-100"
                                                     title="Suspend"
                                                 >
-                                                    <FaBan className="text-xl" />
+                                                    <FaBan className="text-xs" />
                                                 </button>
                                             )}
                                             <button
                                                 onClick={(e) => handleDeleteUser(customer._id, e)}
-                                                className="p-2 bg-red-100 text-red-600 rounded-lg hover:bg-red-200"
+                                                className="p-1.5 bg-red-50 text-red-600 rounded-lg hover:bg-red-100"
                                                 title="Delete"
                                             >
-                                                <FaTimesCircle className="text-xl" />
+                                                <FaTimesCircle className="text-xs" />
                                             </button>
-                                            <button className="hover:text-orange-500 p-2"><FaEye className="text-xl" /></button>
+                                            <button className="p-1.5 hover:bg-gray-100 rounded-lg transition"><FaEye className="text-xs" /></button>
                                         </div>
                                     </td>
                                 </tr>

@@ -1,21 +1,28 @@
 import { API_BASE_URL } from './config';
 
 export const getImageUrl = (path: string | undefined | null) => {
-    if (!path) return '';
+    if (!path || typeof path !== 'string' || path.trim() === '') return '';
     if (path.startsWith('http')) return path;
     
     // Normalize slashes
     let cleanPath = path.replace(/\\/g, '/');
     
     // Remove leading slash if present
-    if (cleanPath.startsWith('/')) {
+    while (cleanPath.startsWith('/')) {
         cleanPath = cleanPath.slice(1);
     }
     
+    // Remove duplicate slashes
+    cleanPath = cleanPath.replace(/\/+/g, '/');
+    
     // Ensure it has uploads/ prefix if it's a relative path to our backend
+    // but only if it doesn't already start with it
     if (!cleanPath.startsWith('uploads/')) {
         cleanPath = `uploads/${cleanPath}`;
     }
     
-    return `${API_BASE_URL}/${cleanPath}`;
+    // Ensure API_BASE_URL doesn't end with slash and cleanPath doesn't start with one
+    const baseUrl = API_BASE_URL.endsWith('/') ? API_BASE_URL.slice(0, -1) : API_BASE_URL;
+    
+    return `${baseUrl}/${cleanPath}`;
 };

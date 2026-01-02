@@ -70,27 +70,22 @@ const seedData = async () => {
         const mockUserEmails = ['restaurant@example.com', 'rider@example.com', 'customer@example.com'];
         await User.deleteMany({ email: { $in: mockUserEmails } });
 
-        // 2. SEED ADMIN (Only if not exists)
-        const adminCount = await Admin.countDocuments();
+        // 2. SEED ADMINS (Only if not exists)
+        const adminsToSeed = users.filter(u => u.role === 'admin');
         
-        if (adminCount === 0) {
-            console.log('🌱 Seeding initial admin account...');
-            const adminSeed = users.find(u => u.role === 'admin');
-            
-            if (adminSeed) {
-                const salt = await bcrypt.genSalt(10);
-                const hashedPassword = await bcrypt.hash(adminSeed.password, salt);
-                
+        for (const adminSeed of adminsToSeed) {
+            const adminExists = await Admin.findOne({ email: adminSeed.email });
+            if (!adminExists) {
+                console.log(`🌱 Seeding admin account: ${adminSeed.email}...`);
+                // Pass plain password, Admin model's pre-save hook will hash it
                 await Admin.create({
                     name: adminSeed.name,
                     email: adminSeed.email,
-                    password: hashedPassword,
+                    password: adminSeed.password,
                     role: 'admin'
                 });
                 console.log('✅ Admin account created: ' + adminSeed.email);
             }
-        } else {
-            console.log('✅ Admin already exists.');
         }
 
         console.log('✨ Seeding process completed (Realtime Mode)');

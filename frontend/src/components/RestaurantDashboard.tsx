@@ -250,10 +250,10 @@ export default function RestaurantDashboard() {
             >
                 <div className="h-full flex flex-col">
                     {/* Header */}
-                    <div className="p-6 border-b border-gray-800">
-                        <div className="flex items-center gap-4 mb-6">
+                    <div className="p-4 border-b border-gray-800">
+                        <div className="flex items-center gap-3 mb-4">
                             <div className="relative group">
-                                <div className="w-12 h-12 rounded-xl overflow-hidden bg-gray-800 ring-2 ring-orange-500 shadow-lg shadow-orange-500/20">
+                                <div className="w-10 h-10 rounded-xl overflow-hidden bg-gray-800 ring-2 ring-orange-500 shadow-lg shadow-orange-500/20">
                                     <img
                                         src={getImageUrl(restaurant.logo) || 'https://via.placeholder.com/150'}
                                         alt="Logo"
@@ -261,19 +261,19 @@ export default function RestaurantDashboard() {
                                     />
                                     <label className="absolute inset-0 bg-black/50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition cursor-pointer">
                                         {uploadingLogo ? (
-                                            <div className="animate-spin rounded-full h-5 w-5 border-2 border-white border-t-transparent"></div>
+                                            <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent"></div>
                                         ) : (
-                                            <FaPaperPlane className="text-white text-sm" />
+                                            <FaPaperPlane className="text-white text-[10px]" />
                                         )}
                                         <input type="file" className="hidden" accept="image/*" onChange={handleLogoUpload} />
                                     </label>
                                 </div>
                             </div>
                             <div className="flex-1 min-w-0">
-                                <h2 className="text-lg font-bold truncate leading-tight">{restaurant.name}</h2>
-                                <p className="text-xs text-gray-400 truncate flex items-center gap-1.5 mt-1">
-                                    <span className={`w-2 h-2 rounded-full ${restaurant.isVerified ? 'bg-green-500' : 'bg-yellow-500 animate-pulse'}`}></span>
-                                    {restaurant.isVerified ? 'Verified Partner' : 'Verification Pending'}
+                                <h2 className="text-base font-bold truncate leading-tight">{restaurant.name}</h2>
+                                <p className="text-[10px] text-gray-400 truncate flex items-center gap-1.5 mt-0.5 font-bold uppercase tracking-wider">
+                                    <span className={`w-1.5 h-1.5 rounded-full ${restaurant.isVerified ? 'bg-green-500' : 'bg-yellow-500 animate-pulse'}`}></span>
+                                    {restaurant.isVerified ? 'Partner' : 'Pending'}
                                 </p>
                             </div>
                         </div>
@@ -281,22 +281,22 @@ export default function RestaurantDashboard() {
                         {/* Status Stats */}
                         {!isPending && (
                             <div className="grid grid-cols-2 gap-2">
-                                <div className="bg-gray-800/50 rounded-lg p-2.5 text-center">
-                                    <p className="text-xs text-gray-400 mb-0.5">Rating</p>
-                                    <p className="font-bold text-yellow-400 text-sm flex items-center justify-center gap-1">
-                                        <FaStar /> {restaurant.rating || 'N/A'}
+                                <div className="bg-gray-800/50 rounded-lg p-2 text-center border border-gray-700/30">
+                                    <p className="text-[9px] text-gray-500 mb-0.5 font-bold uppercase tracking-wider">Rating</p>
+                                    <p className="font-bold text-yellow-400 text-xs flex items-center justify-center gap-1">
+                                        <FaStar size={8} /> {restaurant.rating || 'N/A'}
                                     </p>
                                 </div>
-                                <div className="bg-gray-800/50 rounded-lg p-2.5 text-center">
-                                    <p className="text-xs text-gray-400 mb-0.5">Today</p>
-                                    <p className="font-bold text-green-400 text-sm">{(stats?.ready || 0) + (stats?.outForDelivery || 0)} orders</p>
+                                <div className="bg-gray-800/50 rounded-lg p-2 text-center border border-gray-700/30">
+                                    <p className="text-[9px] text-gray-500 mb-0.5 font-bold uppercase tracking-wider">Today</p>
+                                    <p className="font-bold text-green-400 text-xs">{(stats?.ready || 0) + (stats?.outForDelivery || 0)} orders</p>
                                 </div>
                             </div>
                         )}
                     </div>
 
                     {/* Navigation */}
-                    <nav className="flex-1 overflow-y-auto px-4 py-4 space-y-1">
+                    <nav className="flex-1 overflow-y-auto px-3 py-3 space-y-0.5">
                         {menuItems.map((item) => (
                             <button
                                 key={item.id}
@@ -307,29 +307,29 @@ export default function RestaurantDashboard() {
                                     }
                                 }}
                                 disabled={item.disabled}
-                                className={`w-full flex items-center gap-3 px-4 py-3.5 rounded-xl transition-all duration-200 group
+                                className={`w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl transition-all duration-200 group
                                     ${activePage === item.id
-                                        ? 'bg-gradient-to-r from-orange-600 to-orange-500 text-white shadow-lg shadow-orange-500/30 font-medium'
+                                        ? 'bg-gradient-to-r from-orange-600 to-orange-500 text-white shadow-lg shadow-orange-500/30 font-bold'
                                         : item.disabled
                                             ? 'text-gray-600 cursor-not-allowed opacity-50'
                                             : 'text-gray-400 hover:bg-gray-800 hover:text-white'
                                     }`}
                             >
-                                <item.icon className={`text-lg transition-transform group-hover:scale-110 ${activePage === item.id ? 'text-white' : 'text-gray-500 group-hover:text-white'}`} />
-                                <span className="flex-1 text-left">{item.label}</span>
-                                {item.disabled && <FaTimes className="text-xs opacity-50" />}
+                                <item.icon className={`text-base transition-transform group-hover:scale-110 ${activePage === item.id ? 'text-white' : 'text-gray-500 group-hover:text-white'}`} />
+                                <span className="flex-1 text-left text-xs font-bold uppercase tracking-wider">{item.label}</span>
+                                {item.disabled && <FaTimes className="text-[10px] opacity-50" />}
                             </button>
                         ))}
                     </nav>
 
                     {/* Footer */}
-                    <div className="p-4 border-t border-gray-800">
+                    <div className="p-3 border-t border-gray-800">
                         <button
                             onClick={() => {
                                 localStorage.removeItem('userInfo');
                                 window.location.reload();
                             }}
-                            className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-gray-800 hover:bg-red-500/10 hover:text-red-500 text-gray-400 rounded-xl transition-all duration-200 group font-medium"
+                            className="w-full flex items-center justify-center gap-2 px-3 py-2.5 bg-gray-800/50 hover:bg-red-500/10 hover:text-red-500 text-gray-500 rounded-xl transition-all duration-200 group font-bold text-[10px] uppercase tracking-wider border border-gray-700/30"
                         >
                             <FaSignOutAlt className="group-hover:-translate-x-1 transition-transform" />
                             <span>Sign Out</span>

@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import axios from 'axios';
@@ -82,28 +82,28 @@ export default function OrdersView() {
 
     return (
         <div className="p-6">
-            <div className="flex justify-between items-center mb-8">
+            <div className="flex justify-between items-center mb-6">
                 <div>
-                    <h2 className="text-2xl font-bold text-gray-800">Live Orders</h2>
-                    <p className="text-gray-500">Real-time order tracking and management</p>
+                    <h2 className="text-lg font-bold text-gray-800">Live Orders</h2>
+                    <p className="text-[10px] text-gray-500 uppercase tracking-wider font-bold">Real-time order tracking and management</p>
                 </div>
                 <div className="flex items-center gap-4">
-                    <label className="flex items-center gap-2 text-sm text-gray-600 cursor-pointer">
+                    <label className="flex items-center gap-2 text-[10px] font-bold uppercase text-gray-500 cursor-pointer">
                         <input
                             type="checkbox"
                             checked={autoRefresh}
                             onChange={(e) => setAutoRefresh(e.target.checked)}
-                            className="w-4 h-4 text-orange-500 rounded"
+                            className="w-3.5 h-3.5 text-orange-500 rounded border-gray-300 focus:ring-orange-500"
                         />
                         Auto Refresh
                     </label>
                     <button
                         onClick={fetchOrders}
-                        className="flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 text-gray-600 transition"
+                        className="flex items-center gap-2 px-3 py-1.5 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 text-gray-600 transition text-xs font-bold"
                     >
                         <FaSyncAlt className={loading ? 'animate-spin' : ''} /> Refresh
                     </button>
-                    <button className="px-4 py-2 bg-orange-50 text-orange-600 border border-orange-200 rounded-lg font-medium hover:bg-orange-100 transition">
+                    <button className="px-3 py-1.5 bg-orange-50 text-orange-600 border border-orange-200 rounded-lg text-xs font-bold hover:bg-orange-100 transition">
                         View All Orders
                     </button>
                 </div>
@@ -111,40 +111,40 @@ export default function OrdersView() {
 
             {/* Stats Cards */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-                <div className="bg-white p-5 rounded-2xl shadow-sm border border-gray-100 pb-2">
-                    <p className="text-gray-500 text-sm mb-1">Live Orders</p>
-                    <div className="flex justify-between items-end">
-                        <h3 className="text-3xl font-bold text-gray-800">{stats.live}</h3>
-                        <div className="bg-orange-100 p-2 rounded-lg text-orange-600 mb-2">
-                            <FaClock />
-                        </div>
+                <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-100 flex justify-between items-center">
+                    <div>
+                        <p className="text-gray-500 text-[10px] uppercase font-bold mb-1">Live Orders</p>
+                        <h3 className="text-xl font-bold text-gray-800">{stats.live}</h3>
+                    </div>
+                    <div className="bg-orange-50 p-2.5 rounded-lg text-orange-500">
+                        <FaClock className="text-lg" />
                     </div>
                 </div>
-                <div className="bg-white p-5 rounded-2xl shadow-sm border border-gray-100 pb-2">
-                    <p className="text-gray-500 text-sm mb-1">Preparing</p>
-                    <div className="flex justify-between items-end">
-                        <h3 className="text-3xl font-bold text-gray-800">{stats.preparing}</h3>
-                        <div className="bg-yellow-100 p-2 rounded-lg text-yellow-600 mb-2">
-                            <FaStore />
-                        </div>
+                <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-100 flex justify-between items-center">
+                    <div>
+                        <p className="text-gray-500 text-[10px] uppercase font-bold mb-1">Preparing</p>
+                        <h3 className="text-xl font-bold text-gray-800">{stats.preparing}</h3>
+                    </div>
+                    <div className="bg-yellow-50 p-2.5 rounded-lg text-yellow-500">
+                        <FaStore className="text-lg" />
                     </div>
                 </div>
-                <div className="bg-white p-5 rounded-2xl shadow-sm border border-gray-100 pb-2">
-                    <p className="text-gray-500 text-sm mb-1">Out for Delivery</p>
-                    <div className="flex justify-between items-end">
-                        <h3 className="text-3xl font-bold text-gray-800">{stats.outForDelivery}</h3>
-                        <div className="bg-green-100 p-2 rounded-lg text-green-600 mb-2">
-                            <FaMotorcycle />
-                        </div>
+                <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-100 flex justify-between items-center">
+                    <div>
+                        <p className="text-gray-500 text-[10px] uppercase font-bold mb-1">Out for Delivery</p>
+                        <h3 className="text-xl font-bold text-gray-800">{stats.outForDelivery}</h3>
+                    </div>
+                    <div className="bg-green-50 p-2.5 rounded-lg text-green-500">
+                        <FaMotorcycle className="text-lg" />
                     </div>
                 </div>
-                <div className="bg-white p-5 rounded-2xl shadow-sm border border-gray-100 pb-2">
-                    <p className="text-gray-500 text-sm mb-1">Total Value</p>
-                    <div className="flex justify-between items-end">
-                        <h3 className="text-3xl font-bold text-gray-800">Rs {stats.totalValue.toLocaleString()}</h3>
-                        <div className="bg-purple-100 p-2 rounded-lg text-purple-600 mb-2">
-                            <span className="font-bold text-lg">$</span>
-                        </div>
+                <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-100 flex justify-between items-center">
+                    <div>
+                        <p className="text-gray-500 text-[10px] uppercase font-bold mb-1">Total Value</p>
+                        <h3 className="text-xl font-bold text-gray-800">Rs {stats.totalValue.toLocaleString()}</h3>
+                    </div>
+                    <div className="bg-purple-50 p-2.5 rounded-lg text-purple-500">
+                        <FaDollarSign className="text-lg" />
                     </div>
                 </div>
             </div>
@@ -155,72 +155,72 @@ export default function OrdersView() {
                     {orders.map((order) => (
                         <motion.div
                             key={order._id}
-                            initial={{ opacity: 0, y: 20 }}
+                            initial={{ opacity: 0, y: 10 }}
                             animate={{ opacity: 1, y: 0 }}
                             exit={{ opacity: 0, scale: 0.95 }}
-                            className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 hover:shadow-md transition-shadow relative overflow-hidden"
+                            className="bg-white rounded-xl p-4 shadow-sm border border-gray-100 hover:shadow-md transition-shadow relative overflow-hidden"
                         >
-                            <div className="absolute top-0 right-0 p-4">
-                                <span className={`px-4 py-1.5 rounded-full text-xs font-bold border ${getStatusColor(order.status)}`}>
+                            <div className="absolute top-0 right-0 p-3">
+                                <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold border ${getStatusColor(order.status)}`}>
                                     {order.status}
                                 </span>
                             </div>
 
-                            <div className="mb-6">
-                                <h3 className="text-lg font-bold text-gray-800 mb-1">Order #{order.orderNumber || order._id.slice(-6)}</h3>
-                                <p className="text-sm text-gray-500">{new Date(order.createdAt).toLocaleString([], { dateStyle: 'medium', timeStyle: 'short' })}</p>
+                            <div className="mb-4">
+                                <h3 className="text-sm font-bold text-gray-800 mb-0.5">Order #{order.orderNumber || order._id.slice(-6).toUpperCase()}</h3>
+                                <p className="text-[10px] text-gray-500 font-medium">{new Date(order.createdAt).toLocaleString([], { dateStyle: 'medium', timeStyle: 'short' })}</p>
                             </div>
 
-                            <div className="grid grid-cols-2 gap-8 mb-6">
+                            <div className="grid grid-cols-2 gap-6 mb-4">
                                 <div>
-                                    <div className="flex items-center gap-2 mb-2">
-                                        <FaUser className="text-gray-400 text-sm" />
-                                        <span className="text-sm font-semibold text-gray-700">{order.user?.name || 'Guest'}</span>
+                                    <div className="flex items-center gap-2 mb-1">
+                                        <FaUser className="text-gray-400 text-[10px]" />
+                                        <span className="text-xs font-bold text-gray-700">{order.user?.name || 'Guest'}</span>
                                     </div>
-                                    <p className="text-xs text-gray-500 ml-6">{order.user?.phone || 'No phone'}</p>
-                                    <div className="flex items-center gap-2 mt-2 ml-6 text-xs text-gray-500">
-                                        <FaMapMarkerAlt /> {order.restaurant.address ? 'Delivery Address' : 'Karachi, Pakistan'}
+                                    <p className="text-[10px] text-gray-500 ml-4.5 font-medium">{order.user?.phone || 'No phone'}</p>
+                                    <div className="flex items-center gap-2 mt-1 ml-4.5 text-[10px] text-gray-400 font-medium">
+                                        <FaMapMarkerAlt className="text-[8px]" /> {order.restaurant.address ? 'Delivery Address' : 'Karachi, Pakistan'}
                                     </div>
                                 </div>
                                 <div>
-                                    <div className="mb-3">
-                                        <p className="text-xs text-gray-400 mb-1">Restaurant</p>
+                                    <div className="mb-2">
+                                        <p className="text-[9px] text-gray-400 uppercase font-bold mb-0.5">Restaurant</p>
                                         <div className="flex items-center gap-2">
-                                            <FaStore className="text-orange-500" />
-                                            <span className="text-sm font-semibold text-gray-800">{order.restaurant?.name}</span>
+                                            <FaStore className="text-orange-500 text-xs" />
+                                            <span className="text-xs font-bold text-gray-800">{order.restaurant?.name}</span>
                                         </div>
                                     </div>
                                     <div>
-                                        <p className="text-xs text-gray-400 mb-1">Rider</p>
+                                        <p className="text-[9px] text-gray-400 uppercase font-bold mb-0.5">Rider</p>
                                         <div className="flex items-center gap-2">
-                                            <FaMotorcycle className="text-blue-500" />
-                                            <span className="text-sm font-semibold text-gray-800">{order.rider?.user?.name || 'Not Assigned'}</span>
+                                            <FaMotorcycle className="text-blue-500 text-xs" />
+                                            <span className="text-xs font-bold text-gray-800">{order.rider?.user?.name || 'Not Assigned'}</span>
                                         </div>
                                     </div>
                                 </div>
                             </div>
 
-                            <div className="border-t border-gray-100 pt-4 flex justify-between items-center text-sm">
+                            <div className="border-t border-gray-100 pt-3 flex justify-between items-center text-[11px]">
                                 <div>
-                                    <span className="text-gray-500">{order.items?.length || 0} items</span>
-                                    <span className="mx-2 text-gray-300">|</span>
-                                    <span className="text-gray-500">Delivery: Rs {order.deliveryFee || 0}</span>
+                                    <span className="text-gray-500 font-medium">{order.items?.length || 0} items</span>
+                                    <span className="mx-2 text-gray-200">|</span>
+                                    <span className="text-gray-500 font-medium">Delivery: Rs {order.deliveryFee || 0}</span>
                                 </div>
                                 <div className="text-right">
-                                    <p className="text-lg font-bold text-gray-800">Rs {(order.totalAmount || 0).toLocaleString()}</p>
-                                    <p className="text-xs text-green-500">Commission: Rs {Math.round((order.totalAmount || 0) * 0.1)}</p>
+                                    <p className="text-sm font-bold text-gray-800 leading-tight">Rs {(order.totalAmount || 0).toLocaleString()}</p>
+                                    <p className="text-[10px] font-bold text-green-600">Comm: Rs {Math.round((order.totalAmount || 0) * 0.1)}</p>
                                 </div>
                             </div>
 
-                            <div className="mt-4 flex gap-3">
-                                <button className="flex-1 bg-orange-500 hover:bg-orange-600 text-white text-sm font-bold py-2.5 rounded-lg transition shadow-lg shadow-orange-500/20">
+                            <div className="mt-4 flex gap-2">
+                                <button className="flex-1 bg-orange-500 hover:bg-orange-600 text-white text-xs font-bold py-2 rounded-lg transition shadow-md shadow-orange-500/20">
                                     View Details
                                 </button>
-                                <a href={`tel:${order.user?.phone}`} className="px-3 py-2.5 border border-gray-200 rounded-lg hover:bg-gray-50 text-gray-600">
-                                    <FaPhone />
+                                <a href={`tel:${order.user?.phone}`} className="px-2.5 py-2 border border-gray-200 rounded-lg hover:bg-gray-50 text-gray-600 transition">
+                                    <FaPhone className="text-xs" />
                                 </a>
-                                <a href={`tel:${order.rider?.phone}`} className="px-3 py-2.5 border border-gray-200 rounded-lg hover:bg-gray-50 text-gray-600">
-                                    <FaMotorcycle />
+                                <a href={`tel:${order.rider?.phone}`} className="px-2.5 py-2 border border-gray-200 rounded-lg hover:bg-gray-50 text-gray-600 transition">
+                                    <FaMotorcycle className="text-xs" />
                                 </a>
                             </div>
                         </motion.div>
