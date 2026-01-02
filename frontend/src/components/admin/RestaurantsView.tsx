@@ -122,6 +122,7 @@ export default function RestaurantsView() {
 
     const handleSuspend = async (id: string, e: React.MouseEvent) => {
         e.stopPropagation();
+        if (!id) return alert('User ID not found');
         if (!window.confirm('Are you sure you want to suspend this user?')) return;
         try {
             const token = JSON.parse(localStorage.getItem('userInfo') || '{}').token;
@@ -129,26 +130,32 @@ export default function RestaurantsView() {
                 headers: { Authorization: `Bearer ${token}` }
             });
             fetchRestaurants();
-        } catch (error) {
+            alert('User suspended successfully');
+        } catch (error: any) {
             console.error('Error suspending user:', error);
+            alert(error.response?.data?.message || 'Error suspending user');
         }
     };
 
     const handleUnsuspend = async (id: string, e: React.MouseEvent) => {
         e.stopPropagation();
+        if (!id) return alert('User ID not found');
         try {
             const token = JSON.parse(localStorage.getItem('userInfo') || '{}').token;
             await axios.put(`${API_BASE_URL}/api/admin/users/${id}/unsuspend`, {}, {
                 headers: { Authorization: `Bearer ${token}` }
             });
             fetchRestaurants();
-        } catch (error) {
+            alert('User unsuspended successfully');
+        } catch (error: any) {
             console.error('Error unsuspending user:', error);
+            alert(error.response?.data?.message || 'Error unsuspending user');
         }
     };
 
     const handleDeleteUser = async (id: string, e: React.MouseEvent) => {
         e.stopPropagation();
+        if (!id) return alert('User ID not found');
         if (!window.confirm('WARNING: This will permanently delete the user and their restaurant. Proceed?')) return;
         try {
             const token = JSON.parse(localStorage.getItem('userInfo') || '{}').token;
@@ -156,8 +163,10 @@ export default function RestaurantsView() {
                 headers: { Authorization: `Bearer ${token}` }
             });
             fetchRestaurants();
-        } catch (error) {
+            alert('User deleted successfully');
+        } catch (error: any) {
             console.error('Error deleting user:', error);
+            alert(error.response?.data?.message || 'Error deleting user');
         }
     };
 

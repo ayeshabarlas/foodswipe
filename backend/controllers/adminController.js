@@ -535,6 +535,14 @@ const suspendUser = async (req, res) => {
         }
         user.status = 'suspended';
         await user.save();
+
+        // Notify admins to refresh UI
+        const io = req.app.get('io');
+        if (io) {
+            io.to('admin').emit('restaurant_updated');
+            io.to('admin').emit('stats_updated');
+        }
+
         res.json({ message: 'User suspended successfully', user });
     } catch (error) {
         res.status(500).json({ message: 'Server error', error: error.message });
@@ -550,6 +558,14 @@ const unsuspendUser = async (req, res) => {
         }
         user.status = 'active';
         await user.save();
+
+        // Notify admins to refresh UI
+        const io = req.app.get('io');
+        if (io) {
+            io.to('admin').emit('restaurant_updated');
+            io.to('admin').emit('stats_updated');
+        }
+
         res.json({ message: 'User unsuspended successfully', user });
     } catch (error) {
         res.status(500).json({ message: 'Server error', error: error.message });
@@ -565,13 +581,25 @@ const deleteUser = async (req, res) => {
         }
 
         if (user.role === 'restaurant') {
-            await Restaurant.findOneAndDelete({ owner: user._id });
+            const restaurant = await Restaurant.findOne({ owner: user._id });
+            if (restaurant) {
+                await Dish.deleteMany({ restaurant: restaurant._id });
+                await Restaurant.findByIdAndDelete(restaurant._id);
+            }
         }
         if (user.role === 'rider') {
             await Rider.findOneAndDelete({ user: user._id });
         }
 
         await User.findByIdAndDelete(req.params.id);
+
+        // Notify admins to refresh UI
+        const io = req.app.get('io');
+        if (io) {
+            io.to('admin').emit('restaurant_updated');
+            io.to('admin').emit('stats_updated');
+        }
+
         res.json({ message: 'User deleted successfully' });
     } catch (error) {
         res.status(500).json({ message: 'Server error', error: error.message });
