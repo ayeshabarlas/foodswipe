@@ -5,11 +5,7 @@
   },
   "deploy": {
     "startCommand": "node backend/server.js",
-    "healthcheckPath": "/health",
-    "healthcheckTimeout": 600,
     "restartPolicyType": "ON_FAILURE",
-    "restartPolicyMaxRetries": 5,
-    "successThreshold": 1,
-    "failureThreshold": 5
+    "restartPolicyMaxRetries": 5
   }
 }

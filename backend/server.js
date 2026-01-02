@@ -1,10 +1,20 @@
-require('dotenv').config();
-const express = require('express');
 const http = require('http');
+const express = require('express');
+const app = express();
+const server = http.createServer(app);
+const PORT = Number(process.env.PORT) || 8080;
 
+// 🚀 IMMEDIATE BINDING FOR RAILWAY/RENDER
+server.listen(PORT, '0.0.0.0', () => {
+    console.log(`🚀 SERVER IS LIVE ON PORT ${PORT}`);
+});
+
+// Basic Health Check
+app.get('/health', (req, res) => res.status(200).send('OK'));
+app.get('/', (req, res) => res.send('Foodswipe API is running...'));
+
+require('dotenv').config();
 console.log('--- BACKEND STARTUP ---');
-console.log('PORT:', process.env.PORT);
-console.log('NODE_ENV:', process.env.NODE_ENV);
 
 process.on('uncaughtException', (err) => {
     console.error('🔥 UNCAUGHT EXCEPTION:', err);
@@ -17,30 +27,9 @@ process.on('unhandledRejection', (err) => {
 const path = require('path');
 const { initSocket } = require('./socket');
 
-const app = express();
-const server = http.createServer(app);
-const PORT = Number(process.env.PORT) || 8080;
-
 // Initialize Socket.io
 const io = initSocket(server);
 app.set('io', io);
-
-// EMERGENCY START: Listen immediately and don't block
-server.listen(PORT, '0.0.0.0', () => {
-    console.log(`🚀 SERVER IS LIVE ON PORT ${PORT}`);
-    console.log(`📢 Listening on all interfaces (0.0.0.0)`);
-});
-
-// Basic Health Check
-app.get('/health', (req, res) => {
-    console.log('GET /health - Status: OK');
-    res.status(200).send('OK');
-});
-
-// Root route
-app.get('/', (req, res) => {
-    res.send('Foodswipe API is running...');
-});
 
 const cors = require('cors');
 const mongoose = require('mongoose');
