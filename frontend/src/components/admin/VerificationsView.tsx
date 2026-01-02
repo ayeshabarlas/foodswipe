@@ -222,28 +222,38 @@ export default function VerificationsView({ initialTab = 'restaurants' }: { init
                                 <div className="mb-6">
                                     <h4 className="text-md font-bold text-gray-800 mb-4 border-b border-gray-100 pb-2">Official Documents</h4>
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                        {(selectedItem.name ? ['cnicFront', 'cnicBack', 'license'] : ['cnicFront', 'cnicBack', 'drivingLicense', 'vehicleRegistration', 'profileSelfie']).map((docKey) => (
-                                            selectedItem.documents?.[docKey] && (
-                                                <div key={docKey} className="group relative">
-                                                    <p className="text-sm font-bold text-gray-700 mb-2 capitalize">{docKey.replace(/([A-Z])/g, ' $1').trim()}</p>
-                                                    <div className="aspect-video bg-gray-100 rounded-xl overflow-hidden border border-gray-200 relative">
-                                                        <img
-                                                            src={getImageUrl(selectedItem.documents[docKey])}
-                                                            alt={docKey}
-                                                            className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
-                                                        />
-                                                        <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors" />
-                                                        <a
-                                                            href={getImageUrl(selectedItem.documents[docKey])}
-                                                            target="_blank"
-                                                            rel="noreferrer"
-                                                            className="absolute bottom-3 right-3 bg-white/90 p-2 rounded-lg text-xs font-bold shadow-sm opacity-0 group-hover:opacity-100 transition-opacity"
-                                                        >
-                                                            View Full Size
-                                                        </a>
-                                                    </div>
+                                        {(selectedItem.name ? ['cnicFront', 'cnicBack', 'license'] : ['cnicFront', 'cnicBack', 'drivingLicense', 'vehicleRegistration']).map((docKey) => (
+                                            <div key={docKey} className="group relative">
+                                                <p className="text-sm font-bold text-gray-700 mb-2 capitalize">{docKey.replace(/([A-Z])/g, ' $1').trim()}</p>
+                                                <div className="aspect-video bg-gray-100 rounded-xl overflow-hidden border border-gray-200 relative">
+                                                    {selectedItem.documents?.[docKey] ? (
+                                                        <>
+                                                            <img
+                                                                src={getImageUrl(selectedItem.documents[docKey])}
+                                                                alt={docKey}
+                                                                className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+                                                                onError={(e: any) => {
+                                                                    e.target.src = 'https://via.placeholder.com/400x225?text=Document+Not+Found';
+                                                                }}
+                                                            />
+                                                            <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors" />
+                                                            <a
+                                                                href={getImageUrl(selectedItem.documents[docKey])}
+                                                                target="_blank"
+                                                                rel="noreferrer"
+                                                                className="absolute bottom-3 right-3 bg-white/90 p-2 rounded-lg text-xs font-bold shadow-sm opacity-0 group-hover:opacity-100 transition-opacity"
+                                                            >
+                                                                View Full Size
+                                                            </a>
+                                                        </>
+                                                    ) : (
+                                                        <div className="w-full h-full flex flex-col items-center justify-center text-gray-400 bg-gray-50">
+                                                            <FaFileAlt className="text-2xl mb-2" />
+                                                            <span className="text-xs">Not Uploaded</span>
+                                                        </div>
+                                                    )}
                                                 </div>
-                                            )
+                                            </div>
                                         ))}
                                     </div>
                                 </div>
