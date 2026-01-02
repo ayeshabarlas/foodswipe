@@ -96,7 +96,9 @@ const loginUser = async (req, res) => {
 
         if (!user) {
             console.log(`Login failed: No user found for ${identifier} with role ${role}`);
-            return res.status(401).json({ message: 'Account not found for this role. If you registered as a different role, please select it and try again.' });
+            return res.status(401).json({ 
+                message: `Account not found for role '${role}'. If you are an Admin, please use the Admin Dashboard login. If you registered as a different role, please select it.` 
+            });
         }
 
         console.log('User found for login:', { id: user._id, email: user.email, role: user.role });
