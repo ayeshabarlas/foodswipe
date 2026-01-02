@@ -66,9 +66,9 @@ export default function EnhancedOrdersView() {
 
     const filteredOrders = Array.isArray(orders) ? orders.filter(o => {
         const term = searchTerm.toLowerCase();
-        return o._id.includes(term) ||
-            o.user?.name.toLowerCase().includes(term) ||
-            o.restaurant?.name.toLowerCase().includes(term);
+        return (o._id && o._id.toLowerCase().includes(term)) ||
+            (o.user?.name && o.user.name.toLowerCase().includes(term)) ||
+            (o.restaurant?.name && o.restaurant.name.toLowerCase().includes(term));
     }) : [];
 
     return (

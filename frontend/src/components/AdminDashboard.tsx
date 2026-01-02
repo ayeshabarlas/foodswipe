@@ -111,9 +111,11 @@ export default function AdminDashboard() {
         };
 
         socket.on('order_created', (order) => {
+            if (!order) return;
             console.log('New order created!', order);
             playNotificationSound();
-            toast.success(`New Order #${order.orderNumber || order._id.substring(0, 8)} created!`, {
+            const orderId = order.orderNumber || (order._id ? order._id.substring(0, 8) : 'New');
+            toast.success(`New Order #${orderId} created!`, {
                 duration: 5000,
                 position: 'top-right',
                 icon: '🛒',
@@ -122,7 +124,9 @@ export default function AdminDashboard() {
         });
 
         socket.on('order_updated', (order) => {
-            toast.info(`Order #${order.orderNumber || order._id.substring(0, 8)} status updated to ${order.status}`, {
+            if (!order) return;
+            const orderId = order.orderNumber || (order._id ? order._id.substring(0, 8) : 'Update');
+            toast.info(`Order #${orderId} status updated to ${order.status}`, {
                 position: 'top-right',
             });
             updateStats();
