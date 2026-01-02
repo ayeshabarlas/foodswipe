@@ -138,8 +138,15 @@ export default function AdminDashboard() {
             updateStats();
         });
         socket.on('restaurant_updated', updateStats);
+        socket.on('stats_updated', updateStats);
         socket.on('rider_updated', updateStats);
         socket.on('user_registered', updateStats);
+
+        socket.on('notification', (data) => {
+            if (data.type === 'success') toast.success(data.message);
+            else if (data.type === 'error') toast.error(data.message);
+            else toast(data.message);
+        });
 
         socket.on('connect', () => {
             console.log('✅ Socket connected');

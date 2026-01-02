@@ -25,6 +25,11 @@ export default function VerificationsView({ initialTab = 'restaurants' }: { init
             fetchVerifications();
         });
 
+        socket.on('restaurant_updated', () => {
+            console.log('Restaurant update detected, refreshing verifications...');
+            fetchVerifications();
+        });
+
         socket.on('rider_updated', () => {
             console.log('Rider update detected, refreshing verifications...');
             fetchVerifications();

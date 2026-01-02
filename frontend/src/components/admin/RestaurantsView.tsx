@@ -161,6 +161,22 @@ export default function RestaurantsView() {
         }
     };
 
+    const handleCleanupMock = async () => {
+        if (!window.confirm('Are you sure you want to delete all mock restaurants and data? This cannot be undone.')) return;
+        
+        try {
+            const userInfo = JSON.parse(localStorage.getItem('userInfo') || '{}');
+            await axios.post(`${API_BASE_URL}/api/admin/cleanup-mock`, {}, {
+                headers: { Authorization: `Bearer ${userInfo.token}` }
+            });
+            alert('Mock data cleanup successful! The list will refresh.');
+            fetchRestaurants();
+        } catch (error) {
+            console.error('Cleanup failed:', error);
+            alert('Cleanup failed. Please check console for details.');
+        }
+    };
+
     const stats = {
         total: restaurants?.length || 0,
         online: Array.isArray(restaurants) ? restaurants.filter(r => r.isActive && r.verificationStatus === 'approved').length : 0,
@@ -195,9 +211,17 @@ export default function RestaurantsView() {
                     <h2 className="text-2xl font-bold text-gray-800">Restaurants Management</h2>
                     <p className="text-gray-500">Manage all restaurants and their operations</p>
                 </div>
-                <button className="bg-orange-500 hover:bg-orange-600 text-white px-6 py-2 rounded-xl font-semibold transition flex items-center gap-2 shadow-lg shadow-orange-200">
-                    <FaStore /> + Add Restaurant
-                </button>
+                <div className="flex gap-3">
+                    <button 
+                        onClick={handleCleanupMock}
+                        className="bg-red-500 hover:bg-red-600 text-white px-6 py-2 rounded-xl font-semibold transition flex items-center gap-2 shadow-lg shadow-red-200"
+                    >
+                        <FaTimesCircle /> Cleanup Mock Data
+                    </button>
+                    <button className="bg-orange-500 hover:bg-orange-600 text-white px-6 py-2 rounded-xl font-semibold transition flex items-center gap-2 shadow-lg shadow-orange-200">
+                        <FaStore /> + Add Restaurant
+                    </button>
+                </div>
             </div>
 
             {/* Stats Cards */}

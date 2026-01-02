@@ -16,26 +16,51 @@ const seedData = async () => {
         ];
 
         // Find and delete mock restaurants and their related dishes
-        const restaurantsToDelete = await Restaurant.find({ 
-            $or: [
-                { name: { $in: mockRestaurantNames } },
-                { 'owner.email': 'customer@example.com' }, // Jane Doe mock email
-                { 'owner.name': 'Jane Doe' },
-                { owner: { $regex: /^owner\d+$/ } },
-                { contact: '021-111-111-111' },
-                { contact: '051-8484888' }, // Ginyaki mock contact
-                { contact: '042-35750735' }, // Salt'n Pepper mock contact
-                { contact: '042-35756107' }, // Bundu Khan mock contact
-                { logo: { $regex: /mock/i } }, // Any restaurant with 'mock' in logo path
-                { address: { $regex: /karachi|islamabad|lahore/i }, owner: null } // Mock restaurants often have null owner in some versions
-            ]
-        });
-        const restaurantIds = restaurantsToDelete.map(r => r._id);
+        const restaurants = await Restaurant.find({}).populate('owner');
+        const restaurantIdsToDelete = [];
 
-        if (restaurantIds.length > 0) {
-            await Dish.deleteMany({ restaurant: { $in: restaurantIds } });
-            await Restaurant.deleteMany({ _id: { $in: restaurantIds } });
-            console.log(`🧹 Removed ${restaurantIds.length} mocked restaurants and their dishes.`);
+        const mockNameRegex = new RegExp(mockRestaurantNames.join('|'), 'i');
+
+        for (const r of restaurants) {
+            let shouldDelete = false;
+
+            // Pattern 1: Known mock names (Case Insensitive Regex)
+            if (r.name && (mockNameRegex.test(r.name) || r.name.toLowerCase().includes('mock'))) {
+                shouldDelete = true;
+            }
+
+            // Pattern 2: Mock contact numbers
+            const mockContacts = [
+                '021-111-111-111', '051-8484888', '042-35750735', 
+                '042-35756107', '0300-1234567', '051-111-111-111',
+                '051-2898044', '042-12345678', '0300-8461111', '021-111-666-111'
+            ];
+            if (r.contact && mockContacts.includes(r.contact)) shouldDelete = true;
+
+            // Pattern 3: Invalid or mock owners
+            if (!r.owner) shouldDelete = true;
+            if (r.owner && r.owner.email && r.owner.email.includes('example.com')) shouldDelete = true;
+            if (r.owner && typeof r.owner === 'string' && r.owner.match(/^owner\d+$/i)) shouldDelete = true;
+            
+            // Pattern 4: Mock logos or generic URLs
+            if (r.logo && (r.logo.match(/mock|wikimedia|unsplash|placeholder|Good_Food_Display/i))) {
+                shouldDelete = true;
+            }
+
+            // Pattern 5: Mock address patterns for unverified ones
+            if (!r.isVerified && r.address && r.address.match(/karachi|islamabad|lahore|Do Darya|Dastagir|Blue Area|Pir Sohawa|Lakshmi Chowk|Fort Road|F-7 Markaz|North Nazimabad|Mall Road|Liberty Market/i)) {
+                shouldDelete = true;
+            }
+
+            if (shouldDelete) {
+                restaurantIdsToDelete.push(r._id);
+            }
+        }
+
+        if (restaurantIdsToDelete.length > 0) {
+            await Dish.deleteMany({ restaurant: { $in: restaurantIdsToDelete } });
+            await Restaurant.deleteMany({ _id: { $in: restaurantIdsToDelete } });
+            console.log(`🧹 Removed ${restaurantIdsToDelete.length} mocked restaurants and their dishes.`);
         }
 
         // Clean up mock users (except admins)

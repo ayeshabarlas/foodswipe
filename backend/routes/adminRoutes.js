@@ -17,7 +17,8 @@ const {
     unsuspendUser,
     deleteUser,
     deleteRestaurant,
-    deleteRider
+    deleteRider,
+    cleanupMockData
 } = require('../controllers/adminController');
 const { loginAdmin, getAdminMe, registerAdmin } = require('../controllers/adminAuthController');
 
@@ -60,5 +61,8 @@ router.put('/settings', updateSystemSettings);
 
 // Dashboard stats
 router.get('/stats', getDashboardStats);
+
+// System Cleanup
+router.post('/cleanup-mock', cleanupMockData);
 
 module.exports = router;
