@@ -267,6 +267,9 @@ export default function VerificationsView({ initialTab = 'restaurants' }: { init
                                                 src={getImageUrl(selectedItem.storefrontPhoto)}
                                                 alt="Storefront"
                                                 className="w-full h-full object-cover"
+                                                onError={(e: any) => {
+                                                    e.target.src = 'https://via.placeholder.com/400x225?text=Storefront+Not+Found';
+                                                }}
                                             />
                                         </div>
                                     </div>
@@ -283,6 +286,9 @@ export default function VerificationsView({ initialTab = 'restaurants' }: { init
                                                         src={getImageUrl(photo)}
                                                         alt={`Menu ${index + 1}`}
                                                         className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+                                                        onError={(e: any) => {
+                                                            e.target.src = 'https://via.placeholder.com/400x400?text=Menu+Not+Found';
+                                                        }}
                                                     />
                                                     <a
                                                         href={getImageUrl(photo)}

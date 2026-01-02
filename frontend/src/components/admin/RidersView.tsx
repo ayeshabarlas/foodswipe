@@ -296,7 +296,10 @@ export default function RidersView() {
         <div className="p-6 bg-gray-50 min-h-screen">
             <div className="flex justify-between items-center mb-8">
                 <div>
-                    <h2 className="text-2xl font-bold text-gray-800">Riders Management</h2>
+                    <div className="flex items-center gap-2">
+                        <h2 className="text-2xl font-bold text-gray-800">Riders Management</h2>
+                        <span className="text-[10px] bg-gray-100 text-gray-400 px-2 py-0.5 rounded-full font-mono">v1.2-verified</span>
+                    </div>
                     <p className="text-gray-500">Manage delivery riders and their performance</p>
                 </div>
                 <button className="flex items-center gap-2 px-6 py-3 bg-orange-500 text-white rounded-2xl font-bold hover:bg-orange-600 transition shadow-lg shadow-orange-500/30">
