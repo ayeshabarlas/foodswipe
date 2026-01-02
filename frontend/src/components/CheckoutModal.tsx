@@ -1,3 +1,4 @@
+﻿'use client';
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { FaTimes, FaClock, FaCreditCard, FaMoneyBillWave, FaWallet, FaCheckCircle, FaMapMarkerAlt, FaEdit, FaGift } from 'react-icons/fa';
@@ -733,7 +734,7 @@ export default function CheckoutModal({ isOpen, onClose, cart, total, subtotal, 
                                                 </div>
                                                 {voucherError && (
                                                     <p className="text-red-500 text-xs mt-2 flex items-center gap-1">
-                                                        <span>❌</span> {voucherError}
+                                                        <span>âŒ</span> {voucherError}
                                                     </p>
                                                 )}
                                             </>
@@ -741,10 +742,10 @@ export default function CheckoutModal({ isOpen, onClose, cart, total, subtotal, 
                                             <div className="bg-green-50 border border-green-200 rounded-xl p-3 flex items-center justify-between">
                                                 <div>
                                                     <p className="font-semibold text-green-700 text-sm flex items-center gap-2">
-                                                        <span>✅</span> {appliedVoucher.code} Applied!
+                                                        <span>âœ…</span> {appliedVoucher.code} Applied!
                                                     </p>
                                                     <p className="text-xs text-green-600 mt-0.5">
-                                                        {appliedVoucher.discount}% off • Saving Rs. {discountAmount}
+                                                        {appliedVoucher.discount}% off â€¢ Saving Rs. {discountAmount}
                                                     </p>
                                                 </div>
                                                 <button
@@ -808,7 +809,7 @@ export default function CheckoutModal({ isOpen, onClose, cart, total, subtotal, 
                                         className="w-full py-4 bg-gradient-to-r from-orange-500 to-red-500 rounded-2xl text-white font-bold text-base shadow-lg hover:shadow-xl transition active:scale-[0.99] disabled:opacity-50 disabled:cursor-not-allowed flex justify-between px-6 items-center"
                                     >
                                         <span>{loading ? 'Placing Order...' : 'Place Order'}</span>
-                                        <span>₨ {finalTotal}</span>
+                                        <span>â‚¨ {finalTotal}</span>
                                     </button>
                                 </div>
                             </>

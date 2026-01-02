@@ -1,3 +1,4 @@
+﻿'use client';
 import { useState, useEffect } from 'react';
 import axios from 'axios';
 import { io } from 'socket.io-client';
@@ -252,7 +253,7 @@ export default function VouchersView() {
                                 <td className="px-6 py-4 text-sm font-medium text-gray-800">Rs {voucher.totalCost.toLocaleString()}</td>
                                 <td className="px-6 py-4 text-sm text-gray-600">
                                     <div className="flex items-center gap-1">
-                                        <span className="text-gray-400 text-xs">📅</span>
+                                        <span className="text-gray-400 text-xs">ðŸ“…</span>
                                         {voucher.validUntil}
                                     </div>
                                 </td>

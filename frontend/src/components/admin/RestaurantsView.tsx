@@ -1,3 +1,4 @@
+﻿'use client';
 
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
@@ -445,7 +446,7 @@ export default function RestaurantsView() {
                                 <h3 className="text-2xl font-bold text-gray-800">{selectedRestaurant.name}</h3>
                                 <div className="text-sm text-gray-500 mt-1 flex gap-4">
                                     <span>{selectedRestaurant.contact}</span>
-                                    <span>•</span>
+                                    <span>â€¢</span>
                                     <span>{selectedRestaurant.address}</span>
                                 </div>
                             </div>

@@ -45,17 +45,17 @@ interface Stats {
 }
 
 export default function AdminDashboard() {
-    const [activeTab, setActiveTab] = useState(() => {
-        if (typeof window !== 'undefined') {
-            return localStorage.getItem('adminActiveTab') || 'dashboard';
-        }
-        return 'dashboard';
-    });
+    const [activeTab, setActiveTab] = useState('dashboard');
     const [stats, setStats] = useState<Stats | null>(null);
     const [loading, setLoading] = useState(true);
+    const [mounted, setMounted] = useState(false);
     const router = useRouter();
 
     useEffect(() => {
+        setMounted(true);
+        const savedTab = localStorage.getItem('adminActiveTab');
+        if (savedTab) setActiveTab(savedTab);
+
         // Verify admin role on mount
         const userInfo = localStorage.getItem('userInfo');
         if (userInfo) {
@@ -241,7 +241,7 @@ export default function AdminDashboard() {
         }
     };
 
-    if (loading) {
+    if (!mounted || loading) {
         return (
             <div className="min-h-screen bg-gray-100 flex items-center justify-center">
                 <div className="w-16 h-16 border-4 border-orange-500 border-t-transparent rounded-full animate-spin"></div>

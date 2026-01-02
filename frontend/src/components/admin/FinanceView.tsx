@@ -1,3 +1,4 @@
+﻿'use client';
 import { useState, useEffect } from 'react';
 import axios from 'axios';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
@@ -126,7 +127,7 @@ export default function FinanceView() {
                     <div className="relative z-10">
                         <div className="flex justify-between items-start mb-4">
                             <div className="bg-white/20 p-2 rounded-lg">
-                                <span className="text-xl font-bold">↗</span>
+                                <span className="text-xl font-bold">â†—</span>
                             </div>
                             <span className="text-sm font-medium bg-white/20 px-2 py-1 rounded">10% Rate</span>
                         </div>
@@ -141,7 +142,7 @@ export default function FinanceView() {
                     <div className="relative z-10">
                         <div className="flex justify-between items-start mb-4">
                             <div className="bg-white/20 p-2 rounded-lg">
-                                <span className="text-xl font-bold">↘</span>
+                                <span className="text-xl font-bold">â†˜</span>
                             </div>
                         </div>
                         <p className="text-orange-100 text-sm mb-1">Pending Payouts</p>
@@ -155,7 +156,7 @@ export default function FinanceView() {
                     <div className="relative z-10">
                         <div className="flex justify-between items-start mb-4">
                             <div className="bg-white/20 p-2 rounded-lg">
-                                <span className="text-xl font-bold">💳</span>
+                                <span className="text-xl font-bold">ðŸ’³</span>
                             </div>
                         </div>
                         <p className="text-purple-100 text-sm mb-1">Gateway Fees</p>

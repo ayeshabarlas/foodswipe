@@ -1,3 +1,4 @@
+﻿'use client';
 import { motion } from 'framer-motion';
 import axios from 'axios';
 import { API_BASE_URL } from '../../utils/config';
@@ -287,7 +288,7 @@ export default function DashboardHome({ stats, refreshStats }: DashboardHomeProp
                                 </div>
                                 <div className="text-right">
                                     <p className="font-bold text-gray-800">Rs {restaurant.revenue.toLocaleString()}</p>
-                                    <p className="text-xs text-gray-500 animate-pulse">⭐ {restaurant.rating.toFixed(1)}</p>
+                                    <p className="text-xs text-gray-500 animate-pulse">â­ {restaurant.rating.toFixed(1)}</p>
                                 </div>
                             </div>
                         ))}

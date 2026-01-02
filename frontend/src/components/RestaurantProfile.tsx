@@ -1,3 +1,4 @@
+﻿'use client';
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import axios from 'axios';
@@ -322,7 +323,7 @@ export default function RestaurantProfile({ restaurant: initialRestaurant, onBac
                                     ? (reviews.reduce((acc, r) => acc + r.rating, 0) / reviews.length).toFixed(1)
                                     : (restaurantData.rating > 0 ? restaurantData.rating.toFixed(1) : 'New')}
                             </span>
-                            <span className="text-gray-400 text-sm mx-1">•</span>
+                            <span className="text-gray-400 text-sm mx-1">â€¢</span>
                             <button
                                 onClick={() => setActiveTab('reviews')}
                                 className="text-gray-500 text-sm hover:text-primary transition underline underline-offset-2"
@@ -462,7 +463,7 @@ export default function RestaurantProfile({ restaurant: initialRestaurant, onBac
                                                         Valid until {new Date(voucher.expiryDate).toLocaleDateString()}
                                                     </div>
                                                     <div className="text-[10px] font-bold text-[#FF4D8D] flex items-center gap-1 bg-[#FF4D8D]/10 px-2 py-1 rounded-full">
-                                                        {copiedVoucherId === voucher._id ? 'Copied! ✅' : 'Tap to Copy'}
+                                                        {copiedVoucherId === voucher._id ? 'Copied! âœ…' : 'Tap to Copy'}
                                                     </div>
                                                 </div>
 
@@ -478,7 +479,7 @@ export default function RestaurantProfile({ restaurant: initialRestaurant, onBac
                                 {deals.length > 0 && (
                                     <div>
                                         <h3 className="text-sm font-bold text-gray-700 mb-2 flex items-center gap-2">
-                                            🏷️ Active Deals
+                                            ðŸ·ï¸ Active Deals
                                         </h3>
                                         <div className="grid grid-cols-1 gap-2">
                                             {deals.map((deal) => (

@@ -1,3 +1,4 @@
+﻿'use client';
 import { useState } from 'react';
 import {
     FaChartLine,
@@ -79,7 +80,7 @@ export default function Sidebar({ activeTab, setActiveTab, onLogout }: SidebarPr
                 onClick={() => setIsMobileOpen(!isMobileOpen)}
                 className="md:hidden fixed top-4 right-4 z-[60] bg-white p-2 rounded-lg shadow-lg text-gray-700"
             >
-                {isMobileOpen ? '✕' : '☰'}
+                {isMobileOpen ? 'âœ•' : 'â˜°'}
             </button>
 
             {/* Backdrop */}
