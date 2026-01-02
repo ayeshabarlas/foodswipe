@@ -1,76 +1,34 @@
-const http = require('http');
-const express = require('express');
-const app = express();
-const server = http.createServer(app);
-const PORT = Number(process.env.PORT) || 8080;
-
-// 🚀 IMMEDIATE BINDING FOR RAILWAY/RENDER
-server.listen(PORT, '0.0.0.0', () => {
-    console.log(`🚀 SERVER IS LIVE ON PORT ${PORT}`);
-});
-
-// Basic Health Check
-app.get('/health', (req, res) => {
-    console.log('📢 Health check received at:', new Date().toISOString());
-    res.status(200).send('OK');
-});
-
 require('dotenv').config();
-console.log('--- BACKEND STARTUP ---');
-console.log('MONGO_URI exists:', !!process.env.MONGO_URI);
-console.log('JWT_SECRET exists:', !!process.env.JWT_SECRET);
-console.log('PORT:', process.env.PORT);
-
-process.on('uncaughtException', (err) => {
-    console.error('🔥 UNCAUGHT EXCEPTION:', err);
-});
-
-process.on('unhandledRejection', (err) => {
-    console.error('🔥 UNHANDLED REJECTION:', err);
-});
-
-const path = require('path');
-const { initSocket } = require('./socket');
-
-// Initialize Socket.io
-const io = initSocket(server);
-app.set('io', io);
-
+const express = require('express');
+const http = require('http');
 const cors = require('cors');
 const mongoose = require('mongoose');
+const path = require('path');
+const { initSocket } = require('./socket');
 const connectDB = require('./config/db');
 
-// Middleware
-const allowedOrigins = [
-    'https://foodswipe-one.vercel.app',
-    'https://foodswipe-admin.vercel.app',
-    'https://foodswipe-backend.onrender.com',
-    'https://foodswipe-api.onrender.com',
-    'http://localhost:3000',
-    'http://localhost:3001'
-];
+const app = express();
+const server = http.createServer(app);
+const PORT = process.env.PORT || 8080;
 
+console.log('--- 🚀 FOODSWIPE BACKEND STARTING ---');
+console.log('PORT:', PORT);
+
+// 1. MIDDLEWARE FIRST
 app.use(cors({
-    origin: function (origin, callback) {
-        // allow requests with no origin (like mobile apps or curl requests)
-        if (!origin) return callback(null, true);
-        if (allowedOrigins.indexOf(origin) === -1) {
-            return callback(null, true); // Allow all for now to debug, but fix credentials
-        }
-        return callback(null, true);
-    },
+    origin: true, // Allow all origins for debugging
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization']
 }));
 app.use(express.json());
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
-// Routes
-app.get('/', (req, res) => {
-    res.send('Foodswipe API is running...');
-});
+// 2. BASIC ROUTES
+app.get('/health', (req, res) => res.status(200).send('OK'));
+app.get('/', (req, res) => res.send('Foodswipe API is Live and Running!'));
 
-// Define API Routes
+// 3. API ROUTES
 app.use('/api/auth', require('./routes/authRoutes'));
 app.use('/api/users', require('./routes/userRoutes'));
 app.use('/api/restaurants', require('./routes/restaurantRoutes'));
@@ -92,34 +50,31 @@ app.use('/api/finance', require('./routes/financeRoutes'));
 app.use('/api/verifications', require('./routes/verificationRoutes'));
 app.use('/api/tickets', require('./routes/ticketRoutes'));
 
-// Serve uploads
-app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
-
+// 4. STARTUP LOGIC
 const startServer = async () => {
-    console.log('🚀 Starting Server Initialization...');
-    
-    // 1. Try to connect to DB first, but don't block forever
-    let dbConnected = false;
-    if (process.env.USE_MOCK_DB !== 'true') {
-        try {
-            console.log('⏳ Connecting to MongoDB...');
-            dbConnected = await connectDB();
-            if (dbConnected) {
-                console.log('✅ DB Connected. Running Seeder...');
-                // Run seeder but don't let it block the server start if it's slow
-                require('./seederFunction')().catch(err => console.error('Seeder failed:', err));
-            }
-        } catch (err) {
-            console.error('❌ DB Connection failed during startup:', err.message);
-        }
-    } else {
-        console.log('💡 Using Mock Database');
-    }
+    try {
+        // Initialize Socket.io
+        const io = initSocket(server);
+        app.set('io', io);
 
-    // 2. We already started the server at the top
-    console.log(`💡 Initialization complete. Server should be responding on ${PORT}`);
+        // Connect to DB (don't block server start)
+        if (process.env.USE_MOCK_DB !== 'true') {
+            connectDB().then(connected => {
+                if (connected) {
+                    console.log('✅ MongoDB Connected');
+                    require('./seederFunction')().catch(err => console.error('Seeder Error:', err));
+                }
+            });
+        }
+
+        server.listen(PORT, '0.0.0.0', () => {
+            console.log(`🚀 SERVER IS LIVE ON PORT ${PORT}`);
+        });
+    } catch (err) {
+        console.error('🔥 Startup Error:', err);
+    }
 };
 
 startServer();
 
-module.exports = { io };
+module.exports = { io: () => app.get('io') };
