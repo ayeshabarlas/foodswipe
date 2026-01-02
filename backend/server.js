@@ -19,7 +19,7 @@ const { initSocket } = require('./socket');
 
 const app = express();
 const server = http.createServer(app);
-const PORT = process.env.PORT || 8080;
+const PORT = Number(process.env.PORT) || 8080;
 
 // Initialize Socket.io
 const io = initSocket(server);
@@ -28,10 +28,18 @@ app.set('io', io);
 // EMERGENCY START: Listen immediately and don't block
 server.listen(PORT, '0.0.0.0', () => {
     console.log(`🚀 SERVER IS LIVE ON PORT ${PORT}`);
+    console.log(`📢 Listening on all interfaces (0.0.0.0)`);
 });
 
+// Basic Health Check
 app.get('/health', (req, res) => {
+    console.log('GET /health - Status: OK');
     res.status(200).send('OK');
+});
+
+// Root route
+app.get('/', (req, res) => {
+    res.send('Foodswipe API is running...');
 });
 
 const cors = require('cors');
