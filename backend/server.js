@@ -10,7 +10,10 @@ server.listen(PORT, '0.0.0.0', () => {
 });
 
 // Basic Health Check
-app.get('/health', (req, res) => res.status(200).send('OK'));
+app.get('/health', (req, res) => {
+    console.log('📢 Health check received at:', new Date().toISOString());
+    res.status(200).send('OK');
+});
 app.get('/', (req, res) => res.send('Foodswipe API is running...'));
 
 require('dotenv').config();
