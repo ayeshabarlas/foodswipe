@@ -9,7 +9,7 @@ import RiderDashboard from './RiderDashboard';
 
 export default function RiderPortal() {
     const [riderId, setRiderId] = useState<string | null>(null);
-    const [verificationStatus, setVerificationStatus] = useState<'pending' | 'approved' | 'rejected'>('pending');
+    const [verificationStatus, setVerificationStatus] = useState<'new' | 'pending' | 'approved' | 'rejected'>('new');
     const [loading, setLoading] = useState(true);
     const [step, setStep] = useState<'registration' | 'documents' | 'dashboard'>('registration');
 
@@ -26,24 +26,20 @@ export default function RiderPortal() {
                     setRiderId(res.data._id);
                     setVerificationStatus(res.data.verificationStatus);
 
-                    // If already approved, go straight to dashboard
+                    // Logic based on verification status
                     if (res.data.verificationStatus === 'approved') {
                         setStep('dashboard');
-                    }
-                    // If has basic info but no documents, show document upload
-                    else if (res.data.fullName && !res.data.documents?.cnicFront) {
+                    } else if (res.data.verificationStatus === 'new') {
                         setStep('documents');
-                    }
-                    // If documents submitted, show document upload (to check status)
-                    else if (res.data.documents?.cnicFront) {
+                    } else if (res.data.verificationStatus === 'pending') {
                         setStep('documents');
-                    }
-                    // Otherwise show registration
-                    else {
+                    } else if (res.data.verificationStatus === 'rejected') {
+                        // For now just show document upload to fix issues
+                        setStep('documents');
+                    } else {
                         setStep('registration');
                     }
                 } else {
-                    // No profile found
                     setStep('registration');
                 }
             } catch (error: any) {

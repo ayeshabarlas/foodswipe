@@ -20,7 +20,7 @@ const registerRider = async (req, res) => {
             cnicNumber,
             dateOfBirth,
             vehicleType,
-            verificationStatus: 'pending',
+            verificationStatus: 'new',
         });
 
         res.status(201).json(rider);

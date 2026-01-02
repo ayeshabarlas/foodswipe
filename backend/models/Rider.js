@@ -41,8 +41,8 @@ const riderSchema = mongoose.Schema(
         },
         verificationStatus: {
             type: String,
-            enum: ['pending', 'approved', 'rejected'],
-            default: 'pending',
+            enum: ['new', 'pending', 'approved', 'rejected'],
+            default: 'new',
         },
         isOnline: {
             type: Boolean,
