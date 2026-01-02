@@ -9,32 +9,16 @@ const connectDB = require('./config/db');
 
 const app = express();
 const server = http.createServer(app);
-const PORT = process.env.PORT || 8080;
+const PORT = Number(process.env.PORT) || 8080;
 
-// 🖥️ 1. REQUEST LOGGER (At the very top to see traffic)
-app.use((req, res, next) => {
-    console.log(`[${new Date().toISOString()}] 📡 ${req.method} ${req.url} - IP: ${req.ip}`);
-    next();
-});
-
-// 🚀 2. IMMEDIATE PORT BINDING
+// 🚀 1. IMMEDIATE PORT BINDING (Essential for Railway/Koyeb)
 server.listen(PORT, '0.0.0.0', () => {
-    console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-    console.log(`🚀 FOODSWIPE BACKEND IS LIVE!`);
-    console.log(`📌 PORT: ${PORT}`);
-    console.log(`📌 NODE_ENV: ${process.env.NODE_ENV}`);
-    console.log(`📌 TIME: ${new Date().toISOString()}`);
-    console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+    console.log(`🚀 SERVER IS LIVE ON PORT ${PORT}`);
 });
 
-// 🏥 3. IMMEDIATE HEALTH CHECK
+// 🚀 2. HEALTH CHECK (No Middleware to block it)
 app.get('/health', (req, res) => {
-    console.log('🟢 [HEALTH CHECK] Requested');
-    res.status(200).json({
-        status: 'ok',
-        uptime: process.uptime(),
-        timestamp: new Date().toISOString()
-    });
+    res.status(200).send('OK');
 });
 
 // 3. MIDDLEWARE
