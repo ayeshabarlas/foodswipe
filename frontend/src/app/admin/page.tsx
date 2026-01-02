@@ -28,9 +28,11 @@ export default function AdminPage() {
             console.log('Parsed user:', user);
             console.log('User role:', user.role);
 
-            // Verify admin role
-            if (user.role !== 'admin') {
-                console.error('Unauthorized: User role is', user.role, 'but expected admin');
+            // Verify admin role (allow any admin-related role)
+            const isAdminRole = ['admin', 'super-admin', 'finance-admin', 'support-admin'].includes(user.role);
+            
+            if (!isAdminRole) {
+                console.error('Unauthorized: User role is', user.role, 'but expected an admin role');
                 // Clear stale non-admin session if we're in the admin area
                 localStorage.removeItem('userInfo');
                 localStorage.removeItem('token');

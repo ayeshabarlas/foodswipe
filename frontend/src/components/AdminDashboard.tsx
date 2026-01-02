@@ -24,6 +24,7 @@ import SupportView from './admin/SupportView';
 import axios from 'axios';
 import { io } from 'socket.io-client';
 import { API_BASE_URL, SOCKET_URL } from '../utils/config';
+import toast, { Toaster } from 'react-hot-toast';
 
 interface Stats {
     totalUsers: number;
@@ -60,8 +61,10 @@ export default function AdminDashboard() {
         if (userInfo) {
             try {
                 const user = JSON.parse(userInfo);
-                if (user.role !== 'admin') {
-                    console.error('Unauthorized: User is not an admin');
+                const isAdminRole = ['admin', 'super-admin', 'finance-admin', 'support-admin'].includes(user.role);
+                
+                if (!isAdminRole) {
+                    console.error('Unauthorized: User is not an admin. Role:', user.role);
                     handleLogout();
                     return;
                 }
@@ -75,7 +78,12 @@ export default function AdminDashboard() {
         fetchStats();
 
         // Join admin room for real-time updates
-        const socket = io(SOCKET_URL);
+        const socket = io(SOCKET_URL, {
+            reconnection: true,
+            reconnectionAttempts: 5,
+            reconnectionDelay: 1000,
+        });
+
         if (userInfo) {
             try {
                 const user = JSON.parse(userInfo);
@@ -92,10 +100,54 @@ export default function AdminDashboard() {
             fetchStats();
         };
 
-        socket.on('order_created', updateStats);
-        socket.on('order_updated', updateStats);
-        socket.on('restaurant_registered', updateStats);
+        // Sound notification for new orders
+        const playNotificationSound = () => {
+            try {
+                const audio = new Audio('https://assets.mixkit.co/active_storage/sfx/2358/2358-preview.mp3');
+                audio.play().catch(e => console.log('Audio play failed:', e));
+            } catch (e) {
+                console.error('Error playing sound:', e);
+            }
+        };
+
+        socket.on('order_created', (order) => {
+            console.log('New order created!', order);
+            playNotificationSound();
+            toast.success(`New Order #${order.orderNumber || order._id.substring(0, 8)} created!`, {
+                duration: 5000,
+                position: 'top-right',
+                icon: '🛒',
+            });
+            updateStats();
+        });
+
+        socket.on('order_updated', (order) => {
+            toast.info(`Order #${order.orderNumber || order._id.substring(0, 8)} status updated to ${order.status}`, {
+                position: 'top-right',
+            });
+            updateStats();
+        });
+
+        socket.on('restaurant_registered', (restaurant) => {
+            console.log('New restaurant registered!', restaurant);
+            toast.success(`New Restaurant: ${restaurant.name} registered!`, {
+                duration: 6000,
+                position: 'top-right',
+                icon: '🏪',
+            });
+            updateStats();
+        });
         socket.on('restaurant_updated', updateStats);
+        socket.on('rider_updated', updateStats);
+        socket.on('user_registered', updateStats);
+
+        socket.on('connect', () => {
+            console.log('✅ Socket connected');
+        });
+
+        socket.on('disconnect', () => {
+            console.log('❌ Socket disconnected, attempting to reconnect...');
+        });
 
         return () => {
             socket.disconnect();
@@ -129,7 +181,7 @@ export default function AdminDashboard() {
     const renderView = () => {
         switch (activeTab) {
             case 'dashboard':
-                return <DashboardHome stats={stats} />;
+                return <DashboardHome stats={stats} refreshStats={fetchStats} />;
 
             // Restaurant Sub-menus
             case 'restaurants': // Default fallback
@@ -193,6 +245,7 @@ export default function AdminDashboard() {
 
     return (
         <div className="min-h-screen bg-gray-100 flex">
+            <Toaster />
             <Sidebar activeTab={activeTab} setActiveTab={handleTabChange} onLogout={handleLogout} />
             <div className="flex-1 w-full md:ml-64 pt-16 md:pt-0">
                 {renderView()}

@@ -1,11 +1,11 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import { API_BASE_URL } from '../../utils/config';
+import { io } from 'socket.io-client';
+import { API_BASE_URL, SOCKET_URL } from '../../utils/config';
 import { FaCheckCircle, FaTimesCircle, FaEye, FaSpinner, FaStore, FaMotorcycle, FaFileAlt } from 'react-icons/fa';
-import { motion, AnimatePresence } from 'framer-motion';
-import { getImageUrl } from '../../utils/imageUtils';
 
 export default function VerificationsView({ initialTab = 'restaurants' }: { initialTab?: string }) {
     const [restaurants, setRestaurants] = useState<any[]>([]);
@@ -18,6 +18,22 @@ export default function VerificationsView({ initialTab = 'restaurants' }: { init
 
     useEffect(() => {
         fetchVerifications();
+
+        const socket = io(SOCKET_URL);
+        
+        socket.on('restaurant_registered', () => {
+            console.log('New restaurant registration detected, refreshing verifications...');
+            fetchVerifications();
+        });
+
+        socket.on('rider_updated', () => {
+            console.log('Rider update detected, refreshing verifications...');
+            fetchVerifications();
+        });
+
+        return () => {
+            socket.disconnect();
+        };
     }, []);
 
     const fetchVerifications = async () => {

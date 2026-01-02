@@ -5,10 +5,7 @@ const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs'); // used by User model for hashing
 const User = require('../models/User');
 const Otp = require('../models/Otp');
-const mockDb = require('../data/mockStore');
 const admin = require('../config/firebase');
-
-const useMock = process.env.USE_MOCK_DB === 'true';
 
 // Helper to generate a JWT token for a user id
 const generateToken = (id) => {
@@ -26,15 +23,6 @@ const registerUser = async (req, res) => {
         return res.status(400).json({ message: 'Name and email are required' });
     }
     try {
-        if (useMock) {
-            const emailExists = await mockDb.users.findOne({ email, role: role || 'customer' });
-            const phoneExists = await mockDb.users.findOne({ phone });
-            if (emailExists || phoneExists) {
-                return res.status(400).json({ message: 'User with given email or phone already exists' });
-            }
-            const user = await mockDb.users.create({ name, email, password: password || '', phone, role: role || 'customer' });
-            return res.status(201).json({ _id: user._id, name: user.name, email: user.email, phone: user.phone, role: user.role, token: generateToken(user._id) });
-        }
         const emailExists = await User.findOne({ email, role: role || 'customer' });
         if (emailExists) {
             console.log(`Registration failed: User exists for role ${role || 'customer'}`, { email });
@@ -66,15 +54,7 @@ const loginUser = async (req, res) => {
     }
     try {
         console.log(`Login attempt: identifier=${identifier}, role=${role}`);
-        if (useMock) {
-            const query = { $or: [{ email: identifier }, { phone: identifier }] };
-            if (role) query.role = role;
-            const user = await mockDb.users.findOne(query);
-            if (!user) {
-                return res.status(400).json({ message: 'Invalid credentials' });
-            }
-            return res.json({ _id: user._id, name: user.name, email: user.email, phone: user.phone, phoneVerified: user.phoneVerified, role: user.role, token: generateToken(user._id) });
-        }
+        
         // Strict Role-Based Login: identifier + role must match in User collection
         // Admins are now in their own Admin collection and will use /api/admin/login
         const query = {

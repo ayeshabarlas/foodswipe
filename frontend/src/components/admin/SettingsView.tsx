@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import axios from 'axios';
 import { API_BASE_URL } from '../../utils/config';
@@ -8,6 +8,29 @@ export default function SettingsView() {
     const [supportEmail, setSupportEmail] = useState('support@foodswipe.com');
     const [announcement, setAnnouncement] = useState('');
     const [saving, setSaving] = useState(false);
+    const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+        fetchSettings();
+    }, []);
+
+    const fetchSettings = async () => {
+        try {
+            const token = JSON.parse(localStorage.getItem('userInfo') || '{}').token;
+            const { data } = await axios.get(`${API_BASE_URL}/api/admin/settings`, {
+                headers: { Authorization: `Bearer ${token}` }
+            });
+            if (data) {
+                setCommission(data.commission || 10);
+                setSupportEmail(data.supportEmail || 'support@foodswipe.com');
+                setAnnouncement(data.announcement || '');
+            }
+        } catch (error) {
+            console.error('Error fetching settings:', error);
+        } finally {
+            setLoading(false);
+        }
+    };
 
     const handleSave = async () => {
         setSaving(true);

@@ -15,7 +15,10 @@ const {
     getUsers,
     suspendUser,
     unsuspendUser,
-    deleteUser
+    deleteUser,
+    deleteRestaurant,
+    deleteRider,
+    cleanupMockData
 } = require('../controllers/adminController');
 const { loginAdmin, getAdminMe, registerAdmin } = require('../controllers/adminAuthController');
 
@@ -32,12 +35,14 @@ router.get('/restaurants/pending', getPendingRestaurants);
 router.get('/restaurants', getAllRestaurants);
 router.put('/restaurants/:id/approve', approveRestaurant);
 router.put('/restaurants/:id/reject', rejectRestaurant);
+router.delete('/restaurants/:id', deleteRestaurant);
 
 // Order management
 router.get('/orders', getAllOrders);
 
 // Rider management
 router.get('/riders', getAllRiders);
+router.delete('/riders/:id', deleteRider);
 
 // User management
 router.get('/users', getUsers);
@@ -56,5 +61,8 @@ router.put('/settings', updateSystemSettings);
 
 // Dashboard stats
 router.get('/stats', getDashboardStats);
+
+// System Cleanup
+router.post('/cleanup-mock', cleanupMockData);
 
 module.exports = router;

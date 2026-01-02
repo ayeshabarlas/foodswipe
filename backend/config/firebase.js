@@ -10,16 +10,20 @@ const serviceAccountJson = process.env.FIREBASE_SERVICE_ACCOUNT_JSON;
 
 console.log('🔥 Firebase Admin SDK Initialization Check');
 
-if (serviceAccountJson) {
+if (serviceAccountJson && serviceAccountJson.trim() !== '') {
     try {
         let serviceAccount;
-        if (serviceAccountJson.trim().startsWith('{')) {
-            serviceAccount = JSON.parse(serviceAccountJson);
+        const trimmedJson = serviceAccountJson.trim();
+
+        if (trimmedJson.startsWith('{')) {
+            serviceAccount = JSON.parse(trimmedJson);
         } else {
             // If it's not a JSON string, assume it's a file path (for local dev)
-            const resolvedPath = path.resolve(__dirname, '..', serviceAccountJson);
+            const resolvedPath = path.resolve(__dirname, '..', trimmedJson);
             if (fs.existsSync(resolvedPath)) {
                 serviceAccount = require(resolvedPath);
+            } else {
+                console.warn(`⚠️  Firebase Service Account file not found at: ${resolvedPath}`);
             }
         }
 
@@ -31,10 +35,11 @@ if (serviceAccountJson) {
         }
     } catch (error) {
         console.error("❌ Firebase Initialization Error:", error.message);
-        console.warn("Server will start without Firebase authentication.");
+        console.warn("Server will start without Firebase authentication features.");
     }
 } else {
-    console.warn("⚠️  Firebase Admin SDK not initialized. FIREBASE_SERVICE_ACCOUNT_JSON missing.");
+    console.warn("⚠️  Firebase Admin SDK not initialized. FIREBASE_SERVICE_ACCOUNT_JSON is empty or missing.");
 }
+
 
 module.exports = admin;

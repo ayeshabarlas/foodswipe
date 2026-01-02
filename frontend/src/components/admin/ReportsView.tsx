@@ -2,6 +2,8 @@
 
 import { useState, useEffect } from 'react';
 import axios from 'axios';
+import { io } from 'socket.io-client';
+import { API_BASE_URL, SOCKET_URL } from '../../utils/config';
 import { FaChartLine, FaShoppingBag, FaMoneyBillWave, FaUsers, FaStore, FaMotorcycle } from 'react-icons/fa';
 
 interface AnalyticsData {
@@ -19,11 +21,20 @@ interface AnalyticsData {
 }
 
 export default function AnalyticsView() {
-    const [analytics, setAnalytics] = useState<AnalyticsData | null>(null);
+    const [analytics, setAnalytics] = useState<any | null>(null);
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
         fetchAnalytics();
+
+        const socket = io(SOCKET_URL);
+        socket.on('order_created', fetchAnalytics);
+        socket.on('order_updated', fetchAnalytics);
+        socket.on('restaurant_updated', fetchAnalytics);
+
+        return () => {
+            socket.disconnect();
+        };
     }, []);
 
     const fetchAnalytics = async () => {
@@ -35,22 +46,8 @@ export default function AnalyticsView() {
                 },
             };
 
-            // Mock data for now - backend endpoint needs to be created
-            const mockData: AnalyticsData = {
-                totalRevenue: 0,
-                totalOrders: 0,
-                totalCustomers: 0,
-                totalRestaurants: 0,
-                totalRiders: 0,
-                avgOrderValue: 0,
-                todayRevenue: 0,
-                todayOrders: 0,
-                monthlyRevenue: Array(12).fill(0),
-                monthlyOrders: Array(12).fill(0),
-                topRestaurants: [],
-            };
-
-            setAnalytics(mockData);
+            const res = await axios.get(`${API_BASE_URL}/api/admin/stats`, config);
+            setAnalytics(res.data);
         } catch (err: any) {
             console.error('❌ Error fetching analytics:', err);
         } finally {

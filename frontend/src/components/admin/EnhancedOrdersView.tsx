@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react';
 import axios from 'axios';
-import { API_BASE_URL } from '../../utils/config';
-import { FaSearch, FaFilter, FaCalendarAlt, FaDownload, FaReceipt } from 'react-icons/fa';
+import { io } from 'socket.io-client';
+import { API_BASE_URL, SOCKET_URL } from '../../utils/config';
+import { FaSearch, FaFilter, FaCalendarAlt, FaDownload, FaReceipt, FaSyncAlt } from 'react-icons/fa';
 
 interface Order {
     _id: string;
@@ -19,10 +20,27 @@ export default function EnhancedOrdersView() {
     const [orders, setOrders] = useState<Order[]>([]);
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
+    const [autoRefresh, setAutoRefresh] = useState(true);
 
     useEffect(() => {
         fetchOrders();
-    }, []);
+
+        const socket = io(SOCKET_URL);
+        
+        const handleUpdate = () => {
+            if (autoRefresh) {
+                console.log('Real-time update: Refreshing enhanced orders...');
+                fetchOrders();
+            }
+        };
+
+        socket.on('order_created', handleUpdate);
+        socket.on('order_updated', handleUpdate);
+
+        return () => {
+            socket.disconnect();
+        };
+    }, [autoRefresh]);
 
     const fetchOrders = async () => {
         try {

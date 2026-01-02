@@ -1,8 +1,5 @@
 const jwt = require('jsonwebtoken');
 const Admin = require('../models/Admin');
-const mockDb = require('../data/mockStore');
-
-const useMock = process.env.USE_MOCK_DB === 'true';
 
 // Helper to generate a JWT token for an admin id
 const generateToken = (id) => {
@@ -75,30 +72,6 @@ const loginAdmin = async (req, res) => {
 
     try {
         console.log(`Admin Login attempt: email=${loginEmail}`);
-
-        if (useMock) {
-            // Fallback to mock users when no database connection is used
-            const adminUser = await mockDb.users.findOne({ email: loginEmail, role: 'admin' });
-            if (!adminUser) {
-                console.log(`Admin login failed (mock): No admin found for ${loginEmail}`);
-                return res.status(401).json({ message: 'Invalid admin credentials' });
-            }
-            const isMatch = adminUser.password === password;
-            console.log(`Admin password match (mock) for ${loginEmail}: ${isMatch}`);
-            if (!isMatch) {
-                return res.status(401).json({ message: 'Invalid admin credentials' });
-            }
-            const userData = {
-                _id: adminUser._id,
-                name: adminUser.name,
-                email: adminUser.email,
-                role: adminUser.role || 'admin',
-                isAdmin: true,
-                token: generateToken(adminUser._id),
-            };
-            console.log('Sending login response (mock):', JSON.stringify(userData, null, 2));
-            return res.json(userData);
-        }
 
         const admin = await Admin.findOne({
             email: { $regex: new RegExp(`^${loginEmail}$`, 'i') }

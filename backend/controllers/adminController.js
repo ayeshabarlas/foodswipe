@@ -578,6 +578,72 @@ const deleteUser = async (req, res) => {
     }
 };
 
+// @desc    Delete a restaurant
+const deleteRestaurant = async (req, res) => {
+    try {
+        const restaurant = await Restaurant.findById(req.params.id);
+        if (!restaurant) {
+            return res.status(404).json({ message: 'Restaurant not found' });
+        }
+
+        // Delete all dishes associated with this restaurant
+        await Dish.deleteMany({ restaurant: restaurant._id });
+        
+        // Delete the restaurant
+        await Restaurant.findByIdAndDelete(req.params.id);
+
+        // Notify admins
+        if (req.app.get('io')) {
+            req.app.get('io').to('admin').emit('restaurant_updated');
+        }
+
+        res.json({ message: 'Restaurant and its dishes deleted successfully' });
+    } catch (error) {
+        res.status(500).json({ message: 'Server error', error: error.message });
+    }
+};
+
+// @desc    Delete a rider
+const deleteRider = async (req, res) => {
+    try {
+        const rider = await Rider.findById(req.params.id);
+        if (!rider) {
+            return res.status(404).json({ message: 'Rider not found' });
+        }
+
+        await Rider.findByIdAndDelete(req.params.id);
+
+        // Notify admins
+        if (req.app.get('io')) {
+            req.app.get('io').to('admin').emit('rider_updated');
+        }
+
+        res.json({ message: 'Rider deleted successfully' });
+    } catch (error) {
+        res.status(500).json({ message: 'Server error', error: error.message });
+    }
+};
+
+// @desc    Cleanup mock data manually
+// @route   POST /api/admin/cleanup-mock
+// @access  Private/Admin
+const cleanupMockData = async (req, res) => {
+    try {
+        const seedData = require('../seederFunction');
+        await seedData();
+        
+        // Notify admins to refresh
+        if (req.app.get('io')) {
+            req.app.get('io').to('admin').emit('restaurant_updated');
+            req.app.get('io').to('admin').emit('stats_updated');
+        }
+        
+        res.json({ message: 'Mock data cleanup triggered successfully' });
+    } catch (error) {
+        res.status(500).json({ message: 'Cleanup failed', error: error.message });
+    }
+};
+
 module.exports = {
     getPendingRestaurants,
     approveRestaurant,
@@ -592,5 +658,8 @@ module.exports = {
     getUsers,
     suspendUser,
     unsuspendUser,
-    deleteUser
+    deleteUser,
+    deleteRestaurant,
+    deleteRider,
+    cleanupMockData
 };

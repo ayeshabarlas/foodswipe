@@ -1,73 +1,66 @@
 const users = require('./data/users');
-const restaurants = require('./data/restaurants');
-const dishes = require('./data/dishes');
-const vouchers = require('./data/vouchers');
 const User = require('./models/User');
 const Admin = require('./models/Admin');
 const Restaurant = require('./models/Restaurant');
 const Dish = require('./models/Dish');
 const Voucher = require('./models/Voucher');
-
 const bcrypt = require('bcryptjs');
 
 const seedData = async () => {
     try {
-        const count = await User.countDocuments();
-        if (count > 0) {
-            console.log('Data already exists, skipping seed.');
-            return;
+        // 1. CLEANUP MOCK DATA (As requested by user to remove "mocked restaurants" and related data)
+        const mockRestaurantNames = [
+            'Kolachi', 'Javed Nihari', 'Savour Foods', 'The Monal', 
+            'Butt Karahi', 'Haveli Restaurant', 'Ginyaki', 
+            'Kababjees', "Salt'n Pepper", 'Bundu Khan'
+        ];
+
+        // Find and delete mock restaurants and their related dishes
+        const restaurantsToDelete = await Restaurant.find({ 
+            $or: [
+                { name: { $in: mockRestaurantNames } },
+                { owner: { $regex: /^owner\d+$/ } }, // Matches 'owner1', 'owner2', etc.
+                { contact: '021-111-111-111' } // Common mock contact
+            ]
+        });
+        const restaurantIds = restaurantsToDelete.map(r => r._id);
+
+        if (restaurantIds.length > 0) {
+            await Dish.deleteMany({ restaurant: { $in: restaurantIds } });
+            await Restaurant.deleteMany({ _id: { $in: restaurantIds } });
+            console.log(`🧹 Removed ${restaurantIds.length} mocked restaurants and their dishes.`);
         }
 
-        console.log('Seeding data...');
+        // Clean up mock users (except admins)
+        const mockUserEmails = ['restaurant@example.com', 'rider@example.com', 'customer@example.com'];
+        await User.deleteMany({ email: { $in: mockUserEmails } });
 
-        // Split seeds: regular users vs admins
-        const userSeeds = users.filter(u => u.role !== 'admin');
-        const adminSeeds = users.filter(u => u.role === 'admin');
-
-        const validRoles = ['customer', 'restaurant', 'rider'];
-        const usersWithHashedPasswords = await Promise.all(userSeeds.map(async (user) => {
-            const salt = await bcrypt.genSalt(10);
-            const hashedPassword = await bcrypt.hash(user.password, salt);
-            const role = validRoles.includes(user.role) ? user.role : 'customer';
-            return { ...user, password: hashedPassword, role };
-        }));
-
-        const createdUsers = await User.insertMany(usersWithHashedPasswords);
-
-        // Create admin accounts in Admin collection (not User)
-        if (adminSeeds.length > 0) {
-            const adminsWithHashedPasswords = await Promise.all(adminSeeds.map(async (admin) => {
+        // 2. SEED ADMIN (Only if not exists)
+        const adminCount = await Admin.countDocuments();
+        
+        if (adminCount === 0) {
+            console.log('🌱 Seeding initial admin account...');
+            const adminSeed = users.find(u => u.role === 'admin');
+            
+            if (adminSeed) {
                 const salt = await bcrypt.genSalt(10);
-                const hashedPassword = await bcrypt.hash(admin.password, salt);
-                return { name: admin.name, email: admin.email, password: hashedPassword, role: 'admin' };
-            }));
-            await Admin.insertMany(adminsWithHashedPasswords);
+                const hashedPassword = await bcrypt.hash(adminSeed.password, salt);
+                
+                await Admin.create({
+                    name: adminSeed.name,
+                    email: adminSeed.email,
+                    password: hashedPassword,
+                    role: 'admin'
+                });
+                console.log('✅ Admin account created: ' + adminSeed.email);
+            }
+        } else {
+            console.log('✅ Admin already exists.');
         }
 
-        // Determine restaurant owner from created users
-        const restaurantOwnerUser = createdUsers.find(u => u.role === 'restaurant') || createdUsers[0];
-        const fallbackOwnerUser = createdUsers.find(u => u.role === 'customer') || createdUsers[0];
-
-        const sampleRestaurants = restaurants.map((restaurant, index) => {
-            const owner = index === 0 ? restaurantOwnerUser._id : (fallbackOwnerUser ? fallbackOwnerUser._id : restaurantOwnerUser._id);
-            return { ...restaurant, owner };
-        });
-
-        const createdRestaurants = await Restaurant.insertMany(sampleRestaurants);
-
-        const sampleDishes = dishes.map((dish, index) => {
-            const restaurantIndex = index % createdRestaurants.length;
-            return { ...dish, restaurant: createdRestaurants[restaurantIndex]._id };
-        });
-
-        await Dish.insertMany(sampleDishes);
-
-        // Seed vouchers
-        await Voucher.insertMany(vouchers);
-
-        console.log('Data Imported Successfully!');
+        console.log('✨ Seeding process completed (Realtime Mode)');
     } catch (error) {
-        console.error(`Seeding Error: ${error.message}`);
+        console.error(`❌ Seeding Error: ${error.message}`);
     }
 };
 

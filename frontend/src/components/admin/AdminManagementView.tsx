@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import axios from 'axios';
-import { API_BASE_URL } from '../../utils/config';
+import { io } from 'socket.io-client';
+import { API_BASE_URL, SOCKET_URL } from '../../utils/config';
 import { FaUserShield, FaPlus, FaSearch, FaEllipsisV, FaShieldAlt } from 'react-icons/fa';
 
 export default function AdminManagementView() {
@@ -9,6 +10,17 @@ export default function AdminManagementView() {
 
     useEffect(() => {
         fetchAdmins();
+
+        const socket = io(SOCKET_URL);
+        
+        socket.on('user_registered', () => {
+            console.log('User update (possibly new admin) detected, refreshing...');
+            fetchAdmins();
+        });
+
+        return () => {
+            socket.disconnect();
+        };
     }, []);
 
     const fetchAdmins = async () => {

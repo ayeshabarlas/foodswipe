@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import axios from 'axios';
-import { API_BASE_URL } from '../../utils/config';
+import { io } from 'socket.io-client';
+import { API_BASE_URL, SOCKET_URL } from '../../utils/config';
 import { FaCheckCircle } from 'react-icons/fa';
 
 export default function PaymentsView() {
@@ -9,6 +10,13 @@ export default function PaymentsView() {
 
     useEffect(() => {
         fetchPayouts();
+
+        const socket = io(SOCKET_URL);
+        socket.on('order_updated', fetchPayouts); // Orders affect payouts
+        
+        return () => {
+            socket.disconnect();
+        };
     }, []);
 
     const fetchPayouts = async () => {
