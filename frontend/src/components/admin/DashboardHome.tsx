@@ -51,23 +51,7 @@ interface DashboardHomeProps {
 
 const COLORS = ['#00C49F', '#FFBB28', '#FF8042'];
 
-export default function DashboardHome({ stats, refreshStats }: DashboardHomeProps) {
-    const handleCleanupMock = async () => {
-        if (!window.confirm('Are you sure you want to delete all mock restaurants and data? This cannot be undone.')) return;
-        
-        try {
-            const userInfo = JSON.parse(localStorage.getItem('userInfo') || '{}');
-            await axios.post(`${API_BASE_URL}/api/admin/cleanup-mock`, {}, {
-                headers: { Authorization: `Bearer ${userInfo.token}` }
-            });
-            alert('Mock data cleanup successful! The panel will refresh.');
-            if (refreshStats) refreshStats();
-        } catch (error) {
-            console.error('Cleanup failed:', error);
-            alert('Cleanup failed. Please check console for details.');
-        }
-    };
-
+export default function DashboardHome({ stats }: DashboardHomeProps) {
     // Default stats to prevent UI from vanishing
     const defaultStats: Stats = {
         totalUsers: 0,
@@ -143,13 +127,6 @@ export default function DashboardHome({ stats, refreshStats }: DashboardHomeProp
                     <p className="text-gray-500">Welcome back! Here's what's happening today.</p>
                 </div>
                 <div className="flex gap-4">
-                    <button 
-                        onClick={handleCleanupMock}
-                        className="flex items-center gap-2 px-4 py-2 bg-red-50 text-red-600 rounded-xl hover:bg-red-100 transition border border-red-100 text-sm font-medium"
-                        title="Remove all mock data"
-                    >
-                        <FaTrashAlt /> Clean Mock Data
-                    </button>
                     <div className="bg-white px-4 py-2 rounded-xl shadow-sm border border-gray-100 flex items-center gap-2">
                         <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></span>
                         <span className="text-sm font-medium text-gray-600">Live Updates Active</span>

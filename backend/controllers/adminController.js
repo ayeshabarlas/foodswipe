@@ -624,26 +624,6 @@ const deleteRider = async (req, res) => {
     }
 };
 
-// @desc    Cleanup mock data manually
-// @route   POST /api/admin/cleanup-mock
-// @access  Private/Admin
-const cleanupMockData = async (req, res) => {
-    try {
-        const seedData = require('../seederFunction');
-        await seedData();
-        
-        // Notify admins to refresh
-        if (req.app.get('io')) {
-            req.app.get('io').to('admin').emit('restaurant_updated');
-            req.app.get('io').to('admin').emit('stats_updated');
-        }
-        
-        res.json({ message: 'Mock data cleanup triggered successfully' });
-    } catch (error) {
-        res.status(500).json({ message: 'Cleanup failed', error: error.message });
-    }
-};
-
 module.exports = {
     getPendingRestaurants,
     approveRestaurant,
@@ -660,6 +640,5 @@ module.exports = {
     unsuspendUser,
     deleteUser,
     deleteRestaurant,
-    deleteRider,
-    cleanupMockData
+    deleteRider
 };

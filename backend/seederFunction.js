@@ -19,8 +19,15 @@ const seedData = async () => {
         const restaurantsToDelete = await Restaurant.find({ 
             $or: [
                 { name: { $in: mockRestaurantNames } },
-                { owner: { $regex: /^owner\d+$/ } }, // Matches 'owner1', 'owner2', etc.
-                { contact: '021-111-111-111' } // Common mock contact
+                { 'owner.email': 'customer@example.com' }, // Jane Doe mock email
+                { 'owner.name': 'Jane Doe' },
+                { owner: { $regex: /^owner\d+$/ } },
+                { contact: '021-111-111-111' },
+                { contact: '051-8484888' }, // Ginyaki mock contact
+                { contact: '042-35750735' }, // Salt'n Pepper mock contact
+                { contact: '042-35756107' }, // Bundu Khan mock contact
+                { logo: { $regex: /mock/i } }, // Any restaurant with 'mock' in logo path
+                { address: { $regex: /karachi|islamabad|lahore/i }, owner: null } // Mock restaurants often have null owner in some versions
             ]
         });
         const restaurantIds = restaurantsToDelete.map(r => r._id);
