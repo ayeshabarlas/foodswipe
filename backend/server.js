@@ -39,9 +39,25 @@ const mongoose = require('mongoose');
 const connectDB = require('./config/db');
 
 // Middleware
+const allowedOrigins = [
+    'https://foodswipe-one.vercel.app',
+    'https://foodswipe-admin.vercel.app',
+    'http://localhost:3000',
+    'http://localhost:3001'
+];
+
 app.use(cors({
-    origin: '*',
-    credentials: true
+    origin: function (origin, callback) {
+        // allow requests with no origin (like mobile apps or curl requests)
+        if (!origin) return callback(null, true);
+        if (allowedOrigins.indexOf(origin) === -1) {
+            return callback(null, true); // Allow all for now to debug, but fix credentials
+        }
+        return callback(null, true);
+    },
+    credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization']
 }));
 app.use(express.json());
 

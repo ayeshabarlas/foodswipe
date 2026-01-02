@@ -185,6 +185,19 @@ export default function LoginScreen({ onLogin }: LoginScreenProps) {
                     {error && (
                         <div className="mb-4 p-3 rounded-lg bg-red-50 text-red-500 text-sm text-center border border-red-100">
                             {error}
+                            <button 
+                                onClick={async () => {
+                                    try {
+                                        const res = await axios.get(`${API_BASE_URL}/health`);
+                                        alert(`Backend is reachable! Status: ${res.data}`);
+                                    } catch (e: any) {
+                                        alert(`Backend unreachable: ${e.message}. URL: ${API_BASE_URL}`);
+                                    }
+                                }}
+                                className="block mt-2 text-xs underline text-red-600 mx-auto"
+                            >
+                                Check Connectivity
+                            </button>
                         </div>
                     )}
 
