@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { FaTimes, FaClock, FaCreditCard, FaMoneyBillWave, FaWallet, FaCheckCircle, FaMapMarkerAlt, FaEdit, FaGift } from 'react-icons/fa';

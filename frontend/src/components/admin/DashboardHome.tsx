@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 import { motion } from 'framer-motion';
 import axios from 'axios';
 import { API_BASE_URL } from '../../utils/config';
