@@ -16,9 +16,12 @@ export const getImageUrl = (path: string | undefined | null) => {
     cleanPath = cleanPath.replace(/\/+/g, '/');
     
     // Ensure it has uploads/ prefix if it's a relative path to our backend
-    // but only if it doesn't already start with it
-    if (!cleanPath.startsWith('uploads/')) {
+    if (!cleanPath.startsWith('uploads/') && !cleanPath.includes('uploads/')) {
         cleanPath = `uploads/${cleanPath}`;
+    } else if (cleanPath.includes('uploads/')) {
+        // If uploads/ is somewhere else, extract it
+        const index = cleanPath.indexOf('uploads/');
+        cleanPath = cleanPath.slice(index);
     }
     
     // Ensure API_BASE_URL doesn't end with slash and cleanPath doesn't start with one

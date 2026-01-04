@@ -1,6 +1,20 @@
 const getApiUrl = () => {
   let url = process.env.NEXT_PUBLIC_API_URL;
-  if (!url) return 'http://localhost:8080';
+  
+  // If no env var, try to determine based on environment
+  if (!url) {
+    if (typeof window !== 'undefined') {
+      const host = window.location.hostname;
+      if (host === 'localhost' || host === '127.0.0.1') {
+        return 'http://localhost:5000'; // Match backend port 5000
+      }
+      // If on Vercel but no API URL set, try the railway production URL
+      if (host.includes('vercel.app')) {
+        return 'https://foodswipe-production-46d6.up.railway.app';
+      }
+    }
+    return 'http://localhost:5000';
+  }
   
   // Ensure protocol
   if (!url.startsWith('http')) {
@@ -12,7 +26,18 @@ const getApiUrl = () => {
 
 const getSocketUrl = () => {
   let url = process.env.NEXT_PUBLIC_SOCKET_URL;
-  if (!url) return 'http://localhost:8080';
+  if (!url) {
+    if (typeof window !== 'undefined') {
+      const host = window.location.hostname;
+      if (host === 'localhost' || host === '127.0.0.1') {
+        return 'http://localhost:5000';
+      }
+      if (host.includes('vercel.app')) {
+        return 'https://foodswipe-production-46d6.up.railway.app';
+      }
+    }
+    return 'http://localhost:5000';
+  }
 
   // Ensure protocol
   if (!url.startsWith('http')) {

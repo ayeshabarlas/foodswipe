@@ -79,7 +79,9 @@ const loginAdmin = async (req, res) => {
 
         if (!admin) {
             console.log(`Admin login failed: No admin found for ${loginEmail}`);
-            return res.status(401).json({ message: 'Invalid admin credentials' });
+            return res.status(401).json({ 
+                message: "Account not registered. Please login." 
+            });
         }
 
         const isMatch = await admin.matchPassword(password);

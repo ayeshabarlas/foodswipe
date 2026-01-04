@@ -2,7 +2,16 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import AdminDashboard from '@/components/AdminDashboard';
+import dynamic from 'next/dynamic';
+
+const AdminDashboard = dynamic(() => import('@/components/AdminDashboard'), { 
+    ssr: false,
+    loading: () => (
+        <div className="min-h-screen bg-gray-100 flex items-center justify-center">
+            <div className="w-16 h-16 border-4 border-orange-500 border-t-transparent rounded-full animate-spin"></div>
+        </div>
+    )
+});
 
 export default function AdminPage() {
     const [isAuthenticated, setIsAuthenticated] = useState(false);

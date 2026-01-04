@@ -235,7 +235,7 @@ export default function VerificationsView({ initialTab = 'restaurants' }: { init
                                                     {selectedItem.documents?.[docKey] ? (
                                                         <>
                                                             <img
-                                                                src={getImageUrl(selectedItem.documents[docKey])}
+                                                                src={getImageUrl(selectedItem.documents?.[docKey])}
                                                                 alt={docKey}
                                                                 className="w-full h-full object-contain bg-gray-50 transition-transform duration-500 group-hover:scale-105"
                                                                 onError={(e: any) => {
@@ -251,7 +251,7 @@ export default function VerificationsView({ initialTab = 'restaurants' }: { init
                                                             />
                                                             <div className="absolute inset-0 bg-black/0 group-hover:bg-black/5 transition-colors pointer-events-none" />
                                                             <a
-                                                                href={getImageUrl(selectedItem.documents[docKey])}
+                                                                href={getImageUrl(selectedItem.documents?.[docKey])}
                                                                 target="_blank"
                                                                 rel="noreferrer"
                                                                 className="absolute bottom-2 right-2 bg-white/90 px-2 py-1 rounded-lg text-[9px] font-bold shadow-md opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-1 hover:bg-white"
