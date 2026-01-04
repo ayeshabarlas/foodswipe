@@ -10,7 +10,10 @@ const getApiUrl = () => {
         return 'https://foodswipe-production-46d6.up.railway.app';
       }
     }
-    return 'http://localhost:5000';
+    // Default to production if we're not sure, but have a fallback
+    return process.env.NODE_ENV === 'production' 
+      ? 'https://foodswipe-production-46d6.up.railway.app' 
+      : 'http://localhost:5000';
   }
   
   // Ensure protocol
