@@ -5,11 +5,8 @@ const getApiUrl = () => {
   if (!url) {
     if (typeof window !== 'undefined') {
       const host = window.location.hostname;
-      if (host === 'localhost' || host === '127.0.0.1') {
-        return 'http://localhost:5000'; // Match backend port 5000
-      }
-      // If on Vercel but no API URL set, try the railway production URL
-      if (host.includes('vercel.app')) {
+      // If it's NOT localhost/127.0.0.1, assume it's production
+      if (host !== 'localhost' && host !== '127.0.0.1' && !host.startsWith('192.168.')) {
         return 'https://foodswipe-production-46d6.up.railway.app';
       }
     }
@@ -29,10 +26,7 @@ const getSocketUrl = () => {
   if (!url) {
     if (typeof window !== 'undefined') {
       const host = window.location.hostname;
-      if (host === 'localhost' || host === '127.0.0.1') {
-        return 'http://localhost:5000';
-      }
-      if (host.includes('vercel.app')) {
+      if (host !== 'localhost' && host !== '127.0.0.1' && !host.startsWith('192.168.')) {
         return 'https://foodswipe-production-46d6.up.railway.app';
       }
     }
