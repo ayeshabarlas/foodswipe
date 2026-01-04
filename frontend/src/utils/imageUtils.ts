@@ -31,5 +31,11 @@ export const getImageUrl = (path: string | undefined | null) => {
     const baseUrl = API_BASE_URL.endsWith('/') ? API_BASE_URL.slice(0, -1) : API_BASE_URL;
     
     const finalUrl = `${baseUrl}/${cleanPath}`;
+    
+    // Debug for production
+    if (typeof window !== 'undefined' && !window.location.hostname.includes('localhost')) {
+        console.log('🖼️ Image URL:', { original: path, final: finalUrl });
+    }
+    
     return finalUrl;
 };

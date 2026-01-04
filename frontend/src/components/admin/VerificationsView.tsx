@@ -237,6 +237,7 @@ export default function VerificationsView({ initialTab = 'restaurants' }: { init
                                                             <img
                                                                 src={getImageUrl(selectedItem.documents?.[docKey])}
                                                                 alt={docKey}
+                                                                title={getImageUrl(selectedItem.documents?.[docKey])}
                                                                 className="w-full h-full object-contain bg-gray-50 transition-transform duration-500 group-hover:scale-105"
                                                                 onError={(e: any) => {
                                                                     e.target.style.display = 'none';

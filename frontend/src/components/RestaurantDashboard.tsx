@@ -348,6 +348,12 @@ export default function RestaurantDashboard() {
 
             {/* Main Content */}
             <main className={`flex-1 min-w-0 flex flex-col h-screen transition-all duration-300 ${isSidebarOpen ? 'lg:pl-0' : ''}`}>
+                {/* Banner for Version Check */}
+                <div className="bg-blue-600 text-white px-4 py-1 text-[10px] font-bold flex justify-between items-center shrink-0">
+                    <span>DEPLOYMENT: v2.2 (Updated: 5:45 PM)</span>
+                    <span className="opacity-70">API: {API_BASE_URL}</span>
+                </div>
+
                 {/* Mobile Header */}
                 <header className="bg-white border-b border-gray-100 p-4 lg:hidden sticky top-0 z-30 flex items-center justify-between shadow-sm shrink-0">
                     <div className="flex items-center gap-3">
