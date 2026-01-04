@@ -447,55 +447,55 @@ export default function OrderBoard({ restaurant }: OrderBoardProps) {
             </AnimatePresence>
 
             {/* Order Grid */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 h-[calc(100vh-200px)] overflow-hidden">
                 {/* Pending Column */}
-                <div>
-                    <h3 className="font-semibold text-gray-700 mb-4 flex items-center gap-2 text-sm sm:text-base">
+                <div className="flex flex-col h-full">
+                    <h3 className="font-semibold text-gray-700 mb-4 flex items-center gap-2 text-sm sm:text-base sticky top-0 bg-gray-50 z-10 py-1">
                         New
                         <span className="bg-orange-100 text-orange-600 px-2 py-0.5 rounded-full text-xs font-bold">
                             {pendingOrders.length}
                         </span>
                     </h3>
-                    <div className="space-y-4">
+                    <div className="space-y-4 overflow-y-auto flex-1 pr-2 pb-20 custom-scrollbar">
                         {pendingOrders.map(renderOrderCard)}
                     </div>
                 </div>
 
                 {/* Preparing Column */}
-                <div>
-                    <h3 className="font-semibold text-gray- mb-4 flex items-center gap-2 text-sm sm:text-base">
+                <div className="flex flex-col h-full">
+                    <h3 className="font-semibold text-gray-700 mb-4 flex items-center gap-2 text-sm sm:text-base sticky top-0 bg-gray-50 z-10 py-1">
                         Preparing
                         <span className="bg-blue-100 text-blue-600 px-2 py-0.5 rounded-full text-xs font-bold">
                             {preparingOrders.length}
                         </span>
                     </h3>
-                    <div className="space-y-4">
+                    <div className="space-y-4 overflow-y-auto flex-1 pr-2 pb-20 custom-scrollbar">
                         {preparingOrders.map(renderOrderCard)}
                     </div>
                 </div>
 
                 {/* Ready Column */}
-                <div>
-                    <h3 className="font-semibold text-gray-700 mb-4 flex items-center gap-2 text-sm sm:text-base">
+                <div className="flex flex-col h-full">
+                    <h3 className="font-semibold text-gray-700 mb-4 flex items-center gap-2 text-sm sm:text-base sticky top-0 bg-gray-50 z-10 py-1">
                         Ready
                         <span className="bg-green-100 text-green-600 px-2 py-0.5 rounded-full text-xs font-bold">
                             {readyOrders.length}
                         </span>
                     </h3>
-                    <div className="space-y-4">
+                    <div className="space-y-4 overflow-y-auto flex-1 pr-2 pb-20 custom-scrollbar">
                         {readyOrders.map(renderOrderCard)}
                     </div>
                 </div>
 
                 {/* Completed Column */}
-                <div>
-                    <h3 className="font-semibold text-gray-700 mb-4 flex items-center gap-2 text-sm sm:text-base">
+                <div className="flex flex-col h-full">
+                    <h3 className="font-semibold text-gray-700 mb-4 flex items-center gap-2 text-sm sm:text-base sticky top-0 bg-gray-50 z-10 py-1">
                         Completed
                         <span className="bg-purple-100 text-purple-600 px-2 py-0.5 rounded-full text-xs font-bold">
                             {completedOrders.length}
                         </span>
                     </h3>
-                    <div className="space-y-4">
+                    <div className="space-y-4 overflow-y-auto flex-1 pr-2 pb-20 custom-scrollbar">
                         {completedOrders.map(renderOrderCard)}
                     </div>
                 </div>

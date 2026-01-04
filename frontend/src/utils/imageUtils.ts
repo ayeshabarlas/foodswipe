@@ -24,8 +24,12 @@ export const getImageUrl = (path: string | undefined | null) => {
         cleanPath = cleanPath.slice(index);
     }
     
-    // Ensure API_BASE_URL doesn't end with slash and cleanPath doesn't start with one
+    // Final normalization: remove any leading slash from cleanPath
+    cleanPath = cleanPath.replace(/^\/+/, '');
+    
+    // Ensure API_BASE_URL doesn't end with slash
     const baseUrl = API_BASE_URL.endsWith('/') ? API_BASE_URL.slice(0, -1) : API_BASE_URL;
     
-    return `${baseUrl}/${cleanPath}`;
+    const finalUrl = `${baseUrl}/${cleanPath}`;
+    return finalUrl;
 };
