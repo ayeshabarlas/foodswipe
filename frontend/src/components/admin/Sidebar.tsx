@@ -154,14 +154,24 @@ export default function Sidebar({ activeTab, setActiveTab, onLogout }: SidebarPr
                     </nav>
                 </div>
 
-                {/* Footer Section */}
-                <div className="p-3 border-t border-gray-50 bg-gray-50/30">
+                {/* Logout & Support Section */}
+                <div className="p-3 border-t border-gray-50 space-y-1">
+                    <div className="px-3 py-2 bg-gray-50 rounded-xl mb-2">
+                        <p className="text-[8px] text-gray-400 font-black uppercase tracking-widest mb-1">Support</p>
+                        <a 
+                            href="mailto:app.foodswipehelp@gmail.com" 
+                            className="text-[9px] font-bold text-gray-600 hover:text-orange-600 transition-colors truncate block"
+                        >
+                            app.foodswipehelp@gmail.com
+                        </a>
+                    </div>
+                    
                     <button
                         onClick={onLogout}
-                        className="w-full flex items-center gap-2.5 px-3 py-2 text-gray-500 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all group font-bold text-[10px] uppercase tracking-widest"
+                        className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-red-500 hover:bg-red-50 transition-all duration-200 group"
                     >
-                        <FaSignOutAlt className="text-base group-hover:-translate-x-0.5 transition-transform" />
-                        <span>Sign Out</span>
+                        <FaSignOutAlt className="text-base" />
+                        <span className="text-xs uppercase tracking-wider font-bold">Logout</span>
                     </button>
                 </div>
             </div>

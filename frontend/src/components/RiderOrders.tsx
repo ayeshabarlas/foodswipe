@@ -3,11 +3,12 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { API_BASE_URL } from '../utils/config';
-import { FaBox, FaCheckCircle, FaClock, FaTimes, FaMapMarkerAlt, FaPhone } from 'react-icons/fa';
-import { initSocket, disconnectSocket } from '../utils/socket';
+import { FaBox, FaCheckCircle, FaClock, FaTimes, FaMapMarkerAlt, FaPhone, FaCommentDots } from 'react-icons/fa';
+import { initSocket, disconnectSocket, getSocket } from '../utils/socket';
 import toast, { Toaster } from 'react-hot-toast';
 import { useGeolocation } from '../utils/useGeolocation';
 import dynamic from 'next/dynamic';
+import OrderChat from './OrderChat';
 
 // Dynamically import map to avoid SSR issues
 const OrderTracking = dynamic(() => import('./OrderTracking'), { ssr: false });
@@ -20,6 +21,8 @@ export default function RiderOrders({ riderId }: RiderOrdersProps) {
     const [orders, setOrders] = useState<any[]>([]);
     const [filter, setFilter] = useState<'active' | 'completed' | 'all'>('active');
     const [activeDelivery, setActiveDelivery] = useState<any>(null);
+    const [isChatOpen, setIsChatOpen] = useState(false);
+    const userInfo = JSON.parse(localStorage.getItem("userInfo") || "{}");
 
     // Track location if there's an active delivery
     const { location } = useGeolocation(!!activeDelivery);
@@ -148,58 +151,78 @@ export default function RiderOrders({ riderId }: RiderOrdersProps) {
         }
     };
 
-    return (
-        <div className="min-h-screen bg-gray-50 pb-20">
-            {/* Header */}
-            <div className="bg-white px-6 pt-8 pb-6 border-b border-gray-200">
-                <h1 className="text-2xl font-bold text-gray-900 mb-4">Orders</h1>
+    const [activeChat, setActiveChat] = useState<any>(null);
 
-                {/* Filter Tabs */}
+    const handleChat = (order: any) => {
+        setActiveChat(order);
+        setIsChatOpen(true);
+    };
+
+    return (
+        <div className="flex flex-col h-full bg-gray-50 p-4 lg:p-6 text-[13px]">
+            {/* Header */}
+            <div className="flex items-center justify-between mb-6">
+                <h1 className="text-xl font-bold text-gray-900">Delivery Orders</h1>
                 <div className="flex gap-2">
-                    <button onClick={() => setFilter('active')} className={`flex-1 py-2 rounded-lg font-semibold transition ${filter === 'active' ? 'bg-orange-500 text-white' : 'bg-gray-100 text-gray-600'}`}>Active</button>
-                    <button onClick={() => setFilter('completed')} className={`flex-1 py-2 rounded-lg font-semibold transition ${filter === 'completed' ? 'bg-orange-500 text-white' : 'bg-gray-100 text-gray-600'}`}>Completed</button>
-                    <button onClick={() => setFilter('all')} className={`flex-1 py-2 rounded-lg font-semibold transition ${filter === 'all' ? 'bg-orange-500 text-white' : 'bg-gray-100 text-gray-600'}`}>All</button>
+                    <button 
+                        onClick={() => setFilter('active')}
+                        className={`px-4 py-1.5 rounded-lg text-xs font-bold transition ${filter === 'active' ? 'bg-orange-500 text-white shadow-md shadow-orange-500/20' : 'bg-white text-gray-600 border border-gray-100'}`}
+                    >
+                        Active
+                    </button>
+                    <button 
+                        onClick={() => setFilter('completed')}
+                        className={`px-4 py-1.5 rounded-lg text-xs font-bold transition ${filter === 'completed' ? 'bg-orange-500 text-white shadow-md shadow-orange-500/20' : 'bg-white text-gray-600 border border-gray-100'}`}
+                    >
+                        History
+                    </button>
                 </div>
             </div>
 
             {/* Active Delivery Map */}
             {activeDelivery && (
-                <div className="px-6 pt-6">
-                    <div className="mb-4">
-                        <h2 className="font-bold text-lg mb-2">Current Delivery</h2>
-                        <OrderTracking order={activeDelivery} userRole="user" />
-                    </div>
+                <div className="mb-6">
+                    <h2 className="font-bold text-lg mb-2">Current Delivery</h2>
+                    <OrderTracking order={activeDelivery} userRole="user" />
                 </div>
             )}
 
-            {/* Orders List */}
-            <div className="px-6 py-6">
-                {filteredOrders.length === 0 ? (
-                    <div className="bg-white rounded-2xl p-12 text-center">
-                        <FaBox className="text-5xl text-gray-300 mx-auto mb-4" />
-                        <p className="text-gray-500 font-medium">No {filter} orders yet</p>
-                    </div>
-                ) : (
-                    <div className="space-y-4">
-                        {filteredOrders.map((order, idx) => (
-                            <OrderCard
-                                key={idx}
-                                order={order}
-                                riderId={riderId}
-                                onAccept={handleAcceptOrder}
-                                onPickup={handlePickupOrder}
-                            />
-                        ))}
+            <div className="flex-1 overflow-y-auto space-y-4 pr-1 custom-scrollbar">
+                {filteredOrders.map(order => (
+                    <OrderCard 
+                        key={order._id} 
+                        order={order} 
+                        riderId={riderId} 
+                        onAccept={handleAcceptOrder} 
+                        onPickup={handlePickupOrder}
+                        onChat={handleChat}
+                    />
+                ))}
+                {filteredOrders.length === 0 && (
+                    <div className="flex flex-col items-center justify-center py-20 text-gray-400">
+                        <FaBox size={40} className="mb-4 opacity-20" />
+                        <p className="font-bold uppercase tracking-widest text-xs">No orders found</p>
                     </div>
                 )}
             </div>
+
+            <OrderChat 
+                orderId={activeChat?._id || ''}
+                isOpen={isChatOpen}
+                onClose={() => {
+                    setIsChatOpen(false);
+                    setActiveChat(null);
+                }}
+                userRole="rider"
+                userName={userInfo.name || 'Rider'}
+            />
 
             <Toaster />
         </div>
     );
 }
 
-function OrderCard({ order, riderId, onAccept, onPickup }: { order: any; riderId: string; onAccept: (id: string) => void; onPickup: (id: string) => void }) {
+function OrderCard({ order, riderId, onAccept, onPickup, onChat }: { order: any; riderId: string; onAccept: (id: string) => void; onPickup: (id: string) => void; onChat: (order: any) => void }) {
     const getStatusIcon = () => {
         switch (order.status) {
             case 'Delivered': return <FaCheckCircle className="text-green-500" />;
@@ -254,8 +277,20 @@ function OrderCard({ order, riderId, onAccept, onPickup }: { order: any; riderId
                 <div className="flex items-start gap-2">
                     <FaMapMarkerAlt className="text-blue-500 mt-1 flex-shrink-0" />
                     <div className="flex-1">
-                        <p className="text-xs text-gray-500 mb-1 font-normal">Deliver to</p>
-                        <p className="font-semibold text-gray-900">{order.customer?.name || 'Customer'}</p>
+                        <div className="flex items-center justify-between">
+                            <div>
+                                <p className="text-xs text-gray-500 mb-1 font-normal">Deliver to</p>
+                                <p className="font-semibold text-gray-900">{order.customer?.name || 'Customer'}</p>
+                            </div>
+                            {isAssignedToMe && (
+                                <button
+                                    onClick={() => onChat(order)}
+                                    className="p-2 bg-orange-100 text-orange-600 rounded-lg hover:bg-orange-200 transition"
+                                >
+                                    <FaCommentDots />
+                                </button>
+                            )}
+                        </div>
                         <p className="text-sm text-gray-600 font-normal">{order.deliveryAddress || 'Delivery Address'}</p>
                         {order.customer?.phone && (
                             <button

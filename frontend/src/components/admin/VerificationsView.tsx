@@ -20,25 +20,41 @@ export default function VerificationsView({ initialTab = 'restaurants' }: { init
     useEffect(() => {
         fetchVerifications();
 
-        const socket = io(SOCKET_URL);
-        
-        socket.on('restaurant_registered', () => {
-            console.log('New restaurant registration detected, refreshing verifications...');
-            fetchVerifications();
-        });
+        // Join admin room for real-time updates
+        const userInfo = localStorage.getItem('userInfo');
+        let socket: any;
 
-        socket.on('restaurant_updated', () => {
-            console.log('Restaurant update detected, refreshing verifications...');
-            fetchVerifications();
-        });
+        if (userInfo) {
+            try {
+                const user = JSON.parse(userInfo);
+                socket = io(SOCKET_URL);
+                
+                socket.on('connect', () => {
+                    console.log('Connected to socket for verification updates');
+                    socket.emit('join', { userId: user._id, role: 'admin' });
+                });
 
-        socket.on('rider_updated', () => {
-            console.log('Rider update detected, refreshing verifications...');
-            fetchVerifications();
-        });
+                socket.on('restaurant_registered', (newRestaurant: any) => {
+                    console.log('New restaurant registered for verification:', newRestaurant);
+                    fetchVerifications();
+                });
+
+                socket.on('rider_registered', (newRider: any) => {
+                    console.log('New rider registered for verification:', newRider);
+                    fetchVerifications();
+                });
+
+                socket.on('verification_updated', () => {
+                    console.log('Verification updated, refreshing...');
+                    fetchVerifications();
+                });
+            } catch (e) {
+                console.error('Error setting up socket in VerificationsView:', e);
+            }
+        }
 
         return () => {
-            socket.disconnect();
+            if (socket) socket.disconnect();
         };
     }, []);
 
@@ -139,8 +155,7 @@ export default function VerificationsView({ initialTab = 'restaurants' }: { init
         <div className="p-6">
             <div className="flex justify-between items-center mb-6">
                 <div>
-                    <h2 className="text-lg font-bold text-gray-800">Pending Approvals <span className="text-[10px] bg-blue-100 text-blue-600 px-2 py-0.5 rounded-full ml-2">v2.5 (BUILD FIX)</span></h2>
-                    <p className="text-[10px] text-gray-500 uppercase tracking-wider font-bold">Review and verify new registrations</p>
+                    <h2 className="text-lg font-bold text-gray-800">Pending Approvals</h2>
                 </div>
                 <div className="flex gap-1 bg-white p-1 rounded-lg border border-gray-100 shadow-sm">
                     <button

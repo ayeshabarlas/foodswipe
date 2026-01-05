@@ -5,7 +5,11 @@ import { FaPhoneAlt, FaComments, FaExclamationCircle, FaMapMarkerAlt, FaUserSlas
 
 export default function RiderSupport() {
     const handleEmergencyCall = () => {
-        window.location.href = 'tel:+923001234567';
+        window.location.href = 'tel:+923295599855';
+    };
+
+    const handleEmailSupport = () => {
+        window.location.href = 'mailto:app.foodswipehelp@gmail.com';
     };
 
     return (
@@ -49,7 +53,7 @@ export default function RiderSupport() {
             </div>
 
             {/* Call Support */}
-            <div className="px-6 mb-6">
+            <div className="px-6 mb-4">
                 <button
                     onClick={() => window.location.href = 'tel:+923295599855'}
                     className="w-full bg-white rounded-2xl p-4 flex items-center gap-4 shadow-sm hover:shadow-md transition border border-gray-100"
@@ -60,6 +64,25 @@ export default function RiderSupport() {
                     <div className="flex-1 text-left">
                         <h3 className="font-semibold text-gray-900">Call Support</h3>
                         <p className="text-sm text-gray-600">+92 329 5599855</p>
+                    </div>
+                    <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                    </svg>
+                </button>
+            </div>
+
+            {/* Email Support */}
+            <div className="px-6 mb-6">
+                <button
+                    onClick={handleEmailSupport}
+                    className="w-full bg-white rounded-2xl p-4 flex items-center gap-4 shadow-sm hover:shadow-md transition border border-gray-100"
+                >
+                    <div className="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center">
+                        <FaComments className="text-blue-600 text-xl" />
+                    </div>
+                    <div className="flex-1 text-left">
+                        <h3 className="font-semibold text-gray-900">Email Support</h3>
+                        <p className="text-sm text-gray-600">app.foodswipehelp@gmail.com</p>
                     </div>
                     <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />

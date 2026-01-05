@@ -161,21 +161,15 @@ export default function VouchersView() {
                 </div>
                 <div className="bg-white p-5 rounded-xl border border-gray-100 shadow-sm">
                     <p className="text-gray-500 text-sm mb-1">Total Cost</p>
-                    <h3 className="text-2xl font-bold text-orange-600">Rs {stats.totalCost.toLocaleString()}</h3>
+                    <h3 className="text-2xl font-bold text-orange-600">Rs. {stats.totalCost.toLocaleString()}</h3>
                 </div>
-            </div>
-
-            {/* Funding Cards */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-                <div className="bg-gradient-to-r from-orange-500 to-red-500 rounded-2xl p-6 text-white shadow-lg">
-                    <h3 className="text-lg font-bold mb-2">Platform-Funded Discounts</h3>
-                    <p className="text-3xl font-bold mb-1">Rs {vouchers.filter(v => v.fundedBy === 'Platform').reduce((acc, v) => acc + (v.totalCost || 0), 0).toLocaleString()}</p>
-                    <p className="text-white/80 text-sm">Paid from platform commission earnings</p>
+                <div className="bg-green-50 p-4 rounded-xl border border-green-100">
+                    <p className="text-xs text-green-600 font-bold uppercase mb-1">Platform Cost</p>
+                    <p className="text-3xl font-bold mb-1">Rs. {vouchers.filter(v => v.fundedBy === 'Platform').reduce((acc, v) => acc + (v.totalCost || 0), 0).toLocaleString()}</p>
                 </div>
-                <div className="bg-gradient-to-r from-blue-500 to-indigo-500 rounded-2xl p-6 text-white shadow-lg">
-                    <h3 className="text-lg font-bold mb-2">Restaurant-Funded Discounts</h3>
-                    <p className="text-3xl font-bold mb-1">Rs {vouchers.filter(v => v.fundedBy !== 'Platform').reduce((acc, v) => acc + (v.totalCost || 0), 0).toLocaleString()}</p>
-                    <p className="text-white/80 text-sm">Deducted from restaurant wallets</p>
+                <div className="bg-blue-50 p-4 rounded-xl border border-blue-100">
+                    <p className="text-xs text-blue-600 font-bold uppercase mb-1">Restaurant Cost</p>
+                    <p className="text-3xl font-bold mb-1">Rs. {vouchers.filter(v => v.fundedBy !== 'Platform').reduce((acc, v) => acc + (v.totalCost || 0), 0).toLocaleString()}</p>
                 </div>
             </div>
 
@@ -230,9 +224,9 @@ export default function VouchersView() {
                                 <td className="px-6 py-4 font-mono font-medium text-gray-700">{voucher.code}</td>
                                 <td className="px-6 py-4">
                                     <div className="text-sm font-bold text-gray-800">
-                                        {voucher.discountType === 'percentage' ? `${voucher.discountValue}%` : `Rs ${voucher.discountValue}`}
+                                        {voucher.discountType === 'percentage' ? `${voucher.discountValue}%` : `Rs. ${voucher.discountValue}`}
                                     </div>
-                                    <div className="text-xs text-gray-500">Max: Rs {voucher.maxDiscount}</div>
+                                    <div className="text-xs text-gray-500">Max: Rs. {voucher.maxDiscount}</div>
                                 </td>
                                 <td className="px-6 py-4">
                                     <span className={`px-2 py-1 rounded-lg text-xs font-bold ${voucher.fundedBy === 'Platform' ? 'bg-orange-100 text-orange-700' : 'bg-blue-100 text-blue-700'
@@ -240,7 +234,7 @@ export default function VouchersView() {
                                         {voucher.fundedBy}
                                     </span>
                                 </td>
-                                <td className="px-6 py-4 text-sm text-gray-600">Rs {voucher.minOrder}</td>
+                                <td className="px-6 py-4 text-sm text-gray-600">Rs. {voucher.minOrder}</td>
                                 <td className="px-6 py-4">
                                     <div className="text-sm text-gray-800">{voucher.usageCount} / {voucher.usageLimit}</div>
                                     <div className="w-16 h-1.5 bg-gray-100 rounded-full mt-1">
@@ -250,7 +244,7 @@ export default function VouchersView() {
                                         ></div>
                                     </div>
                                 </td>
-                                <td className="px-6 py-4 text-sm font-medium text-gray-800">Rs {voucher.totalCost.toLocaleString()}</td>
+                                <td className="px-6 py-4 text-sm font-medium text-gray-800">Rs. {voucher.totalCost.toLocaleString()}</td>
                                 <td className="px-6 py-4 text-sm text-gray-600">
                                     <div className="flex items-center gap-1">
                                         <span className="text-gray-400 text-xs">ðŸ“…</span>

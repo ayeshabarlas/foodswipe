@@ -16,7 +16,7 @@ export default function DashboardSupport() {
     const [copiedEmail, setCopiedEmail] = useState(false);
 
     const handleCopyPhone = () => {
-        navigator.clipboard.writeText('+1-800-FOODSWIPE');
+        navigator.clipboard.writeText('+92 329 5599855');
         setCopiedPhone(true);
         setTimeout(() => setCopiedPhone(false), 2000);
     };

@@ -68,7 +68,7 @@ export default function PaymentsView() {
                                             </span>
                                         </td>
                                         <td className="px-6 py-4 font-medium text-gray-800">{payout.entityName || 'Unknown'}</td>
-                                        <td className="px-6 py-4 font-bold text-gray-800">Rs {payout.totalAmount?.toLocaleString()}</td>
+                                        <td className="px-6 py-4 font-bold text-gray-800">Rs. {payout.totalAmount?.toLocaleString()}</td>
                                         <td className="px-6 py-4">
                                             <span className={`px-2 py-1 rounded-full text-xs font-bold capitalize ${payout.status === 'paid' ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700'}`}>
                                                 {payout.status}

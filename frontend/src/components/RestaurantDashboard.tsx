@@ -15,9 +15,9 @@ import KitchenDisplay from './KitchenDisplay';
 import DashboardPromotions from './DashboardPromotions';
 import DashboardSettings from './DashboardSettings';
 import DashboardSupport from './DashboardSupport';
-import { io } from 'socket.io-client';
-import { getImageUrl } from '../utils/imageUtils';
-import { API_BASE_URL, SOCKET_URL } from '../utils/config';
+import { getImageUrl, getImageFallback } from '../utils/imageUtils';
+import { API_BASE_URL } from '../utils/config';
+import { initSocket, disconnectSocket } from '../utils/socket';
 
 export default function RestaurantDashboard() {
     const [restaurant, setRestaurant] = useState<any>(null);
@@ -38,9 +38,12 @@ export default function RestaurantDashboard() {
     const [socket, setSocket] = useState<any>(null);
 
     useEffect(() => {
-        const newSocket = io(SOCKET_URL);
-        setSocket(newSocket);
-        return () => { newSocket.disconnect(); };
+        const userInfo = JSON.parse(localStorage.getItem('userInfo') || '{}');
+        if (userInfo && userInfo._id) {
+            const newSocket = initSocket(userInfo._id, 'restaurant', userInfo.restaurantId);
+            setSocket(newSocket);
+        }
+        return () => { disconnectSocket(); };
     }, []);
 
     const fetchDashboardData = async () => {
@@ -83,14 +86,14 @@ export default function RestaurantDashboard() {
 
     useEffect(() => {
         if (!socket || !restaurant) return;
-        socket.emit('join-restaurant', restaurant._id);
 
         const handleNewOrder = (order: any) => {
+            console.log('New order received via socket:', order);
             playNotificationSound();
             const newNotification = {
                 _id: Date.now().toString(),
                 title: 'New Order Received',
-                message: `Order #${order._id.slice(-6)} has been placed`,
+                message: `Order #${order._id.slice(-6).toUpperCase()} has been placed`,
                 createdAt: new Date().toISOString(),
                 read: false
             };
@@ -98,14 +101,17 @@ export default function RestaurantDashboard() {
             fetchDashboardData();
         };
 
-        const handleOrderUpdate = () => fetchDashboardData();
+        const handleOrderUpdate = () => {
+            console.log('Order update received via socket');
+            fetchDashboardData();
+        };
 
-        socket.on('new-order', handleNewOrder);
-        socket.on('order-updated', handleOrderUpdate);
+        socket.on('newOrder', handleNewOrder);
+        socket.on('orderStatusUpdate', handleOrderUpdate);
 
         return () => {
-            socket.off('new-order', handleNewOrder);
-            socket.off('order-updated', handleOrderUpdate);
+            socket.off('newOrder', handleNewOrder);
+            socket.off('orderStatusUpdate', handleOrderUpdate);
         };
     }, [socket, restaurant]);
 
@@ -155,7 +161,7 @@ export default function RestaurantDashboard() {
             );
 
             setRestaurant({ ...restaurant, logo: fullUrl });
-            onUpdate(); // Ensure this is called if available to refresh state everywhere
+            fetchDashboardData(); // Ensure this is called to refresh state everywhere
             alert('Logo updated successfully!');
         } catch (error) {
             console.error('Logo upload failed:', error);
@@ -244,7 +250,7 @@ export default function RestaurantDashboard() {
     };
 
     return (
-        <div className="flex h-screen bg-gray-50 overflow-hidden font-sans text-[13px]">
+        <div className="flex h-screen bg-gray-50 overflow-hidden font-sans text-[11px]">
             {/* Sidebar Overlay */}
             <AnimatePresence>
                 {isSidebarOpen && (
@@ -270,9 +276,13 @@ export default function RestaurantDashboard() {
                             <div className="relative group">
                                 <div className="w-10 h-10 rounded-xl overflow-hidden bg-gray-800 ring-2 ring-orange-500 shadow-lg shadow-orange-500/20">
                                     <img
-                                        src={getImageUrl(restaurant.logo) || 'https://via.placeholder.com/150'}
+                                        src={getImageUrl(restaurant.logo)}
                                         alt="Logo"
                                         className="w-full h-full object-cover"
+                                        onError={(e) => {
+                                            const target = e.target as HTMLImageElement;
+                                            target.src = getImageFallback('logo');
+                                        }}
                                     />
                                     <label className="absolute inset-0 bg-black/50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition cursor-pointer">
                                         {uploadingLogo ? (
@@ -286,8 +296,7 @@ export default function RestaurantDashboard() {
                             </div>
                             <div className="flex-1 min-w-0">
                                 <div className="flex items-center gap-2">
-                                    <h2 className="text-sm font-bold truncate leading-tight">{restaurant.name}</h2>
-                                    <span className="bg-orange-500/20 text-orange-500 text-[8px] px-1.5 py-0.5 rounded-full font-bold uppercase">v2.6</span>
+                                    <h2 className="text-[13px] font-bold truncate leading-tight">{restaurant.name}</h2>
                                 </div>
                                 <p className="text-[9px] text-gray-400 truncate flex items-center gap-1.5 mt-0.5 font-bold uppercase tracking-wider">
                                     <span className={`w-1.5 h-1.5 rounded-full ${restaurant.isVerified ? 'bg-green-500' : 'bg-yellow-500 animate-pulse'}`}></span>
@@ -437,15 +446,19 @@ export default function RestaurantDashboard() {
                 )}
 
                 <div className="flex-1 overflow-hidden bg-gray-50/50 flex flex-col">
-                    <div className="flex-1 overflow-y-auto custom-scrollbar p-4 lg:p-6 max-w-7xl mx-auto w-full">
-                        <motion.div
-                            key={activePage}
-                            initial={{ opacity: 0, y: 10 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            transition={{ duration: 0.2 }}
-                        >
-                            {renderContent()}
-                        </motion.div>
+                    <div className="flex-1 overflow-y-auto custom-scrollbar p-4 lg:p-6 max-w-7xl mx-auto w-full text-[13px]">
+                        <AnimatePresence mode="wait">
+                            <motion.div
+                                key={activePage}
+                                initial={{ opacity: 0, y: 10 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                exit={{ opacity: 0, y: -10 }}
+                                transition={{ duration: 0.2 }}
+                                className="min-h-full"
+                            >
+                                {renderContent()}
+                            </motion.div>
+                        </AnimatePresence>
                     </div>
                 </div>
             </main>

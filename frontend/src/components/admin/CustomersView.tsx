@@ -216,8 +216,8 @@ export default function CustomersView() {
                                         <div className="text-[10px] text-gray-400">{customer.email}</div>
                                     </td>
                                     <td className="px-6 py-3 text-[11px] text-gray-600">{customer.totalOrders || 0}</td>
-                                    <td className="px-6 py-3 text-[11px] font-bold text-gray-800">Rs {(customer.totalSpent || 0).toLocaleString()}</td>
-                                    <td className="px-6 py-3 text-[11px] text-gray-600">Rs {(currentUserAvg(customer)).toLocaleString()}</td>
+                                    <td className="px-6 py-3 text-[11px] font-bold text-gray-800">Rs. {(customer.totalSpent || 0).toLocaleString()}</td>
+                                    <td className="px-6 py-3 text-[11px] text-gray-600">Rs. {(currentUserAvg(customer)).toLocaleString()}</td>
                                     <td className="px-6 py-3 text-[11px] text-gray-600">
                                         {customer.cancellations > 0 ? (
                                             <span className="text-red-500 font-bold">{customer.cancellations}</span>

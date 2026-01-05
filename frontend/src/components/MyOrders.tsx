@@ -222,7 +222,7 @@ const MyOrders = forwardRef<MyOrdersRef, MyOrdersProps>(({ isOpen, onClose, onTr
                                             <div className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium border ${getStatusColor(order.status)}`}>
                                                 {order.status}
                                             </div>
-                                            <p className="text-orange-500 font-bold text-lg">Rs. {order.totalAmount}</p>
+                                            <p className="text-orange-600 font-bold text-lg">Rs. {order.totalAmount}</p>
                                         </div>
 
                                         {(order.status.toLowerCase() === 'delivering' || order.status.toLowerCase() === 'preparing' || order.status.toLowerCase() === 'pending') && (

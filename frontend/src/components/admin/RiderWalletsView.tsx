@@ -52,7 +52,7 @@ export default function RiderWalletsView() {
     };
 
     const formatCurrency = (amount: number) => {
-        return `Rs ${amount.toLocaleString('en-PK', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`;
+        return `Rs. ${amount.toLocaleString('en-PK', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`;
     };
 
     const formatDate = (date: string | null) => {

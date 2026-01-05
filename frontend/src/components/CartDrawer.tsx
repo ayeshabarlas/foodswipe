@@ -81,7 +81,7 @@ export default function CartDrawer({ isOpen, onClose, onTrackOrder }: CartDrawer
                                                 <div className="flex-1">
                                                     <h3 className="font-bold text-gray-900 text-base">{item.name}</h3>
                                                     <p className="text-gray-500 text-sm">{item.restaurantName}</p>
-                                                    <p className="text-orange-500 font-bold text-base mt-1">Rs. {item.price}</p>
+                                                    <p className="text-orange-500 font-bold text-base mt-1">Rs. {item.price.toLocaleString()}</p>
                                                 </div>
 
                                                 <div className="flex items-center gap-3">
@@ -125,7 +125,7 @@ export default function CartDrawer({ isOpen, onClose, onTrackOrder }: CartDrawer
                                 <div className="p-5 border-t border-gray-200 bg-white">
                                     <div className="flex justify-between items-center mb-4">
                                         <span className="text-gray-600">Subtotal</span>
-                                        <span className="font-bold text-gray-900">Rs. {subtotal}</span>
+                                        <span className="font-bold text-gray-900">Rs. {subtotal.toLocaleString()}</span>
                                     </div>
                                     <button
                                         onClick={() => setIsCheckoutOpen(true)}

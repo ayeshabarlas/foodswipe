@@ -2,11 +2,11 @@
 
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { FaCheckCircle, FaTimesCircle, FaMapMarkerAlt, FaFileImage, FaEye, FaSearch, FaFilter, FaStar, FaStore, FaClock, FaDollarSign } from 'react-icons/fa';
+import { FaCheckCircle, FaTimesCircle, FaMapMarkerAlt, FaFileImage, FaEye, FaSearch, FaFilter, FaStar, FaStore, FaClock, FaDollarSign, FaExternalLinkAlt } from 'react-icons/fa';
 import axios from 'axios';
 import { io } from 'socket.io-client';
 import { API_BASE_URL, SOCKET_URL } from '../../utils/config';
-import { getImageUrl } from '../../utils/imageUtils';
+import { getImageUrl, getImageFallback } from '../../utils/imageUtils';
 
 interface Restaurant {
     _id: string;
@@ -47,25 +47,36 @@ export default function RestaurantsView() {
     useEffect(() => {
         fetchRestaurants();
 
-        // Socket.io connection
-        const socket = io(SOCKET_URL);
+        // Join admin room for real-time updates
+        const userInfo = localStorage.getItem('userInfo');
+        let socket: any;
 
-        socket.on('connect', () => {
-            console.log('Connected to socket for restaurant updates');
-        });
+        if (userInfo) {
+            try {
+                const user = JSON.parse(userInfo);
+                socket = io(SOCKET_URL);
+                
+                socket.on('connect', () => {
+                    console.log('Connected to socket for restaurant updates');
+                    socket.emit('join', { userId: user._id, role: 'admin' });
+                });
 
-        socket.on('restaurant_registered', (newRestaurant) => {
-            console.log('New restaurant registered:', newRestaurant);
-            fetchRestaurants();
-        });
+                socket.on('restaurant_registered', (newRestaurant: any) => {
+                    console.log('New restaurant registered:', newRestaurant);
+                    fetchRestaurants();
+                });
 
-        socket.on('restaurant_updated', () => {
-            console.log('Restaurant updated, refreshing...');
-            fetchRestaurants();
-        });
+                socket.on('restaurant_updated', () => {
+                    console.log('Restaurant updated, refreshing...');
+                    fetchRestaurants();
+                });
+            } catch (e) {
+                console.error('Error setting up socket in RestaurantsView:', e);
+            }
+        }
 
         return () => {
-            socket.disconnect();
+            if (socket) socket.disconnect();
         };
     }, []);
 
@@ -266,7 +277,7 @@ export default function RestaurantsView() {
                 <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-100 flex justify-between items-center">
                     <div>
                         <p className="text-gray-500 text-[10px] uppercase font-bold mb-1">Total Commission</p>
-                        <h3 className="text-xl font-bold text-gray-800">Rs {stats.commission.toLocaleString()}</h3>
+                        <h3 className="text-xl font-bold text-gray-800">Rs. {stats.commission.toLocaleString()}</h3>
                     </div>
                     <div className="bg-purple-50 p-2.5 rounded-lg text-purple-500">
                         <FaDollarSign className="text-lg" />
@@ -370,12 +381,12 @@ export default function RestaurantsView() {
                                         </div>
                                     </td>
                                     <td className="px-6 py-3 text-[11px] text-gray-600">{restaurant.totalOrders || 0}</td>
-                                    <td className="px-6 py-3 text-[11px] text-gray-600">Rs {(restaurant.revenue || 0).toLocaleString()}</td>
+                                    <td className="px-6 py-3 text-[11px] text-gray-600">Rs. {(restaurant.revenue || 0).toLocaleString()}</td>
                                     <td className="px-6 py-3 text-[11px] font-semibold text-green-600">
-                                        Rs {(Math.round((restaurant.revenue || 0) * 0.1)).toLocaleString()}
+                                        Rs. {(Math.round((restaurant.revenue || 0) * 0.1)).toLocaleString()}
                                     </td>
                                     <td className="px-6 py-3 text-[11px] font-bold text-orange-600">
-                                        Rs {(Math.round((restaurant.revenue || 0) * 0.9)).toLocaleString()}
+                                        Rs. {(Math.round((restaurant.revenue || 0) * 0.9)).toLocaleString()}
                                     </td>
                                     <td className="px-6 py-3 text-right">
                                         {restaurant.verificationStatus === 'pending' ? (
@@ -474,9 +485,26 @@ export default function RestaurantsView() {
                                             value && (
                                                 <div key={key} className="group relative border border-gray-100 rounded-xl p-2 bg-gray-50/50 hover:border-orange-200 transition-colors">
                                                     <p className="text-[9px] font-bold text-gray-400 uppercase mb-2 tracking-tighter">{key.replace(/([A-Z])/g, ' $1').trim()}</p>
-                                                    <div className="aspect-video relative overflow-hidden rounded-lg">
-                                                        <img src={getImageUrl(value as string)} alt={key} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" />
-                                                        <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors" />
+                                                    <div className="aspect-video relative overflow-hidden rounded-lg group">
+                                                        <img 
+                                                            src={getImageUrl(value as string)} 
+                                                            alt={key} 
+                                                            className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" 
+                                                            onError={(e) => {
+                                                                const target = e.target as HTMLImageElement;
+                                                                target.src = getImageFallback('document');
+                                                            }}
+                                                        />
+                                                        <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                                                            <a 
+                                                                href={getImageUrl(value as string)} 
+                                                                target="_blank" 
+                                                                rel="noopener noreferrer"
+                                                                className="bg-white text-gray-900 px-3 py-1 rounded-full text-[10px] font-bold shadow-lg hover:bg-orange-500 hover:text-white transition-colors flex items-center gap-1"
+                                                            >
+                                                                <FaExternalLinkAlt size={8} /> View Full
+                                                            </a>
+                                                        </div>
                                                     </div>
                                                 </div>
                                             )

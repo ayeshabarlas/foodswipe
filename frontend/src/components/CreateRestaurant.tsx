@@ -68,7 +68,7 @@ export default function CreateRestaurant({ onRestaurantCreated }: CreateRestaura
                         Authorization: `Bearer ${token}`
                     }
                 });
-                return `${API_BASE_URL}${res.data.imageUrl}`;
+                return res.data.imageUrl;
             });
 
             const uploadedUrls = await Promise.all(uploadPromises);

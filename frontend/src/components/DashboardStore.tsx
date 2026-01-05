@@ -5,7 +5,7 @@ import { motion } from 'framer-motion';
 import { FaPowerOff, FaClock, FaInfoCircle, FaBell, FaCheckCircle, FaChartLine } from 'react-icons/fa';
 import axios from 'axios';
 import { API_BASE_URL } from '../utils/config';
-import { getImageUrl } from '../utils/imageUtils';
+import { getImageUrl, getImageFallback } from '../utils/imageUtils';
 
 interface StoreHours {
     day: string;
@@ -66,7 +66,7 @@ export default function DashboardStore({ restaurant, onUpdate }: DashboardStoreP
         }
 
         const uploadData = new FormData();
-        uploadData.append('image', file);
+        uploadData.append('file', file);
 
         setUploadingLogo(true);
         try {
@@ -163,9 +163,17 @@ export default function DashboardStore({ restaurant, onUpdate }: DashboardStoreP
             >
                 <div className="relative group w-24 h-24 rounded-2xl overflow-hidden bg-gray-100 border border-gray-200">
                     {logo ? (
-                        <img src={getImageUrl(logo)} alt="Store Logo" className="w-full h-full object-cover" />
+                        <img 
+                            src={getImageUrl(logo)} 
+                            alt="Store Logo" 
+                            className="w-full h-full object-cover" 
+                            onError={(e) => {
+                                const target = e.target as HTMLImageElement;
+                                target.src = getImageFallback('logo');
+                            }}
+                        />
                     ) : (
-                        <div className="w-full h-full flex items-center justify-center text-gray-400 text-xs text-center p-2">
+                        <div className="w-full h-full flex items-center justify-center text-gray-400 text-[10px] text-center p-2">
                             No Logo
                         </div>
                     )}

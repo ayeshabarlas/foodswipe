@@ -22,13 +22,13 @@ export default function Helpline({ isOpen, onClose }: HelplineProps) {
     const [copiedEmail, setCopiedEmail] = useState(false);
 
     const handleCopyPhone = () => {
-        navigator.clipboard.writeText('+1-800-FOODSWIPE');
+        navigator.clipboard.writeText('+92 329 5599855');
         setCopiedPhone(true);
         setTimeout(() => setCopiedPhone(false), 2000);
     };
 
     const handleCopyEmail = () => {
-        navigator.clipboard.writeText('support@foodswipe.com');
+        navigator.clipboard.writeText('app.foodswipehelp@gmail.com');
         setCopiedEmail(true);
         setTimeout(() => setCopiedEmail(false), 2000);
     };
@@ -38,8 +38,8 @@ export default function Helpline({ isOpen, onClose }: HelplineProps) {
             icon: FaPhone,
             title: 'Call Us',
             description: 'Speak directly with our support team',
-            value: '+1-800-FOODSWIPE',
-            action: () => window.open('tel:+18003663794'),
+            value: '+92 329 5599855',
+            action: () => window.open('tel:+923295599855'),
             secondaryAction: handleCopyPhone,
             secondaryLabel: copiedPhone ? 'Copied!' : 'Copy',
             color: 'from-blue-500 to-blue-600'
@@ -48,16 +48,16 @@ export default function Helpline({ isOpen, onClose }: HelplineProps) {
             icon: FaWhatsapp,
             title: 'WhatsApp',
             description: 'Chat with us on WhatsApp',
-            value: '+1 (800) 366-3794',
-            action: () => window.open('https://wa.me/18003663794', '_blank'),
+            value: '+92 329 5599855',
+            action: () => window.open('https://wa.me/923295599855', '_blank'),
             color: 'from-green-500 to-green-600'
         },
         {
             icon: FaEnvelope,
             title: 'Email Support',
             description: 'Send us your queries',
-            value: 'support@foodswipe.com',
-            action: () => window.open('mailto:support@foodswipe.com'),
+            value: 'app.foodswipehelp@gmail.com',
+            action: () => window.open('mailto:app.foodswipehelp@gmail.com'),
             secondaryAction: handleCopyEmail,
             secondaryLabel: copiedEmail ? 'Copied!' : 'Copy',
             color: 'from-orange-500 to-pink-600'

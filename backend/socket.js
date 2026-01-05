@@ -60,17 +60,8 @@ const initSocket = (server) => {
             const { orderId, message, recipients } = data;
             console.log(`💬 Message in Order ${orderId}:`, message.text);
 
-            // Broadcast to specific recipients (customer, rider, restaurant)
-            if (recipients && recipients.length > 0) {
-                recipients.forEach(role => {
-                    // Logic to find the room for the specific user/rider/restaurant associated with the order
-                    // For now, we broadcast to the order-specific room
-                    io.to(`order_${orderId}`).emit('orderMessage', { orderId, message });
-                });
-            } else {
-                // Default: broadcast to everyone in the order room
-                io.to(`order_${orderId}`).emit('orderMessage', { orderId, message });
-            }
+            // Broadcast to everyone in the order room except the sender
+            socket.to(`order_${orderId}`).emit('orderMessage', { orderId, message });
         });
 
         // Join specific order room for chat

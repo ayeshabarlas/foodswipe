@@ -17,18 +17,19 @@ const app = initializeApp(firebaseConfig);
 // Initialize Firebase Auth with App Check bypass for development
 export const auth = getAuth(app);
 
-// CRITICAL FIX: Enable test mode for phone authentication
-// This completely bypasses reCAPTCHA and SMS sending issues
+// CRITICAL FIX: Only enable test mode in localhost development
 if (typeof window !== 'undefined') {
-    // Disable App Check enforcement
-    // @ts-ignore
-    auth.settings = auth.settings || {};
-    // @ts-ignore
-    auth.settings.appVerificationDisabledForTesting = true;
-
-    // IMPORTANT: For phone auth in development, we need to use test phone numbers
-    // OR properly configure reCAPTCHA in Firebase Console
-    // Currently reCAPTCHA is failing, so we'll provide instructions for test numbers
+    const isLocalhost = window.location.hostname === 'localhost' || 
+                        window.location.hostname === '127.0.0.1' || 
+                        window.location.hostname.startsWith('192.168.');
+                        
+    if (isLocalhost) {
+        // @ts-ignore
+        auth.settings = auth.settings || {};
+        // @ts-ignore
+        auth.settings.appVerificationDisabledForTesting = true;
+        console.log('🔧 Firebase Auth: Test mode enabled for localhost');
+    }
 }
 
 // Google provider

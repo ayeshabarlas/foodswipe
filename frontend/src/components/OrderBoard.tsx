@@ -9,6 +9,7 @@ import CancelOrderModal from './CancelOrderModal';
 import { initSocket, getSocket, disconnectSocket } from '../utils/socket';
 import toast, { Toaster } from 'react-hot-toast';
 import dynamic from 'next/dynamic';
+import OrderChat from './OrderChat';
 
 // Dynamically import map to avoid SSR issues
 const OrderTracking = dynamic(() => import('./OrderTracking'), { ssr: false });
@@ -47,8 +48,6 @@ export default function OrderBoard({ restaurant }: OrderBoardProps) {
     const [cancellingOrderId, setCancellingOrderId] = useState<string | null>(null);
     const [trackingOrder, setTrackingOrder] = useState<Order | null>(null);
     const [activeChat, setActiveChat] = useState<Order | null>(null);
-    const [chatMessages, setChatMessages] = useState<Record<string, Message[]>>({});
-    const [currentMessage, setCurrentMessage] = useState('');
     const [prepTimes, setPrepTimes] = useState<Record<string, number>>({});
 
     const fetchOrders = async () => {
@@ -87,19 +86,6 @@ export default function OrderBoard({ restaurant }: OrderBoardProps) {
 
         socket?.on('riderPickedUp', () => {
             fetchOrders();
-        });
-
-        socket?.on('orderMessage', (data: { orderId: string; message: Message }) => {
-            setChatMessages(prev => ({
-                ...prev,
-                [data.orderId]: [...(prev[data.orderId] || []), data.message]
-            }));
-            if (!activeChat || activeChat._id !== data.orderId) {
-                toast.success(`New message from ${data.message.senderName}`, {
-                    icon: '💬',
-                    position: 'bottom-right'
-                });
-            }
         });
 
         return () => {
@@ -142,40 +128,6 @@ export default function OrderBoard({ restaurant }: OrderBoardProps) {
     const handleAcceptOrder = (orderId: string) => {
         updateStatus(orderId, 'Accepted');
         setNewOrderPopup(null);
-    };
-
-    useEffect(() => {
-        if (activeChat) {
-            const socket = getSocket();
-            socket?.emit('joinOrderChat', { orderId: activeChat._id });
-        }
-    }, [activeChat]);
-
-    const handleSendMessage = () => {
-        if (!currentMessage.trim() || !activeChat) return;
-
-        const socket = getSocket();
-        const userInfo = JSON.parse(localStorage.getItem('userInfo') || '{}');
-
-        const messageData: Message = {
-            id: Date.now().toString(),
-            text: currentMessage,
-            sender: 'restaurant',
-            timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-            senderName: restaurant?.name || userInfo.name || 'Restaurant'
-        };
-
-        socket?.emit('sendOrderMessage', {
-            orderId: activeChat._id,
-            message: messageData,
-            recipients: ['customer', 'rider']
-        });
-
-        setChatMessages(prev => ({
-            ...prev,
-            [activeChat._id]: [...(prev[activeChat._id] || []), messageData]
-        }));
-        setCurrentMessage('');
     };
 
     const getInitials = (name: string) => {
@@ -336,7 +288,7 @@ export default function OrderBoard({ restaurant }: OrderBoardProps) {
     }
 
     return (
-        <div className="relative">
+        <div className="h-full flex flex-col overflow-hidden">
             {/* Tracking Modal */}
             <AnimatePresence>
                 {trackingOrder && (
@@ -369,7 +321,7 @@ export default function OrderBoard({ restaurant }: OrderBoardProps) {
                 )}
             </AnimatePresence>
 
-            {/* New Order Popup */}
+            {/* New Order Popup remains same as it's a modal */}
             <AnimatePresence>
                 {newOrderPopup && (
                     <motion.div
@@ -509,155 +461,111 @@ export default function OrderBoard({ restaurant }: OrderBoardProps) {
                 )}
             </AnimatePresence>
 
-            {/* Order Grid */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 min-h-0">
+            {/* Order Grid - Fixed Scrollability */}
+            <div className="flex-1 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 overflow-hidden h-full pb-4">
                 {/* Pending Column */}
-                <div className="flex flex-col h-full">
-                    <h3 className="font-semibold text-gray-700 mb-4 flex items-center gap-2 text-sm sm:text-base sticky top-0 bg-gray-50 z-10 py-1">
-                        New
-                        <span className="bg-orange-100 text-orange-600 px-2 py-0.5 rounded-full text-xs font-bold">
+                <div className="flex flex-col h-full bg-gray-50/50 rounded-2xl p-3 border border-gray-100">
+                    <h3 className="font-bold text-gray-800 mb-3 flex items-center justify-between text-[11px] uppercase tracking-wider">
+                        <span className="flex items-center gap-2">
+                            <div className="w-2 h-2 rounded-full bg-orange-500 shadow-[0_0_8px_rgba(249,115,22,0.5)]"></div>
+                            New Orders
+                        </span>
+                        <span className="bg-orange-100 text-orange-600 px-2 py-0.5 rounded-lg font-black">
                             {pendingOrders.length}
                         </span>
                     </h3>
-                    <div className="space-y-4 pr-2 pb-20 custom-scrollbar">
-                        {pendingOrders.map(renderOrderCard)}
+                    <div className="flex-1 overflow-y-auto space-y-3 pr-1 custom-scrollbar">
+                        {pendingOrders.length === 0 ? (
+                            <div className="h-full flex flex-col items-center justify-center opacity-30 grayscale py-10">
+                                <FaShoppingBag size={24} className="mb-2 text-gray-400" />
+                                <p className="text-[10px] font-bold uppercase tracking-widest">Empty</p>
+                            </div>
+                        ) : (
+                            pendingOrders.map(renderOrderCard)
+                        )}
                     </div>
                 </div>
 
                 {/* Preparing Column */}
-                <div className="flex flex-col h-full">
-                    <h3 className="font-semibold text-gray-700 mb-4 flex items-center gap-2 text-sm sm:text-base sticky top-0 bg-gray-50 z-10 py-1">
-                        Preparing
-                        <span className="bg-blue-100 text-blue-600 px-2 py-0.5 rounded-full text-xs font-bold">
+                <div className="flex flex-col h-full bg-gray-50/50 rounded-2xl p-3 border border-gray-100">
+                    <h3 className="font-bold text-gray-800 mb-3 flex items-center justify-between text-[11px] uppercase tracking-wider">
+                        <span className="flex items-center gap-2">
+                            <div className="w-2 h-2 rounded-full bg-blue-500 shadow-[0_0_8px_rgba(59,130,246,0.5)] animate-pulse"></div>
+                            Preparing
+                        </span>
+                        <span className="bg-blue-100 text-blue-600 px-2 py-0.5 rounded-lg font-black">
                             {preparingOrders.length}
                         </span>
                     </h3>
-                    <div className="space-y-4 pr-2 pb-20 custom-scrollbar">
-                        {preparingOrders.map(renderOrderCard)}
+                    <div className="flex-1 overflow-y-auto space-y-3 pr-1 custom-scrollbar">
+                        {preparingOrders.length === 0 ? (
+                            <div className="h-full flex flex-col items-center justify-center opacity-30 grayscale py-10">
+                                <FaClock size={24} className="mb-2 text-gray-400" />
+                                <p className="text-[10px] font-bold uppercase tracking-widest">Empty</p>
+                            </div>
+                        ) : (
+                            preparingOrders.map(renderOrderCard)
+                        )}
                     </div>
                 </div>
 
                 {/* Ready Column */}
-                <div className="flex flex-col h-full">
-                    <h3 className="font-semibold text-gray-700 mb-4 flex items-center gap-2 text-sm sm:text-base sticky top-0 bg-gray-50 z-10 py-1">
-                        Ready
-                        <span className="bg-green-100 text-green-600 px-2 py-0.5 rounded-full text-xs font-bold">
+                <div className="flex flex-col h-full bg-gray-50/50 rounded-2xl p-3 border border-gray-100">
+                    <h3 className="font-bold text-gray-800 mb-3 flex items-center justify-between text-[11px] uppercase tracking-wider">
+                        <span className="flex items-center gap-2">
+                            <div className="w-2 h-2 rounded-full bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.5)]"></div>
+                            Ready
+                        </span>
+                        <span className="bg-green-100 text-green-600 px-2 py-0.5 rounded-lg font-black">
                             {readyOrders.length}
                         </span>
                     </h3>
-                    <div className="space-y-4 pr-2 pb-20 custom-scrollbar">
-                        {readyOrders.map(renderOrderCard)}
+                    <div className="flex-1 overflow-y-auto space-y-3 pr-1 custom-scrollbar">
+                        {readyOrders.length === 0 ? (
+                            <div className="h-full flex flex-col items-center justify-center opacity-30 grayscale py-10">
+                                <FaCheck size={24} className="mb-2 text-gray-400" />
+                                <p className="text-[10px] font-bold uppercase tracking-widest">Empty</p>
+                            </div>
+                        ) : (
+                            readyOrders.map(renderOrderCard)
+                        )}
                     </div>
                 </div>
 
                 {/* Completed Column */}
-                <div className="flex flex-col h-full">
-                    <h3 className="font-semibold text-gray-700 mb-4 flex items-center gap-2 text-sm sm:text-base sticky top-0 bg-gray-50 z-10 py-1">
-                        Completed
-                        <span className="bg-purple-100 text-purple-600 px-2 py-0.5 rounded-full text-xs font-bold">
+                <div className="flex flex-col h-full bg-gray-50/50 rounded-2xl p-3 border border-gray-100">
+                    <h3 className="font-bold text-gray-800 mb-3 flex items-center justify-between text-[11px] uppercase tracking-wider">
+                        <span className="flex items-center gap-2">
+                            <div className="w-2 h-2 rounded-full bg-purple-500 shadow-[0_0_8px_rgba(168,85,247,0.5)]"></div>
+                            Active
+                        </span>
+                        <span className="bg-purple-100 text-purple-600 px-2 py-0.5 rounded-lg font-black">
                             {completedOrders.length}
                         </span>
                     </h3>
-                    <div className="space-y-4 pr-2 pb-20 custom-scrollbar">
-                        {completedOrders.map(renderOrderCard)}
+                    <div className="flex-1 overflow-y-auto space-y-3 pr-1 custom-scrollbar">
+                        {completedOrders.length === 0 ? (
+                            <div className="h-full flex flex-col items-center justify-center opacity-30 grayscale py-10">
+                                <FaMotorcycle size={24} className="mb-2 text-gray-400" />
+                                <p className="text-[10px] font-bold uppercase tracking-widest">Empty</p>
+                            </div>
+                        ) : (
+                            completedOrders.map(renderOrderCard)
+                        )}
                     </div>
                 </div>
             </div>
 
-            {/* Chat Modal */}
-            <AnimatePresence>
-                {activeChat && (
-                    <motion.div
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                        exit={{ opacity: 0 }}
-                        className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-end sm:items-center justify-center p-0 sm:p-4"
-                        onClick={() => setActiveChat(null)}
-                    >
-                        <motion.div
-                            initial={{ y: '100%' }}
-                            animate={{ y: 0 }}
-                            exit={{ y: '100%' }}
-                            onClick={(e) => e.stopPropagation()}
-                            className="bg-white rounded-t-3xl sm:rounded-3xl w-full max-w-lg h-[80vh] sm:h-[600px] flex flex-col overflow-hidden shadow-2xl"
-                        >
-                            {/* Chat Header */}
-                            <div className="p-4 bg-gradient-to-r from-orange-500 to-red-600 text-white flex items-center justify-between shadow-lg">
-                                <div className="flex items-center gap-3">
-                                    <div className="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center">
-                                        <FaCommentDots size={20} />
-                                    </div>
-                                    <div>
-                                        <h3 className="font-bold text-sm">Order #{activeChat._id.slice(-6)}</h3>
-                                        <p className="text-[10px] opacity-80 uppercase tracking-widest font-bold">
-                                            Chat with {activeChat.user?.name}
-                                        </p>
-                                    </div>
-                                </div>
-                                <button
-                                    onClick={() => setActiveChat(null)}
-                                    className="w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center transition"
-                                >
-                                    <FaTimes size={16} />
-                                </button>
-                            </div>
-
-                            {/* Messages Area */}
-                            <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-gray-50 custom-scrollbar">
-                                {(chatMessages[activeChat._id] || []).map((msg, idx) => (
-                                    <div
-                                        key={idx}
-                                        className={`flex flex-col ${msg.sender === 'restaurant' ? 'items-end' : 'items-start'}`}
-                                    >
-                                        <div
-                                            className={`max-w-[85%] px-4 py-2.5 rounded-2xl text-sm shadow-sm ${msg.sender === 'restaurant'
-                                                ? 'bg-orange-500 text-white rounded-tr-none'
-                                                : 'bg-white text-gray-800 border border-gray-100 rounded-tl-none'
-                                                }`}
-                                        >
-                                            <p className="font-medium">{msg.text}</p>
-                                        </div>
-                                        <div className="flex items-center gap-1.5 mt-1 px-1">
-                                            <span className="text-[9px] font-bold text-gray-400 uppercase">
-                                                {msg.sender === 'restaurant' ? 'You' : msg.senderName}
-                                            </span>
-                                            <span className="text-[9px] text-gray-400">•</span>
-                                            <span className="text-[9px] text-gray-400">{msg.timestamp}</span>
-                                        </div>
-                                    </div>
-                                ))}
-                                {(!chatMessages[activeChat._id] || chatMessages[activeChat._id].length === 0) && (
-                                    <div className="h-full flex flex-col items-center justify-center text-gray-400 space-y-2 opacity-50">
-                                        <FaCommentDots size={40} />
-                                        <p className="text-xs font-bold uppercase tracking-wider">No messages yet</p>
-                                    </div>
-                                )}
-                            </div>
-
-                            {/* Chat Input */}
-                            <div className="p-4 bg-white border-t border-gray-100">
-                                <div className="flex gap-2">
-                                    <input
-                                        type="text"
-                                        value={currentMessage}
-                                        onChange={(e) => setCurrentMessage(e.target.value)}
-                                        onKeyPress={(e) => e.key === 'Enter' && handleSendMessage()}
-                                        placeholder="Type your message..."
-                                        className="flex-1 bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 transition-all"
-                                    />
-                                    <button
-                                        onClick={handleSendMessage}
-                                        disabled={!currentMessage.trim()}
-                                        className="w-12 h-12 bg-orange-500 hover:bg-orange-600 disabled:opacity-50 disabled:hover:bg-orange-500 text-white rounded-xl flex items-center justify-center transition-all shadow-md active:scale-95"
-                                    >
-                                        <FaCheck size={18} />
-                                    </button>
-                                </div>
-                            </div>
-                        </motion.div>
-                    </motion.div>
-                )}
-            </AnimatePresence>
+            {/* Order Chat */}
+            {activeChat && (
+                <OrderChat
+                    orderId={activeChat._id}
+                    isOpen={!!activeChat}
+                    onClose={() => setActiveChat(null)}
+                    userRole="restaurant"
+                    userName={restaurant?.name || 'Restaurant'}
+                />
+            )}
 
             {/* Cancel Order Modal */}
             <CancelOrderModal

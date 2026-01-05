@@ -11,6 +11,7 @@ const {
     getAllRiders,
     getRestaurantSales,
     getDailyStats,
+    getSystemSettings,
     updateSystemSettings,
     getUsers,
     suspendUser,
@@ -57,6 +58,7 @@ router.get('/payments', getRestaurantSales);
 router.get('/reports/daily', getDailyStats);
 
 // Settings
+router.get('/settings', getSystemSettings);
 router.put('/settings', updateSystemSettings);
 
 // Dashboard stats

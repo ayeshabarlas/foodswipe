@@ -97,15 +97,15 @@ export default function EnhancedOrdersView() {
                 </div>
                 <div className="bg-white p-4 rounded-2xl shadow-sm border border-gray-100">
                     <p className="text-gray-400 text-[10px] mb-1 font-bold uppercase tracking-wider">Total Revenue</p>
-                    <h3 className="text-lg font-bold text-gray-800">Rs {stats.totalRevenue.toLocaleString()}</h3>
+                    <h3 className="text-lg font-bold text-gray-800">Rs. {stats.totalRevenue.toLocaleString()}</h3>
                 </div>
                 <div className="bg-white p-4 rounded-2xl shadow-sm border border-gray-100">
                     <p className="text-gray-400 text-[10px] mb-1 font-bold uppercase tracking-wider">Platform Commission</p>
-                    <h3 className="text-lg font-bold text-gray-800">Rs {stats.commission.toLocaleString()}</h3>
+                    <h3 className="text-lg font-bold text-gray-800">Rs. {stats.commission.toLocaleString()}</h3>
                 </div>
                 <div className="bg-white p-4 rounded-2xl shadow-sm border border-gray-100">
                     <p className="text-gray-400 text-[10px] mb-1 font-bold uppercase tracking-wider">Avg Order Value</p>
-                    <h3 className="text-lg font-bold text-gray-800">Rs {stats.avgOrderValue.toLocaleString()}</h3>
+                    <h3 className="text-lg font-bold text-gray-800">Rs. {stats.avgOrderValue.toLocaleString()}</h3>
                 </div>
             </div>
 
@@ -192,7 +192,7 @@ export default function EnhancedOrdersView() {
                                             <p className="text-[10px] text-gray-400">Partner</p>
                                         </td>
                                         <td className="px-4 py-3">
-                                            <p className="text-xs font-bold text-gray-800">Rs {order.totalAmount?.toLocaleString()}</p>
+                                            <p className="text-xs font-bold text-gray-800">Rs. {order.totalAmount?.toLocaleString()}</p>
                                             <p className="text-[10px] text-green-500 font-bold uppercase tracking-wider">Paid</p>
                                         </td>
                                         <td className="px-4 py-3">

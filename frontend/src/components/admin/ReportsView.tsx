@@ -56,7 +56,7 @@ export default function AnalyticsView() {
     };
 
     const formatCurrency = (amount: number) => {
-        return `Rs ${(amount || 0).toLocaleString('en-PK', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`;
+        return `Rs. ${(amount || 0).toLocaleString('en-PK', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`;
     };
 
     if (loading) {

@@ -6,7 +6,7 @@ import { API_BASE_URL } from '../../utils/config';
 
 export default function SettingsView() {
     const [commission, setCommission] = useState(10);
-    const [supportEmail, setSupportEmail] = useState('support@foodswipe.com');
+    const [supportEmail, setSupportEmail] = useState('app.foodswipehelp@gmail.com');
     const [announcement, setAnnouncement] = useState('');
     const [saving, setSaving] = useState(false);
     const [loading, setLoading] = useState(true);
@@ -23,7 +23,7 @@ export default function SettingsView() {
             });
             if (data) {
                 setCommission(data.commission || 10);
-                setSupportEmail(data.supportEmail || 'support@foodswipe.com');
+                setSupportEmail(data.supportEmail || 'app.foodswipehelp@gmail.com');
                 setAnnouncement(data.announcement || '');
             }
         } catch (error) {

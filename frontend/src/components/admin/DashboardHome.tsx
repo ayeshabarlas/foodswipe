@@ -93,8 +93,8 @@ export default function DashboardHome({ stats, refreshStats }: DashboardHomeProp
     const widgets = [
         {
             label: 'Total Revenue (Today)',
-            value: `Rs ${(displayStats.todayRevenue || 0).toLocaleString()}`,
-            subValue: `Rs ${(displayStats.totalRevenue || 0).toLocaleString()}`,
+            value: `Rs. ${(displayStats.todayRevenue || 0).toLocaleString()}`,
+            subValue: `Rs. ${(displayStats.totalRevenue || 0).toLocaleString()}`,
             subLabel: 'Total Revenue',
             icon: FaMoneyBillWave,
             color: 'bg-green-100 text-green-600',
@@ -285,8 +285,8 @@ export default function DashboardHome({ stats, refreshStats }: DashboardHomeProp
                                     </div>
                                 </div>
                                 <div className="text-right">
-                                    <p className="font-bold text-gray-800 text-xs">Rs {restaurant.revenue.toLocaleString()}</p>
-                                    <p className="text-[10px] text-gray-500 font-bold uppercase">â­ {restaurant.rating.toFixed(1)}</p>
+                                    <p className="font-bold text-gray-800 text-xs">Rs. {restaurant.revenue.toLocaleString()}</p>
+                                    <p className="text-[10px] text-gray-500 font-bold uppercase">⭐ {restaurant.rating.toFixed(1)}</p>
                                 </div>
                             </div>
                         ))}

@@ -141,7 +141,7 @@ export default function OrdersView() {
                 <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-100 flex justify-between items-center">
                     <div>
                         <p className="text-gray-500 text-[10px] uppercase font-bold mb-1">Total Value</p>
-                        <h3 className="text-xl font-bold text-gray-800">Rs {stats.totalValue.toLocaleString()}</h3>
+                        <h3 className="text-xl font-bold text-gray-800">Rs. {stats.totalValue.toLocaleString()}</h3>
                     </div>
                     <div className="bg-purple-50 p-2.5 rounded-lg text-purple-500">
                         <FaDollarSign className="text-lg" />
@@ -204,11 +204,11 @@ export default function OrdersView() {
                                 <div>
                                     <span className="text-gray-500 font-medium">{order.items?.length || 0} items</span>
                                     <span className="mx-2 text-gray-200">|</span>
-                                    <span className="text-gray-500 font-medium">Delivery: Rs {order.deliveryFee || 0}</span>
+                                    <span className="text-gray-500 font-medium">Delivery: Rs. {order.deliveryFee || 0}</span>
                                 </div>
                                 <div className="text-right">
-                                    <p className="text-sm font-bold text-gray-800 leading-tight">Rs {(order.totalAmount || 0).toLocaleString()}</p>
-                                    <p className="text-[10px] font-bold text-green-600">Comm: Rs {Math.round((order.totalAmount || 0) * 0.1)}</p>
+                                    <p className="text-sm font-bold text-gray-800 leading-tight">Rs. {(order.totalAmount || 0).toLocaleString()}</p>
+                                    <p className="text-[10px] font-bold text-green-600">Comm: Rs. {Math.round((order.totalAmount || 0) * 0.1)}</p>
                                 </div>
                             </div>
 

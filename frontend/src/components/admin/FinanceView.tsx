@@ -117,7 +117,7 @@ export default function FinanceView() {
                             <span className="text-[10px] font-bold bg-white/20 px-1.5 py-0.5 rounded uppercase">+12.5%</span>
                         </div>
                         <p className="text-blue-100 text-[10px] font-bold uppercase tracking-wider mb-0.5">Total Revenue</p>
-                        <h3 className="text-xl font-bold">Rs {stats.totalRevenue.toLocaleString()}</h3>
+                        <h3 className="text-xl font-bold">Rs. {stats.totalRevenue.toLocaleString()}</h3>
                         <p className="text-blue-200 text-[9px] font-medium uppercase tracking-tighter">This month</p>
                     </div>
                 </div>
@@ -132,7 +132,7 @@ export default function FinanceView() {
                             <span className="text-[10px] font-bold bg-white/20 px-1.5 py-0.5 rounded uppercase">10% Rate</span>
                         </div>
                         <p className="text-green-100 text-[10px] font-bold uppercase tracking-wider mb-0.5">Platform Commission</p>
-                        <h3 className="text-xl font-bold">Rs {stats.platformCommission.toLocaleString()}</h3>
+                        <h3 className="text-xl font-bold">Rs. {stats.platformCommission.toLocaleString()}</h3>
                         <p className="text-green-200 text-[9px] font-medium uppercase tracking-tighter">This month (10%)</p>
                     </div>
                 </div>
@@ -146,7 +146,7 @@ export default function FinanceView() {
                             </div>
                         </div>
                         <p className="text-orange-100 text-[10px] font-bold uppercase tracking-wider mb-0.5">Pending Payouts</p>
-                        <h3 className="text-xl font-bold">Rs {stats.pendingPayouts.toLocaleString()}</h3>
+                        <h3 className="text-xl font-bold">Rs. {stats.pendingPayouts.toLocaleString()}</h3>
                         <p className="text-orange-200 text-[9px] font-medium uppercase tracking-tighter">Restaurants & Riders</p>
                     </div>
                 </div>
@@ -160,7 +160,7 @@ export default function FinanceView() {
                             </div>
                         </div>
                         <p className="text-purple-100 text-[10px] font-bold uppercase tracking-wider mb-0.5">Gateway Fees</p>
-                        <h3 className="text-xl font-bold">Rs {stats.gatewayFees.toLocaleString()}</h3>
+                        <h3 className="text-xl font-bold">Rs. {stats.gatewayFees.toLocaleString()}</h3>
                         <p className="text-purple-200 text-[9px] font-medium uppercase tracking-tighter">Processing fees</p>
                     </div>
                 </div>
@@ -170,15 +170,15 @@ export default function FinanceView() {
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
                 <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-100">
                     <p className="text-gray-500 text-[10px] font-bold uppercase tracking-wider mb-1">Restaurant Earnings (90%)</p>
-                    <h3 className="text-xl font-bold text-gray-800">Rs {stats.restaurantEarnings.toLocaleString()}</h3>
+                    <h3 className="text-xl font-bold text-gray-800">Rs. {stats.restaurantEarnings.toLocaleString()}</h3>
                 </div>
                 <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-100">
                     <p className="text-gray-500 text-[10px] font-bold uppercase tracking-wider mb-1">Rider Earnings</p>
-                    <h3 className="text-xl font-bold text-gray-800">Rs {stats.riderEarnings.toLocaleString()}</h3>
+                    <h3 className="text-xl font-bold text-gray-800">Rs. {stats.riderEarnings.toLocaleString()}</h3>
                 </div>
                 <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-100">
                     <p className="text-green-600 text-[10px] font-bold uppercase tracking-wider mb-1">Platform Net Revenue</p>
-                    <h3 className="text-xl font-bold text-green-700">Rs {stats.netRevenue.toLocaleString()}</h3>
+                    <h3 className="text-xl font-bold text-green-700">Rs. {stats.netRevenue.toLocaleString()}</h3>
                     <p className="text-[9px] text-gray-400 mt-1 uppercase font-bold">Commission - Gateway Fees</p>
                 </div>
             </div>

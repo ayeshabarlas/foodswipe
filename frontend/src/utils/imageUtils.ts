@@ -1,74 +1,68 @@
 import { API_BASE_URL } from './config';
 
+/**
+ * Normalizes image paths and returns a full URL.
+ * Handles both local development and production (Koyeb/Vercel).
+ */
 export const getImageUrl = (path: string | undefined | null) => {
     if (!path || typeof path !== 'string' || path.trim() === '') return '';
     
-    // Ensure API_BASE_URL doesn't end with slash
-    const baseUrl = API_BASE_URL.endsWith('/') ? API_BASE_URL.slice(0, -1) : API_BASE_URL;
-
-    // Normalize slashes
+    // 1. Normalize slashes to forward slashes
     let cleanPath = path.replace(/\\/g, '/');
     
-    // Check if it's already a relative path starting with /api/ or api/
-    if (cleanPath.startsWith('api/uploads/')) {
-        return `${baseUrl}/${cleanPath}`;
-    }
-    if (cleanPath.startsWith('/api/uploads/')) {
-        return `${baseUrl}${cleanPath}`;
-    }
+    // 2. Prepare Base URL (ensure no trailing slash)
+    const baseUrl = API_BASE_URL.endsWith('/') ? API_BASE_URL.slice(0, -1) : API_BASE_URL;
 
-    // Handle full URLs
-    if (path.startsWith('http')) {
-        // If it's a Railway URL but we are on Koyeb, swap the domain
-        if (path.includes('railway.app') && baseUrl.includes('koyeb.app')) {
-            const pathParts = path.split('/uploads/');
-            if (pathParts.length > 1) {
-                return `${baseUrl}/api/uploads/${pathParts[1]}`;
+    // 3. Handle Full URLs (http/https)
+    if (cleanPath.startsWith('http')) {
+        // If it's a legacy Railway URL but we're on Koyeb, or it's a Koyeb URL without /api/
+        // We want to force it through our /api/uploads proxy/route for consistency
+        if (cleanPath.includes('/uploads/')) {
+            const fileName = cleanPath.split('/uploads/').pop();
+            if (fileName) {
+                return `${baseUrl}/api/uploads/${fileName}`;
             }
         }
-        
-        // Fix Koyeb broken documents by ensuring /api/ prefix if needed
-        if (baseUrl.includes('koyeb.app') && path.includes('/uploads/') && !path.includes('/api/uploads/')) {
-             const parts = path.split('/uploads/');
-             return `${baseUrl}/api/uploads/${parts[1]}`;
-        }
+        return cleanPath;
+    }
 
-        return path;
+    // 4. Handle Relative Paths
+    // Extract filename if it contains 'uploads/'
+    let fileName = cleanPath;
+    if (cleanPath.includes('uploads/')) {
+        const parts = cleanPath.split('uploads/');
+        fileName = parts[parts.length - 1];
+    }
+
+    // Remove any leading slashes or extra path components from filename
+    // We only want the final filename
+    if (fileName.includes('/')) {
+        fileName = fileName.split('/').pop() || fileName;
     }
     
-    // Remove leading slash if present
-    while (cleanPath.startsWith('/')) {
-        cleanPath = cleanPath.slice(1);
-    }
-    
-    // Remove duplicate slashes
-    cleanPath = cleanPath.replace(/\/+/g, '/');
-    
-    // Ensure it has api/uploads/ prefix if it's a relative path to our backend on Koyeb
-    if (baseUrl.includes('koyeb.app')) {
-        // If it has uploads/ but not api/, add api/
-        if (cleanPath.includes('uploads/')) {
-            const index = cleanPath.indexOf('uploads/');
-            cleanPath = `api/${cleanPath.slice(index)}`;
-        } else {
-            // Otherwise add both
-            cleanPath = `api/uploads/${cleanPath}`;
-        }
-    } else {
-        if (!cleanPath.startsWith('uploads/') && !cleanPath.includes('uploads/')) {
-            cleanPath = `uploads/${cleanPath}`;
-        }
-    }
-    
-    // Final normalization: remove any leading slash from cleanPath
-    cleanPath = cleanPath.replace(/^\/+/, '');
-    
-    const finalUrl = `${baseUrl}/${cleanPath}`;
-    
-    // Debug for production
+    fileName = fileName.replace(/^\/+/, '');
+
+    // 5. Construct Final URL
+    // Ensure we don't have double slashes except for protocol
+    const finalUrl = `${baseUrl}/api/uploads/${fileName}`.replace(/([^:]\/)\/+/g, "$1");
+
+    // Debugging for non-localhost environments
     if (typeof window !== 'undefined' && !window.location.hostname.includes('localhost')) {
-        console.log('🖼️ Image URL:', { original: path, final: finalUrl });
+        // console.log('🖼️ Image URL Debug:', { original: path, final: finalUrl });
     }
-    
+
     return finalUrl;
+};
+
+/**
+ * Returns a fallback image if the primary one fails
+ */
+export const getImageFallback = (type: 'logo' | 'dish' | 'document' | 'user' = 'logo') => {
+    const fallbacks = {
+        logo: 'https://via.placeholder.com/150?text=FoodSwipe',
+        dish: 'https://via.placeholder.com/400?text=Delicious+Food',
+        document: 'https://via.placeholder.com/600x400?text=Document+Not+Found',
+        user: 'https://via.placeholder.com/150?text=User'
+    };
+    return fallbacks[type];
 };

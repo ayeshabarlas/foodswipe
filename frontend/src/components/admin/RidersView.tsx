@@ -298,15 +298,15 @@ export default function RidersView() {
                     <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
                         <div className="bg-white/5 p-2.5 rounded-lg border border-white/5">
                             <p className="text-white/40 text-[8px] font-bold uppercase tracking-wider mb-0.5">Total Earnings</p>
-                            <p className="text-sm font-bold text-green-400">Rs {(selectedRider.totalEarnings || selectedRider.earnings?.total || 0).toLocaleString()}</p>
+                            <p className="text-sm font-bold text-green-400">Rs. {(selectedRider.totalEarnings || selectedRider.earnings?.total || 0).toLocaleString()}</p>
                         </div>
                         <div className="bg-white/5 p-2.5 rounded-lg border border-white/5">
                             <p className="text-white/40 text-[8px] font-bold uppercase tracking-wider mb-0.5">Cash (COD)</p>
-                            <p className="text-sm font-bold text-orange-400">Rs {(selectedRider.cashCollected || 0).toLocaleString()}</p>
+                            <p className="text-sm font-bold text-orange-400">Rs. {(selectedRider.cashCollected || 0).toLocaleString()}</p>
                         </div>
                         <div className="bg-white/5 p-2.5 rounded-lg border border-white/5">
                             <p className="text-white/40 text-[8px] font-bold uppercase tracking-wider mb-0.5">Available Withdraw</p>
-                            <p className="text-sm font-bold text-blue-400">Rs {(selectedRider.availableWithdraw || 0).toLocaleString()}</p>
+                            <p className="text-sm font-bold text-blue-400">Rs. {(selectedRider.availableWithdraw || 0).toLocaleString()}</p>
                         </div>
                         <div className="bg-white/5 p-2.5 rounded-lg border border-white/5">
                             <p className="text-white/40 text-[8px] font-bold uppercase tracking-wider mb-0.5">Avg Rating</p>
@@ -369,7 +369,7 @@ export default function RidersView() {
                 <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-100 flex justify-between items-center">
                     <div>
                         <p className="text-gray-500 text-[10px] uppercase font-bold mb-1">Cash Collected</p>
-                        <h3 className="text-xl font-bold text-gray-800">Rs {stats.cashCollected.toLocaleString()}</h3>
+                        <h3 className="text-xl font-bold text-gray-800">Rs. {stats.cashCollected.toLocaleString()}</h3>
                     </div>
                     <div className="bg-orange-50 p-2.5 rounded-lg text-orange-500">
                         <FaDollarSign className="text-lg" />
@@ -451,11 +451,11 @@ export default function RidersView() {
                                     <td className="px-6 py-3 text-[10px] text-gray-600">{rider.todayOrders || 0}</td>
                                     <td className="px-6 py-3 text-[10px] text-gray-600">{rider.totalOrders || 0}</td>
                                     <td className="px-6 py-3 text-[10px] font-bold text-gray-800">
-                                        Rs {(rider.totalEarnings || rider.earnings?.total || 0).toLocaleString()}
-                                    </td>
-                                    <td className="px-6 py-3 text-[10px] font-bold text-orange-600">
-                                        Rs {(rider.cashCollected || 0).toLocaleString()}
-                                    </td>
+                                                Rs. {(rider.totalEarnings || rider.earnings?.total || 0).toLocaleString()}
+                                            </td>
+                                            <td className="px-6 py-3 text-[10px] font-bold text-orange-600">
+                                                Rs. {(rider.cashCollected || 0).toLocaleString()}
+                                            </td>
                                     <td className="px-6 py-3 text-right">
                                         <div className="flex justify-end gap-1.5">
                                             {rider.user?.status === 'suspended' ? (

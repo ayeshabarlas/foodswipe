@@ -27,11 +27,11 @@ export const initRecaptcha = (containerId: string = 'recaptcha-container'): Reca
     }
 
     try {
-        console.log(`Initializing invisible reCAPTCHA on element: ${containerId}`);
+        console.log(`Initializing visible reCAPTCHA on element: ${containerId}`);
 
-        // Use INVISIBLE reCAPTCHA to avoid App Check conflicts
+        // Use VISIBLE reCAPTCHA for reliability
         recaptchaVerifier = new RecaptchaVerifier(auth, containerId, {
-            size: 'invisible',
+            size: 'normal',
             callback: () => {
                 console.log('✅ reCAPTCHA solved successfully');
             },

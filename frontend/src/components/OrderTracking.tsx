@@ -1,11 +1,12 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
-import { FaMotorcycle, FaPhone } from 'react-icons/fa';
-import { initSocket } from '../utils/socket';
+import { FaMotorcycle, FaPhone, FaCheck, FaCommentDots } from 'react-icons/fa';
+import { initSocket, getSocket } from '../utils/socket';
 import axios from 'axios';
 import { API_BASE_URL } from '../utils/config';
 import dynamic from 'next/dynamic';
+import OrderChat from './OrderChat';
 
 // Dynamically import MapComponent to avoid SSR and module instantiation issues
 const MapComponent = dynamic(() => import('./MapComponent'), {
@@ -56,6 +57,8 @@ export default function OrderTracking({ order: initialOrder, userRole = 'user', 
         order?.riderLocation || null
     );
     const [eta, setEta] = useState<string>('Calculating...');
+    const [isChatOpen, setIsChatOpen] = useState(false);
+    const userInfo = JSON.parse(localStorage.getItem("userInfo") || "{}");
 
     useEffect(() => {
         if (!order) return;
@@ -79,6 +82,13 @@ export default function OrderTracking({ order: initialOrder, userRole = 'user', 
                 console.log('Rider location updated:', data.location);
                 setRiderLocation(data.location);
                 calculateETA(data.location);
+            }
+        });
+
+        socket?.on('orderStatusUpdate', (updatedOrder: any) => {
+            if (updatedOrder._id === order._id) {
+                console.log('Order status updated via socket:', updatedOrder.status);
+                setOrder(updatedOrder);
             }
         });
 
@@ -193,32 +203,44 @@ export default function OrderTracking({ order: initialOrder, userRole = 'user', 
                     riderLoc={riderLoc}
                     order={order}
                 />
-            </div>
 
-            {order.rider && (
-                <div className="p-4 flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 bg-gray-200 rounded-full flex items-center justify-center">
-                            <FaMotorcycle className="text-gray-500" />
+                {/* Rider Info Card */}
+                {order.rider && (
+                    <div className="absolute bottom-6 left-6 right-6 bg-white rounded-2xl shadow-2xl p-4 flex items-center justify-between z-10 border border-gray-100">
+                        <div className="flex items-center gap-4">
+                            <div className="w-12 h-12 bg-orange-100 rounded-full flex items-center justify-center text-orange-500 font-black text-lg">
+                                {order.rider.fullName?.charAt(0) || 'R'}
+                            </div>
+                            <div>
+                                <p className="text-[10px] text-gray-400 font-black uppercase tracking-widest">Your Rider</p>
+                                <h4 className="font-black text-gray-900">{order.rider.fullName || 'Rider Assigned'}</h4>
+                            </div>
                         </div>
-                        <div>
-                            <p className="font-semibold text-gray-900">{order.rider.fullName}</p>
-                            <p className="text-xs text-gray-500 font-normal">{order.rider.vehicleType || 'Motorcycle'}</p>
+                        <div className="flex gap-2">
+                            <button 
+                                onClick={() => setIsChatOpen(true)}
+                                className="w-10 h-10 rounded-xl bg-orange-100 text-orange-600 flex items-center justify-center hover:bg-orange-200 transition-colors"
+                            >
+                                <FaCommentDots />
+                            </button>
+                            <a 
+                                href={`tel:${order.rider.phoneNumber || ''}`}
+                                className="w-10 h-10 rounded-xl bg-orange-500 text-white flex items-center justify-center hover:bg-orange-600 transition-colors shadow-lg shadow-orange-500/20"
+                            >
+                                <FaPhone />
+                            </a>
                         </div>
                     </div>
-                    <button
-                        onClick={() => {
-                            if (order.rider?.phoneNumber) {
-                                navigator.clipboard.writeText(order.rider.phoneNumber);
-                                alert('📞 Rider phone number copied!');
-                            }
-                        }}
-                        className="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center text-green-600 hover:bg-green-200 transition cursor-pointer"
-                    >
-                        <FaPhone />
-                    </button>
-                </div>
-            )}
+                )}
+            </div>
+
+            <OrderChat 
+                orderId={order._id}
+                isOpen={isChatOpen}
+                onClose={() => setIsChatOpen(false)}
+                userRole={userRole === 'user' ? 'customer' : 'restaurant'}
+                userName={userInfo.name || 'User'}
+            />
         </div>
     );
 }

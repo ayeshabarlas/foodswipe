@@ -6,7 +6,7 @@ import { FaBars, FaSearch, FaShoppingCart, FaStar, FaMapMarkerAlt, FaClock, FaPl
 import { useCart } from '../context/CartContext';
 import { useSwipeBack } from '../hooks/useSwipeBack';
 import DishDetails from './DishDetails';
-import { getImageUrl } from '../utils/imageUtils';
+import { getImageUrl, getImageFallback } from '../utils/imageUtils';
 import { API_BASE_URL } from '../utils/config';
 
 interface Dish {
@@ -55,10 +55,12 @@ interface Restaurant {
     deliveryTime?: string;
     distance?: string;
     reviewCount?: number;
+    isActive?: boolean;
     location?: {
         type: string;
         coordinates: number[];
     };
+    storeStatus?: 'open' | 'closed' | 'busy';
 }
 
 interface RestaurantProfileProps {
@@ -306,14 +308,25 @@ export default function RestaurantProfile({ restaurant: initialRestaurant, onBac
                 <div className="flex items-start gap-4 mb-4">
                     <div className="relative">
                         <img
-                            src={getImageUrl(restaurantData.logo) || '/placeholder-logo.png'}
+                            src={getImageUrl(restaurantData.logo)}
                             alt={restaurantData.name}
                             className="w-20 h-20 rounded-2xl object-cover shadow-md"
+                            onError={(e) => {
+                                const target = e.target as HTMLImageElement;
+                                target.src = getImageFallback('logo');
+                            }}
                         />
-                        <div className={`absolute -bottom-1 -right-1 px-2 py-0.5 rounded-full text-[9px] font-bold uppercase border-2 border-white shadow-sm ${restaurantData.storeStatus === 'open' ? 'bg-green-500 text-white' : 'bg-red-500 text-white'
-                            }`}>
-                            {restaurantData.storeStatus === 'open' ? 'Open' : 'Closed'}
-                        </div>
+                        {(restaurantData.storeStatus === 'closed' || !restaurantData.isActive) && (
+                            <div className="absolute inset-0 bg-black/40 rounded-2xl flex items-center justify-center">
+                                <span className="bg-red-500 text-white text-[10px] font-bold px-2 py-1 rounded-lg uppercase tracking-wider">Closed</span>
+                            </div>
+                        )}
+                        {(restaurantData.storeStatus !== 'closed' && restaurantData.isActive) && (
+                            <div className={`absolute -bottom-1 -right-1 px-2 py-0.5 rounded-full text-[9px] font-bold uppercase border-2 border-white shadow-sm ${restaurantData.storeStatus === 'open' ? 'bg-green-500 text-white' : 'bg-yellow-500 text-white'
+                                }`}>
+                                {restaurantData.storeStatus || 'Open'}
+                            </div>
+                        )}
                     </div>
                     <div className="flex-1">
                         <h1 className="text-xl font-bold text-gray-900 mb-1">{restaurantData.name}</h1>
@@ -329,7 +342,9 @@ export default function RestaurantProfile({ restaurant: initialRestaurant, onBac
                                     ? (reviews.reduce((acc, r) => acc + r.rating, 0) / reviews.length).toFixed(1)
                                     : (restaurantData.rating > 0 ? restaurantData.rating.toFixed(1) : 'New')}
                             </span>
-                            <span className="text-gray-400 text-sm mx-1">â€¢</span>
+                            {(reviews.length > 0 || restaurantData.rating > 0) && (
+                                <span className="text-gray-400 text-sm mx-1">•</span>
+                            )}
                             <button
                                 onClick={() => setActiveTab('reviews')}
                                 className="text-gray-500 text-sm hover:text-primary transition underline underline-offset-2"
@@ -400,7 +415,7 @@ export default function RestaurantProfile({ restaurant: initialRestaurant, onBac
                                         </div>
                                         <h3 className="font-bold text-sm leading-tight mb-1">{dish.name}</h3>
                                         <div className="flex justify-between items-end">
-                                            <span className="font-bold text-sm text-yellow-400">Rs. {dish.price}</span>
+                                            <span className="font-bold text-sm text-yellow-400">Rs. {dish.price.toLocaleString()}</span>
                                             <button
                                                 onClick={(e) => {
                                                     e.stopPropagation();
@@ -465,11 +480,11 @@ export default function RestaurantProfile({ restaurant: initialRestaurant, onBac
 
                                                 <div className="mt-3 pt-3 border-t border-dashed border-[#FF4D8D]/30 flex justify-between items-end">
                                                     <div className="text-[10px] text-gray-500 font-medium leading-tight max-w-[70%]">
-                                                        Min. order Rs. {voucher.minimumAmount}<br />
+                                                        Min. order Rs. {voucher.minimumAmount.toLocaleString()}<br />
                                                         Valid until {new Date(voucher.expiryDate).toLocaleDateString()}
                                                     </div>
                                                     <div className="text-[10px] font-bold text-[#FF4D8D] flex items-center gap-1 bg-[#FF4D8D]/10 px-2 py-1 rounded-full">
-                                                        {copiedVoucherId === voucher._id ? 'Copied! âœ…' : 'Tap to Copy'}
+                                                        {copiedVoucherId === voucher._id ? 'Copied! ✅' : 'Tap to Copy'}
                                                     </div>
                                                 </div>
 
@@ -502,7 +517,7 @@ export default function RestaurantProfile({ restaurant: initialRestaurant, onBac
                                                         </div>
                                                     </div>
                                                     <div className="text-xl font-bold text-purple-600">
-                                                        {deal.discountType === 'percentage' ? `${deal.discount}%` : `Rs. ${deal.discount}`}
+                                                        {deal.discountType === 'percentage' ? `${deal.discount}%` : `Rs. ${deal.discount.toLocaleString()}`}
                                                     </div>
                                                 </div>
                                             ))}
@@ -642,9 +657,9 @@ export default function RestaurantProfile({ restaurant: initialRestaurant, onBac
                                                         </div>
                                                         <div className="flex items-center justify-between">
                                                             <div className="flex items-center gap-2">
-                                                                <span className="text-primary font-bold">Rs. {dish.price}</span>
+                                                                <span className="text-primary font-bold">Rs. {dish.price.toLocaleString()}</span>
                                                                 {(dish.discount || 0) > 0 && (
-                                                                    <span className="text-gray-400 text-xs line-through">Rs. {Math.round(dish.price / (1 - (dish.discount || 0) / 100))}</span>
+                                                                    <span className="text-gray-400 text-xs line-through">Rs. {Math.round(dish.price / (1 - (dish.discount || 0) / 100)).toLocaleString()}</span>
                                                                 )}
                                                             </div>
                                                             <button

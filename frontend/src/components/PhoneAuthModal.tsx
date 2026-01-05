@@ -26,16 +26,16 @@ export default function PhoneAuthModal({ isOpen, onClose, onSuccess }: PhoneAuth
     const [countdown, setCountdown] = useState(0);
     const [recaptchaReady, setRecaptchaReady] = useState(false);
 
-    // Initialize invisible reCAPTCHA when modal opens
+    // Initialize visible reCAPTCHA when modal opens
     useEffect(() => {
         if (isOpen && !recaptchaReady) {
             // Delay to ensure DOM is ready
             const timer = setTimeout(() => {
                 try {
-                    console.log('Initializing invisible reCAPTCHA...');
+                    console.log('Initializing visible reCAPTCHA...');
                     initRecaptcha('recaptcha-container');
                     setRecaptchaReady(true);
-                    console.log('Invisible reCAPTCHA ready');
+                    console.log('Visible reCAPTCHA ready');
                 } catch (err: any) {
                     console.error('reCAPTCHA init error:', err);
                     setError(`Verification error: ${err.message || 'Please refresh the page.'}`);
