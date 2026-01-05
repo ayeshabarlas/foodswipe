@@ -30,6 +30,12 @@ export const getImageUrl = (path: string | undefined | null) => {
     // Ensure API_BASE_URL doesn't end with slash
     const baseUrl = API_BASE_URL.endsWith('/') ? API_BASE_URL.slice(0, -1) : API_BASE_URL;
     
+    // FORCE FULL URL FOR KOYEB IMAGES
+    if (baseUrl.includes('koyeb.app') && !cleanPath.startsWith('http')) {
+        const fullUrl = `${baseUrl}/${cleanPath}`;
+        return fullUrl;
+    }
+    
     const finalUrl = `${baseUrl}/${cleanPath}`;
     
     // Debug for production

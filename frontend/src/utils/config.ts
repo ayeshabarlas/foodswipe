@@ -5,14 +5,14 @@ const getApiUrl = () => {
   if (!url) {
     if (typeof window !== 'undefined') {
       const host = window.location.hostname;
-      // If it's NOT localhost/127.0.0.1, assume it's production
+      // Force Koyeb URL as primary production API
       if (host !== 'localhost' && host !== '127.0.0.1' && !host.startsWith('192.168.')) {
-        return 'https://foodswipe-production-46d6.up.railway.app';
+        return 'https://colossal-anya-foodswipe-a3e25304.koyeb.app';
       }
     }
-    // Default to production if we're not sure, but have a fallback
+    // Default fallback
     return process.env.NODE_ENV === 'production' 
-      ? 'https://foodswipe-production-46d6.up.railway.app' 
+      ? 'https://colossal-anya-foodswipe-a3e25304.koyeb.app' 
       : 'http://localhost:5000';
   }
   
@@ -30,10 +30,12 @@ const getSocketUrl = () => {
     if (typeof window !== 'undefined') {
       const host = window.location.hostname;
       if (host !== 'localhost' && host !== '127.0.0.1' && !host.startsWith('192.168.')) {
-        return 'https://foodswipe-production-46d6.up.railway.app';
+        return 'https://colossal-anya-foodswipe-a3e25304.koyeb.app';
       }
     }
-    return 'http://localhost:5000';
+    return process.env.NODE_ENV === 'production' 
+      ? 'https://colossal-anya-foodswipe-a3e25304.koyeb.app' 
+      : 'http://localhost:5000';
   }
 
   // Ensure protocol

@@ -350,7 +350,7 @@ export default function RestaurantDashboard() {
             <main className={`flex-1 min-w-0 flex flex-col h-screen transition-all duration-300 ${isSidebarOpen ? 'lg:pl-0' : ''}`}>
                 {/* Banner for Version Check */}
                 <div className="bg-blue-600 text-white px-4 py-1 text-[10px] font-bold flex justify-between items-center shrink-0">
-                    <span>DEPLOYMENT: v2.2 (Updated: 5:45 PM)</span>
+                    <span>DEPLOYMENT: v2.3 (KOYEB SYNC)</span>
                     <span className="opacity-70">API: {API_BASE_URL}</span>
                 </div>
 
