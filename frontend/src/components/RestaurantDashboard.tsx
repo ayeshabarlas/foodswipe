@@ -139,20 +139,24 @@ export default function RestaurantDashboard() {
             formData.append('file', e.target.files[0]);
 
             const userInfo = JSON.parse(localStorage.getItem('userInfo') || '{}');
-            const res = await axios.post(`${API_BASE_URL}/api/upload`, formData, {
+            const { data } = await axios.post(`${API_BASE_URL}/api/upload`, formData, {
                 headers: {
                     'Content-Type': 'multipart/form-data',
                     Authorization: `Bearer ${userInfo.token}`
                 }
             });
 
+            const fullUrl = data.imageUrl;
+
             // Update restaurant logo in backend
-            await axios.put(`${API_BASE_URL}/api/restaurants/${restaurant._id}`,
-                { logo: res.data.imageUrl },
+            await axios.put(`${API_BASE_URL}/api/restaurants/store-settings`,
+                { logo: fullUrl },
                 { headers: { Authorization: `Bearer ${userInfo.token}` } }
             );
 
-            setRestaurant({ ...restaurant, logo: res.data.imageUrl });
+            setRestaurant({ ...restaurant, logo: fullUrl });
+            onUpdate(); // Ensure this is called if available to refresh state everywhere
+            alert('Logo updated successfully!');
         } catch (error) {
             console.error('Logo upload failed:', error);
             alert('Failed to upload logo');
@@ -242,10 +246,23 @@ export default function RestaurantDashboard() {
     };
 
     return (
-        <div className="h-screen bg-gray-50 flex font-sans overflow-hidden">
+        <div className="h-screen bg-gray-50 flex font-sans overflow-hidden text-[13px]">
+            {/* Sidebar Overlay */}
+            <AnimatePresence>
+                {isSidebarOpen && (
+                    <motion.div
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        onClick={() => setIsSidebarOpen(false)}
+                        className="fixed inset-0 bg-black/50 z-40 lg:hidden backdrop-blur-sm"
+                    />
+                )}
+            </AnimatePresence>
+
             {/* Sidebar */}
             <aside
-                className={`fixed inset-y-0 left-0 z-50 w-72 bg-gray-900 text-white transform transition-transform duration-300 ease-in-out shadow-2xl
+                className={`fixed inset-y-0 left-0 z-50 w-64 bg-gray-900 text-white transform transition-transform duration-300 ease-in-out shadow-2xl
                 ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'} lg:translate-x-0 lg:static`}
             >
                 <div className="h-full flex flex-col">
@@ -271,10 +288,10 @@ export default function RestaurantDashboard() {
                             </div>
                             <div className="flex-1 min-w-0">
                                 <div className="flex items-center gap-2">
-                      <h2 className="text-base font-bold truncate leading-tight">{restaurant.name}</h2>
-                      <span className="bg-orange-500/20 text-orange-500 text-[8px] px-1.5 py-0.5 rounded-full font-bold uppercase">v2.5 (BUILD FIX)</span>
-                    </div>
-                                <p className="text-[10px] text-gray-400 truncate flex items-center gap-1.5 mt-0.5 font-bold uppercase tracking-wider">
+                                    <h2 className="text-sm font-bold truncate leading-tight">{restaurant.name}</h2>
+                                    <span className="bg-orange-500/20 text-orange-500 text-[8px] px-1.5 py-0.5 rounded-full font-bold uppercase">v2.6</span>
+                                </div>
+                                <p className="text-[9px] text-gray-400 truncate flex items-center gap-1.5 mt-0.5 font-bold uppercase tracking-wider">
                                     <span className={`w-1.5 h-1.5 rounded-full ${restaurant.isVerified ? 'bg-green-500' : 'bg-yellow-500 animate-pulse'}`}></span>
                                     {restaurant.isVerified ? 'Partner' : 'Pending'}
                                 </p>
@@ -285,77 +302,109 @@ export default function RestaurantDashboard() {
                         {!isPending && (
                             <div className="grid grid-cols-2 gap-2">
                                 <div className="bg-gray-800/50 rounded-lg p-2 text-center border border-gray-700/30">
-                                    <p className="text-[9px] text-gray-500 mb-0.5 font-bold uppercase tracking-wider">Rating</p>
-                                    <p className="font-bold text-yellow-400 text-xs flex items-center justify-center gap-1">
+                                    <p className="text-[8px] text-gray-500 mb-0.5 font-bold uppercase tracking-wider">Rating</p>
+                                    <p className="font-bold text-yellow-400 text-[10px] flex items-center justify-center gap-1">
                                         <FaStar size={8} /> {restaurant.rating || 'N/A'}
                                     </p>
                                 </div>
                                 <div className="bg-gray-800/50 rounded-lg p-2 text-center border border-gray-700/30">
-                                    <p className="text-[9px] text-gray-500 mb-0.5 font-bold uppercase tracking-wider">Today</p>
-                                    <p className="font-bold text-green-400 text-xs">{(stats?.ready || 0) + (stats?.outForDelivery || 0)} orders</p>
+                                    <p className="text-[8px] text-gray-500 mb-0.5 font-bold uppercase tracking-wider">Today</p>
+                                    <p className="font-bold text-green-400 text-[10px]">{(stats?.ready || 0) + (stats?.outForDelivery || 0)}</p>
                                 </div>
                             </div>
                         )}
                     </div>
 
                     {/* Navigation */}
-                    <nav className="flex-1 overflow-y-auto px-3 py-3 space-y-0.5">
+                    <nav className="flex-1 overflow-y-auto px-3 py-3 space-y-0.5 custom-scrollbar">
                         {menuItems.map((item) => (
                             <button
                                 key={item.id}
-                                onClick={() => {
-                                    if (!item.disabled) {
-                                        setActivePage(item.id);
-                                        setIsSidebarOpen(false);
-                                    }
-                                }}
                                 disabled={item.disabled}
-                                className={`w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl transition-all duration-200 group
-                                    ${activePage === item.id
-                                        ? 'bg-gradient-to-r from-orange-600 to-orange-500 text-white shadow-lg shadow-orange-500/30 font-bold'
+                                onClick={() => {
+                                    setActivePage(item.id);
+                                    setIsSidebarOpen(false);
+                                }}
+                                className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-xl transition-all duration-200 group relative
+                                ${
+                                    activePage === item.id
+                                        ? 'bg-gradient-to-r from-orange-500 to-orange-600 text-white shadow-lg shadow-orange-500/30'
                                         : item.disabled
-                                            ? 'text-gray-600 cursor-not-allowed opacity-50'
+                                            ? 'text-gray-600 opacity-40 cursor-not-allowed'
                                             : 'text-gray-400 hover:bg-gray-800 hover:text-white'
-                                    }`}
+                                }`}
                             >
-                                <item.icon className={`text-base transition-transform group-hover:scale-110 ${activePage === item.id ? 'text-white' : 'text-gray-500 group-hover:text-white'}`} />
-                                <span className="flex-1 text-left text-xs font-bold uppercase tracking-wider">{item.label}</span>
-                                {item.disabled && <FaTimes className="text-[10px] opacity-50" />}
+                                <item.icon className={`text-sm ${activePage === item.id ? 'text-white' : 'text-gray-500 group-hover:text-orange-400'}`} />
+                                <span className="text-[11px] font-bold uppercase tracking-wider">{item.label}</span>
+                                {item.disabled && (
+                                    <div className="ml-auto">
+                                        <FaTimes className="text-[8px]" />
+                                    </div>
+                                )}
                             </button>
                         ))}
                     </nav>
 
                     {/* Footer */}
-                    <div className="p-3 border-t border-gray-800">
+                    <div className="p-4 border-t border-gray-800 space-y-3">
                         <button
                             onClick={() => {
                                 localStorage.removeItem('userInfo');
                                 window.location.reload();
                             }}
-                            className="w-full flex items-center justify-center gap-2 px-3 py-2.5 bg-gray-800/50 hover:bg-red-500/10 hover:text-red-500 text-gray-500 rounded-xl transition-all duration-200 group font-bold text-[10px] uppercase tracking-wider border border-gray-700/30"
+                            className="w-full flex items-center justify-center gap-2 px-4 py-2 text-gray-400 hover:text-white hover:bg-red-500/10 rounded-xl transition-colors text-[10px] font-bold uppercase tracking-widest"
                         >
-                            <FaSignOutAlt className="group-hover:-translate-x-1 transition-transform" />
-                            <span>Sign Out</span>
+                            <FaSignOutAlt /> Sign Out
                         </button>
                     </div>
                 </div>
             </aside>
 
-            {/* Mobile Sidebar Overlay */}
-            {isSidebarOpen && (
-                <div className="fixed inset-0 bg-black/50 z-40 lg:hidden backdrop-blur-sm" onClick={() => setIsSidebarOpen(false)} />
-            )}
-
             {/* Main Content */}
-            <main className={`flex-1 min-w-0 flex flex-col h-screen transition-all duration-300 ${isSidebarOpen ? 'lg:pl-0' : ''}`}>
-                {/* Banner for Version Check */}
-                <div className="bg-blue-600 text-white px-4 py-1 text-[10px] font-bold flex justify-between items-center shrink-0">
-                    <span>DEPLOYMENT: v2.3 (KOYEB SYNC)</span>
-                    <span className="opacity-70">API: {API_BASE_URL}</span>
-                </div>
+            <main className="flex-1 min-w-0 flex flex-col h-screen overflow-hidden">
+                {/* Desktop Header */}
+                <header className="bg-white border-b border-gray-100 p-4 hidden lg:flex items-center justify-between shadow-sm shrink-0">
+                    <div className="flex items-center gap-4">
+                        <h1 className="text-xl font-bold text-gray-900 tracking-tight">
+                            {menuItems.find((i) => i.id === activePage)?.label}
+                        </h1>
+                        <div className="h-6 w-[1px] bg-gray-200" />
+                        <p className="text-gray-500 text-xs">
+                            Welcome back, {restaurant.owner?.name?.split(' ')[0] || 'Partner'}
+                        </p>
+                    </div>
+
+                    <div className="flex items-center gap-3">
+                        {/* Notifications */}
+                        <div className="relative">
+                            <button
+                                onClick={() => setShowNotifications(!showNotifications)}
+                                className="p-2.5 bg-gray-50 text-gray-600 rounded-xl hover:bg-orange-50 hover:text-orange-500 transition relative group"
+                            >
+                                <FaBell className="text-sm" />
+                                {notifications.length > 0 && (
+                                    <span className="absolute top-2 right-2 w-2 h-2 bg-red-500 rounded-full border-2 border-white animate-pulse" />
+                                )}
+                            </button>
+                        </div>
+
+                        {/* User Profile */}
+                        <div className="flex items-center gap-3 pl-3 border-l border-gray-100">
+                            <div className="text-right hidden sm:block">
+                                <p className="text-xs font-bold text-gray-900 leading-none">{restaurant.owner?.name}</p>
+                                <p className="text-[10px] text-gray-500 mt-1 uppercase tracking-tighter">Restaurant Owner</p>
+                            </div>
+                            <div className="w-9 h-9 rounded-full bg-gradient-to-tr from-orange-500 to-orange-400 p-[2px] shadow-md">
+                                <div className="w-full h-full rounded-full bg-white flex items-center justify-center text-orange-500 font-bold text-xs uppercase">
+                                    {restaurant.owner?.name?.charAt(0)}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </header>
 
                 {/* Mobile Header */}
-                <header className="bg-white border-b border-gray-100 p-4 lg:hidden sticky top-0 z-30 flex items-center justify-between shadow-sm shrink-0">
+                <header className="bg-white border-b border-gray-100 p-4 lg:hidden flex items-center justify-between shadow-sm shrink-0">
                     <div className="flex items-center gap-3">
                         <button
                             onClick={() => setIsSidebarOpen(true)}
@@ -364,86 +413,38 @@ export default function RestaurantDashboard() {
                             <FaBars />
                         </button>
                         <h1 className="font-bold text-gray-800 text-lg">
-                            {menuItems.find(i => i.id === activePage)?.label}
+                            {menuItems.find((i) => i.id === activePage)?.label}
                         </h1>
                     </div>
                 </header>
 
                 {/* Banner for Pending Status */}
                 {isPending && (
-                    <div className="bg-orange-500 text-white px-6 py-3 text-sm font-medium flex items-center justify-between z-20 shadow-md shrink-0">
+                    <div className="bg-orange-500 text-white px-6 py-2.5 text-xs font-medium flex items-center justify-between z-20 shadow-md shrink-0">
                         <div className="flex items-center gap-2">
-                            <div className="bg-white/20 p-1.5 rounded-full animate-pulse">
-                                <FaClock />
+                            <div className="bg-white/20 p-1 rounded-full animate-pulse">
+                                <FaClock size={12} />
                             </div>
-                            <span>Your restaurant is currently in <strong>Verification Mode</strong>. Some features are restricted until approval.</span>
+                            <span>
+                                Your restaurant is currently in <strong>Verification Mode</strong>. Some features are restricted until approval.
+                            </span>
                         </div>
-                        <button onClick={() => setActivePage('support')} className="bg-white text-orange-600 px-3 py-1 rounded-lg text-xs font-bold hover:bg-gray-50 transition">
+                        <button
+                            onClick={() => setActivePage('support')}
+                            className="bg-white text-orange-600 px-3 py-1 rounded-lg text-[10px] font-bold hover:bg-gray-50 transition uppercase tracking-wider"
+                        >
                             Contact Support
                         </button>
                     </div>
                 )}
 
-                <div className="flex-1 overflow-hidden flex flex-col">
-                    <div className="p-4 lg:p-8 max-w-7xl mx-auto w-full flex-1 flex flex-col overflow-hidden">
-                        {!isPending && (
-                            <div className="mb-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4 shrink-0">
-                                <div>
-                                    <h1 className="text-2xl lg:text-3xl font-bold text-gray-900 tracking-tight">
-                                        {menuItems.find(i => i.id === activePage)?.label}
-                                    </h1>
-                                    <p className="text-gray-500 mt-1">
-                                        Welcome back, {restaurant.owner?.name?.split(' ')[0] || 'Partner'}
-                                    </p>
-                                </div>
-
-                                <div className="flex items-center gap-3 self-end sm:self-auto">
-                                    <button
-                                        onClick={() => setShowNotifications(!showNotifications)}
-                                        className="p-3 bg-white border border-gray-200 text-gray-600 rounded-xl hover:bg-orange-50 hover:text-orange-600 hover:border-orange-200 transition relative shadow-sm"
-                                    >
-                                        <FaBell className="text-xl" />
-                                        {Array.isArray(notifications) && notifications.some(n => !n.read) && (
-                                            <span className="absolute top-2 right-2 w-2.5 h-2.5 bg-red-500 rounded-full ring-2 ring-white animate-pulse"></span>
-                                        )}
-                                    </button>
-
-                                    {showNotifications && (
-                                        <div className="absolute top-20 right-4 sm:right-8 w-80 bg-white shadow-xl rounded-2xl border border-gray-100 z-50 overflow-hidden ring-1 ring-black/5">
-                                            <div className="p-4 bg-gray-50 border-b border-gray-100 flex justify-between items-center">
-                                                <h3 className="font-bold text-gray-800">Notifications</h3>
-                                                <button onClick={() => setNotifications([])} className="text-xs text-orange-600 hover:text-orange-700 font-medium">Clear All</button>
-                                            </div>
-                                            <div className="max-h-80 overflow-y-auto">
-                                                {notifications.length > 0 ? (
-                                                    notifications.map(n => (
-                                                        <div key={n._id} onClick={() => markAsRead(n._id)} className={`p-4 border-b border-gray-50 cursor-pointer hover:bg-gray-50 transition ${!n.read ? 'bg-orange-50/50' : ''}`}>
-                                                            <div className="flex justify-between items-start mb-1">
-                                                                <p className={`text-sm ${!n.read ? 'font-bold text-gray-900' : 'font-medium text-gray-700'}`}>{n.title}</p>
-                                                                <span className="text-[10px] text-gray-400">{new Date(n.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
-                                                            </div>
-                                                            <p className="text-xs text-gray-500 leading-relaxed">{n.message}</p>
-                                                        </div>
-                                                    ))
-                                                ) : (
-                                                    <div className="p-8 text-center text-gray-400">
-                                                        <FaBell className="mx-auto text-2xl mb-2 opacity-20" />
-                                                        <p className="text-sm">No new notifications</p>
-                                                    </div>
-                                                )}
-                                            </div>
-                                        </div>
-                                    )}
-                                </div>
-                            </div>
-                        )}
-
+                <div className="flex-1 overflow-y-auto custom-scrollbar bg-gray-50/50">
+                    <div className="p-4 lg:p-6 max-w-7xl mx-auto w-full">
                         <motion.div
                             key={activePage}
                             initial={{ opacity: 0, y: 10 }}
                             animate={{ opacity: 1, y: 0 }}
                             transition={{ duration: 0.2 }}
-                            className="flex-1 flex flex-col overflow-hidden"
                         >
                             {renderContent()}
                         </motion.div>

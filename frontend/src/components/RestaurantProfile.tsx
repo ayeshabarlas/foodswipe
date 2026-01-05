@@ -304,11 +304,17 @@ export default function RestaurantProfile({ restaurant: initialRestaurant, onBac
 
             <div className="bg-white p-6 pb-2">
                 <div className="flex items-start gap-4 mb-4">
-                    <img
-                        src={getImageUrl(restaurantData.logo) || '/placeholder-logo.png'}
-                        alt={restaurantData.name}
-                        className="w-20 h-20 rounded-2xl object-cover shadow-md"
-                    />
+                    <div className="relative">
+                        <img
+                            src={getImageUrl(restaurantData.logo) || '/placeholder-logo.png'}
+                            alt={restaurantData.name}
+                            className="w-20 h-20 rounded-2xl object-cover shadow-md"
+                        />
+                        <div className={`absolute -bottom-1 -right-1 px-2 py-0.5 rounded-full text-[9px] font-bold uppercase border-2 border-white shadow-sm ${restaurantData.storeStatus === 'open' ? 'bg-green-500 text-white' : 'bg-red-500 text-white'
+                            }`}>
+                            {restaurantData.storeStatus === 'open' ? 'Open' : 'Closed'}
+                        </div>
+                    </div>
                     <div className="flex-1">
                         <h1 className="text-xl font-bold text-gray-900 mb-1">{restaurantData.name}</h1>
                         <p className="text-gray-500 text-sm mb-2">

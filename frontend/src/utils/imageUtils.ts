@@ -15,6 +15,14 @@ export const getImageUrl = (path: string | undefined | null) => {
                 return `${baseUrl}/uploads/${pathParts[1]}`;
             }
         }
+        
+        // Fix Koyeb broken documents by ensuring /api/ prefix if needed
+        // Most common case is when path has /uploads/ but is missing /api/
+        if (baseUrl.includes('koyeb.app') && path.includes('/uploads/') && !path.includes('/api/uploads/')) {
+             const parts = path.split('/uploads/');
+             return `${baseUrl}/api/uploads/${parts[1]}`;
+        }
+
         return path;
     }
     
@@ -29,23 +37,28 @@ export const getImageUrl = (path: string | undefined | null) => {
     // Remove duplicate slashes
     cleanPath = cleanPath.replace(/\/+/g, '/');
     
-    // Ensure it has uploads/ prefix if it's a relative path to our backend
-    if (!cleanPath.startsWith('uploads/') && !cleanPath.includes('uploads/')) {
-        cleanPath = `uploads/${cleanPath}`;
-    } else if (cleanPath.includes('uploads/')) {
-        // If uploads/ is somewhere else, extract it
-        const index = cleanPath.indexOf('uploads/');
-        cleanPath = cleanPath.slice(index);
+    // Ensure it has api/uploads/ prefix if it's a relative path to our backend on Koyeb
+    if (baseUrl.includes('koyeb.app')) {
+        // If it already has api/uploads, just clean it
+        if (cleanPath.includes('api/uploads/')) {
+            const index = cleanPath.indexOf('api/uploads/');
+            cleanPath = cleanPath.slice(index);
+        } else if (cleanPath.includes('uploads/')) {
+            // If it has uploads but not api, add api
+            const index = cleanPath.indexOf('uploads/');
+            cleanPath = `api/${cleanPath.slice(index)}`;
+        } else {
+            // Otherwise add both
+            cleanPath = `api/uploads/${cleanPath}`;
+        }
+    } else {
+        if (!cleanPath.startsWith('uploads/') && !cleanPath.includes('uploads/')) {
+            cleanPath = `uploads/${cleanPath}`;
+        }
     }
     
     // Final normalization: remove any leading slash from cleanPath
     cleanPath = cleanPath.replace(/^\/+/, '');
-    
-    // FORCE FULL URL FOR KOYEB IMAGES
-    if (baseUrl.includes('koyeb.app') && !cleanPath.startsWith('http')) {
-        const fullUrl = `${baseUrl}/${cleanPath}`;
-        return fullUrl;
-    }
     
     const finalUrl = `${baseUrl}/${cleanPath}`;
     

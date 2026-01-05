@@ -22,49 +22,21 @@ export default function DashboardSupport() {
     };
 
     const handleCopyEmail = () => {
-        navigator.clipboard.writeText('support@foodswipe.com');
+        navigator.clipboard.writeText('app.foodswipehelp@gmail.com');
         setCopiedEmail(true);
         setTimeout(() => setCopiedEmail(false), 2000);
     };
 
     const contactOptions = [
         {
-            icon: FaPhone,
-            title: 'Call Us',
-            description: 'Speak directly with our support team',
-            value: '+1-800-FOODSWIPE',
-            action: () => window.open('tel:+18003663794'),
-            secondaryAction: handleCopyPhone,
-            secondaryLabel: copiedPhone ? 'Copied!' : 'Copy',
-            color: 'from-blue-500 to-blue-600'
-        },
-        {
-            icon: FaWhatsapp,
-            title: 'WhatsApp',
-            description: 'Chat with us on WhatsApp',
-            value: '+1 (800) 366-3794',
-            action: () => window.open('https://wa.me/18003663794', '_blank'),
-            color: 'from-green-500 to-green-600'
-        },
-        {
             icon: FaEnvelope,
             title: 'Email Support',
             description: 'Send us your queries',
-            value: 'support@foodswipe.com',
-            action: () => window.open('mailto:support@foodswipe.com'),
+            value: 'app.foodswipehelp@gmail.com',
+            action: () => window.open('mailto:app.foodswipehelp@gmail.com'),
             secondaryAction: handleCopyEmail,
             secondaryLabel: copiedEmail ? 'Copied!' : 'Copy',
             color: 'from-orange-500 to-pink-600'
-        },
-        {
-            icon: FaComments,
-            title: 'Live Chat',
-            description: 'Get instant help from our team',
-            value: 'Start conversation',
-            action: () => {
-                alert('Live chat feature coming soon!');
-            },
-            color: 'from-purple-500 to-purple-600'
         }
     ];
 

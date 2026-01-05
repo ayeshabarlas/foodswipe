@@ -129,25 +129,64 @@ export default function OrderTracking({ order: initialOrder, userRole = 'user', 
         ? [riderLocation.lat, riderLocation.lng]
         : restaurantLoc; // Start at restaurant
 
+    const steps = [
+        { label: 'Assigned', status: ['Accepted', 'Preparing', 'Ready', 'OnTheWay', 'Picked Up', 'Delivered'] },
+        { label: 'On Way', status: ['OnTheWay', 'Picked Up', 'Delivered'] },
+        { label: 'Arrived', status: ['Picked Up', 'Delivered'] },
+        { label: 'Picked Up', status: ['Picked Up', 'Delivered'] }
+    ];
+
+    const currentStepIndex = steps.findLastIndex(step => step.status.includes(order.status));
+
     return (
         <div className="bg-white rounded-2xl shadow-lg overflow-hidden border border-gray-100">
-            <div className="p-4 bg-gray-50 border-b border-gray-100 flex justify-between items-center">
-                <div>
-                    <h3 className="font-semibold text-gray-900 flex items-center gap-2">
-                        <FaMotorcycle className="text-orange-500" />
-                        Tracking Order #{order.orderNumber || order._id.slice(-6)}
-                    </h3>
-                    <p className="text-sm text-gray-500 font-normal">
-                        {order.rider ? `${order.rider.fullName} is on the way` : 'Waiting for rider...'}
-                    </p>
+            {/* Header with Progress Bar */}
+            <div className="p-6 bg-white border-b border-gray-100">
+                <div className="flex justify-between items-start mb-6">
+                    <div>
+                        <h3 className="font-black text-gray-900 text-xl flex items-center gap-2">
+                            <FaMotorcycle className="text-orange-500" />
+                            Tracking Order
+                        </h3>
+                        <p className="text-xs text-gray-400 font-bold uppercase tracking-widest mt-1">
+                            Order #{order.orderNumber || order._id.slice(-6)}
+                        </p>
+                    </div>
+                    <div className="text-right">
+                        <p className="text-[10px] text-gray-400 font-black uppercase tracking-widest mb-1">Estimated Arrival</p>
+                        <p className="font-black text-green-600 text-2xl">{eta}</p>
+                    </div>
                 </div>
-                <div className="text-right">
-                    <p className="text-xs text-gray-500 font-normal">Estimated Arrival</p>
-                    <p className="font-semibold text-green-600 text-lg">{eta}</p>
+
+                {/* Progress Bar UI */}
+                <div className="relative pt-2 pb-6">
+                    <div className="flex justify-between mb-2">
+                        {steps.map((step, idx) => (
+                            <div key={idx} className="flex flex-col items-center flex-1 relative z-10">
+                                <div className={`w-8 h-8 rounded-full flex items-center justify-center border-4 transition-all duration-500 ${idx <= currentStepIndex
+                                    ? 'bg-orange-500 border-orange-100 text-white'
+                                    : 'bg-white border-gray-100 text-gray-300'
+                                    }`}>
+                                    {idx < currentStepIndex ? <FaCheck size={12} /> : <span className="text-xs font-black">{idx + 1}</span>}
+                                </div>
+                                <span className={`text-[10px] font-black uppercase mt-2 tracking-tighter ${idx <= currentStepIndex ? 'text-orange-500' : 'text-gray-300'
+                                    }`}>
+                                    {step.label}
+                                </span>
+                            </div>
+                        ))}
+                    </div>
+                    {/* Background Line */}
+                    <div className="absolute top-[22px] left-0 w-full h-1 bg-gray-100 rounded-full z-0"></div>
+                    {/* Active Progress Line */}
+                    <div
+                        className="absolute top-[22px] left-0 h-1 bg-orange-500 rounded-full z-0 transition-all duration-1000"
+                        style={{ width: `${(currentStepIndex / (steps.length - 1)) * 100}%` }}
+                    ></div>
                 </div>
             </div>
 
-            <div className="h-[400px] w-full relative bg-gray-100 z-0">
+            <div className="h-[350px] w-full relative bg-gray-100 z-0">
                 <MapComponent
                     restaurantLoc={restaurantLoc}
                     customerLoc={customerLoc}

@@ -54,6 +54,31 @@ const initSocket = (server) => {
         socket.on('disconnect', () => {
             console.log('❌ Client disconnected:', socket.id);
         });
+
+        // 💬 Order Chat System
+        socket.on('sendOrderMessage', (data) => {
+            const { orderId, message, recipients } = data;
+            console.log(`💬 Message in Order ${orderId}:`, message.text);
+
+            // Broadcast to specific recipients (customer, rider, restaurant)
+            if (recipients && recipients.length > 0) {
+                recipients.forEach(role => {
+                    // Logic to find the room for the specific user/rider/restaurant associated with the order
+                    // For now, we broadcast to the order-specific room
+                    io.to(`order_${orderId}`).emit('orderMessage', { orderId, message });
+                });
+            } else {
+                // Default: broadcast to everyone in the order room
+                io.to(`order_${orderId}`).emit('orderMessage', { orderId, message });
+            }
+        });
+
+        // Join specific order room for chat
+        socket.on('joinOrderChat', (data) => {
+            const { orderId } = data;
+            socket.join(`order_${orderId}`);
+            console.log(`👤 Client joined chat for order: ${orderId}`);
+        });
     });
 
     return io;

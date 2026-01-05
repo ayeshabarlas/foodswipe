@@ -95,8 +95,18 @@ export default function SettingsTab({ restaurant, onUpdate }: SettingsTabProps) 
             };
 
             const { data } = await axios.post(`${API_BASE_URL}/api/upload`, uploadData, config);
-            const fullUrl = `${API_BASE_URL}${data.imageUrl}`;
+            const fullUrl = data.imageUrl; // Use direct URL from response
+            
+            // Immediately update backend to sync with Store Profile
+            await axios.put(
+                `${API_BASE_URL}/api/restaurants/store-settings`,
+                { logo: fullUrl },
+                { headers: { Authorization: `Bearer ${userInfo.token}` } }
+            );
+
             setFormData(prev => ({ ...prev, logo: fullUrl }));
+            onUpdate(); // Refresh parent to sync sidebar/other tabs
+            alert('Logo uploaded and synced successfully!');
         } catch (error) {
             console.error('Logo upload error:', error);
             alert('Failed to upload logo');
