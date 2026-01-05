@@ -13,6 +13,10 @@ const nextConfig = {
             {
                 protocol: 'https',
                 hostname: 'foodswipe-production-46d6.up.railway.app',
+            },
+            {
+                protocol: 'https',
+                hostname: 'colossal-anya-foodswipe-a3e25304.koyeb.app',
             }
         ],
     },
