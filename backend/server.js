@@ -30,6 +30,7 @@ app.use(cors({
 }));
 app.use(express.json());
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+app.use('/api/uploads', express.static(path.join(__dirname, 'uploads')));
 
 // 4. API ROUTES
 app.get('/', (req, res) => res.send('Foodswipe API is Live and Running!'));

@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { FaSave, FaPlus, FaTrash, FaClock, FaMapMarkerAlt, FaInfoCircle, FaUniversity, FaCamera, FaCheck } from 'react-icons/fa';
 import axios from 'axios';
 import { API_BASE_URL } from '../utils/config';
+import { getImageUrl } from '../utils/imageUtils';
 
 interface SettingsTabProps {
     restaurant: any;
@@ -194,7 +195,7 @@ export default function SettingsTab({ restaurant, onUpdate }: SettingsTabProps) 
                             {formData.logo ? (
                                 <>
                                     <img
-                                        src={formData.logo}
+                                        src={getImageUrl(formData.logo)}
                                         alt="Logo"
                                         className="w-full h-full rounded-2xl object-cover border-2 border-gray-100 shadow-md"
                                     />
