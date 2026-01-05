@@ -272,7 +272,7 @@ export default function RestaurantDashboard() {
                             <div className="flex-1 min-w-0">
                                 <div className="flex items-center gap-2">
                       <h2 className="text-base font-bold truncate leading-tight">{restaurant.name}</h2>
-                      <span className="bg-orange-500/20 text-orange-500 text-[8px] px-1.5 py-0.5 rounded-full font-bold uppercase">v2.4 (KOYEB ONLY)</span>
+                      <span className="bg-orange-500/20 text-orange-500 text-[8px] px-1.5 py-0.5 rounded-full font-bold uppercase">v2.5 (BUILD FIX)</span>
                     </div>
                                 <p className="text-[10px] text-gray-400 truncate flex items-center gap-1.5 mt-0.5 font-bold uppercase tracking-wider">
                                     <span className={`w-1.5 h-1.5 rounded-full ${restaurant.isVerified ? 'bg-green-500' : 'bg-yellow-500 animate-pulse'}`}></span>

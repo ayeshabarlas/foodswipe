@@ -41,9 +41,6 @@ export const getImageUrl = (path: string | undefined | null) => {
     // Final normalization: remove any leading slash from cleanPath
     cleanPath = cleanPath.replace(/^\/+/, '');
     
-    // Ensure API_BASE_URL doesn't end with slash
-    const baseUrl = API_BASE_URL.endsWith('/') ? API_BASE_URL.slice(0, -1) : API_BASE_URL;
-    
     // FORCE FULL URL FOR KOYEB IMAGES
     if (baseUrl.includes('koyeb.app') && !cleanPath.startsWith('http')) {
         const fullUrl = `${baseUrl}/${cleanPath}`;
