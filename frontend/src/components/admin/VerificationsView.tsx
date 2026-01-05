@@ -139,7 +139,7 @@ export default function VerificationsView({ initialTab = 'restaurants' }: { init
         <div className="p-6">
             <div className="flex justify-between items-center mb-6">
                 <div>
-                    <h2 className="text-lg font-bold text-gray-800">Pending Approvals</h2>
+                    <h2 className="text-lg font-bold text-gray-800">Pending Approvals <span className="text-[10px] bg-blue-100 text-blue-600 px-2 py-0.5 rounded-full ml-2">v2.4 (KOYEB ONLY)</span></h2>
                     <p className="text-[10px] text-gray-500 uppercase tracking-wider font-bold">Review and verify new registrations</p>
                 </div>
                 <div className="flex gap-1 bg-white p-1 rounded-lg border border-gray-100 shadow-sm">
