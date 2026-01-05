@@ -6,18 +6,28 @@ export const getImageUrl = (path: string | undefined | null) => {
     // Ensure API_BASE_URL doesn't end with slash
     const baseUrl = API_BASE_URL.endsWith('/') ? API_BASE_URL.slice(0, -1) : API_BASE_URL;
 
+    // Normalize slashes
+    let cleanPath = path.replace(/\\/g, '/');
+    
+    // Check if it's already a relative path starting with /api/ or api/
+    if (cleanPath.startsWith('api/uploads/')) {
+        return `${baseUrl}/${cleanPath}`;
+    }
+    if (cleanPath.startsWith('/api/uploads/')) {
+        return `${baseUrl}${cleanPath}`;
+    }
+
     // Handle full URLs
     if (path.startsWith('http')) {
         // If it's a Railway URL but we are on Koyeb, swap the domain
         if (path.includes('railway.app') && baseUrl.includes('koyeb.app')) {
             const pathParts = path.split('/uploads/');
             if (pathParts.length > 1) {
-                return `${baseUrl}/uploads/${pathParts[1]}`;
+                return `${baseUrl}/api/uploads/${pathParts[1]}`;
             }
         }
         
         // Fix Koyeb broken documents by ensuring /api/ prefix if needed
-        // Most common case is when path has /uploads/ but is missing /api/
         if (baseUrl.includes('koyeb.app') && path.includes('/uploads/') && !path.includes('/api/uploads/')) {
              const parts = path.split('/uploads/');
              return `${baseUrl}/api/uploads/${parts[1]}`;
@@ -25,9 +35,6 @@ export const getImageUrl = (path: string | undefined | null) => {
 
         return path;
     }
-    
-    // Normalize slashes
-    let cleanPath = path.replace(/\\/g, '/');
     
     // Remove leading slash if present
     while (cleanPath.startsWith('/')) {
@@ -39,12 +46,8 @@ export const getImageUrl = (path: string | undefined | null) => {
     
     // Ensure it has api/uploads/ prefix if it's a relative path to our backend on Koyeb
     if (baseUrl.includes('koyeb.app')) {
-        // If it already has api/uploads, just clean it
-        if (cleanPath.includes('api/uploads/')) {
-            const index = cleanPath.indexOf('api/uploads/');
-            cleanPath = cleanPath.slice(index);
-        } else if (cleanPath.includes('uploads/')) {
-            // If it has uploads but not api, add api
+        // If it has uploads/ but not api/, add api/
+        if (cleanPath.includes('uploads/')) {
             const index = cleanPath.indexOf('uploads/');
             cleanPath = `api/${cleanPath.slice(index)}`;
         } else {

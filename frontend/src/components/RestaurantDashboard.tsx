@@ -181,16 +181,15 @@ export default function RestaurantDashboard() {
     const isPending = restaurant.verificationStatus === 'pending' || restaurant.verificationStatus === 'not_started';
 
     const menuItems = [
-        { id: 'orders', label: 'Live Orders', icon: FaShoppingBag, disabled: false }, // Orders might be viewable but empty
-        { id: 'menu', label: 'Menu Management', icon: FaUtensils, disabled: isPending },
-        { id: 'store', label: 'Store Profile', icon: FaStore, disabled: false },
-        { id: 'promotions', label: 'Promotions', icon: FaBullhorn, disabled: isPending },
-        { id: 'reviews', label: 'Reviews', icon: FaStar, disabled: isPending },
-        { id: 'kitchen', label: 'Kitchen View', icon: FaConciergeBell, disabled: isPending },
-        { id: 'analytics', label: 'Analytics', icon: FaChartLine, disabled: isPending },
-        { id: 'finance', label: 'Finance', icon: FaDollarSign, disabled: isPending },
-        { id: 'settings', label: 'Settings', icon: FaClock, disabled: false },
-        { id: 'support', label: 'Help & Support', icon: FaHeadset, disabled: false },
+        { id: 'orders', label: 'Orders Board', icon: FaShoppingBag },
+        { id: 'menu', label: 'Menu Items', icon: FaUtensils },
+        { id: 'store', label: 'Store Profile', icon: FaStore },
+        { id: 'analytics', label: 'Performance', icon: FaChartLine },
+        { id: 'payments', label: 'Earnings', icon: FaDollarSign },
+        { id: 'reviews', label: 'Customer Reviews', icon: FaStar },
+        { id: 'promotions', label: 'Promotions', icon: FaBullhorn },
+        { id: 'support', label: 'Help Center', icon: FaHeadset },
+        { id: 'settings', label: 'Account Settings', icon: FaClock },
     ];
 
     const renderContent = () => {
@@ -231,22 +230,21 @@ export default function RestaurantDashboard() {
         }
 
         switch (activePage) {
-            case 'orders': return <OrderBoard restaurant={restaurant} />;
-            case 'menu': return <DashboardMenu />;
+            case 'orders': return <OrderBoard restaurant={restaurant} onUpdate={fetchDashboardData} />;
+            case 'menu': return <DashboardMenu restaurant={restaurant} />;
             case 'store': return <DashboardStore restaurant={restaurant} onUpdate={fetchDashboardData} />;
-            case 'reviews': return <DashboardReviews />;
-            case 'analytics': return <DashboardAnalytics restaurantId={restaurant._id} />;
-            case 'finance': return <PaymentHistory />;
-            case 'kitchen': return <KitchenDisplay />;
-            case 'promotions': return <DashboardPromotions />;
-            case 'settings': return <DashboardSettings restaurant={restaurant} onUpdate={fetchDashboardData} />;
+            case 'analytics': return <DashboardAnalytics restaurant={restaurant} />;
+            case 'payments': return <PaymentHistory restaurant={restaurant} />;
+            case 'reviews': return <DashboardReviews restaurant={restaurant} />;
+            case 'promotions': return <DashboardPromotions restaurant={restaurant} />;
             case 'support': return <DashboardSupport />;
-            default: return <OrderBoard restaurant={restaurant} />;
+            case 'settings': return <DashboardSettings restaurant={restaurant} onUpdate={fetchDashboardData} />;
+            default: return <OrderBoard restaurant={restaurant} onUpdate={fetchDashboardData} />;
         }
     };
 
     return (
-        <div className="h-screen bg-gray-50 flex font-sans overflow-hidden text-[13px]">
+        <div className="flex h-screen bg-gray-50 overflow-hidden font-sans text-[13px]">
             {/* Sidebar Overlay */}
             <AnimatePresence>
                 {isSidebarOpen && (
@@ -438,8 +436,8 @@ export default function RestaurantDashboard() {
                     </div>
                 )}
 
-                <div className="flex-1 overflow-y-auto custom-scrollbar bg-gray-50/50">
-                    <div className="p-4 lg:p-6 max-w-7xl mx-auto w-full">
+                <div className="flex-1 overflow-hidden bg-gray-50/50 flex flex-col">
+                    <div className="flex-1 overflow-y-auto custom-scrollbar p-4 lg:p-6 max-w-7xl mx-auto w-full">
                         <motion.div
                             key={activePage}
                             initial={{ opacity: 0, y: 10 }}

@@ -180,11 +180,8 @@ export default function OrderBoard({ restaurant }: OrderBoardProps) {
 
     const getInitials = (name: string) => {
         return name
-            .split(' ')
-            .map(n => n[0])
-            .join('')
-            .toUpperCase()
-            .substring(0, 2);
+            ? name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2)
+            : '??';
     };
 
     const getStatusBadgeColor = (status: string) => {
@@ -209,155 +206,123 @@ export default function OrderBoard({ restaurant }: OrderBoardProps) {
     const completedOrders = ordersArray.filter(o => ['OnTheWay', 'Picked Up', 'Delivered'].includes(o.status));
 
     const renderOrderCard = (order: Order) => {
-        const initials = getInitials(order.user?.name || 'Guest');
+        const initials = order.user?.name
+            ? order.user.name.split(' ').map((n: string) => n[0]).join('').toUpperCase().slice(0, 2)
+            : '??';
+        
         const canTrack = ['OnTheWay', 'Picked Up'].includes(order.status);
-        const hasRider = !!order.rider;
-
+        
         return (
             <motion.div
                 key={order._id}
-                initial={{ opacity: 0, y: 20 }}
+                layout
+                initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="bg-white rounded-2xl p-5 shadow-sm border border-gray-100 hover:shadow-md transition-all duration-300"
+                className="bg-white rounded-2xl p-4 shadow-sm border border-gray-100 hover:shadow-md transition group"
             >
-                {/* Header: Customer & Status */}
-                <div className="flex items-center gap-3 mb-4">
-                    <div className="w-10 h-10 bg-gradient-to-br from-orange-400 to-red-500 rounded-full flex items-center justify-center text-white font-bold text-xs">
-                        {initials}
+                {/* Order Header */}
+                <div className="flex justify-between items-start mb-3">
+                    <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-xl bg-orange-50 flex items-center justify-center text-orange-600 font-bold text-sm">
+                            {initials}
+                        </div>
+                        <div>
+                            <h4 className="font-bold text-gray-900 text-xs truncate max-w-[120px]">{order.user?.name || 'Guest'}</h4>
+                            <p className="text-[10px] text-gray-400 font-medium">#{order._id.slice(-6)}</p>
+                        </div>
                     </div>
-                    <div className="flex-1 min-w-0">
-                        <h3 className="font-bold text-gray-900 text-sm truncate">{order.user?.name || 'Guest'}</h3>
-                        <p className="text-[10px] text-gray-500 font-medium uppercase tracking-wider">#{order._id.slice(-6)}</p>
+                    <div className="text-right">
+                        <p className="font-black text-gray-900 text-xs">Rs. {order.totalPrice.toFixed(0)}</p>
+                        <p className="text-[9px] text-gray-400 font-bold uppercase tracking-tighter">
+                            {new Date(order.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                        </p>
                     </div>
-                    <span className={`px-2 py-1 rounded-lg text-[10px] font-bold uppercase tracking-tight ${getStatusBadgeColor(order.status)}`}>
-                        {order.status}
-                    </span>
                 </div>
 
                 {/* Items Summary */}
-                <div className="mb-4 bg-gray-50 rounded-xl p-3 border border-gray-50">
-                    <div className="flex justify-between items-center mb-2">
-                        <span className="text-[11px] font-bold text-gray-400 uppercase">Items</span>
-                        <span className="text-[11px] font-bold text-orange-600 bg-orange-50 px-2 py-0.5 rounded-md">
-                            {order.orderItems.length} {order.orderItems.length === 1 ? 'Item' : 'Items'}
-                        </span>
-                    </div>
+                <div className="bg-gray-50 rounded-xl p-3 mb-3">
                     <div className="space-y-1.5">
                         {order.orderItems.map((item, idx) => (
-                            <div key={idx} className="flex justify-between text-[13px] text-gray-700">
-                                <span className="truncate font-medium flex-1">{item.name}</span>
-                                <span className="font-bold text-gray-900 ml-2">x{item.qty}</span>
+                            <div key={idx} className="flex justify-between items-center text-[11px]">
+                                <span className="text-gray-600 font-medium">
+                                    <span className="text-orange-600 font-black mr-1">{item.qty}x</span>
+                                    {item.name}
+                                </span>
                             </div>
                         ))}
                     </div>
                 </div>
 
-                {/* Info Bar: Time & Price */}
-                <div className="flex items-center justify-between mb-4 px-1">
-                    <div className="flex items-center gap-1.5">
-                        <FaClock className="text-gray-400" size={12} />
-                        <span className="text-xs font-semibold text-gray-600">
-                            {new Date(order.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                        </span>
-                    </div>
-                    <div className="text-right">
-                        <span className="text-[10px] text-gray-400 block font-bold uppercase">Total</span>
-                        <span className="text-base font-black text-gray-900">Rs. {order.totalPrice.toFixed(0)}</span>
-                    </div>
-                </div>
-
-                {/* Preparation Time Adjustment (Only for Accepted/Preparing) */}
-                {(order.status === 'Accepted' || order.status === 'Preparing') && (
-                    <div className="mb-4 p-3 bg-blue-50/50 rounded-xl border border-blue-100">
-                        <p className="text-[10px] font-bold text-blue-600 uppercase mb-2">Prep Time (mins)</p>
-                        <div className="flex gap-2">
-                            {[15, 25, 35, 45].map(time => (
-                                <button
-                                    key={time}
-                                    onClick={() => setPrepTimes(prev => ({ ...prev, [order._id]: time }))}
-                                    className={`flex-1 py-1.5 rounded-lg text-xs font-bold transition-all ${prepTimes[order._id] === time
-                                        ? 'bg-blue-600 text-white shadow-sm'
-                                        : 'bg-white text-blue-600 border border-blue-200 hover:bg-blue-50'
-                                        }`}
-                                >
-                                    {time}
-                                </button>
-                            ))}
-                        </div>
-                    </div>
-                )}
-
                 {/* Actions */}
                 <div className="flex flex-col gap-2">
-                    <div className="flex gap-2">
-                        {order.status === 'Pending' && (
-                            <>
-                                <button
-                                    onClick={() => handleAcceptOrder(order._id)}
-                                    className="flex-1 bg-green-500 hover:bg-green-600 text-white px-4 py-2.5 rounded-xl font-bold text-xs transition-all shadow-sm hover:shadow-md"
-                                >
-                                    Accept
-                                </button>
-                                <button
-                                    onClick={() => setRejectingOrder(order._id)}
-                                    className="flex-1 bg-red-500 hover:bg-red-600 text-white px-4 py-2.5 rounded-xl font-bold text-xs transition-all shadow-sm hover:shadow-md"
-                                >
-                                    Reject
-                                </button>
-                            </>
-                        )}
-                        {order.status === 'Accepted' && (
+                    {order.status === 'Pending' && (
+                        <div className="grid grid-cols-2 gap-2">
+                            <button
+                                onClick={() => handleAcceptOrder(order._id)}
+                                className="bg-orange-500 hover:bg-orange-600 text-white py-2 rounded-xl font-bold text-[10px] transition shadow-sm shadow-orange-500/20"
+                            >
+                                ACCEPT
+                            </button>
+                            <button
+                                onClick={() => setRejectingOrder(order._id)}
+                                className="bg-gray-100 hover:bg-gray-200 text-gray-500 py-2 rounded-xl font-bold text-[10px] transition"
+                            >
+                                REJECT
+                            </button>
+                        </div>
+                    )}
+                    
+                    {order.status === 'Accepted' && (
+                        <div className="space-y-2">
+                            <select
+                                className="w-full bg-blue-50 border-none rounded-lg px-2 py-1.5 text-[10px] font-bold text-blue-600 focus:ring-0"
+                                value={prepTimes[order._id] || 25}
+                                onChange={(e) => setPrepTimes({ ...prepTimes, [order._id]: parseInt(e.target.value) })}
+                            >
+                                {[15, 25, 35, 45, 60].map(m => (
+                                    <option key={m} value={m}>{m} MINS PREP</option>
+                                ))}
+                            </select>
                             <button
                                 onClick={() => updateStatus(order._id, 'Preparing', { prepTime: prepTimes[order._id] || 25 })}
-                                className="flex-1 bg-blue-500 hover:bg-blue-600 text-white px-4 py-2.5 rounded-xl font-bold text-xs transition-all shadow-sm hover:shadow-md"
+                                className="w-full bg-blue-500 text-white py-2 rounded-xl font-bold text-[10px] hover:bg-blue-600 transition"
                             >
-                                Start Preparing
+                                START PREPARING
                             </button>
-                        )}
-                        {order.status === 'Preparing' && (
-                            <button
-                                onClick={() => updateStatus(order._id, 'Ready')}
-                                className="flex-1 bg-green-500 hover:bg-green-600 text-white px-4 py-2.5 rounded-xl font-bold text-xs transition-all shadow-sm hover:shadow-md"
-                            >
-                                Mark Ready
-                            </button>
-                        )}
-                        {order.status === 'Ready' && (
-                            <button
-                                onClick={() => updateStatus(order._id, 'OnTheWay')}
-                                className="flex-1 bg-purple-500 hover:bg-purple-600 text-white px-4 py-2.5 rounded-xl font-bold text-xs transition-all shadow-sm hover:shadow-md"
-                            >
-                                Hand to Rider
-                            </button>
-                        )}
-                    </div>
+                        </div>
+                    )}
+
+                    {order.status === 'Preparing' && (
+                        <button
+                            onClick={() => updateStatus(order._id, 'Ready')}
+                            className="w-full bg-green-500 text-white py-2 rounded-xl font-bold text-[10px] hover:bg-green-600 transition"
+                        >
+                            MARK AS READY
+                        </button>
+                    )}
+
+                    {order.status === 'Ready' && (
+                        <button
+                            onClick={() => updateStatus(order._id, 'OnTheWay')}
+                            className="w-full bg-purple-500 text-white py-2 rounded-xl font-bold text-[10px] hover:bg-purple-600 transition"
+                        >
+                            HAND TO RIDER
+                        </button>
+                    )}
 
                     <div className="grid grid-cols-2 gap-2">
-                        {/* Chat Button */}
                         <button
                             onClick={() => setActiveChat(order)}
-                            className="bg-gray-100 hover:bg-gray-200 text-gray-700 px-3 py-2.5 rounded-xl font-bold text-[10px] uppercase tracking-wider transition-all flex items-center justify-center gap-1.5 border border-gray-200"
+                            className="flex items-center justify-center gap-1.5 py-1.5 rounded-lg bg-gray-50 text-gray-500 font-bold text-[9px] hover:bg-gray-100 transition border border-gray-100"
                         >
-                            <FaCommentDots size={14} /> Chat
+                            <FaCommentDots size={10} /> CHAT
                         </button>
-
-                        {/* Track Button */}
                         {canTrack && (
                             <button
                                 onClick={() => setTrackingOrder(order)}
-                                className="bg-orange-500 hover:bg-orange-600 text-white px-3 py-2.5 rounded-xl font-bold text-[10px] uppercase tracking-wider transition-all flex items-center justify-center gap-1.5 shadow-sm"
+                                className="flex items-center justify-center gap-1.5 py-1.5 rounded-lg bg-blue-50 text-blue-600 font-bold text-[9px] hover:bg-blue-100 transition border border-blue-100"
                             >
-                                <FaMotorcycle size={14} /> Track
-                            </button>
-                        )}
-
-                        {/* Cancel Button */}
-                        {!['Delivered', 'Cancelled'].includes(order.status) && !canTrack && (
-                            <button
-                                onClick={() => setCancellingOrderId(order._id)}
-                                className="bg-red-50 hover:bg-red-100 text-red-600 px-3 py-2.5 rounded-xl font-bold text-[10px] uppercase tracking-wider transition-all flex items-center justify-center gap-1.5 border border-red-100"
-                            >
-                                <FaBan size={12} /> Cancel
+                                <FaMotorcycle size={10} /> TRACK
                             </button>
                         )}
                     </div>
@@ -545,7 +510,7 @@ export default function OrderBoard({ restaurant }: OrderBoardProps) {
             </AnimatePresence>
 
             {/* Order Grid */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 h-[calc(100vh-200px)] overflow-hidden">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 min-h-0">
                 {/* Pending Column */}
                 <div className="flex flex-col h-full">
                     <h3 className="font-semibold text-gray-700 mb-4 flex items-center gap-2 text-sm sm:text-base sticky top-0 bg-gray-50 z-10 py-1">
@@ -554,7 +519,7 @@ export default function OrderBoard({ restaurant }: OrderBoardProps) {
                             {pendingOrders.length}
                         </span>
                     </h3>
-                    <div className="space-y-4 overflow-y-auto flex-1 pr-2 pb-20 custom-scrollbar">
+                    <div className="space-y-4 pr-2 pb-20 custom-scrollbar">
                         {pendingOrders.map(renderOrderCard)}
                     </div>
                 </div>
@@ -567,7 +532,7 @@ export default function OrderBoard({ restaurant }: OrderBoardProps) {
                             {preparingOrders.length}
                         </span>
                     </h3>
-                    <div className="space-y-4 overflow-y-auto flex-1 pr-2 pb-20 custom-scrollbar">
+                    <div className="space-y-4 pr-2 pb-20 custom-scrollbar">
                         {preparingOrders.map(renderOrderCard)}
                     </div>
                 </div>
@@ -580,7 +545,7 @@ export default function OrderBoard({ restaurant }: OrderBoardProps) {
                             {readyOrders.length}
                         </span>
                     </h3>
-                    <div className="space-y-4 overflow-y-auto flex-1 pr-2 pb-20 custom-scrollbar">
+                    <div className="space-y-4 pr-2 pb-20 custom-scrollbar">
                         {readyOrders.map(renderOrderCard)}
                     </div>
                 </div>
@@ -593,7 +558,7 @@ export default function OrderBoard({ restaurant }: OrderBoardProps) {
                             {completedOrders.length}
                         </span>
                     </h3>
-                    <div className="space-y-4 overflow-y-auto flex-1 pr-2 pb-20 custom-scrollbar">
+                    <div className="space-y-4 pr-2 pb-20 custom-scrollbar">
                         {completedOrders.map(renderOrderCard)}
                     </div>
                 </div>
