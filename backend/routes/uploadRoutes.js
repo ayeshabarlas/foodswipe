@@ -28,7 +28,8 @@ const storage = multer.diskStorage({
 const fileFilter = (req, file, cb) => {
     const allowedTypes = [
         'image/jpeg', 'image/png', 'image/jpg', 'image/webp', 'image/gif',
-        'video/mp4', 'video/webm', 'video/quicktime',
+        'video/mp4', 'video/webm', 'video/quicktime', 'video/x-msvideo', 'video/mpeg', 'video/ogg', 'video/3gpp', 'video/x-matroska',
+        'video/avi', 'video/msvideo', 'video/x-ms-wmv', 'video/x-flv',
         'application/pdf'
     ];
 
@@ -111,14 +112,21 @@ router.post('/', (req, res) => {
             }
 
             // Return the path for the frontend to construct URL
-            const imagePath = `/uploads/${req.file.filename}`;
-            console.log('✅ Upload successful! Path:', imagePath);
+            const filePath = `/uploads/${req.file.filename}`;
+            console.log('✅ Upload successful! Path:', filePath);
             console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
 
-            res.json({
+            const response = {
                 message: 'File uploaded successfully',
-                imageUrl: imagePath
-            });
+            };
+
+            if (fileType.startsWith('video/')) {
+                response.videoUrl = filePath;
+            } else {
+                response.imageUrl = filePath;
+            }
+
+            res.json(response);
         } catch (error) {
             console.error('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
             console.error('❌ UPLOAD ERROR:');
