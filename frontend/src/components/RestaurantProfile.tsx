@@ -416,7 +416,6 @@ export default function RestaurantProfile({ restaurant: initialRestaurant, onBac
                         )}
                     </button>
                 </div>
-            </div>
 
             {/* Dish Videos Tab Content */}
             {activeMainTab === 'videos' && (
