@@ -387,6 +387,21 @@ const getTimeAgo = (date) => {
     return `${Math.floor(seconds / 86400)} day${Math.floor(seconds / 86400) > 1 ? 's' : ''} ago`;
 };
 
+const calculateRiderEarning = (distance) => {
+    const BASE_PAY = 100;
+    const PER_KM_RATE = 20;
+    const PLATFORM_FEE = 15;
+    
+    const grossEarning = BASE_PAY + (distance * PER_KM_RATE);
+    const netEarning = grossEarning - PLATFORM_FEE;
+    
+    return {
+        grossEarning: Math.round(grossEarning),
+        netEarning: Math.round(netEarning),
+        platformFee: PLATFORM_FEE
+    };
+};
+
 // @desc    Get rider's orders
 // @route   GET /api/riders/:id/orders
 // @access  Private
@@ -407,26 +422,32 @@ const getRiderOrders = async (req, res) => {
             .sort({ createdAt: -1 })
             .limit(20);
 
-        const formattedOrders = orders.map(order => ({
-            _id: order._id,
-            orderNumber: order.orderNumber || order._id.toString().slice(-4),
-            status: order.status,
-            restaurant: {
-                name: order.restaurant?.name || 'Restaurant',
-                address: order.restaurant?.address || 'Restaurant Address',
-                location: order.restaurant?.location
-            },
-            deliveryAddress: order.shippingAddress?.address || 'Delivery Address',
-            customer: order.user ? {
-                name: order.user.name,
-                phone: order.user.phone
-            } : null,
-            timeAgo: getTimeAgo(order.createdAt),
-            totalAmount: order.totalPrice,
-            rider: order.rider, // Include rider info to check if already assigned
-            distanceKm: order.distanceKm || 0,
-            netRiderEarning: order.netRiderEarning || 0
-        }));
+        const formattedOrders = orders.map(order => {
+            // Use real distance or default to 4.8km for display if missing
+            const distance = order.distanceKm || 4.8;
+            const earnings = calculateRiderEarning(distance);
+            
+            return {
+                _id: order._id,
+                orderNumber: order.orderNumber || order._id.toString().slice(-4),
+                status: order.status,
+                restaurant: {
+                    name: order.restaurant?.name || 'Restaurant',
+                    address: order.restaurant?.address || 'Restaurant Address',
+                    location: order.restaurant?.location
+                },
+                deliveryAddress: order.shippingAddress?.address || 'Delivery Address',
+                customer: order.user ? {
+                    name: order.user.name,
+                    phone: order.user.phone
+                } : null,
+                timeAgo: getTimeAgo(order.createdAt),
+                totalAmount: order.totalPrice,
+                rider: order.rider, // Include rider info to check if already assigned
+                distanceKm: distance,
+                netRiderEarning: order.netRiderEarning || earnings.netEarning
+            };
+        });
 
         res.json(formattedOrders);
     } catch (error) {

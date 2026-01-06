@@ -307,25 +307,29 @@ export default function RestaurantProfile({ restaurant: initialRestaurant, onBac
             </div>
 
             {/* Banner Section */}
-            <div className="relative h-56 sm:h-72 w-full overflow-hidden">
+            <div className="relative h-56 sm:h-72 w-full overflow-hidden bg-gray-900">
                 <img
                     src={getImageUrl(restaurantData.logo)}
                     alt="Restaurant Banner"
-                    className="w-full h-full object-cover blur-[2px] scale-110 opacity-40 bg-gray-900"
+                    className="w-full h-full object-cover opacity-60"
                     onError={(e) => {
                         const target = e.target as HTMLImageElement;
                         target.src = getImageFallback('logo');
                     }}
                 />
-                {/* Centered Logo in Banner Background */}
-                <div className="absolute inset-0 flex items-center justify-center">
+                {/* Logo Overlay */}
+                <div className="absolute inset-0 flex items-center justify-center bg-black/20">
                     <img 
                         src={getImageUrl(restaurantData.logo)} 
-                        className="w-40 h-40 object-contain opacity-20"
+                        className="w-32 h-32 object-contain drop-shadow-2xl"
                         alt=""
+                        onError={(e) => {
+                            const target = e.target as HTMLImageElement;
+                            target.src = getImageFallback('logo');
+                        }}
                     />
                 </div>
-                <div className="absolute inset-0 bg-gradient-to-t from-white via-transparent to-black/40" />
+                <div className="absolute inset-0 bg-gradient-to-t from-white via-transparent to-transparent" />
                 
                 {/* Back Button Overlay */}
                 <button 
@@ -379,14 +383,14 @@ export default function RestaurantProfile({ restaurant: initialRestaurant, onBac
                             <span className="text-gray-900 font-bold text-sm">
                                 {reviews.length > 0
                                     ? (reviews.reduce((acc, r) => acc + r.rating, 0) / reviews.length).toFixed(1)
-                                    : (restaurantData.rating > 0 ? restaurantData.rating.toFixed(1) : '4.7')}
+                                    : (restaurantData.rating > 0 ? restaurantData.rating.toFixed(1) : 'New')}
                             </span>
                             <span className="text-gray-400 text-sm mx-1">•</span>
                             <button
                                 onClick={() => setActiveTab('reviews')}
                                 className="text-gray-500 text-sm hover:text-primary transition font-medium"
                             >
-                                {reviewCount || 1567} reviews
+                                {reviewCount} reviews
                             </button>
                         </div>
                     </div>
@@ -457,7 +461,7 @@ export default function RestaurantProfile({ restaurant: initialRestaurant, onBac
                                     {/* Comment count overlay */}
                                     <div className="absolute top-3 left-3 bg-black/40 backdrop-blur-md px-2.5 py-1.5 rounded-xl text-white flex items-center gap-1.5 text-[10px] font-bold border border-white/10">
                                         <FaComment size={10} className="text-primary" />
-                                        <span>{Math.floor(Math.random() * 200) + 50}</span>
+                                        <span>{reviews.filter(r => r.dish?._id === dish._id).length}</span>
                                     </div>
 
                                     <div className="absolute bottom-0 left-0 right-0 p-3">
@@ -466,7 +470,11 @@ export default function RestaurantProfile({ restaurant: initialRestaurant, onBac
                                             <span className="text-primary font-bold text-xs">Rs. {dish.price}</span>
                                             <div className="flex items-center gap-1">
                                                 <FaStar className="text-yellow-400" size={10} />
-                                                <span className="text-white text-[10px] font-bold">4.8</span>
+                                                <span className="text-white text-[10px] font-bold">
+                                                    {reviews.filter(r => r.dish?._id === dish._id).length > 0
+                                                        ? (reviews.filter(r => r.dish?._id === dish._id).reduce((acc, r) => acc + r.rating, 0) / reviews.filter(r => r.dish?._id === dish._id).length).toFixed(1)
+                                                        : '5.0'}
+                                                </span>
                                             </div>
                                         </div>
                                     </div>
@@ -711,10 +719,9 @@ export default function RestaurantProfile({ restaurant: initialRestaurant, onBac
                                                                     e.stopPropagation();
                                                                     addToCart({ ...dish, quantity: 1, restaurantId: restaurantData._id, restaurantName: restaurantData.name });
                                                                 }}
-                                                                className="bg-primary text-white p-2.5 rounded-xl hover:bg-primary-dark transition shadow-sm flex items-center justify-center min-w-[44px]"
+                                                                className="px-4 py-1.5 bg-gradient-to-r from-orange-500 to-red-600 text-white text-xs font-bold rounded-lg shadow-md hover:shadow-lg active:scale-95 transition-all"
                                                             >
-                                                                <span className="text-sm font-bold mr-1">Add</span>
-                                                                <span className="text-xl">+</span>
+                                                                Add
                                                             </button>
                                                         </div>
                                                     </div>

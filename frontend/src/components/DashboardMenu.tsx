@@ -8,7 +8,7 @@ import {
 } from 'react-icons/fa';
 import AddDishModal from './AddDishModal';
 import axios from 'axios';
-import { getImageUrl } from '../utils/imageUtils';
+import { getImageUrl, getImageFallback } from '../utils/imageUtils';
 import { API_BASE_URL } from '../utils/config';
 
 interface Dish {
@@ -19,9 +19,7 @@ interface Dish {
     category: string;
     imageUrl: string;
     videoUrl: string;
-    ingredients: string[]
-
-    ;
+    ingredients: string[];
     stockQuantity: number;
     lowStockThreshold: number;
     isAvailable: boolean;
@@ -147,52 +145,69 @@ export default function DashboardMenu() {
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                {filteredDishes.map((dish) => (
-                    <motion.div
-                        layout
-                        initial={{ opacity: 0, scale: 0.9 }}
-                        animate={{ opacity: 1, scale: 1 }}
-                        exit={{ opacity: 0, scale: 0.9 }}
-                        key={dish._id}
-                        className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden hover:shadow-md transition group"
-                    >
-                        <div className="relative h-48 bg-gray-100">
-                            {dish.imageUrl ? (
-                                <img src={getImageUrl(dish.imageUrl)} alt={dish.name} className="w-full h-full object-cover" />
-                            ) : (
-                                <div className="w-full h-full flex items-center justify-center text-gray-400 bg-gray-50">
-                                    <FaImage className="text-4xl opacity-50" />
+                {filteredDishes.length === 0 ? (
+                    <div className="col-span-full py-20 text-center bg-white rounded-2xl border border-dashed border-gray-200">
+                        <FaImage className="mx-auto text-gray-200 text-5xl mb-4" />
+                        <p className="text-gray-400 font-medium">No dishes found in this category</p>
+                    </div>
+                ) : (
+                    filteredDishes.map((dish) => (
+                        <motion.div
+                            layout
+                            initial={{ opacity: 0, scale: 0.9 }}
+                            animate={{ opacity: 1, scale: 1 }}
+                            exit={{ opacity: 0, scale: 0.9 }}
+                            key={dish._id}
+                            className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden hover:shadow-md transition group"
+                        >
+                            <div className="relative h-48 bg-gray-100">
+                                <img
+                                    src={getImageUrl(dish.imageUrl)}
+                                    alt={dish.name}
+                                    className="w-full h-full object-cover"
+                                    onError={(e) => {
+                                        const target = e.target as HTMLImageElement;
+                                        target.src = getImageFallback('dish');
+                                    }}
+                                />
+                                <div className="absolute top-2 right-2 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                                    <button
+                                        onClick={() => openEditModal(dish)}
+                                        className="p-2 bg-white text-blue-500 rounded-full shadow-lg hover:bg-blue-50 transition-colors"
+                                    >
+                                        <FaEdit />
+                                    </button>
+                                    <button
+                                        onClick={() => handleDelete(dish._id)}
+                                        className="p-2 bg-white text-red-500 rounded-full shadow-lg hover:bg-red-50 transition-colors"
+                                    >
+                                        <FaTrash />
+                                    </button>
                                 </div>
-                            )}
-                            <div className="absolute top-2 right-2 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                                <button onClick={() => openEditModal(dish)} className="p-2 bg-white text-blue-500 rounded-full shadow-lg hover:bg-blue-50">
-                                    <FaEdit />
-                                </button>
-                                <button onClick={() => handleDelete(dish._id)} className="p-2 bg-white text-red-500 rounded-full shadow-lg hover:bg-red-50">
-                                    <FaTrash />
-                                </button>
-                            </div>
-                            {dish.stockQuantity !== null && dish.stockQuantity <= dish.lowStockThreshold && (
-                                <div className="absolute bottom-2 left-2 bg-red-500 text-white text-xs px-2 py-1 rounded-full flex items-center gap-1">
-                                    <FaExclamationTriangle /> Low Stock: {dish.stockQuantity}
-                                </div>
-                            )}
-                        </div>
-                        <div className="p-4">
-                            <div className="flex justify-between items-start mb-2">
-                                <h3 className="font-bold text-gray-900 line-clamp-1">{dish.name}</h3>
-                                <span className="text-orange-600 font-bold">Rs. {dish.price}</span>
-                            </div>
-                            <p className="text-gray-500 text-sm line-clamp-2 mb-3">{dish.description}</p>
-                            <div className="flex flex-wrap gap-2">
-                                <span className="px-2 py-1 bg-gray-100 text-gray-600 text-xs rounded-md">{dish.category}</span>
-                                {dish.ingredients?.length > 0 && (
-                                    <span className="px-2 py-1 bg-green-50 text-green-600 text-xs rounded-md">{dish.ingredients.length} Ingredients</span>
+                                {dish.stockQuantity !== null && dish.stockQuantity <= dish.lowStockThreshold && (
+                                    <div className="absolute bottom-2 left-2 bg-red-500 text-white text-[10px] font-bold px-2 py-1 rounded-full flex items-center gap-1 shadow-sm">
+                                        <FaExclamationTriangle /> LOW STOCK: {dish.stockQuantity}
+                                    </div>
                                 )}
                             </div>
-                        </div>
-                    </motion.div>
-                ))}
+                            <div className="p-4">
+                                <div className="flex justify-between items-start mb-1">
+                                    <h3 className="font-bold text-gray-900 line-clamp-1">{dish.name}</h3>
+                                    <span className="text-orange-600 font-black text-sm whitespace-nowrap">Rs. {dish.price}</span>
+                                </div>
+                                <p className="text-gray-500 text-xs line-clamp-2 mb-4 h-8">{dish.description}</p>
+                                <div className="flex flex-wrap gap-2">
+                                    <span className="px-2 py-1 bg-gray-100 text-gray-600 text-[10px] font-bold uppercase rounded-md tracking-wider">{dish.category}</span>
+                                    {dish.ingredients?.length > 0 && (
+                                        <span className="px-2 py-1 bg-green-50 text-green-600 text-[10px] font-bold uppercase rounded-md tracking-wider">
+                                            {dish.ingredients.length} Ingredients
+                                        </span>
+                                    )}
+                                </div>
+                            </div>
+                        </motion.div>
+                    ))
+                )}
             </div>
 
             <AddDishModal
@@ -204,6 +219,8 @@ export default function DashboardMenu() {
                 onSubmit={handleModalSubmit}
                 editingDish={editingDish}
             />
-        </div >
+        </div>
+    );
+}
     );
 }

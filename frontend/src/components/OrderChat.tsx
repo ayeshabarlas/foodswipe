@@ -99,70 +99,72 @@ export default function OrderChat({ orderId, isOpen, onClose, userRole, userName
                                     <FaCommentDots size={20} />
                                 </div>
                                 <div>
-                                    <h3 className="font-bold text-sm">Order Chat</h3>
-                                    <p className="text-[10px] opacity-80 uppercase tracking-widest font-bold">
-                                        Active Support for Order #{orderId.slice(-6)}
+                                    <h3 className="font-bold text-base">Order Chat</h3>
+                                    <p className="text-[10px] opacity-90 uppercase tracking-widest font-black">
+                                        ACTIVE SUPPORT FOR ORDER #{orderId.slice(-6)}
                                     </p>
                                 </div>
                             </div>
                             <button
                                 onClick={onClose}
-                                className="w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center transition"
+                                className="w-8 h-8 rounded-full bg-white/20 hover:bg-white/30 flex items-center justify-center transition backdrop-blur-md"
                             >
                                 <FaTimes size={16} />
                             </button>
                         </div>
 
                         {/* Messages */}
-                        <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-gray-50 custom-scrollbar">
+                        <div className="flex-1 overflow-y-auto p-6 space-y-6 bg-white custom-scrollbar">
                             {messages.map((msg, idx) => (
                                 <div
                                     key={idx}
                                     className={`flex flex-col ${msg.sender === userRole ? 'items-end' : 'items-start'}`}
                                 >
                                     <div
-                                        className={`max-w-[85%] px-4 py-2.5 rounded-2xl text-sm shadow-sm ${msg.sender === userRole
+                                        className={`max-w-[75%] px-5 py-3 rounded-2xl text-sm font-medium shadow-sm ${msg.sender === userRole
                                             ? 'bg-orange-500 text-white rounded-tr-none'
-                                            : 'bg-white text-gray-800 border border-gray-100 rounded-tl-none'
+                                            : 'bg-gray-100 text-gray-800 rounded-tl-none'
                                             }`}
                                     >
-                                        <p className="font-medium">{msg.text}</p>
+                                        <p>{msg.text}</p>
                                     </div>
-                                    <div className="flex items-center gap-1.5 mt-1 px-1">
-                                        <span className="text-[9px] font-bold text-gray-400 uppercase">
-                                            {msg.sender === userRole ? 'You' : msg.senderName}
+                                    <div className="flex items-center gap-2 mt-1.5 px-1">
+                                        <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">
+                                            {msg.sender === userRole ? 'YOU' : msg.senderName.toUpperCase()}
                                         </span>
-                                        <span className="text-[9px] text-gray-400">•</span>
-                                        <span className="text-[9px] text-gray-400">{msg.timestamp}</span>
+                                        <span className="text-[10px] text-gray-300">•</span>
+                                        <span className="text-[10px] font-medium text-gray-400">{msg.timestamp}</span>
                                     </div>
                                 </div>
                             ))}
                             <div ref={messagesEndRef} />
                             {messages.length === 0 && (
-                                <div className="h-full flex flex-col items-center justify-center text-gray-400 space-y-2 opacity-50">
-                                    <FaCommentDots size={40} />
-                                    <p className="text-xs font-bold uppercase tracking-wider">No messages yet</p>
+                                <div className="h-full flex flex-col items-center justify-center text-gray-300 space-y-3">
+                                    <div className="w-16 h-16 bg-gray-50 rounded-full flex items-center justify-center">
+                                        <FaCommentDots size={32} />
+                                    </div>
+                                    <p className="text-xs font-bold uppercase tracking-widest">Start the conversation</p>
                                 </div>
                             )}
                         </div>
 
                         {/* Input */}
-                        <div className="p-4 bg-white border-t border-gray-100">
-                            <div className="flex gap-2">
+                        <div className="p-4 bg-white border-t border-gray-50 mb-2">
+                            <div className="flex gap-3 items-center bg-gray-50 rounded-2xl px-4 py-1.5 border border-gray-100 focus-within:ring-2 focus-within:ring-orange-500/10 focus-within:border-orange-500 transition-all">
                                 <input
                                     type="text"
                                     value={currentMessage}
                                     onChange={(e) => setCurrentMessage(e.target.value)}
                                     onKeyPress={(e) => e.key === 'Enter' && handleSendMessage()}
                                     placeholder="Type your message..."
-                                    className="flex-1 bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 transition-all"
+                                    className="flex-1 bg-transparent border-none py-3 text-sm focus:outline-none"
                                 />
                                 <button
                                     onClick={handleSendMessage}
                                     disabled={!currentMessage.trim()}
-                                    className="w-12 h-12 bg-orange-500 hover:bg-orange-600 disabled:opacity-50 disabled:hover:bg-orange-500 text-white rounded-xl flex items-center justify-center transition-all shadow-md active:scale-95"
+                                    className="w-10 h-10 bg-orange-500 hover:bg-orange-600 disabled:opacity-30 disabled:hover:bg-orange-500 text-white rounded-xl flex items-center justify-center transition-all shadow-md active:scale-90"
                                 >
-                                    <FaPaperPlane size={18} />
+                                    <FaPaperPlane size={16} />
                                 </button>
                             </div>
                         </div>

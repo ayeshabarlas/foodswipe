@@ -208,7 +208,7 @@ export default function RiderOrders({ riderId }: RiderOrdersProps) {
     };
 
     return (
-        <div className="flex flex-col h-full bg-gray-50 p-4 lg:p-6 text-[13px]">
+        <div className="flex flex-col h-screen bg-gray-50 p-4 lg:p-6 text-[13px] overflow-hidden">
             {/* Header */}
             <div className="flex items-center justify-between mb-6">
                 <h1 className="text-xl font-bold text-gray-900">Delivery Orders</h1>
@@ -413,17 +413,17 @@ function OrderCard({ order, riderId, onAccept, onPickup, onDeliver, onChat }: { 
 
             {/* Stats Grid */}
             <div className="grid grid-cols-3 gap-3 mb-4">
-                <div className="text-center p-3 bg-gray-50 rounded-xl">
-                    <p className="text-xs text-gray-500 mb-1 font-normal">Distance</p>
-                    <p className="font-semibold text-gray-900">{order.distanceKm || (Math.random() * 5 + 1).toFixed(1)} km</p>
+                <div className="text-center p-3 bg-orange-50 rounded-xl">
+                    <p className="text-[10px] text-gray-500 mb-1 font-bold uppercase tracking-wider">Distance</p>
+                    <p className="font-bold text-gray-900">{order.distanceKm || (Math.random() * 5 + 1).toFixed(1)} km</p>
                 </div>
-                <div className="text-center p-3 bg-green-50 rounded-xl">
-                    <p className="text-xs text-gray-500 mb-1 font-normal">Earnings</p>
-                    <p className="font-semibold text-green-600">Rs. {order.netRiderEarning || (order.status === 'Delivered' ? '185' : '---')}</p>
+                <div className="text-center p-3 bg-green-50 rounded-xl border border-green-100">
+                    <p className="text-[10px] text-gray-600 mb-1 font-bold uppercase tracking-wider">Earnings</p>
+                    <p className="font-black text-green-600 text-base">Rs. {order.netRiderEarning || (order.status === 'Delivered' ? '185' : '---')}</p>
                 </div>
                 <div className="text-center p-3 bg-gray-50 rounded-xl">
-                    <p className="text-xs text-gray-500 mb-1 font-normal">Items</p>
-                    <p className="font-semibold text-gray-900">{order.items?.length || order.orderItems?.length || '---'}</p>
+                    <p className="text-[10px] text-gray-500 mb-1 font-bold uppercase tracking-wider">Items</p>
+                    <p className="font-bold text-gray-900">{order.items?.length || order.orderItems?.length || '---'}</p>
                 </div>
             </div>
 
