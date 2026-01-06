@@ -37,16 +37,23 @@ export default function DashboardMenu() {
     const fetchDishes = async () => {
         try {
             const userInfo = JSON.parse(localStorage.getItem('userInfo') || '{}');
-            if (!userInfo.token) return;
+            if (!userInfo.token) {
+                console.warn('DashboardMenu: No auth token found in localStorage');
+                return;
+            }
             const config = { headers: { Authorization: `Bearer ${userInfo.token}` } };
 
+            console.log('DashboardMenu: Fetching restaurant info...');
             const restaurantRes = await axios.get(`${API_BASE_URL}/api/restaurants/my-restaurant`, config);
+            console.log('DashboardMenu: Restaurant info received:', restaurantRes.data);
             setRestaurant(restaurantRes.data);
 
+            console.log('DashboardMenu: Fetching dishes...');
             const response = await axios.get(`${API_BASE_URL}/api/dishes/my-dishes`, config);
+            console.log('DashboardMenu: Dishes received:', response.data);
             setDishes(response.data);
-        } catch (error) {
-            console.error('Error fetching dishes:', error);
+        } catch (error: any) {
+            console.error('DashboardMenu: Error fetching data:', error.response?.data || error.message);
         }
     };
 

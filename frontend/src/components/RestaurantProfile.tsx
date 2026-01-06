@@ -47,6 +47,7 @@ interface Restaurant {
     _id: string;
     name: string;
     logo: string;
+    coverImage?: string;
     rating: number;
     address: string;
     contact: string;
@@ -281,7 +282,7 @@ export default function RestaurantProfile({ restaurant: initialRestaurant, onBac
             animate={{ x: 0 }}
             exit={{ x: '100%' }}
             transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-            className="fixed inset-0 bg-gray-50 z-50 overflow-y-auto flex flex-col"
+            className="fixed inset-0 bg-gray-50 z-50 overflow-y-auto flex flex-col h-[100dvh]"
         >
             {/* Header - Dark Theme */}
             <div className="bg-[#1a1a1a] p-4 flex items-center justify-between sticky top-0 z-20 shadow-md">
@@ -307,29 +308,17 @@ export default function RestaurantProfile({ restaurant: initialRestaurant, onBac
             </div>
 
             {/* Banner Section */}
-            <div className="relative h-56 sm:h-72 w-full overflow-hidden bg-gray-900">
+            <div className="relative h-64 sm:h-80 w-full overflow-hidden bg-gray-900 flex-shrink-0">
                 <img
-                    src={getImageUrl(restaurantData.logo)}
+                    src={getImageUrl(restaurantData.coverImage || restaurantData.logo)}
                     alt="Restaurant Banner"
-                    className="w-full h-full object-cover opacity-60"
+                    className="w-full h-full object-cover"
                     onError={(e) => {
                         const target = e.target as HTMLImageElement;
-                        target.src = getImageFallback('logo');
+                        target.src = 'https://images.unsplash.com/photo-1504674900247-0877df9cc836?q=80&w=1470&auto=format&fit=crop';
                     }}
                 />
-                {/* Logo Overlay */}
-                <div className="absolute inset-0 flex items-center justify-center bg-black/20">
-                    <img 
-                        src={getImageUrl(restaurantData.logo)} 
-                        className="w-32 h-32 object-contain drop-shadow-2xl"
-                        alt=""
-                        onError={(e) => {
-                            const target = e.target as HTMLImageElement;
-                            target.src = getImageFallback('logo');
-                        }}
-                    />
-                </div>
-                <div className="absolute inset-0 bg-gradient-to-t from-white via-transparent to-transparent" />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
                 
                 {/* Back Button Overlay */}
                 <button 
@@ -338,100 +327,105 @@ export default function RestaurantProfile({ restaurant: initialRestaurant, onBac
                 >
                     <FaTimes />
                 </button>
-            </div>
 
-            {/* Restaurant Info Section */}
-            <div className="bg-white px-6 pb-2 -mt-10 relative z-10 rounded-t-[32px]">
-                <div className="flex items-start gap-4 mb-4 pt-4">
-                    <div className="relative -mt-16">
-                        <img
-                            src={getImageUrl(restaurantData.logo)}
-                            alt={restaurantData.name}
-                            className="w-28 h-28 rounded-3xl object-cover shadow-2xl border-4 border-white bg-white"
-                            onError={(e) => {
-                                const target = e.target as HTMLImageElement;
-                                target.src = getImageFallback('logo');
-                            }}
-                        />
-                        {/* Status indicator on logo */}
-                        <div className={`absolute bottom-1 right-1 w-6 h-6 rounded-full border-4 border-white ${
-                            restaurantData.storeStatus === 'open' ? 'bg-green-500' : 
-                            restaurantData.storeStatus === 'busy' ? 'bg-orange-500' : 'bg-gray-400'
-                        }`} />
-                    </div>
-                        {(restaurantData.storeStatus === 'closed' || !restaurantData.isActive) && (
-                            <div className="absolute inset-0 bg-black/40 rounded-2xl flex items-center justify-center">
-                                <span className="bg-red-500 text-white text-[10px] font-bold px-2 py-1 rounded-lg uppercase tracking-wider">Closed</span>
+                {/* Restaurant Basic Info Overlay */}
+                <div className="absolute bottom-12 left-8 right-8 z-10">
+                    <div className="flex items-end gap-5">
+                        <div className="relative flex-shrink-0">
+                            <img
+                                src={getImageUrl(restaurantData.logo)}
+                                alt={restaurantData.name}
+                                className="w-24 h-24 rounded-2xl object-cover border-4 border-white shadow-2xl bg-white"
+                                onError={(e) => {
+                                    const target = e.target as HTMLImageElement;
+                                    target.src = getImageFallback('logo');
+                                }}
+                            />
+                            <div className={`absolute -bottom-1 -right-1 w-6 h-6 rounded-full border-4 border-white ${
+                                restaurantData.storeStatus === 'open' ? 'bg-green-500' : 
+                                restaurantData.storeStatus === 'busy' ? 'bg-orange-500' : 'bg-gray-400'
+                            }`} />
+                        </div>
+                        <div className="flex-1 pb-1">
+                            <h1 className="text-2xl font-bold text-white mb-2 drop-shadow-md">{restaurantData.name}</h1>
+                            <div className="flex items-center gap-4">
+                                <div className="flex items-center gap-1.5 bg-black/40 backdrop-blur-md px-3 py-1 rounded-xl border border-white/10">
+                                    <FaStar className="text-yellow-400" size={14} />
+                                    <span className="text-white font-black text-sm">
+                                        {reviews.length > 0
+                                            ? (reviews.reduce((acc, r) => acc + r.rating, 0) / reviews.length).toFixed(1)
+                                            : (restaurantData.rating > 0 ? restaurantData.rating.toFixed(1) : 'New')}
+                                    </span>
+                                </div>
+                                <div className="text-white/90 text-sm font-bold drop-shadow-sm bg-black/20 backdrop-blur-sm px-3 py-1 rounded-xl">
+                                    {restaurantData.cuisineTypes && restaurantData.cuisineTypes.length > 0
+                                        ? restaurantData.cuisineTypes.join(', ')
+                                        : (restaurantData.cuisine || 'Pakistani')}
+                                </div>
                             </div>
-                        )}
-                        {(restaurantData.storeStatus !== 'closed' && restaurantData.isActive) && (
-                            <div className={`absolute bottom-1 right-1 px-2 py-0.5 rounded-full text-[9px] font-bold uppercase border-2 border-white shadow-sm ${restaurantData.storeStatus === 'open' ? 'bg-green-500 text-white' : 'bg-yellow-500 text-white'
-                                }`}>
-                                {restaurantData.storeStatus || 'Open'}
-                            </div>
-                        )}
-                    </div>
-                    <div className="flex-1 pt-2">
-                        <h1 className="text-xl font-bold text-gray-900 mb-0.5">{restaurantData.name}</h1>
-                        <p className="text-gray-500 text-sm mb-2 font-medium">
-                            {restaurantData.cuisineTypes && restaurantData.cuisineTypes.length > 0
-                                ? restaurantData.cuisineTypes.join(', ')
-                                : (restaurantData.cuisine || 'Pakistani')}
-                        </p>
-                        <div className="flex items-center gap-1">
-                            <FaStar className="text-yellow-400" size={14} />
-                            <span className="text-gray-900 font-bold text-sm">
-                                {reviews.length > 0
-                                    ? (reviews.reduce((acc, r) => acc + r.rating, 0) / reviews.length).toFixed(1)
-                                    : (restaurantData.rating > 0 ? restaurantData.rating.toFixed(1) : 'New')}
-                            </span>
-                            <span className="text-gray-400 text-sm mx-1">•</span>
-                            <button
-                                onClick={() => setActiveTab('reviews')}
-                                className="text-gray-500 text-sm hover:text-primary transition font-medium"
-                            >
-                                {reviewCount} reviews
-                            </button>
                         </div>
                     </div>
                 </div>
+            </div>
 
-                <div className="flex items-center gap-6 text-sm text-gray-600 mb-6 font-medium">
-                    <div className="flex items-center gap-2">
-                        <FaMapMarkerAlt className="text-gray-400" size={14} />
-                        <span>{distance}</span>
+            {/* Stats Bar */}
+            <div className="bg-white px-4 sm:px-8 py-5 flex items-center justify-between border-b border-gray-100 shadow-sm relative z-20 flex-shrink-0">
+                <div className="flex items-center gap-4 sm:gap-12 max-w-[70%] overflow-hidden">
+                    <div className="flex flex-col min-w-fit">
+                        <span className="text-gray-400 text-[10px] uppercase font-black tracking-widest mb-1 truncate">Distance</span>
+                        <div className="flex items-center gap-1.5 text-gray-900 font-black">
+                            <FaMapMarkerAlt className="text-primary shrink-0" size={14} />
+                            <span className="text-xs sm:text-sm truncate">{distance}</span>
+                        </div>
                     </div>
-                    <div className="flex items-center gap-2">
-                        <FaClock className="text-gray-400" size={14} />
-                        <span>{restaurantData.deliveryTime || '20-30 min'}</span>
+                    <div className="h-8 w-px bg-gray-100 shrink-0" />
+                    <div className="flex flex-col min-w-fit">
+                        <span className="text-gray-400 text-[10px] uppercase font-black tracking-widest mb-1 truncate">Delivery</span>
+                        <div className="flex items-center gap-1.5 text-gray-900 font-black">
+                            <FaClock className="text-primary shrink-0" size={14} />
+                            <span className="text-xs sm:text-sm truncate">{restaurantData.deliveryTime || '20-30 min'}</span>
+                        </div>
                     </div>
                 </div>
+                <button 
+                    onClick={() => {
+                        setActiveMainTab('menu');
+                        setActiveTab('reviews');
+                    }}
+                    className="flex flex-col items-end group shrink-0"
+                >
+                    <span className="text-gray-400 text-[10px] uppercase font-black tracking-widest mb-1">Reviews</span>
+                    <span className="text-primary font-black text-xs sm:text-sm group-hover:underline">{reviewCount} reviews</span>
+                </button>
+            </div>
 
+            {/* Main Content Area */}
+            <div className="flex-1 bg-white">
                 {/* Main Tabs */}
-                <div className="flex border-b border-gray-100 mb-4">
+                <div className="flex px-8 pt-4 border-b border-gray-100">
                     <button
                         onClick={() => setActiveMainTab('videos')}
-                        className={`flex-1 pb-3 text-base font-bold transition-all relative ${activeMainTab === 'videos' ? 'text-gray-900' : 'text-gray-400'}`}
+                        className={`pb-3 pr-8 text-sm font-bold transition-all relative ${activeMainTab === 'videos' ? 'text-gray-900' : 'text-gray-400'}`}
                     >
-                        Dish Videos
+                        DISH VIDEOS
                         {activeMainTab === 'videos' && (
-                            <motion.div layoutId="mainTabIndicator" className="absolute bottom-0 left-0 right-0 h-0.5 bg-gray-900" />
+                            <motion.div layoutId="mainTabIndicator" className="absolute bottom-0 left-0 right-8 h-0.5 bg-primary" />
                         )}
                     </button>
                     <button
                         onClick={() => setActiveMainTab('menu')}
-                        className={`flex-1 pb-3 text-base font-bold transition-all relative ${activeMainTab === 'menu' ? 'text-gray-900' : 'text-gray-400'}`}
+                        className={`pb-3 px-8 text-sm font-bold transition-all relative ${activeMainTab === 'menu' ? 'text-gray-900' : 'text-gray-400'}`}
                     >
-                        Menu
+                        MENU
                         {activeMainTab === 'menu' && (
-                            <motion.div layoutId="mainTabIndicator" className="absolute bottom-0 left-0 right-0 h-0.5 bg-gray-900" />
+                            <motion.div layoutId="mainTabIndicator" className="absolute bottom-0 left-8 right-8 h-0.5 bg-primary" />
                         )}
                     </button>
                 </div>
 
             {/* Dish Videos Tab Content */}
             {activeMainTab === 'videos' && (
-                <div className="flex-1 bg-white px-4 pb-20 overflow-y-auto no-scrollbar">
+                <div className="bg-white px-4 pb-20">
                     <div className="grid grid-cols-2 gap-3 py-4">
                         {menuSections.flatMap(s => s.items).filter(dish => dish.videoUrl).length > 0 ? (
                             menuSections.flatMap(s => s.items).filter(dish => dish.videoUrl).map((dish) => (
@@ -612,7 +606,7 @@ export default function RestaurantProfile({ restaurant: initialRestaurant, onBac
 
 
                     {/* Content Area */}
-                    <div className="flex-1 bg-gray-50 p-4 overflow-y-auto no-scrollbar" onScroll={(e) => {
+                    <div className="flex-1 bg-gray-50 p-4" onScroll={(e) => {
                         // Optional: Update active tab on scroll
                     }}>
                         {activeTab === 'reviews' ? (

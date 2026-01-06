@@ -208,52 +208,141 @@ export default function RiderOrders({ riderId }: RiderOrdersProps) {
     };
 
     return (
-        <div className="flex flex-col h-screen bg-gray-50 p-4 lg:p-6 text-[13px] overflow-hidden">
-            {/* Header */}
-            <div className="flex items-center justify-between mb-6">
-                <h1 className="text-xl font-bold text-gray-900">Delivery Orders</h1>
-                <div className="flex gap-2">
-                    <button 
-                        onClick={() => setFilter('active')}
-                        className={`px-4 py-1.5 rounded-lg text-xs font-bold transition ${filter === 'active' ? 'bg-orange-500 text-white shadow-md shadow-orange-500/20' : 'bg-white text-gray-600 border border-gray-100'}`}
-                    >
-                        Active
-                    </button>
-                    <button 
-                        onClick={() => setFilter('completed')}
-                        className={`px-4 py-1.5 rounded-lg text-xs font-bold transition ${filter === 'completed' ? 'bg-orange-500 text-white shadow-md shadow-orange-500/20' : 'bg-white text-gray-600 border border-gray-100'}`}
-                    >
-                        History
-                    </button>
+        <div className="flex flex-col h-screen bg-gray-50 text-[13px] overflow-hidden relative">
+            {/* Header - Fixed at top */}
+            <div className="bg-white p-4 lg:p-6 shadow-sm z-10 flex-shrink-0">
+                <div className="flex items-center justify-between">
+                    <h1 className="text-xl font-bold text-gray-900">Delivery Orders</h1>
+                    <div className="flex gap-2">
+                        <button 
+                            onClick={() => setFilter('active')}
+                            className={`px-4 py-1.5 rounded-lg text-xs font-bold transition ${filter === 'active' ? 'bg-orange-500 text-white shadow-md shadow-orange-500/20' : 'bg-white text-gray-600 border border-gray-100'}`}
+                        >
+                            Active
+                        </button>
+                        <button 
+                            onClick={() => setFilter('completed')}
+                            className={`px-4 py-1.5 rounded-lg text-xs font-bold transition ${filter === 'completed' ? 'bg-orange-500 text-white shadow-md shadow-orange-500/20' : 'bg-white text-gray-600 border border-gray-100'}`}
+                        >
+                            History
+                        </button>
+                    </div>
                 </div>
             </div>
 
-            {/* Active Delivery Map */}
-            {activeDelivery && (
-                <div className="mb-6">
-                    <h2 className="font-bold text-lg mb-2">Current Delivery</h2>
-                    <OrderTracking order={activeDelivery} userRole="user" />
-                </div>
-            )}
+            {/* Scrollable Content Area */}
+            <div className="flex-1 overflow-y-auto p-4 lg:p-6 space-y-6 pb-32">
+                {/* Active Delivery Tracking Card - Screenshot Style */}
+                {activeDelivery && (
+                    <div className="bg-white rounded-3xl shadow-xl overflow-hidden border border-gray-100 animate-in fade-in slide-in-from-bottom-4 duration-500">
+                        <div className="p-6">
+                            <div className="flex justify-between items-start mb-6">
+                                <div>
+                                    <div className="flex items-center gap-2 text-orange-500 mb-1">
+                                        <FaBox size={18} />
+                                        <h2 className="text-xl font-black tracking-tight">Tracking Order</h2>
+                                    </div>
+                                    <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">ORDER #{activeDelivery.orderNumber || activeDelivery._id.slice(-7).toUpperCase()}</p>
+                                </div>
+                                <div className="text-right">
+                                    <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">ESTIMATED ARRIVAL</p>
+                                    <p className="text-2xl font-black text-green-500">25-35 mins</p>
+                                </div>
+                            </div>
 
-            <div className="flex-1 overflow-y-auto space-y-4 pr-1 custom-scrollbar">
-                {filteredOrders.map(order => (
-                    <OrderCard 
-                        key={order._id} 
-                        order={order} 
-                        riderId={riderId} 
-                        onAccept={handleAcceptOrder} 
-                        onPickup={handlePickupOrder}
-                        onDeliver={handleDeliverOrder}
-                        onChat={handleChat}
-                    />
-                ))}
-                {filteredOrders.length === 0 && (
-                    <div className="flex flex-col items-center justify-center py-20 text-gray-400">
-                        <FaBox size={40} className="mb-4 opacity-20" />
-                        <p className="font-bold uppercase tracking-widest text-xs">No orders found</p>
+                            {/* Progress Steps */}
+                            <div className="relative flex justify-between items-center mb-12 px-2">
+                                <div className="absolute left-6 right-6 h-1 bg-gray-100 top-[14px] z-0" />
+                                <div 
+                                    className="absolute left-6 h-1 bg-orange-500 top-[14px] z-0 transition-all duration-1000" 
+                                    style={{ 
+                                        width: activeDelivery.status === 'Delivered' ? '100%' : 
+                                               activeDelivery.status === 'Picked Up' ? '66.6%' : 
+                                               activeDelivery.status === 'Arrived' ? '33.3%' : '0%' 
+                                    }}
+                                />
+                                
+                                {[
+                                    { label: 'ACCEPTED', status: 'Confirmed' },
+                                    { label: 'AT STORE', status: 'Arrived' },
+                                    { label: 'PICKED UP', status: 'Picked Up' },
+                                    { label: 'DELIVERED', status: 'Delivered' }
+                                ].map((step, idx) => {
+                                    const statuses = ['Confirmed', 'Preparing', 'Ready', 'OnTheWay', 'Arrived', 'Picked Up', 'Delivered'];
+                                    const currentIdx = statuses.indexOf(activeDelivery.status);
+                                    const stepIdx = statuses.indexOf(step.status);
+                                    const isCompleted = currentIdx >= stepIdx;
+                                    
+                                    return (
+                                        <div key={step.label} className="relative z-10 flex flex-col items-center">
+                                            <div className={`w-7 h-7 rounded-full flex items-center justify-center border-4 border-white shadow-sm transition-colors duration-500 ${isCompleted ? 'bg-orange-500 text-white' : 'bg-gray-100 text-gray-400'}`}>
+                                                {isCompleted ? <FaCheckCircle size={10} /> : <div className="w-1.5 h-1.5 rounded-full bg-current" />}
+                                            </div>
+                                            <span className={`absolute -bottom-6 whitespace-nowrap text-[8px] font-black tracking-tighter ${isCompleted ? 'text-orange-500' : 'text-gray-300'}`}>
+                                                {step.label}
+                                            </span>
+                                        </div>
+                                    );
+                                })}
+                            </div>
+
+                            {/* Map Area */}
+                            <div className="rounded-2xl overflow-hidden h-72 border border-gray-100 shadow-inner">
+                                <OrderTracking order={activeDelivery} userRole="rider" />
+                            </div>
+                        </div>
                     </div>
                 )}
+
+                {/* Orders List */}
+                <div className="space-y-4">
+                    <h3 className="text-sm font-black text-gray-400 uppercase tracking-widest px-2">
+                        {filter === 'active' ? 'Active Tasks' : 'Delivery History'}
+                    </h3>
+                    {filteredOrders.map(order => (
+                        <OrderCard 
+                            key={order._id} 
+                            order={order} 
+                            riderId={riderId} 
+                            onAccept={handleAcceptOrder} 
+                            onPickup={handlePickupOrder}
+                            onDeliver={handleDeliverOrder}
+                            onChat={handleChat}
+                        />
+                    ))}
+                    {filteredOrders.length === 0 && (
+                        <div className="flex flex-col items-center justify-center py-20 text-gray-400 bg-white rounded-3xl border border-dashed border-gray-200">
+                            <FaBox size={40} className="mb-4 opacity-10" />
+                            <p className="font-bold uppercase tracking-widest text-[10px]">No orders found</p>
+                        </div>
+                    )}
+                </div>
+            </div>
+
+            {/* Bottom Navigation - Fixed like in screenshot */}
+            <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-100 px-6 py-3 flex justify-between items-center z-50 shadow-[0_-4px_20px_rgba(0,0,0,0,03)]">
+                <div className="flex flex-col items-center gap-1 text-gray-400">
+                    <FaBox size={18} />
+                    <span className="text-[9px] font-bold uppercase tracking-tighter">Home</span>
+                </div>
+                <div className="flex flex-col items-center gap-1 text-gray-400">
+                    <FaCheckCircle size={18} />
+                    <span className="text-[9px] font-bold uppercase tracking-tighter">Earnings</span>
+                </div>
+                <div className="flex flex-col items-center gap-1 text-orange-500">
+                    <div className="bg-orange-50 p-2 rounded-xl">
+                        <FaBox size={18} />
+                    </div>
+                    <span className="text-[9px] font-bold uppercase tracking-tighter">Orders</span>
+                </div>
+                <div className="flex flex-col items-center gap-1 text-gray-400">
+                    <FaCommentDots size={18} />
+                    <span className="text-[9px] font-bold uppercase tracking-tighter">Support</span>
+                </div>
+                <div className="flex flex-col items-center gap-1 text-gray-400">
+                    <FaCheckCircle size={18} />
+                    <span className="text-[9px] font-bold uppercase tracking-tighter">Profile</span>
+                </div>
             </div>
 
             <OrderChat 

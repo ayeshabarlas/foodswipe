@@ -148,8 +148,8 @@ export default function DishDetails({ dish, onClose }: DishDetailsProps) {
                         <span className="text-2xl font-bold text-primary">Rs. {currentPrice}</span>
                         <div className="flex items-center gap-1">
                             <FaStar className="text-yellow-400" size={16} />
-                            <span className="text-gray-900 font-bold">{dish.restaurant.rating || 4.8}</span>
-                            <span className="text-gray-500 text-sm">({reviews.length > 0 ? reviews.length : 234})</span>
+                            <span className="text-gray-900 font-bold">{dish.restaurant.rating || 'New'}</span>
+                            <span className="text-gray-500 text-sm">({reviews.length})</span>
                         </div>
                     </div>
 
@@ -261,9 +261,10 @@ export default function DishDetails({ dish, onClose }: DishDetailsProps) {
 
                 <button
                     onClick={handleAddToCart}
-                    className="flex-1 py-3 bg-primary hover:bg-primary-dark text-white font-bold rounded-full shadow-lg shadow-orange-500/30 transition flex items-center justify-center gap-2"
+                    className="flex-1 bg-gradient-to-r from-orange-500 to-red-600 text-white font-bold py-3.5 rounded-2xl flex items-center justify-center gap-2 shadow-lg shadow-orange-500/20 active:scale-95 transition-all"
                 >
-                    Add to Cart - Rs. {(currentPrice * quantity).toFixed(0)}
+                    <FaShoppingCart />
+                    Add to Cart • Rs. {(currentPrice * quantity).toLocaleString()}
                 </button>
             </div>
         </motion.div>

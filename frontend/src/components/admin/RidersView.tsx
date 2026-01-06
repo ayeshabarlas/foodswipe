@@ -159,7 +159,7 @@ export default function RidersView() {
 
                 <div className="flex justify-between items-center mb-4">
                     <div>
-                        <h2 className="text-base font-bold text-gray-900">{selectedRider.fullName || selectedRider.user?.name}</h2>
+                        <h2 className="text-base font-bold text-gray-900">{selectedRider.user?.name || selectedRider.fullName}</h2>
                         <p className="text-[9px] text-gray-400 uppercase tracking-wider font-bold">Rider Profile & Performance</p>
                     </div>
                     <div className="flex gap-1.5">
@@ -182,7 +182,7 @@ export default function RidersView() {
                         </div>
                         <div>
                             <div className="flex items-center gap-2">
-                                <span className="font-bold text-sm">{selectedRider.fullName || selectedRider.user?.name}</span>
+                                <span className="font-bold text-sm">{selectedRider.user?.name || selectedRider.fullName}</span>
                                 <span className="flex items-center gap-1 text-[9px] bg-white/20 px-1.5 py-0.5 rounded-full font-bold uppercase tracking-tighter">
                                     <div className={`w-1 h-1 rounded-full ${selectedRider.isOnline ? 'bg-white animate-pulse' : 'bg-gray-200'}`}></div>
                                     {selectedRider.isOnline ? 'Online' : 'Offline'}
@@ -430,7 +430,7 @@ export default function RidersView() {
                                     <td className="px-6 py-3">
                                         <div className="text-xs">
                                             <div className="flex items-center gap-2">
-                                                <p className="font-bold text-gray-800">{rider.fullName || rider.user?.name || 'Unknown User'}</p>
+                                                <p className="font-bold text-gray-800">{rider.user?.name || rider.fullName || 'Unknown User'}</p>
                                                 <span className="bg-green-100 text-green-700 text-[10px] px-1.5 py-0.5 rounded-full font-bold">FIXED</span>
                                             </div>
                                             <p className="text-[10px] text-gray-500">{rider.user?.phone || 'No Phone'}</p>

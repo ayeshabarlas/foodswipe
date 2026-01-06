@@ -215,22 +215,23 @@ const VideoCard = ({
                         loop
                         muted
                         playsInline
+                        poster={getImageUrl(dish.imageUrl)}
                         onError={(e) => {
                             console.error('Video error:', dish.videoUrl);
                             const target = e.target as HTMLVideoElement;
-                            target.style.display = 'none';
+                            // target.style.display = 'none'; // Don't hide, poster will show
                         }}
                     />
-                ) : null}
-                <img
-                    src={getImageUrl(dish.imageUrl) || getImageFallback('dish')}
-                    alt={dish.name}
-                    className="w-full h-full object-cover"
-                    onError={(e) => {
-                        (e.target as HTMLImageElement).src = getImageFallback('dish');
-                    }}
-                    style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', objectFit: 'cover', zIndex: -1 }}
-                />
+                ) : (
+                    <img
+                        src={getImageUrl(dish.imageUrl) || getImageFallback('dish')}
+                        alt={dish.name}
+                        className="w-full h-full object-cover"
+                        onError={(e) => {
+                            (e.target as HTMLImageElement).src = getImageFallback('dish');
+                        }}
+                    />
+                )}
             </div>
 
             <div className="absolute top-20 left-4 z-30 pointer-events-auto flex flex-col items-start gap-2">

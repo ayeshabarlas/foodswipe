@@ -79,6 +79,7 @@ export default function AddDishModal({ isOpen, onClose, onSubmit, editingDish }:
     const [drinks, setDrinks] = useState<Drink[]>(editingDish?.drinks || []);
     const [combos, setCombos] = useState<Combo[]>(editingDish?.combos || []);
     const [uploading, setUploading] = useState(false);
+    const [uploadProgress, setUploadProgress] = useState(0);
 
     const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>, field: 'imageUrl' | 'videoUrl') => {
         const file = e.target.files?.[0];
@@ -88,24 +89,48 @@ export default function AddDishModal({ isOpen, onClose, onSubmit, editingDish }:
         uploadData.append('file', file);
 
         setUploading(true);
+        setUploadProgress(0);
         try {
             const userInfo = JSON.parse(localStorage.getItem('userInfo') || '{}');
+            const token = userInfo.token;
+            
+            if (!token) {
+                alert('Session expired. Please login again.');
+                return;
+            }
+
+            // Check file size (100MB limit for videos, 10MB for images)
+            const maxSize = field === 'videoUrl' ? 100 * 1024 * 1024 : 10 * 1024 * 1024;
+            if (file.size > maxSize) {
+                alert(`File is too large. Max size is ${field === 'videoUrl' ? '100MB' : '10MB'}`);
+                return;
+            }
+
             const config = {
                 headers: {
                     'Content-Type': 'multipart/form-data',
-                    Authorization: `Bearer ${userInfo.token}`,
+                    Authorization: `Bearer ${token}`,
                 },
+                onUploadProgress: (progressEvent: any) => {
+                    const percentCompleted = Math.round((progressEvent.loaded * 100) / progressEvent.total);
+                    setUploadProgress(percentCompleted);
+                }
             };
 
             const { data } = await axios.post(`${API_BASE_URL}/api/upload`, uploadData, config);
-            // Save relative path to DB, getImageUrl will handle the rest
-            setFormData(prev => ({ ...prev, [field]: data.imageUrl }));
+            
+            if (data && data.imageUrl) {
+                setFormData(prev => ({ ...prev, [field]: data.imageUrl }));
+            } else {
+                throw new Error('Invalid response from server');
+            }
         } catch (error: any) {
             console.error('File upload error:', error);
-            const msg = error.response?.data?.message || 'Failed to upload file';
-            alert(msg);
+            const msg = error.response?.data?.message || error.message || 'Failed to upload file';
+            alert(`Upload Error: ${msg}`);
         } finally {
             setUploading(false);
+            setUploadProgress(0);
         }
     };
 
@@ -574,28 +599,44 @@ export default function AddDishModal({ isOpen, onClose, onSubmit, editingDish }:
                                             accept="video/*"
                                             onChange={(e) => handleFileUpload(e, 'videoUrl')}
                                             className="hidden"
+                                            disabled={uploading}
                                         />
                                         <label
                                             htmlFor="dish-video"
-                                            className="flex items-center w-full px-2 py-2 border border-blue-100 rounded-xl cursor-pointer hover:bg-gray-50 transition"
+                                            className={`flex items-center w-full px-2 py-2 border border-blue-100 rounded-xl cursor-pointer hover:bg-gray-50 transition ${uploading ? 'opacity-50 cursor-not-allowed' : ''}`}
                                         >
                                             <span className="bg-orange-50 text-orange-600 font-bold px-4 py-2 rounded-lg text-sm mr-4">
-                                                Choose File
+                                                {uploading ? 'Uploading...' : 'Choose Video'}
                                             </span>
                                             <span className="text-gray-600 text-sm truncate">
-                                                {formData.videoUrl ? formData.videoUrl.split('/').pop() : 'No file chosen'}
+                                                {formData.videoUrl ? formData.videoUrl.split('/').pop() : 'No video chosen'}
                                             </span>
                                         </label>
                                     </div>
-                                    <p className="text-xs text-gray-400 mt-2">Supported formats: MP4, MOV, AVI (Max 50MB)</p>
+                                    {uploading && (
+                                        <div className="mt-4">
+                                            <div className="flex justify-between text-xs text-gray-500 mb-1">
+                                                <span>Uploading...</span>
+                                                <span>{uploadProgress}%</span>
+                                            </div>
+                                            <div className="w-full h-1.5 bg-gray-100 rounded-full overflow-hidden">
+                                                <motion.div 
+                                                    initial={{ width: 0 }}
+                                                    animate={{ width: `${uploadProgress}%` }}
+                                                    className="h-full bg-orange-500"
+                                                />
+                                            </div>
+                                        </div>
+                                    )}
+                                    <p className="text-xs text-gray-400 mt-2">Supported formats: MP4, WebM, MOV (Max 100MB)</p>
                                 </div>
                                 <div className="col-span-3">
-                                    <div className="w-full aspect-square bg-black rounded-xl border border-gray-200 flex items-center justify-center overflow-hidden relative">
+                                    <div className="w-full aspect-square bg-gray-50 rounded-xl border border-gray-200 flex items-center justify-center overflow-hidden relative">
                                         {formData.videoUrl ? (
                                             <video src={getImageUrl(formData.videoUrl)} className="w-full h-full object-cover" />
                                         ) : (
-                                            <div className="text-white/30 flex flex-col items-center">
-                                                <span className="text-xs">No Video</span>
+                                            <div className="text-gray-300 flex flex-col items-center">
+                                                <span className="text-xs">Preview</span>
                                             </div>
                                         )}
                                     </div>
