@@ -4,8 +4,8 @@ import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { FaCheckCircle, FaTimesCircle, FaMapMarkerAlt, FaFileImage, FaEye, FaSearch, FaFilter, FaStar, FaStore, FaClock, FaDollarSign, FaExternalLinkAlt } from 'react-icons/fa';
 import axios from 'axios';
-import { io } from 'socket.io-client';
-import { API_BASE_URL, SOCKET_URL } from '../../utils/config';
+import { API_BASE_URL } from '../../utils/config';
+import { getSocket } from '../../utils/socket';
 import { getImageUrl, getImageFallback } from '../../utils/imageUtils';
 
 interface Restaurant {
@@ -47,37 +47,23 @@ export default function RestaurantsView() {
     useEffect(() => {
         fetchRestaurants();
 
-        // Join admin room for real-time updates
-        const userInfo = localStorage.getItem('userInfo');
-        let socket: any;
+        // Use global socket for real-time updates
+        const socket = getSocket();
+        
+        if (socket) {
+            const handleUpdate = () => {
+                console.log('Restaurant update received in RestaurantsView, refreshing...');
+                fetchRestaurants();
+            };
 
-        if (userInfo) {
-            try {
-                const user = JSON.parse(userInfo);
-                socket = io(SOCKET_URL);
-                
-                socket.on('connect', () => {
-                    console.log('Connected to socket for restaurant updates');
-                    socket.emit('join', { userId: user._id, role: 'admin' });
-                });
+            socket.on('restaurant_registered', handleUpdate);
+            socket.on('restaurant_updated', handleUpdate);
 
-                socket.on('restaurant_registered', (newRestaurant: any) => {
-                    console.log('New restaurant registered:', newRestaurant);
-                    fetchRestaurants();
-                });
-
-                socket.on('restaurant_updated', () => {
-                    console.log('Restaurant updated, refreshing...');
-                    fetchRestaurants();
-                });
-            } catch (e) {
-                console.error('Error setting up socket in RestaurantsView:', e);
-            }
+            return () => {
+                socket.off('restaurant_registered', handleUpdate);
+                socket.off('restaurant_updated', handleUpdate);
+            };
         }
-
-        return () => {
-            if (socket) socket.disconnect();
-        };
     }, []);
 
     const fetchRestaurants = async () => {

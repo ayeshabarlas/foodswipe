@@ -205,7 +205,7 @@ export default function RiderEarnings({ riderId }: RiderEarningsProps) {
                                     <p className="text-xs text-gray-500">{tx.time}</p>
                                 </div>
                             </div>
-                            <p className="font-bold text-gray-900">+Rs. {tx.amount}</p>
+                            <p className="font-bold text-gray-900">+Rs. {tx.amount.toLocaleString()}</p>
                         </div>
                     ))}
                     {transactions.length === 0 && (

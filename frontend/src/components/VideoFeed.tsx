@@ -13,7 +13,7 @@ import dynamic from 'next/dynamic';
 const OrderTracking = dynamic(() => import('./OrderTracking'), { ssr: false });
 import LocationPermission from './LocationPermission';
 import ProfileModal from './ProfileModal';
-import { getImageUrl } from '../utils/imageUtils';
+import { getImageUrl, getImageFallback } from '../utils/imageUtils';
 import { useCart } from '@/context/CartContext';
 import { API_BASE_URL } from '../utils/config';
 
@@ -207,7 +207,30 @@ const VideoCard = ({
     return (
         <div className="relative h-screen w-full snap-start snap-always bg-black flex-shrink-0 overflow-hidden">
             <div className="absolute inset-0 z-0" onPointerDown={handlePointerDown} onPointerMove={handlePointerMove} onPointerUp={handlePointerUp}>
-                <video ref={videoRef} src={getImageUrl(dish.videoUrl)} className="w-full h-full object-cover pointer-events-none" loop muted playsInline />
+                {dish.videoUrl ? (
+                    <video
+                        ref={videoRef}
+                        src={getImageUrl(dish.videoUrl)}
+                        className="w-full h-full object-cover pointer-events-none"
+                        loop
+                        muted
+                        playsInline
+                        onError={(e) => {
+                            console.error('Video error:', dish.videoUrl);
+                            const target = e.target as HTMLVideoElement;
+                            target.style.display = 'none';
+                        }}
+                    />
+                ) : null}
+                <img
+                    src={getImageUrl(dish.imageUrl) || getImageFallback('dish')}
+                    alt={dish.name}
+                    className="w-full h-full object-cover"
+                    onError={(e) => {
+                        (e.target as HTMLImageElement).src = getImageFallback('dish');
+                    }}
+                    style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', objectFit: 'cover', zIndex: -1 }}
+                />
             </div>
 
             <div className="absolute top-20 left-4 z-30 pointer-events-auto flex flex-col items-start gap-2">
@@ -218,7 +241,14 @@ const VideoCard = ({
                     }}
                     className="flex items-center gap-3 bg-black/40 backdrop-blur-md rounded-full px-4 py-2 hover:bg-black/50 transition cursor-pointer"
                 >
-                    <img src={getImageUrl(dish.restaurant.logo)} alt={dish.restaurant.name} className="w-10 h-10 rounded-full object-cover border-2 border-white" />
+                    <img
+                        src={getImageUrl(dish.restaurant.logo) || getImageFallback('logo')}
+                        alt={dish.restaurant.name}
+                        className="w-10 h-10 rounded-full object-cover border-2 border-white"
+                        onError={(e) => {
+                            (e.target as HTMLImageElement).src = getImageFallback('logo');
+                        }}
+                    />
                     <div className="flex flex-col text-left">
                         <p className="text-white font-bold text-sm">{dish.restaurant.name}</p>
                         {distance && <p className="text-white/80 text-xs">{distance} km away</p>}

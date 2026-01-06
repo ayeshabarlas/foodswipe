@@ -1,4 +1,7 @@
 const Rider = require('../models/Rider');
+const Transaction = require('../models/Transaction');
+const Order = require('../models/Order');
+const { calculateRiderEarning } = require('../utils/paymentUtils');
 
 // @desc    Register a new rider
 // @route   POST /api/riders/register
@@ -22,6 +25,11 @@ const registerRider = async (req, res) => {
             vehicleType,
             verificationStatus: 'new',
         });
+
+        // Notify admins about new registration
+        if (req.app.get('io')) {
+            req.app.get('io').to('admin').emit('rider_registered', rider);
+        }
 
         res.status(201).json(rider);
     } catch (error) {
@@ -181,21 +189,26 @@ const getAvailableOrders = async (req, res) => {
         }
 
         // Format the order for the rider
-        const formattedOrders = orders.map(order => ({
-            _id: order._id,
-            orderNumber: order.orderNumber || order._id.toString().slice(-4),
-            status: order.status,
-            restaurant: {
-                name: order.restaurant?.name || 'Restaurant',
-                address: order.restaurant?.address || 'Restaurant Address',
-                location: order.restaurant?.location
-            },
-            deliveryAddress: order.shippingAddress?.address || 'Delivery Address',
-            distance: 3.2, // Calculate real distance later
-            earnings: 180,  // Calculate based on distance and base fare
-            estimatedTime: 15, // Calculate based on distance
-            totalAmount: order.totalPrice
-        }));
+        const formattedOrders = orders.map(order => {
+            const distance = 3.2; // Calculate real distance later
+            const earnings = calculateRiderEarning(distance);
+            
+            return {
+                _id: order._id,
+                orderNumber: order.orderNumber || order._id.toString().slice(-4),
+                status: order.status,
+                restaurant: {
+                    name: order.restaurant?.name || 'Restaurant',
+                    address: order.restaurant?.address || 'Restaurant Address',
+                    location: order.restaurant?.location
+                },
+                deliveryAddress: order.shippingAddress?.address || 'Delivery Address',
+                distance: distance,
+                earnings: earnings.netEarning,
+                estimatedTime: 15, // Calculate based on distance
+                totalAmount: order.totalPrice
+            };
+        });
 
         res.json(formattedOrders);
     } catch (error) {
@@ -261,54 +274,27 @@ const rejectOrder = async (req, res) => {
 // @access  Private
 const getEarnings = async (req, res) => {
     try {
-        const Order = require('../models/Order');
         const rider = await Rider.findById(req.params.id);
 
         if (!rider) {
             return res.status(404).json({ message: 'Rider not found' });
         }
 
-        // Calculate earnings from completed orders
-        const completedOrders = await Order.find({
-            rider: req.params.id,
-            status: { $in: ['Delivered', 'Completed'] }
-        });
+        // Calculate totals from rider model (already updated on order completion)
+        const totalEarnings = rider.earnings?.total || 0;
+        const totalTips = 0; // Tips logic to be added later
 
-        // Calculate totals
-        const totalEarnings = completedOrders.reduce((sum, order) => sum + (order.deliveryFee || 150), 0);
-        const totalTips = completedOrders.reduce((sum, order) => sum + (order.tip || 0), 0);
-
-        // Calculate daily/weekly stats (basic implementation)
-        const today = new Date();
-        today.setHours(0, 0, 0, 0);
-
-        const weekStart = new Date();
-        weekStart.setDate(weekStart.getDate() - 7);
-
-        const todayEarnings = completedOrders
-            .filter(o => new Date(o.createdAt) >= today)
-            .reduce((sum, o) => sum + (o.deliveryFee || 150) + (o.tip || 0), 0);
-
-        const weekEarnings = completedOrders
-            .filter(o => new Date(o.createdAt) >= weekStart)
-            .reduce((sum, o) => sum + (o.deliveryFee || 150) + (o.tip || 0), 0);
-
-        // Calculate pending payout (orders not yet paid out)
-        const pendingOrders = await Order.find({
-            rider: req.params.id,
-            status: { $in: ['Delivered', 'Completed'] },
-            payout: { $exists: false }
-        });
-
-        const pendingAmount = pendingOrders.reduce((sum, order) => sum + (order.deliveryFee || 150) + (order.tip || 0), 0);
+        // Calculate daily/weekly stats
+        const todayEarnings = rider.earnings?.today || 0;
+        const weekEarnings = rider.earnings?.thisWeek || 0;
 
         res.json({
             total: weekEarnings,
-            basePay: totalEarnings, // Total base pay from deliveries
-            bonuses: 0, // Placeholder for now
+            basePay: totalEarnings, 
+            bonuses: 0,
             tips: totalTips,
-            deliveries: completedOrders.length,
-            pendingPayout: pendingAmount,
+            deliveries: rider.totalOrders || 0,
+            pendingPayout: rider.walletBalance || 0,
             nextPayoutDate: getNextPayoutDate(),
             today: todayEarnings,
             thisWeek: weekEarnings
@@ -332,24 +318,30 @@ const getNextPayoutDate = () => {
 // @access  Private
 const getTransactions = async (req, res) => {
     try {
-        const Order = require('../models/Order');
-
-        // Fetch recent completed orders as transactions
-        const orders = await Order.find({
-            rider: req.params.id,
-            status: { $in: ['Delivered', 'Completed'] }
+        // Fetch recent transactions from Transaction model
+        const transactions = await Transaction.find({
+            entityId: req.params.id,
+            entityType: 'rider'
         })
-            .sort({ updatedAt: -1 })
-            .limit(10);
+        .populate('order', 'orderNumber')
+        .sort({ createdAt: -1 })
+        .limit(20);
 
-        const transactions = orders.map(order => ({
-            id: `#${order.orderNumber}`,
-            time: new Date(order.updatedAt).toLocaleString('en-US', { hour: 'numeric', minute: 'numeric', hour12: true }),
-            amount: (order.deliveryFee || 150) + (order.tip || 0),
-            type: order.tip > 0 ? 'delivery+tip' : 'delivery'
+        const formattedTransactions = transactions.map(tx => ({
+            id: tx.order ? `#${tx.order.orderNumber}` : tx.reference || 'N/A',
+            time: new Date(tx.createdAt).toLocaleString('en-US', { 
+                month: 'short', 
+                day: 'numeric', 
+                hour: 'numeric', 
+                minute: 'numeric', 
+                hour12: true 
+            }),
+            amount: tx.amount,
+            type: tx.type,
+            description: tx.description
         }));
 
-        res.json(transactions);
+        res.json(formattedTransactions);
     } catch (error) {
         console.error('Get transactions error:', error);
         res.status(500).json({ message: 'Server error', error: error.message });
@@ -431,7 +423,9 @@ const getRiderOrders = async (req, res) => {
             } : null,
             timeAgo: getTimeAgo(order.createdAt),
             totalAmount: order.totalPrice,
-            rider: order.rider // Include rider info to check if already assigned
+            rider: order.rider, // Include rider info to check if already assigned
+            distanceKm: order.distanceKm || 0,
+            netRiderEarning: order.netRiderEarning || 0
         }));
 
         res.json(formattedOrders);
@@ -555,7 +549,6 @@ const markPickedUp = async (req, res) => {
 // @access  Private
 const cashout = async (req, res) => {
     try {
-        const Order = require('../models/Order');
         const Payout = require('../models/Payout');
         const rider = await Rider.findById(req.params.id);
 
@@ -567,18 +560,7 @@ const cashout = async (req, res) => {
             return res.status(400).json({ message: 'Please add bank details first' });
         }
 
-        // Find pending orders
-        const pendingOrders = await Order.find({
-            rider: req.params.id,
-            status: { $in: ['Delivered', 'Completed'] },
-            payout: { $exists: false }
-        });
-
-        if (pendingOrders.length === 0) {
-            return res.status(400).json({ message: 'No earnings to cash out' });
-        }
-
-        const totalAmount = pendingOrders.reduce((sum, order) => sum + (order.deliveryFee || 150) + (order.tip || 0), 0);
+        const totalAmount = rider.walletBalance || 0;
 
         if (totalAmount < 500) {
             return res.status(400).json({ message: 'Minimum cashout amount is Rs. 500' });
@@ -587,18 +569,29 @@ const cashout = async (req, res) => {
         // Create payout record
         const payout = await Payout.create({
             rider: rider._id,
-            weekStart: new Date(), // Just using current date for now
+            weekStart: new Date(),
             weekEnd: new Date(),
-            totalSales: totalAmount, // Using totalSales field for amount
+            totalSales: totalAmount,
             netPayable: totalAmount,
             status: 'pending'
         });
 
-        // Update orders with payout ID
-        await Order.updateMany(
-            { _id: { $in: pendingOrders.map(o => o._id) } },
-            { payout: payout._id }
-        );
+        // Update rider wallet balance
+        const oldBalance = rider.walletBalance;
+        rider.walletBalance = 0;
+        await rider.save();
+
+        // Create transaction log
+        await Transaction.create({
+            entityType: 'rider',
+            entityId: rider._id,
+            entityModel: 'Rider',
+            type: 'payout',
+            amount: -totalAmount,
+            balanceAfter: 0,
+            description: `Cashout request of Rs. ${totalAmount}`,
+            reference: payout._id.toString()
+        });
 
         res.json({ message: 'Cashout request submitted', payout });
     } catch (error) {

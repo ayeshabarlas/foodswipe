@@ -172,8 +172,8 @@ To revolutionize food delivery by providing a seamless experience that brings yo
 We're a passionate team of food lovers and tech enthusiasts dedicated to making your dining experience exceptional.
 
 📧 Contact Us:
-   Email: support@foodswipe.com
-   Phone: +92 300 1234567
+   Email: app.foodswipehelp@gmail.com
+   Phone: +92 329 5599855
 
 Follow us on social media:
    Instagram: @foodswipe

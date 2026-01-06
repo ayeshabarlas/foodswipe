@@ -4,7 +4,7 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { API_BASE_URL } from '../utils/config';
 import { motion, AnimatePresence } from 'framer-motion';
-import { FaTimes, FaCheck, FaClock, FaMapMarkerAlt, FaCommentDots, FaBan, FaMotorcycle } from 'react-icons/fa';
+import { FaTimes, FaCheck, FaClock, FaMapMarkerAlt, FaCommentDots, FaBan, FaMotorcycle, FaShoppingBag } from 'react-icons/fa';
 import CancelOrderModal from './CancelOrderModal';
 import { initSocket, getSocket, disconnectSocket } from '../utils/socket';
 import toast, { Toaster } from 'react-hot-toast';

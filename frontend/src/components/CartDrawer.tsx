@@ -22,7 +22,12 @@ export default function CartDrawer({ isOpen, onClose, onTrackOrder }: CartDrawer
     // Enable swipe back gesture
     useSwipeBack({ onSwipeBack: onClose });
 
-    const deliveryFee = 50;
+    // Distance-based delivery fee tiers (applied at checkout based on location)
+    // < 3 km → Rs. 79
+    // 3–6 km → Rs. 99
+    // 6–9 km → Rs. 129
+    // 9+ km → Rs. 149
+    const deliveryFee = 79; // Starting tier fee
     const taxRate = 0.08;
     const subtotal = cartTotal;
     const tax = Math.round(subtotal * taxRate);

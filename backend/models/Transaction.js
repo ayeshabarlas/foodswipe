@@ -14,7 +14,7 @@ const transactionSchema = mongoose.Schema(
         },
         entityModel: {
             type: String,
-            enum: ['Restaurant', 'User', 'Platform'],
+            enum: ['Restaurant', 'User', 'Platform', 'Rider'],
             required: true,
         },
         order: {

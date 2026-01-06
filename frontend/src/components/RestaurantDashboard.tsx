@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { FaShoppingBag, FaUtensils, FaStore, FaChartLine, FaDollarSign, FaStar, FaBullhorn, FaHeadset, FaConciergeBell, FaBell, FaClock, FaBox, FaCheck, FaPaperPlane, FaSignOutAlt, FaBars, FaTimes } from 'react-icons/fa';
+import { FaShoppingBag, FaUtensils, FaStore, FaChartLine, FaDollarSign, FaStar, FaBullhorn, FaHeadset, FaConciergeBell, FaBell, FaClock, FaBox, FaCheck, FaPaperPlane, FaSignOutAlt, FaBars, FaTimes, FaBan } from 'react-icons/fa';
 import { motion, AnimatePresence } from 'framer-motion';
 import axios from 'axios';
 import CreateRestaurant from './CreateRestaurant';
@@ -251,6 +251,14 @@ export default function RestaurantDashboard() {
 
     return (
         <div className="flex h-screen bg-gray-50 overflow-hidden font-sans text-[11px]">
+            {/* Account Status Banner */}
+            {restaurant?.owner?.status === 'suspended' && (
+                <div className="fixed top-0 left-0 right-0 bg-red-600 text-white px-4 py-2 text-center text-xs font-bold z-[9999] shadow-lg flex items-center justify-center gap-2">
+                    <FaBan />
+                    <span>YOUR ACCOUNT HAS BEEN SUSPENDED. Please contact support at app.foodswipehelp@gmail.com</span>
+                </div>
+            )}
+
             {/* Sidebar Overlay */}
             <AnimatePresence>
                 {isSidebarOpen && (

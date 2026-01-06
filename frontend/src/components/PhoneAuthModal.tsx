@@ -62,8 +62,8 @@ export default function PhoneAuthModal({ isOpen, onClose, onSuccess }: PhoneAuth
     }, [countdown]);
 
     const validatePhoneNumber = (phone: string): boolean => {
-        // Pakistan phone number: 10 digits (3XXXXXXXXX)
-        const phoneRegex = /^3[0-9]{9}$/;
+        // Pakistan phone number: 10 digits (3XXXXXXXXX) or 11 digits (03XXXXXXXXX)
+        const phoneRegex = /^(03|3)[0-9]{9}$/;
         return phoneRegex.test(phone);
     };
 
@@ -71,17 +71,20 @@ export default function PhoneAuthModal({ isOpen, onClose, onSuccess }: PhoneAuth
         setError('');
 
         if (!validatePhoneNumber(phoneNumber)) {
-            setError('Please enter a valid Pakistani phone number (3XXXXXXXXX)');
+            setError('Please enter a valid Pakistani phone number (e.g., 03XXXXXXXXX or 3XXXXXXXXX)');
             return;
         }
 
-        const fullNumber = `${countryCode}${phoneNumber}`;
+        // Format number for Firebase: strip leading 0 and prepend country code
+        const formattedPhone = phoneNumber.startsWith('0') ? phoneNumber.substring(1) : phoneNumber;
+        const fullNumber = `${countryCode}${formattedPhone}`;
         setLoading(true);
 
         try {
-            // DEVELOPMENT MODE BYPASS for reCAPTCHA issues
-            // This allows testing without Firebase reCAPTCHA verification
-            const isDevelopment = process.env.NODE_ENV === 'development' || window.location.hostname === 'localhost';
+            // Check for specific bypass flag or development environment
+            const isLocalhost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+            const isDebugEnabled = localStorage.getItem('debug_otp') === 'true';
+            const isDevelopment = process.env.NODE_ENV === 'development' || isLocalhost || isDebugEnabled;
 
             if (isDevelopment && countryCode === '+92') {
                 console.log('🔧 DEVELOPMENT MODE: Bypassing Firebase OTP for testing');
@@ -348,6 +351,19 @@ export default function PhoneAuthModal({ isOpen, onClose, onSuccess }: PhoneAuth
                             >
                                 {loading ? 'Sending...' : !recaptchaReady ? 'Initializing...' : 'Send OTP'}
                             </button>
+
+                            {/* Hidden Debug Option */}
+                            <div className="mt-4 text-center">
+                                <button 
+                                    onClick={() => {
+                                        localStorage.setItem('debug_otp', 'true');
+                                        toast.success('Debug Mode Enabled: Click Send OTP again');
+                                    }}
+                                    className="text-[10px] text-gray-300 hover:text-gray-400 transition"
+                                >
+                                    Having trouble? Enable Test Mode
+                                </button>
+                            </div>
                         </div>
                     )}
 

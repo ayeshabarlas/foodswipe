@@ -19,8 +19,8 @@ export default function ProfileModal({ isOpen, onClose, user }: ProfileModalProp
     const userData = {
         name: user?.name || 'John Doe',
         email: user?.email || 'john.doe@email.com',
-        phone: user?.phone || '+1 (555) 123-4567',
-        address: user?.address || '123 Main Street, Apt 4B\nNew York, NY 10001',
+        phone: user?.phone || '+92 329 5599855',
+        address: user?.address || 'Gulberg III, Lahore, Pakistan',
         memberSince: 'January 2024',
         avatar: user?.avatar
     };

@@ -147,43 +147,84 @@ export default function RiderDashboard({ riderId }: RiderDashboardProps) {
     // Page switching
     if (activeTab === 'earnings') {
         return (
-            <>
+            <div className="flex flex-col min-h-screen">
+                {riderData?.user?.status === 'suspended' && (
+                    <div className="bg-red-600 text-white px-4 py-3 text-sm font-bold flex items-center justify-between sticky top-0 z-[100] shadow-lg">
+                        <div className="flex items-center gap-2">
+                            <FaBan />
+                            <span>ACCOUNT SUSPENDED</span>
+                        </div>
+                    </div>
+                )}
                 <RiderEarnings riderId={effectiveRiderId} />
                 <BottomNav activeTab={activeTab} setActiveTab={setActiveTab} />
-            </>
+            </div>
         );
     }
 
     if (activeTab === 'profile') {
         return (
-            <>
+            <div className="flex flex-col min-h-screen">
+                {riderData?.user?.status === 'suspended' && (
+                    <div className="bg-red-600 text-white px-4 py-3 text-sm font-bold flex items-center justify-between sticky top-0 z-[100] shadow-lg">
+                        <div className="flex items-center gap-2">
+                            <FaBan />
+                            <span>ACCOUNT SUSPENDED</span>
+                        </div>
+                    </div>
+                )}
                 <RiderProfile riderId={effectiveRiderId} />
                 <BottomNav activeTab={activeTab} setActiveTab={setActiveTab} />
-            </>
+            </div>
         );
     }
 
     if (activeTab === 'support') {
         return (
-            <>
+            <div className="flex flex-col min-h-screen">
+                {riderData?.user?.status === 'suspended' && (
+                    <div className="bg-red-600 text-white px-4 py-3 text-sm font-bold flex items-center justify-between sticky top-0 z-[100] shadow-lg">
+                        <div className="flex items-center gap-2">
+                            <FaBan />
+                            <span>ACCOUNT SUSPENDED</span>
+                        </div>
+                    </div>
+                )}
                 <RiderSupport />
                 <BottomNav activeTab={activeTab} setActiveTab={setActiveTab} />
-            </>
+            </div>
         );
     }
 
     if (activeTab === 'orders') {
         return (
-            <>
+            <div className="flex flex-col min-h-screen">
+                {riderData?.user?.status === 'suspended' && (
+                    <div className="bg-red-600 text-white px-4 py-3 text-sm font-bold flex items-center justify-between sticky top-0 z-[100] shadow-lg">
+                        <div className="flex items-center gap-2">
+                            <FaBan />
+                            <span>ACCOUNT SUSPENDED</span>
+                        </div>
+                    </div>
+                )}
                 <RiderOrders riderId={effectiveRiderId} />
                 <BottomNav activeTab={activeTab} setActiveTab={setActiveTab} />
-            </>
+            </div>
         );
     }
 
     // Home tab (default)
     return (
         <div className="min-h-screen bg-gray-50 pb-20">
+            {/* Account Status Banner */}
+            {riderData?.user?.status === 'suspended' && (
+                <div className="bg-red-600 text-white px-4 py-3 text-sm font-bold flex items-center justify-between sticky top-0 z-[100] shadow-lg">
+                    <div className="flex items-center gap-2">
+                        <FaBan />
+                        <span>YOUR ACCOUNT HAS BEEN SUSPENDED. Please contact support.</span>
+                    </div>
+                </div>
+            )}
             {/* Order Notification Modal */}
             {pendingOrder && (
                 <OrderNotificationModal
@@ -227,7 +268,7 @@ export default function RiderDashboard({ riderId }: RiderDashboardProps) {
                     <StatCard
                         icon={<FaDollarSign className="text-lg" />}
                         label="Today's Earnings"
-                        value={`PKR ${riderData.earnings?.today || 0}`}
+                        value={`Rs. ${riderData.earnings?.today || 0}`}
                         bgColor="bg-green-500"
                     />
                     <StatCard
@@ -245,7 +286,7 @@ export default function RiderDashboard({ riderId }: RiderDashboardProps) {
                     <StatCard
                         icon={<FaTrophy className="text-lg" />}
                         label="This Week"
-                        value={`PKR ${riderData.earnings?.thisWeek || 0}`}
+                        value={`Rs. ${riderData.earnings?.thisWeek || 0}`}
                         bgColor="bg-purple-500"
                     />
                 </div>
@@ -294,7 +335,7 @@ export default function RiderDashboard({ riderId }: RiderDashboardProps) {
                                         <p className="text-[10px] text-gray-500 font-medium uppercase tracking-wider">{delivery.timeAgo}</p>
                                     </div>
                                     <div className="text-right">
-                                        <p className="font-bold text-green-600 text-sm">+PKR {delivery.earnings}</p>
+                                        <p className="font-bold text-green-600 text-sm">+Rs. {delivery.earnings}</p>
                                         <div className="flex items-center justify-end gap-1 text-yellow-500 text-[10px] mt-0.5 font-bold">
                                             <FaStar size={8} />
                                             <span>{delivery.rating || '5.0'}</span>

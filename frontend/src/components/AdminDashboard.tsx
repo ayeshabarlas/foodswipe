@@ -22,8 +22,8 @@ import AdminManagementView from './admin/AdminManagementView';
 import SupportView from './admin/SupportView';
 
 import axios from 'axios';
-import { io } from 'socket.io-client';
-import { API_BASE_URL, SOCKET_URL } from '../utils/config';
+import { initSocket, getSocket, disconnectSocket } from '../utils/socket';
+import { API_BASE_URL } from '../utils/config';
 import toast, { Toaster } from 'react-hot-toast';
 
 interface Stats {
@@ -58,9 +58,10 @@ export default function AdminDashboard() {
 
         // Verify admin role on mount
         const userInfo = localStorage.getItem('userInfo');
+        let user: any = null;
         if (userInfo) {
             try {
-                const user = JSON.parse(userInfo);
+                user = JSON.parse(userInfo);
                 const isAdminRole = ['admin', 'super-admin', 'finance-admin', 'support-admin'].includes(user.role);
                 
                 if (!isAdminRole) {
@@ -78,90 +79,71 @@ export default function AdminDashboard() {
         fetchStats();
 
         // Join admin room for real-time updates
-        const socket = io(SOCKET_URL, {
-            reconnection: true,
-            reconnectionAttempts: 5,
-            reconnectionDelay: 1000,
-        });
+        const socket = initSocket(user?._id, user?.role || 'admin');
 
-        if (userInfo) {
-            try {
-                const user = JSON.parse(userInfo);
-                socket.emit('join', { userId: user._id, role: 'admin' });
-                console.log('Joined admin room for real-time updates');
-            } catch (e) {
-                console.error('Error joining admin room:', e);
-            }
+        if (socket) {
+            // Standard listeners for dashboard-wide updates
+            const updateStats = () => {
+                console.log('Real-time update received: fetching new stats');
+                fetchStats();
+            };
+
+            // Sound notification for new orders
+            const playNotificationSound = () => {
+                try {
+                    const audio = new Audio('https://assets.mixkit.co/active_storage/sfx/2358/2358-preview.mp3');
+                    audio.play().catch(e => console.log('Audio play failed:', e));
+                } catch (e) {
+                    console.error('Error playing sound:', e);
+                }
+            };
+
+            socket.on('order_created', (order) => {
+                if (!order) return;
+                console.log('New order created!', order);
+                playNotificationSound();
+                const orderId = order.orderNumber || (order._id ? order._id.substring(0, 8) : 'New');
+                toast.success(`New Order #${orderId} created!`, {
+                    duration: 5000,
+                    position: 'top-right',
+                    icon: '🛒',
+                });
+                updateStats();
+            });
+
+            socket.on('order_updated', (order) => {
+                if (!order) return;
+                const orderId = order.orderNumber || (order._id ? order._id.substring(0, 8) : 'Update');
+                toast.info(`Order #${orderId} status updated to ${order.status}`, {
+                    position: 'top-right',
+                });
+                updateStats();
+            });
+
+            socket.on('restaurant_registered', (restaurant) => {
+                console.log('New restaurant registered!', restaurant);
+                toast.success(`New Restaurant: ${restaurant.name} registered!`, {
+                    duration: 6000,
+                    position: 'top-right',
+                    icon: '🏪',
+                });
+                updateStats();
+            });
+
+            socket.on('restaurant_updated', updateStats);
+            socket.on('stats_updated', updateStats);
+            socket.on('rider_updated', updateStats);
+            socket.on('user_registered', updateStats);
+
+            socket.on('notification', (data) => {
+                if (data.type === 'success') toast.success(data.message);
+                else if (data.type === 'error') toast.error(data.message);
+                else toast(data.message);
+            });
         }
 
-        // Standard listeners for dashboard-wide updates
-        const updateStats = () => {
-            console.log('Real-time update received: fetching new stats');
-            fetchStats();
-        };
-
-        // Sound notification for new orders
-        const playNotificationSound = () => {
-            try {
-                const audio = new Audio('https://assets.mixkit.co/active_storage/sfx/2358/2358-preview.mp3');
-                audio.play().catch(e => console.log('Audio play failed:', e));
-            } catch (e) {
-                console.error('Error playing sound:', e);
-            }
-        };
-
-        socket.on('order_created', (order) => {
-            if (!order) return;
-            console.log('New order created!', order);
-            playNotificationSound();
-            const orderId = order.orderNumber || (order._id ? order._id.substring(0, 8) : 'New');
-            toast.success(`New Order #${orderId} created!`, {
-                duration: 5000,
-                position: 'top-right',
-                icon: '🛒',
-            });
-            updateStats();
-        });
-
-        socket.on('order_updated', (order) => {
-            if (!order) return;
-            const orderId = order.orderNumber || (order._id ? order._id.substring(0, 8) : 'Update');
-            toast.info(`Order #${orderId} status updated to ${order.status}`, {
-                position: 'top-right',
-            });
-            updateStats();
-        });
-
-        socket.on('restaurant_registered', (restaurant) => {
-            console.log('New restaurant registered!', restaurant);
-            toast.success(`New Restaurant: ${restaurant.name} registered!`, {
-                duration: 6000,
-                position: 'top-right',
-                icon: '🏪',
-            });
-            updateStats();
-        });
-        socket.on('restaurant_updated', updateStats);
-        socket.on('stats_updated', updateStats);
-        socket.on('rider_updated', updateStats);
-        socket.on('user_registered', updateStats);
-
-        socket.on('notification', (data) => {
-            if (data.type === 'success') toast.success(data.message);
-            else if (data.type === 'error') toast.error(data.message);
-            else toast(data.message);
-        });
-
-        socket.on('connect', () => {
-            console.log('✅ Socket connected');
-        });
-
-        socket.on('disconnect', () => {
-            console.log('❌ Socket disconnected, attempting to reconnect...');
-        });
-
         return () => {
-            socket.disconnect();
+            disconnectSocket();
         };
     }, []);
 

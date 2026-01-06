@@ -2,6 +2,9 @@ const Order = require('../models/Order');
 const User = require('../models/User');
 const Restaurant = require('../models/Restaurant');
 const Dish = require('../models/Dish');
+const Rider = require('../models/Rider');
+const Transaction = require('../models/Transaction');
+const { calculateRiderEarning, calculateDeliveryFee } = require('../utils/paymentUtils');
 
 // @desc    Create new order
 // @route   POST /api/orders
@@ -15,7 +18,7 @@ const createOrder = async (req, res) => {
             return res.status(401).json({ message: 'User not authenticated' });
         }
 
-        const { items, restaurant, deliveryAddress, totalAmount, paymentMethod, deliveryInstructions } = req.body;
+        const { items, restaurant, deliveryAddress, totalAmount, paymentMethod, deliveryInstructions, subtotal, deliveryFee } = req.body;
 
         // Map frontend data to model schema
         const orderItems = items.map(item => ({
@@ -40,6 +43,9 @@ const createOrder = async (req, res) => {
             shippingAddress,
             paymentMethod: paymentMethod || 'COD',
             totalPrice: totalAmount,
+            subtotal: subtotal || (totalAmount - (deliveryFee || 0)),
+            deliveryFee: deliveryFee || 0,
+            deliveryFeeCustomerPaid: deliveryFee || 0,
             status: 'Pending',
         });
 
@@ -147,10 +153,10 @@ const getOrderById = async (req, res) => {
 
 // @desc    Update order status
 // @route   PUT /api/orders/:id/status
-// @access  Private (Restaurant/Admin)
+// @access  Private (Restaurant/Admin/Rider)
 const updateOrderStatus = async (req, res) => {
     try {
-        const { status, cancellationReason, prepTime, delayedUntil, delayReason } = req.body;
+        const { status, cancellationReason, prepTime, delayedUntil, delayReason, distanceKm } = req.body;
         const order = await Order.findById(req.params.id);
 
         if (!order) {
@@ -165,11 +171,20 @@ const updateOrderStatus = async (req, res) => {
         if (delayedUntil) order.delayedUntil = delayedUntil;
         if (delayReason) order.delayReason = delayReason;
 
+        // If order is delivered, trigger payment processing
+        if (status === 'Delivered') {
+            await processOrderCompletion(order, distanceKm || 5); // Default to 5km if not provided
+        }
+
         await order.save();
 
         const updatedOrder = await Order.findById(order._id)
             .populate('user', 'name email phone')
-            .populate('restaurant', 'name address contact location');
+            .populate('restaurant', 'name address contact location')
+            .populate({
+                path: 'rider',
+                populate: { path: 'user', select: 'name phone' }
+            });
 
         // Emit socket events for real-time updates
         if (req.app.get('io')) {
@@ -203,7 +218,63 @@ const updateOrderStatus = async (req, res) => {
 
         res.json(updatedOrder);
     } catch (error) {
+        console.error('Update order status error:', error);
         res.status(500).json({ message: 'Server error', error: error.message });
+    }
+};
+
+/**
+ * Helper to process order completion payments
+ */
+const processOrderCompletion = async (order, distanceKm) => {
+    try {
+        if (!order.rider) return; // No rider assigned
+
+        const earnings = calculateRiderEarning(distanceKm);
+        const deliveryFee = calculateDeliveryFee(distanceKm);
+
+        // Update order with payment details
+        order.distanceKm = distanceKm;
+        order.grossRiderEarning = earnings.grossEarning;
+        order.platformFee = earnings.platformFee;
+        order.netRiderEarning = earnings.netEarning;
+        order.deliveryFeeCustomerPaid = deliveryFee;
+        order.completedAt = new Date();
+
+        // Update rider wallet
+        const rider = await Rider.findOne({ user: order.rider });
+        if (rider) {
+            const oldBalance = rider.walletBalance || 0;
+            rider.walletBalance = oldBalance + earnings.netEarning;
+            
+            // Update earnings stats
+            rider.earnings.total += earnings.netEarning;
+            rider.earnings.today += earnings.netEarning;
+            rider.earnings.thisWeek += earnings.netEarning;
+            rider.earnings.thisMonth += earnings.netEarning;
+            
+            await rider.save();
+
+            // Create transaction log
+            await Transaction.create({
+                entityType: 'rider',
+                entityId: rider._id,
+                entityModel: 'Rider',
+                order: order._id,
+                type: 'earning',
+                amount: earnings.netEarning,
+                balanceAfter: rider.walletBalance,
+                description: `Earning for order #${order._id.toString().slice(-6)}`,
+                metadata: {
+                    distanceKm,
+                    grossEarning: earnings.grossEarning,
+                    platformFee: earnings.platformFee
+                }
+            });
+        }
+    } catch (error) {
+        console.error('Process order completion error:', error);
+        throw error;
     }
 };
 
@@ -285,11 +356,55 @@ const cancelOrder = async (req, res) => {
     }
 };
 
+// @desc    Complete order and process payments
+// @route   POST /api/orders/:id/complete
+// @access  Private (Rider/Admin)
+const completeOrder = async (req, res) => {
+    try {
+        const { distanceKm } = req.body;
+        const order = await Order.findById(req.params.id);
+
+        if (!order) {
+            return res.status(404).json({ message: 'Order not found' });
+        }
+
+        if (order.status === 'Delivered') {
+            return res.status(400).json({ message: 'Order already delivered' });
+        }
+
+        order.status = 'Delivered';
+        await processOrderCompletion(order, distanceKm || 5);
+        await order.save();
+
+        const updatedOrder = await Order.findById(order._id)
+            .populate('user', 'name email phone')
+            .populate('restaurant', 'name address contact location')
+            .populate({
+                path: 'rider',
+                populate: { path: 'user', select: 'name phone' }
+            });
+
+        // Emit socket events
+        if (req.app.get('io')) {
+            const io = req.app.get('io');
+            io.to(`user_${order.user}`).emit('orderStatusUpdate', updatedOrder);
+            io.to(`restaurant_${order.restaurant}`).emit('orderStatusUpdate', updatedOrder);
+            io.to('admin').emit('order_updated', updatedOrder);
+        }
+
+        res.json(updatedOrder);
+    } catch (error) {
+        console.error('Complete order error:', error);
+        res.status(500).json({ message: 'Server error', error: error.message });
+    }
+};
+
 module.exports = {
     createOrder,
     getUserOrders,
     getOrderById,
     updateOrderStatus,
+    completeOrder,
     getRestaurantOrders,
     cancelOrder,
 };

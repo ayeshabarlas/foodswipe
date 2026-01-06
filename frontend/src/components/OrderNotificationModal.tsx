@@ -120,7 +120,7 @@ export default function OrderNotificationModal({ order, onAccept, onReject, onCl
                         <div className="text-center p-3 bg-gray-50 rounded-xl">
                             <FaDollarSign className="text-green-600 mx-auto mb-1" />
                             <p className="text-xs text-gray-500 mb-1">Earnings</p>
-                            <p className="font-bold text-green-600">PKR {order.earnings}</p>
+                            <p className="font-bold text-green-600">Rs. {order.earnings}</p>
                         </div>
                         <div className="text-center p-3 bg-gray-50 rounded-xl">
                             <FaClock className="text-gray-600 mx-auto mb-1" />

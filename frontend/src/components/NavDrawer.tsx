@@ -297,8 +297,8 @@ export default function NavDrawer({ isOpen, onClose, user, onOpenProfile }: NavD
                 user={user || {
                     name: 'John Doe',
                     email: 'john.doe@email.com',
-                    phone: '+1 (555) 123-4567',
-                    address: '123 Main Street, Apt 4B\nNew York, NY 10001',
+                    phone: '+92 329 5599855',
+                    address: 'Gulberg III, Lahore, Pakistan',
                     memberSince: 'January 2024'
                 }}
             />

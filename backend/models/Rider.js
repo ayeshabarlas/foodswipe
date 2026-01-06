@@ -57,6 +57,10 @@ const riderSchema = mongoose.Schema(
             enum: ['Available', 'Busy', 'Offline'],
             default: 'Offline',
         },
+        walletBalance: {
+            type: Number,
+            default: 0,
+        },
         earnings: {
             today: { type: Number, default: 0 },
             thisWeek: { type: Number, default: 0 },

@@ -41,6 +41,10 @@ const orderSchema = mongoose.Schema(
             required: true,
             default: 0.0,
         },
+        orderNumber: {
+            type: String,
+            unique: true,
+        },
         subtotal: {
             type: Number,
             default: 0,
@@ -115,7 +119,28 @@ const orderSchema = mongoose.Schema(
         },
         rider: {
             type: mongoose.Schema.Types.ObjectId,
-            ref: 'Rider',
+            ref: 'User',
+            default: null,
+        },
+        distanceKm: {
+            type: Number,
+            default: 0,
+        },
+        grossRiderEarning: {
+            type: Number,
+            default: 0,
+        },
+        platformFee: {
+            type: Number,
+            default: 0,
+        },
+        netRiderEarning: {
+            type: Number,
+            default: 0,
+        },
+        deliveryFeeCustomerPaid: {
+            type: Number,
+            default: 0,
         },
         pickedUpAt: {
             type: Date,
@@ -139,6 +164,18 @@ const orderSchema = mongoose.Schema(
         timestamps: true,
     }
 );
+
+// Generate order number before saving
+orderSchema.pre('save', async function (next) {
+    if (!this.orderNumber) {
+        // Simple format: FS-XXXX where XXXX is random or incremental
+        // For now, let's use a combination of timestamp and random to ensure uniqueness without another query
+        const timestamp = Date.now().toString().slice(-4);
+        const random = Math.floor(Math.random() * 1000).toString().padStart(3, '0');
+        this.orderNumber = `FS-${timestamp}${random}`;
+    }
+    next();
+});
 
 const Order = mongoose.model('Order', orderSchema);
 

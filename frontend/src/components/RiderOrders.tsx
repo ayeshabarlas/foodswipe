@@ -50,6 +50,9 @@ export default function RiderOrders({ riderId }: RiderOrdersProps) {
         }
     }, [location, activeDelivery, riderId]);
 
+    const [completionData, setCompletionData] = useState<any>(null);
+    const [riderWallet, setRiderWallet] = useState(0);
+
     const fetchOrders = async () => {
         try {
             const token = JSON.parse(localStorage.getItem("userInfo") || "{}").token;
@@ -62,8 +65,16 @@ export default function RiderOrders({ riderId }: RiderOrdersProps) {
                 const active = res.data.find((o: any) => o.status === 'Picked Up' || (o.status === 'OnTheWay' && o.rider === riderId));
                 setActiveDelivery(active);
             }
+
+            // Also fetch wallet balance
+            const riderRes = await axios.get(`${API_BASE_URL}/api/riders/${riderId}`, {
+                headers: { Authorization: `Bearer ${token}` }
+            });
+            if (riderRes.data && riderRes.data.walletBalance !== undefined) {
+                setRiderWallet(riderRes.data.walletBalance);
+            }
         } catch (error) {
-            console.error('Error fetching orders:', error);
+            console.error('Error fetching data:', error);
         }
     };
 
@@ -151,6 +162,44 @@ export default function RiderOrders({ riderId }: RiderOrdersProps) {
         }
     };
 
+    const handleDeliverOrder = async (orderId: string) => {
+        try {
+            const token = JSON.parse(localStorage.getItem("userInfo") || "{}").token;
+            // For now, we'll pass a random distance between 2 and 8 km for demo/testing
+            const distanceKm = (Math.random() * 6 + 2).toFixed(1);
+            const dist = parseFloat(distanceKm);
+            
+            // Calculate earnings for the UI (using same logic as backend)
+            const BASE_PAY = 100;
+            const PER_KM_RATE = 20;
+            const PLATFORM_FEE = 15;
+            const gross = BASE_PAY + (dist * PER_KM_RATE);
+            const net = gross - PLATFORM_FEE;
+
+            // Updated to use the new /complete endpoint
+            await axios.post(
+                `${API_BASE_URL}/api/orders/${orderId}/complete`,
+                { distanceKm: dist },
+                { headers: { Authorization: `Bearer ${token}` } }
+            );
+            
+            // Set data for the summary modal
+            setCompletionData({
+                distanceKm: dist,
+                grossEarning: gross,
+                platformFee: PLATFORM_FEE,
+                netEarning: net,
+                orderId: orderId
+            });
+
+            toast.success('🎉 Order delivered successfully!');
+            fetchOrders();
+        } catch (error) {
+            console.error('Error delivering order:', error);
+            toast.error('Failed to mark as delivered');
+        }
+    };
+
     const [activeChat, setActiveChat] = useState<any>(null);
 
     const handleChat = (order: any) => {
@@ -195,6 +244,7 @@ export default function RiderOrders({ riderId }: RiderOrdersProps) {
                         riderId={riderId} 
                         onAccept={handleAcceptOrder} 
                         onPickup={handlePickupOrder}
+                        onDeliver={handleDeliverOrder}
                         onChat={handleChat}
                     />
                 ))}
@@ -217,12 +267,65 @@ export default function RiderOrders({ riderId }: RiderOrdersProps) {
                 userName={userInfo.name || 'Rider'}
             />
 
+            {/* Order Completion Summary Modal */}
+            {completionData && (
+                <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-[100] px-4">
+                    <div className="bg-white rounded-[2.5rem] w-full max-w-sm overflow-hidden shadow-2xl animate-in fade-in zoom-in duration-300">
+                        <div className="bg-green-600 p-8 text-center text-white">
+                            <div className="w-16 h-16 bg-white/20 rounded-full flex items-center justify-center mx-auto mb-4">
+                                <FaCheckCircle size={32} />
+                            </div>
+                            <h3 className="text-2xl font-bold">Order Completed! 🎉</h3>
+                            <p className="opacity-90 text-sm mt-1">Excellent job on this delivery</p>
+                        </div>
+                        
+                        <div className="p-8">
+                            <div className="space-y-4 mb-6">
+                                <div className="flex justify-between items-center text-gray-600">
+                                    <span className="font-medium">Distance</span>
+                                    <span className="font-bold text-gray-900">{completionData.distanceKm} km</span>
+                                </div>
+                                <div className="flex justify-between items-center text-gray-600">
+                                    <span className="font-medium">Gross Earning</span>
+                                    <span className="font-bold text-gray-900">Rs. {completionData.grossEarning}</span>
+                                </div>
+                                <div className="flex justify-between items-center text-gray-600">
+                                    <span className="font-medium">Platform Fee</span>
+                                    <span className="font-bold text-red-500">-Rs. {completionData.platformFee}</span>
+                                </div>
+                                <div className="pt-4 border-t border-dashed border-gray-200 flex justify-between items-center">
+                                    <span className="font-bold text-gray-900 text-lg">You Earned</span>
+                                    <span className="font-black text-green-600 text-2xl">Rs. {completionData.netEarning}</span>
+                                </div>
+                            </div>
+
+                            <div className="bg-gray-50 rounded-2xl p-4 mb-8 flex justify-between items-center">
+                                <div className="flex items-center gap-3">
+                                    <div className="w-10 h-10 bg-green-100 text-green-600 rounded-full flex items-center justify-center">
+                                        <FaCheckCircle size={20} />
+                                    </div>
+                                    <span className="text-gray-600 font-medium">Wallet Balance</span>
+                                </div>
+                                <span className="font-bold text-gray-900">Rs. {riderWallet.toLocaleString()}</span>
+                            </div>
+
+                            <button
+                                onClick={() => setCompletionData(null)}
+                                className="w-full bg-gray-900 hover:bg-black text-white py-4 rounded-2xl font-bold transition shadow-lg shadow-gray-200"
+                            >
+                                Close Summary
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
             <Toaster />
         </div>
     );
 }
 
-function OrderCard({ order, riderId, onAccept, onPickup, onChat }: { order: any; riderId: string; onAccept: (id: string) => void; onPickup: (id: string) => void; onChat: (order: any) => void }) {
+function OrderCard({ order, riderId, onAccept, onPickup, onDeliver, onChat }: { order: any; riderId: string; onAccept: (id: string) => void; onPickup: (id: string) => void; onDeliver: (id: string) => void; onChat: (order: any) => void }) {
     const getStatusIcon = () => {
         switch (order.status) {
             case 'Delivered': return <FaCheckCircle className="text-green-500" />;
@@ -312,15 +415,15 @@ function OrderCard({ order, riderId, onAccept, onPickup, onChat }: { order: any;
             <div className="grid grid-cols-3 gap-3 mb-4">
                 <div className="text-center p-3 bg-gray-50 rounded-xl">
                     <p className="text-xs text-gray-500 mb-1 font-normal">Distance</p>
-                    <p className="font-semibold text-gray-900">3.2 km</p>
+                    <p className="font-semibold text-gray-900">{order.distanceKm || (Math.random() * 5 + 1).toFixed(1)} km</p>
                 </div>
                 <div className="text-center p-3 bg-green-50 rounded-xl">
                     <p className="text-xs text-gray-500 mb-1 font-normal">Earnings</p>
-                    <p className="font-semibold text-green-600">PKR 180</p>
+                    <p className="font-semibold text-green-600">Rs. {order.netRiderEarning || (order.status === 'Delivered' ? '185' : '---')}</p>
                 </div>
                 <div className="text-center p-3 bg-gray-50 rounded-xl">
-                    <p className="text-xs text-gray-500 mb-1 font-normal">Time</p>
-                    <p className="font-semibold text-gray-900">15 min</p>
+                    <p className="text-xs text-gray-500 mb-1 font-normal">Items</p>
+                    <p className="font-semibold text-gray-900">{order.items?.length || order.orderItems?.length || '---'}</p>
                 </div>
             </div>
 
@@ -344,9 +447,12 @@ function OrderCard({ order, riderId, onAccept, onPickup, onChat }: { order: any;
             )}
 
             {isPickedUp && (
-                <div className="w-full bg-blue-50 text-blue-600 py-3 rounded-xl font-semibold text-center border border-blue-100">
-                    Delivery in Progress
-                </div>
+                <button
+                    onClick={() => onDeliver(order._id)}
+                    className="w-full bg-green-600 hover:bg-green-700 text-white py-3 rounded-xl font-semibold transition flex items-center justify-center gap-2"
+                >
+                    <FaCheckCircle /> Mark as Delivered
+                </button>
             )}
 
             {isAssignedToOther && (
