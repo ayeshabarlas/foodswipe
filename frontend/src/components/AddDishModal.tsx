@@ -119,8 +119,9 @@ export default function AddDishModal({ isOpen, onClose, onSubmit, editingDish }:
 
             const { data } = await axios.post(`${API_BASE_URL}/api/upload`, uploadData, config);
             
-            if (data && data.imageUrl) {
-                setFormData(prev => ({ ...prev, [field]: data.imageUrl }));
+            const uploadedPath = data.videoUrl || data.imageUrl;
+            if (uploadedPath) {
+                setFormData(prev => ({ ...prev, [field]: uploadedPath }));
             } else {
                 throw new Error('Invalid response from server');
             }
@@ -573,7 +574,7 @@ export default function AddDishModal({ isOpen, onClose, onSubmit, editingDish }:
                                             </span>
                                         </label>
                                     </div>
-                                    <p className="text-xs text-gray-400 mt-2">Supported formats: JPG, PNG, JPEG</p>
+                                    <p className="text-xs text-gray-400 mt-2">Supported formats: JPG, PNG, JPEG (Max 10MB)</p>
                                 </div>
                                 <div className="col-span-3">
                                     <div className="w-full aspect-square bg-gray-50 rounded-xl border border-gray-200 flex items-center justify-center overflow-hidden relative">
@@ -581,7 +582,7 @@ export default function AddDishModal({ isOpen, onClose, onSubmit, editingDish }:
                                             <img src={getImageUrl(formData.imageUrl)} alt="Preview" className="w-full h-full object-cover" />
                                         ) : (
                                             <div className="text-gray-300 flex flex-col items-center">
-                                                <span className="text-xs">Preview</span>
+                                                <span className="text-xs text-gray-400 font-medium">Image Preview</span>
                                             </div>
                                         )}
                                     </div>
@@ -628,15 +629,21 @@ export default function AddDishModal({ isOpen, onClose, onSubmit, editingDish }:
                                             </div>
                                         </div>
                                     )}
-                                    <p className="text-xs text-gray-400 mt-2">Supported formats: MP4, WebM, MOV (Max 100MB)</p>
+                                    <p className="text-xs text-gray-400 mt-2">Supported formats: MP4, MOV, AVI (Max 100MB)</p>
                                 </div>
                                 <div className="col-span-3">
                                     <div className="w-full aspect-square bg-gray-50 rounded-xl border border-gray-200 flex items-center justify-center overflow-hidden relative">
                                         {formData.videoUrl ? (
-                                            <video src={getImageUrl(formData.videoUrl)} className="w-full h-full object-cover" />
+                                            <video 
+                                                src={getImageUrl(formData.videoUrl)} 
+                                                className="w-full h-full object-cover"
+                                                controls
+                                                muted
+                                                playsInline
+                                            />
                                         ) : (
                                             <div className="text-gray-300 flex flex-col items-center">
-                                                <span className="text-xs">Preview</span>
+                                                <span className="text-xs text-gray-400 font-medium">Video Preview</span>
                                             </div>
                                         )}
                                     </div>
