@@ -309,20 +309,28 @@ export default function RestaurantProfile({ restaurant: initialRestaurant, onBac
             {/* Banner Section */}
             <div className="relative h-56 sm:h-72 w-full overflow-hidden">
                 <img
-                    src={getImageUrl(restaurantData.logo)} // Using logo as fallback for banner if no banner field exists
+                    src={getImageUrl(restaurantData.logo)}
                     alt="Restaurant Banner"
-                    className="w-full h-full object-cover"
+                    className="w-full h-full object-cover blur-[2px] scale-110 opacity-40 bg-gray-900"
                     onError={(e) => {
                         const target = e.target as HTMLImageElement;
-                        target.src = "https://images.unsplash.com/photo-1504674900247-0877df9cc836?auto=format&fit=crop&w=1000&q=80";
+                        target.src = getImageFallback('logo');
                     }}
                 />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
+                {/* Centered Logo in Banner Background */}
+                <div className="absolute inset-0 flex items-center justify-center">
+                    <img 
+                        src={getImageUrl(restaurantData.logo)} 
+                        className="w-40 h-40 object-contain opacity-20"
+                        alt=""
+                    />
+                </div>
+                <div className="absolute inset-0 bg-gradient-to-t from-white via-transparent to-black/40" />
                 
                 {/* Back Button Overlay */}
                 <button 
                     onClick={onBack}
-                    className="absolute top-6 left-6 w-10 h-10 bg-white/20 backdrop-blur-md rounded-full flex items-center justify-center text-white border border-white/30 shadow-lg"
+                    className="absolute top-6 left-6 w-10 h-10 bg-white/20 backdrop-blur-md rounded-full flex items-center justify-center text-white border border-white/30 shadow-lg z-20"
                 >
                     <FaTimes />
                 </button>
@@ -335,7 +343,7 @@ export default function RestaurantProfile({ restaurant: initialRestaurant, onBac
                         <img
                             src={getImageUrl(restaurantData.logo)}
                             alt={restaurantData.name}
-                            className="w-28 h-28 rounded-3xl object-cover shadow-2xl border-4 border-white"
+                            className="w-28 h-28 rounded-3xl object-cover shadow-2xl border-4 border-white bg-white"
                             onError={(e) => {
                                 const target = e.target as HTMLImageElement;
                                 target.src = getImageFallback('logo');
@@ -424,16 +432,20 @@ export default function RestaurantProfile({ restaurant: initialRestaurant, onBac
                         {menuSections.flatMap(s => s.items).filter(dish => dish.videoUrl).length > 0 ? (
                             menuSections.flatMap(s => s.items).filter(dish => dish.videoUrl).map((dish) => (
                                 <div
-                                    key={dish._id}
-                                    onClick={() => setSelectedDish(dish)}
-                                    className="relative aspect-[9/16] rounded-2xl overflow-hidden cursor-pointer group shadow-lg"
-                                >
-                                    <img
-                                        src={getImageUrl(dish.imageUrl)}
-                                        alt={dish.name}
-                                        className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
-                                    />
-                                    <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-60 group-hover:opacity-80 transition-opacity" />
+                                        key={dish._id}
+                                        onClick={() => setSelectedDish(dish)}
+                                        className="relative aspect-[9/16] rounded-2xl overflow-hidden cursor-pointer group shadow-lg bg-gray-100"
+                                    >
+                                        <img
+                                            src={getImageUrl(dish.imageUrl)}
+                                            alt={dish.name}
+                                            className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+                                            onError={(e) => {
+                                                const target = e.target as HTMLImageElement;
+                                                target.src = getImageFallback('dish');
+                                            }}
+                                        />
+                                        <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent opacity-80 group-hover:opacity-100 transition-opacity" />
                                     
                                     {/* Play Icon Overlay */}
                                     <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity scale-75 group-hover:scale-100 duration-300">
