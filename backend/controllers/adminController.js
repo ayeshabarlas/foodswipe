@@ -248,7 +248,7 @@ const getDashboardStats = async (req, res) => {
                 id: r._id,
                 type: 'rider_onboard',
                 text: `New rider onboarded`,
-                subtext: `${r.user?.name || 'Rider'} registered as rider`,
+                subtext: `${r.fullName || r.user?.name || 'Rider'} registered as rider`,
                 time: r.createdAt
             }))
         ]

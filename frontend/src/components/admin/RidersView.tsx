@@ -8,6 +8,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 
 interface Rider {
     _id: string;
+    fullName: string;
     user: { _id: string; name: string; email: string; phone: string; status: string; createdAt: string };
     vehicleType: string;
     vehicleNumber: string;
@@ -137,6 +138,7 @@ export default function RidersView() {
 
     const filteredRiders = Array.isArray(riders) ? riders.filter(rider => {
         const matchesSearch =
+            (rider.fullName?.toLowerCase() || '').includes(searchTerm.toLowerCase()) ||
             (rider.user?.name?.toLowerCase() || '').includes(searchTerm.toLowerCase()) ||
             (rider.user?.phone || '').includes(searchTerm);
         const matchesFilter = filter === 'All' ||
@@ -427,7 +429,10 @@ export default function RidersView() {
                                 <tr key={rider._id} className="hover:bg-gray-50 transition cursor-pointer" onClick={() => setSelectedRider(rider)}>
                                     <td className="px-6 py-3">
                                         <div className="text-xs">
-                                            <p className="font-bold text-gray-800">{rider.fullName || rider.user?.name || 'Unknown User'}</p>
+                                            <div className="flex items-center gap-2">
+                                                <p className="font-bold text-gray-800">{rider.fullName || rider.user?.name || 'Unknown User'}</p>
+                                                <span className="bg-green-100 text-green-700 text-[10px] px-1.5 py-0.5 rounded-full font-bold">FIXED</span>
+                                            </div>
                                             <p className="text-[10px] text-gray-500">{rider.user?.phone || 'No Phone'}</p>
                                         </div>
                                     </td>
