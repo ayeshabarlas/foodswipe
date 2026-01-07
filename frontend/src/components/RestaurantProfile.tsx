@@ -732,6 +732,9 @@ export default function RestaurantProfile({ restaurant: initialRestaurant, onBac
             }
 
 
+            </div>
+
+
             <AnimatePresence>
                 {
                     selectedDish && (
