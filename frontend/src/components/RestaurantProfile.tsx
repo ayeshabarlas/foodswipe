@@ -348,16 +348,16 @@ export default function RestaurantProfile({ restaurant: initialRestaurant, onBac
                         </div>
                         <div className="flex-1 pb-1">
                             <h1 className="text-2xl font-bold text-white mb-2 drop-shadow-md">{restaurantData.name}</h1>
-                            <div className="flex items-center gap-4">
+                <div className="flex items-center gap-4">
                                 <div className="flex items-center gap-1.5 bg-black/40 backdrop-blur-md px-3 py-1 rounded-xl border border-white/10">
                                     <FaStar className="text-yellow-400" size={14} />
-                                    <span className="text-white font-black text-sm">
+                                    <span className="text-white font-medium text-sm">
                                         {reviews.length > 0
                                             ? (reviews.reduce((acc, r) => acc + r.rating, 0) / reviews.length).toFixed(1)
                                             : (restaurantData.rating > 0 ? restaurantData.rating.toFixed(1) : 'New')}
                                     </span>
                                 </div>
-                                <div className="text-white/90 text-sm font-bold drop-shadow-sm bg-black/20 backdrop-blur-sm px-3 py-1 rounded-xl">
+                                <div className="text-white/90 text-sm font-normal drop-shadow-sm bg-black/20 backdrop-blur-sm px-3 py-1 rounded-xl">
                                     {restaurantData.cuisineTypes && restaurantData.cuisineTypes.length > 0
                                         ? restaurantData.cuisineTypes.join(', ')
                                         : (restaurantData.cuisine || 'Pakistani')}
@@ -372,17 +372,17 @@ export default function RestaurantProfile({ restaurant: initialRestaurant, onBac
             <div className="bg-white px-4 sm:px-8 py-5 flex items-center justify-between border-b border-gray-100 shadow-sm relative z-20 flex-shrink-0">
                 <div className="flex items-center gap-4 sm:gap-12 max-w-[70%] overflow-hidden">
                     <div className="flex flex-col min-w-fit">
-                        <span className="text-gray-400 text-[10px] uppercase font-black tracking-widest mb-1 truncate">Distance</span>
-                        <div className="flex items-center gap-1.5 text-gray-900 font-black">
-                            <FaMapMarkerAlt className="text-primary shrink-0" size={14} />
+                        <span className="text-gray-400 text-[11px] font-normal mb-1 truncate">Distance</span>
+                        <div className="flex items-center gap-1.5 text-gray-700 font-normal">
+                            <FaMapMarkerAlt className="text-primary shrink-0 opacity-70" size={14} />
                             <span className="text-xs sm:text-sm truncate">{distance}</span>
                         </div>
                     </div>
                     <div className="h-8 w-px bg-gray-100 shrink-0" />
                     <div className="flex flex-col min-w-fit">
-                        <span className="text-gray-400 text-[10px] uppercase font-black tracking-widest mb-1 truncate">Delivery</span>
-                        <div className="flex items-center gap-1.5 text-gray-900 font-black">
-                            <FaClock className="text-primary shrink-0" size={14} />
+                        <span className="text-gray-400 text-[11px] font-normal mb-1 truncate">Delivery</span>
+                        <div className="flex items-center gap-1.5 text-gray-700 font-normal">
+                            <FaClock className="text-primary shrink-0 opacity-70" size={14} />
                             <span className="text-xs sm:text-sm truncate">{restaurantData.deliveryTime || '20-30 min'}</span>
                         </div>
                     </div>
@@ -394,8 +394,8 @@ export default function RestaurantProfile({ restaurant: initialRestaurant, onBac
                     }}
                     className="flex flex-col items-end group shrink-0"
                 >
-                    <span className="text-gray-400 text-[10px] uppercase font-black tracking-widest mb-1">Reviews</span>
-                    <span className="text-primary font-black text-xs sm:text-sm group-hover:underline">{reviewCount} reviews</span>
+                    <span className="text-gray-400 text-[11px] font-normal mb-1">Reviews</span>
+                    <span className="text-primary font-normal text-xs sm:text-sm group-hover:underline">{reviewCount} reviews</span>
                 </button>
             </div>
 
@@ -405,18 +405,18 @@ export default function RestaurantProfile({ restaurant: initialRestaurant, onBac
                 <div className="flex px-8 pt-4 border-b border-gray-100">
                     <button
                         onClick={() => setActiveMainTab('videos')}
-                        className={`pb-3 pr-8 text-sm font-bold transition-all relative ${activeMainTab === 'videos' ? 'text-gray-900' : 'text-gray-400'}`}
+                        className={`pb-3 pr-8 text-sm font-medium transition-all relative ${activeMainTab === 'videos' ? 'text-gray-900' : 'text-gray-400'}`}
                     >
-                        DISH VIDEOS
+                        Dish Videos
                         {activeMainTab === 'videos' && (
                             <motion.div layoutId="mainTabIndicator" className="absolute bottom-0 left-0 right-8 h-0.5 bg-primary" />
                         )}
                     </button>
                     <button
                         onClick={() => setActiveMainTab('menu')}
-                        className={`pb-3 px-8 text-sm font-bold transition-all relative ${activeMainTab === 'menu' ? 'text-gray-900' : 'text-gray-400'}`}
+                        className={`pb-3 px-8 text-sm font-medium transition-all relative ${activeMainTab === 'menu' ? 'text-gray-900' : 'text-gray-400'}`}
                     >
-                        MENU
+                        Menu
                         {activeMainTab === 'menu' && (
                             <motion.div layoutId="mainTabIndicator" className="absolute bottom-0 left-8 right-8 h-0.5 bg-primary" />
                         )}
@@ -427,9 +427,14 @@ export default function RestaurantProfile({ restaurant: initialRestaurant, onBac
             {activeMainTab === 'videos' && (
                 <div className="bg-white px-4 pb-20">
                     <div className="grid grid-cols-2 gap-3 py-4">
-                        {menuSections.flatMap(s => s.items).filter(dish => dish.videoUrl).length > 0 ? (
-                            menuSections.flatMap(s => s.items).filter(dish => dish.videoUrl).map((dish) => (
-                                <div
+                        {(() => {
+                            const uniqueDishes = Array.from(new Set(menuSections.flatMap(s => s.items).filter(dish => dish.videoUrl).map(d => d._id)))
+                                .map(id => menuSections.flatMap(s => s.items).find(d => d._id === id))
+                                .filter(Boolean);
+                            
+                            return uniqueDishes.length > 0 ? (
+                                uniqueDishes.map((dish: any) => (
+                                    <div
                                         key={dish._id}
                                         onClick={() => setSelectedDish(dish)}
                                         className="relative aspect-[9/16] rounded-2xl overflow-hidden cursor-pointer group shadow-lg bg-gray-100"

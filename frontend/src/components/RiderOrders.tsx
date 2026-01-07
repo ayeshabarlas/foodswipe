@@ -125,7 +125,11 @@ export default function RiderOrders({ riderId }: RiderOrdersProps) {
     }, [riderId]);
 
     const filteredOrders = orders.filter(order => {
-        if (filter === 'active') return ['Ready', 'OnTheWay', 'Confirmed', 'Picked Up'].includes(order.status);
+        if (filter === 'active') {
+            // Don't show the order in the list if it's already in the tracking card at the top
+            if (activeDelivery && order._id === activeDelivery._id) return false;
+            return ['Ready', 'OnTheWay', 'Confirmed', 'Picked Up', 'Arrived'].includes(order.status);
+        }
         if (filter === 'completed') return order.status === 'Delivered';
         return true;
     });
@@ -231,27 +235,27 @@ export default function RiderOrders({ riderId }: RiderOrdersProps) {
             </div>
 
             {/* Scrollable Content Area */}
-            <div className="flex-1 overflow-y-auto p-4 lg:p-6 space-y-6 pb-32">
+            <div className="flex-1 overflow-y-auto p-4 lg:p-6 space-y-6 pb-20">
                 {/* Active Delivery Tracking Card - Screenshot Style */}
                 {activeDelivery && (
-                    <div className="bg-white rounded-3xl shadow-xl overflow-hidden border border-gray-100 animate-in fade-in slide-in-from-bottom-4 duration-500">
+                    <div className="bg-white rounded-3xl shadow-lg overflow-hidden border border-gray-100 animate-in fade-in slide-in-from-bottom-4 duration-500">
                         <div className="p-6">
                             <div className="flex justify-between items-start mb-6">
                                 <div>
                                     <div className="flex items-center gap-2 text-orange-500 mb-1">
                                         <FaBox size={18} />
-                                        <h2 className="text-xl font-black tracking-tight">Tracking Order</h2>
+                                        <h2 className="text-lg font-bold tracking-tight">Tracking Order</h2>
                                     </div>
-                                    <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">ORDER #{activeDelivery.orderNumber || activeDelivery._id.slice(-7).toUpperCase()}</p>
+                                    <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-widest">ORDER #{activeDelivery.orderNumber || activeDelivery._id.slice(-7).toUpperCase()}</p>
                                 </div>
                                 <div className="text-right">
-                                    <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">ESTIMATED ARRIVAL</p>
-                                    <p className="text-2xl font-black text-green-500">25-35 mins</p>
+                                    <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-widest mb-1">ESTIMATED ARRIVAL</p>
+                                    <p className="text-xl font-bold text-green-500">25-35 mins</p>
                                 </div>
                             </div>
 
                             {/* Progress Steps */}
-                            <div className="relative flex justify-between items-center mb-12 px-2">
+                            <div className="relative flex justify-between items-center mb-10 px-2">
                                 <div className="absolute left-6 right-6 h-1 bg-gray-100 top-[14px] z-0" />
                                 <div 
                                     className="absolute left-6 h-1 bg-orange-500 top-[14px] z-0 transition-all duration-1000" 
@@ -278,7 +282,7 @@ export default function RiderOrders({ riderId }: RiderOrdersProps) {
                                             <div className={`w-7 h-7 rounded-full flex items-center justify-center border-4 border-white shadow-sm transition-colors duration-500 ${isCompleted ? 'bg-orange-500 text-white' : 'bg-gray-100 text-gray-400'}`}>
                                                 {isCompleted ? <FaCheckCircle size={10} /> : <div className="w-1.5 h-1.5 rounded-full bg-current" />}
                                             </div>
-                                            <span className={`absolute -bottom-6 whitespace-nowrap text-[8px] font-black tracking-tighter ${isCompleted ? 'text-orange-500' : 'text-gray-300'}`}>
+                                            <span className={`absolute -bottom-6 whitespace-nowrap text-[8px] font-bold tracking-tight ${isCompleted ? 'text-orange-500' : 'text-gray-300'}`}>
                                                 {step.label}
                                             </span>
                                         </div>
@@ -287,7 +291,7 @@ export default function RiderOrders({ riderId }: RiderOrdersProps) {
                             </div>
 
                             {/* Map Area */}
-                            <div className="rounded-2xl overflow-hidden h-72 border border-gray-100 shadow-inner">
+                            <div className="rounded-2xl overflow-hidden h-64 border border-gray-100 shadow-inner mt-4">
                                 <OrderTracking order={activeDelivery} userRole="rider" />
                             </div>
                         </div>
@@ -296,7 +300,7 @@ export default function RiderOrders({ riderId }: RiderOrdersProps) {
 
                 {/* Orders List */}
                 <div className="space-y-4">
-                    <h3 className="text-sm font-black text-gray-400 uppercase tracking-widest px-2">
+                    <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-widest px-2">
                         {filter === 'active' ? 'Active Tasks' : 'Delivery History'}
                     </h3>
                     {filteredOrders.map(order => (
@@ -311,37 +315,11 @@ export default function RiderOrders({ riderId }: RiderOrdersProps) {
                         />
                     ))}
                     {filteredOrders.length === 0 && (
-                        <div className="flex flex-col items-center justify-center py-20 text-gray-400 bg-white rounded-3xl border border-dashed border-gray-200">
-                            <FaBox size={40} className="mb-4 opacity-10" />
-                            <p className="font-bold uppercase tracking-widest text-[10px]">No orders found</p>
+                        <div className="flex flex-col items-center justify-center py-16 text-gray-400 bg-white rounded-3xl border border-dashed border-gray-200">
+                            <FaBox size={32} className="mb-3 opacity-10" />
+                            <p className="font-semibold uppercase tracking-widest text-[9px]">No orders found</p>
                         </div>
                     )}
-                </div>
-            </div>
-
-            {/* Bottom Navigation - Fixed like in screenshot */}
-            <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-100 px-6 py-3 flex justify-between items-center z-50 shadow-[0_-4px_20px_rgba(0,0,0,0,03)]">
-                <div className="flex flex-col items-center gap-1 text-gray-400">
-                    <FaBox size={18} />
-                    <span className="text-[9px] font-bold uppercase tracking-tighter">Home</span>
-                </div>
-                <div className="flex flex-col items-center gap-1 text-gray-400">
-                    <FaCheckCircle size={18} />
-                    <span className="text-[9px] font-bold uppercase tracking-tighter">Earnings</span>
-                </div>
-                <div className="flex flex-col items-center gap-1 text-orange-500">
-                    <div className="bg-orange-50 p-2 rounded-xl">
-                        <FaBox size={18} />
-                    </div>
-                    <span className="text-[9px] font-bold uppercase tracking-tighter">Orders</span>
-                </div>
-                <div className="flex flex-col items-center gap-1 text-gray-400">
-                    <FaCommentDots size={18} />
-                    <span className="text-[9px] font-bold uppercase tracking-tighter">Support</span>
-                </div>
-                <div className="flex flex-col items-center gap-1 text-gray-400">
-                    <FaCheckCircle size={18} />
-                    <span className="text-[9px] font-bold uppercase tracking-tighter">Profile</span>
                 </div>
             </div>
 
@@ -415,6 +393,19 @@ export default function RiderOrders({ riderId }: RiderOrdersProps) {
 }
 
 function OrderCard({ order, riderId, onAccept, onPickup, onDeliver, onChat }: { order: any; riderId: string; onAccept: (id: string) => void; onPickup: (id: string) => void; onDeliver: (id: string) => void; onChat: (order: any) => void }) {
+    // Rider Earning Logic implementation
+    const calculateEarnings = () => {
+        if (order.netRiderEarning) return order.netRiderEarning;
+        
+        const distance = order.distanceKm || 3.5; // fallback
+        const BASE_PAY = 100;
+        const PER_KM_RATE = 20;
+        const PLATFORM_FEE = 15;
+        
+        const net = Math.round(BASE_PAY + (distance * PER_KM_RATE) - PLATFORM_FEE);
+        return net;
+    };
+
     const getStatusIcon = () => {
         switch (order.status) {
             case 'Delivered': return <FaCheckCircle className="text-green-500" />;
@@ -444,11 +435,11 @@ function OrderCard({ order, riderId, onAccept, onPickup, onDeliver, onChat }: { 
                 <div className="flex items-center gap-2">
                     <div className="text-xl">{getStatusIcon()}</div>
                     <div>
-                        <p className="font-semibold text-gray-900">Order #{order.orderNumber}</p>
-                        <p className="text-xs text-gray-500 font-normal">{order.timeAgo || 'Just now'}</p>
+                        <p className="font-bold text-gray-900">Order #{order.orderNumber}</p>
+                        <p className="text-[10px] text-gray-400 font-semibold uppercase tracking-wider">{order.timeAgo || 'Just now'}</p>
                     </div>
                 </div>
-                <span className={`px-3 py-1 rounded-full text-xs font-semibold ${getStatusColor()}`}>
+                <span className={`px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider ${getStatusColor()}`}>
                     {order.status}
                 </span>
             </div>
@@ -458,9 +449,9 @@ function OrderCard({ order, riderId, onAccept, onPickup, onDeliver, onChat }: { 
                 <div className="flex items-start gap-2">
                     <FaMapMarkerAlt className="text-orange-500 mt-1 flex-shrink-0" />
                     <div>
-                        <p className="text-xs text-gray-500 mb-1 font-normal">Pickup from</p>
-                        <p className="font-semibold text-gray-900">{order.restaurant?.name || 'Restaurant'}</p>
-                        <p className="text-sm text-gray-600">{order.restaurant?.address || 'Restaurant Address'}</p>
+                        <p className="text-[10px] text-gray-400 mb-1 font-bold uppercase tracking-wider">Pickup from</p>
+                        <p className="font-bold text-gray-900">{order.restaurant?.name || 'Restaurant'}</p>
+                        <p className="text-xs text-gray-500 font-medium">{order.restaurant?.address || 'Restaurant Address'}</p>
                     </div>
                 </div>
             </div>
@@ -471,8 +462,8 @@ function OrderCard({ order, riderId, onAccept, onPickup, onDeliver, onChat }: { 
                     <div className="flex-1">
                         <div className="flex items-center justify-between">
                             <div>
-                                <p className="text-xs text-gray-500 mb-1 font-normal">Deliver to</p>
-                                <p className="font-semibold text-gray-900">{order.customer?.name || 'Customer'}</p>
+                                <p className="text-[10px] text-gray-400 mb-1 font-bold uppercase tracking-wider">Deliver to</p>
+                                <p className="font-bold text-gray-900">{order.customer?.name || 'Customer'}</p>
                             </div>
                             {isAssignedToMe && (
                                 <button
@@ -483,16 +474,16 @@ function OrderCard({ order, riderId, onAccept, onPickup, onDeliver, onChat }: { 
                                 </button>
                             )}
                         </div>
-                        <p className="text-sm text-gray-600 font-normal">{order.deliveryAddress || 'Delivery Address'}</p>
+                        <p className="text-xs text-gray-500 font-medium">{order.deliveryAddress || 'Delivery Address'}</p>
                         {order.customer?.phone && (
                             <button
                                 onClick={() => {
                                     navigator.clipboard.writeText(order.customer.phone);
                                     toast.success('📞 Phone number copied!');
                                 }}
-                                className="inline-flex items-center gap-1 mt-1 text-sm text-green-600 hover:text-green-700 font-medium cursor-pointer"
+                                className="inline-flex items-center gap-1 mt-1 text-xs text-green-600 hover:text-green-700 font-bold cursor-pointer"
                             >
-                                <FaPhone className="text-xs" />
+                                <FaPhone className="text-[10px]" />
                                 {order.customer.phone}
                             </button>
                         )}
@@ -502,17 +493,17 @@ function OrderCard({ order, riderId, onAccept, onPickup, onDeliver, onChat }: { 
 
             {/* Stats Grid */}
             <div className="grid grid-cols-3 gap-3 mb-4">
-                <div className="text-center p-3 bg-orange-50 rounded-xl">
-                    <p className="text-[10px] text-gray-500 mb-1 font-bold uppercase tracking-wider">Distance</p>
-                    <p className="font-bold text-gray-900">{order.distanceKm || (Math.random() * 5 + 1).toFixed(1)} km</p>
+                <div className="text-center p-3 bg-gray-50 rounded-xl">
+                    <p className="text-[10px] text-gray-400 mb-1 font-bold uppercase tracking-wider">Distance</p>
+                    <p className="font-bold text-gray-900">{order.distanceKm || '3.5'} km</p>
                 </div>
                 <div className="text-center p-3 bg-green-50 rounded-xl border border-green-100">
-                    <p className="text-[10px] text-gray-600 mb-1 font-bold uppercase tracking-wider">Earnings</p>
-                    <p className="font-black text-green-600 text-base">Rs. {order.netRiderEarning || (order.status === 'Delivered' ? '185' : '---')}</p>
+                    <p className="text-[10px] text-green-600/70 mb-1 font-bold uppercase tracking-wider">Earnings</p>
+                    <p className="font-bold text-green-600 text-sm">Rs. {calculateEarnings()}</p>
                 </div>
                 <div className="text-center p-3 bg-gray-50 rounded-xl">
-                    <p className="text-[10px] text-gray-500 mb-1 font-bold uppercase tracking-wider">Items</p>
-                    <p className="font-bold text-gray-900">{order.items?.length || order.orderItems?.length || '---'}</p>
+                    <p className="text-[10px] text-gray-400 mb-1 font-bold uppercase tracking-wider">Items</p>
+                    <p className="font-bold text-gray-900">{order.items?.length || order.orderItems?.length || '1'}</p>
                 </div>
             </div>
 

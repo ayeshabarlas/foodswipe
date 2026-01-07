@@ -46,6 +46,7 @@ export default function SettingsTab({ restaurant, onUpdate }: SettingsTabProps) 
 
     useEffect(() => {
         if (restaurant) {
+            const defaultHours = { open: '09:00', close: '22:00', isClosed: false };
             setFormData({
                 name: restaurant.name || '',
                 address: restaurant.address || '',
@@ -54,25 +55,25 @@ export default function SettingsTab({ restaurant, onUpdate }: SettingsTabProps) 
                 cuisineTypes: restaurant.cuisineTypes || [],
                 priceRange: restaurant.priceRange || '$$',
                 deliveryTime: restaurant.deliveryTime || '',
-                openingHours: restaurant.openingHours || {
-                    monday: { open: '09:00', close: '22:00', isClosed: false },
-                    tuesday: { open: '09:00', close: '22:00', isClosed: false },
-                    wednesday: { open: '09:00', close: '22:00', isClosed: false },
-                    thursday: { open: '09:00', close: '22:00', isClosed: false },
-                    friday: { open: '09:00', close: '23:00', isClosed: false },
-                    saturday: { open: '10:00', close: '23:00', isClosed: false },
-                    sunday: { open: '10:00', close: '23:00', isClosed: false },
+                openingHours: {
+                    monday: restaurant.openingHours?.monday || { ...defaultHours },
+                    tuesday: restaurant.openingHours?.tuesday || { ...defaultHours },
+                    wednesday: restaurant.openingHours?.wednesday || { ...defaultHours },
+                    thursday: restaurant.openingHours?.thursday || { ...defaultHours },
+                    friday: restaurant.openingHours?.friday || { ...defaultHours },
+                    saturday: restaurant.openingHours?.saturday || { ...defaultHours },
+                    sunday: restaurant.openingHours?.sunday || { ...defaultHours },
                 },
                 deliveryZones: restaurant.deliveryZones || [],
                 logo: restaurant.logo || '',
-                bankDetails: restaurant.bankDetails || {
-                    accountType: 'bank',
-                    accountHolderName: '',
-                    accountNumber: '',
-                    bankName: '',
-                    branchCode: '',
-                    iban: '',
-                    phoneNumber: '',
+                bankDetails: {
+                    accountType: restaurant.bankDetails?.accountType || 'bank',
+                    accountHolderName: restaurant.bankDetails?.accountHolderName || '',
+                    accountNumber: restaurant.bankDetails?.accountNumber || '',
+                    bankName: restaurant.bankDetails?.bankName || '',
+                    branchCode: restaurant.bankDetails?.branchCode || '',
+                    iban: restaurant.bankDetails?.iban || '',
+                    phoneNumber: restaurant.bankDetails?.phoneNumber || '',
                 }
             });
         }

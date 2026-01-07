@@ -251,7 +251,7 @@ export default function RiderDashboard({ riderId }: RiderDashboardProps) {
                 <div className="bg-white/20 backdrop-blur-sm rounded-2xl p-3 flex items-center justify-between">
                     <div>
                         <p className="text-white text-sm font-bold">{isOnline ? 'You are Online' : 'You are Offline'}</p>
-                        <p className="text-white/80 text-[10px] font-bold uppercase tracking-wider">{isOnline ? 'Ready for orders' : 'Go online to start earning'}</p>
+                        <p className="text-white/80 text-[10px] font-medium uppercase tracking-wider">{isOnline ? 'Ready for orders' : 'Go online to start earning'}</p>
                     </div>
                     <button
                         onClick={toggleOnlineStatus}
@@ -294,7 +294,7 @@ export default function RiderDashboard({ riderId }: RiderDashboardProps) {
 
             {/* Quick Actions */}
             <div className="px-4 mb-6">
-                <h2 className="text-base font-bold text-gray-800 mb-3 uppercase tracking-wider text-[10px]">Quick Actions</h2>
+                <h2 className="text-base font-semibold text-gray-800 mb-3 uppercase tracking-wider text-[10px]">Quick Actions</h2>
                 <div className="space-y-2.5">
                     <ActionItem
                         icon={<FaRoute className="text-orange-600" />}
@@ -356,7 +356,7 @@ export default function RiderDashboard({ riderId }: RiderDashboardProps) {
 
 function BottomNav({ activeTab, setActiveTab }: { activeTab: string; setActiveTab: (tab: string) => void }) {
     return (
-        <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-100 px-4 py-2 safe-area-pb shadow-[0_-4px_20px_rgba(0,0,0,0.05)]">
+        <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-100 px-4 py-2 safe-area-pb shadow-[0_-4px_20px_rgba(0,0,0,0.05)] z-[999]">
             <div className="flex items-center justify-around max-w-2xl mx-auto">
                 <NavItem icon={<FaHome />} label="Home" active={activeTab === 'home'} onClick={() => setActiveTab('home')} />
                 <NavItem icon={<FaDollarSign />} label="Earnings" active={activeTab === 'earnings'} onClick={() => setActiveTab('earnings')} />
@@ -374,7 +374,7 @@ function StatCard({ icon, label, value, bgColor }: { icon: React.ReactNode; labe
             <div className={`w-9 h-9 ${bgColor} rounded-xl flex items-center justify-center text-white mb-2.5 shadow-sm`}>
                 {icon}
             </div>
-            <p className="text-gray-400 text-[10px] font-bold uppercase tracking-wider mb-0.5">{label}</p>
+            <p className="text-gray-400 text-[10px] font-semibold uppercase tracking-wider mb-0.5">{label}</p>
             <p className="text-gray-800 text-lg font-bold">{value}</p>
         </div>
     );
@@ -397,8 +397,12 @@ function ActionItem({ icon, title, subtitle, bgColor, onClick }: { icon: React.R
 function NavItem({ icon, label, active, onClick }: { icon: React.ReactNode; label: string; active: boolean; onClick: () => void }) {
     return (
         <button
-            onClick={onClick}
-            className={`flex flex-col items-center gap-1 transition-all ${active ? 'text-orange-600 scale-110' : 'text-gray-400 hover:text-gray-600'}`}
+            onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                onClick();
+            }}
+            className={`flex flex-col items-center gap-1 transition-all py-1 px-2 ${active ? 'text-orange-600 scale-105' : 'text-gray-400 hover:text-gray-600'}`}
         >
             <span className="text-lg">{icon}</span>
             <span className="text-[9px] font-bold uppercase tracking-widest">{label}</span>

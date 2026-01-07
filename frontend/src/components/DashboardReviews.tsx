@@ -15,18 +15,14 @@ interface Review {
     createdAt: string;
 }
 
-export default function DashboardReviews() {
+export default function DashboardReviews({ restaurant }: { restaurant: any }) {
     const [reviews, setReviews] = useState<Review[]>([]);
     const [loading, setLoading] = useState(true);
 
     const fetchReviews = async () => {
+        if (!restaurant?._id) return;
         try {
-            const userInfo = JSON.parse(localStorage.getItem('userInfo') || '{}');
-            const restaurantRes = await axios.get(`${API_BASE_URL}/api/restaurants/my-restaurant`, {
-                headers: { Authorization: `Bearer ${userInfo.token}` }
-            });
-
-            const reviewsRes = await axios.get(`${API_BASE_URL}/api/restaurants/${restaurantRes.data._id}/reviews`);
+            const reviewsRes = await axios.get(`${API_BASE_URL}/api/restaurants/${restaurant._id}/reviews`);
             setReviews(reviewsRes.data);
         } catch (error) {
             console.error('Error fetching reviews:', error);
@@ -37,9 +33,9 @@ export default function DashboardReviews() {
 
     useEffect(() => {
         fetchReviews();
-        const interval = setInterval(fetchReviews, 15000); // Poll every 15s
+        const interval = setInterval(fetchReviews, 30000); // Poll every 30s
         return () => clearInterval(interval);
-    }, []);
+    }, [restaurant?._id]);
 
     if (loading) return <div className="p-8 text-center text-gray-500">Loading reviews...</div>;
 
@@ -52,9 +48,11 @@ export default function DashboardReviews() {
         percentage: reviews.length > 0 ? (reviews.filter(r => r.rating === star).length / reviews.length) * 100 : 0
     }));
 
-    // Mock stats (would come from backend in real implementation)
-    const newReviewsThisMonth = 24;
-    const responseRate = 87;
+    // Real stats
+    const now = new Date();
+    const firstDayOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+    const newReviewsThisMonth = reviews.filter(r => new Date(r.createdAt) >= firstDayOfMonth).length;
+    const responseRate = 100; // Default placeholder as response feature not yet implemented
 
     return (
         <div className="p-6 space-y-6 max-w-7xl">

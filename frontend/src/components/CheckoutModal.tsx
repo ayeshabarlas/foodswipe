@@ -244,11 +244,11 @@ export default function CheckoutModal({ isOpen, onClose, cart, total, subtotal, 
                 return;
             }
 
-            let restaurantId = cart[0].restaurantId;
+            let restaurantId = cart[0].restaurantId || cart[0].restaurant?._id || cart[0].restaurant;
             if (!restaurantId) {
-                const itemWithRestaurant = cart.find(item => item.restaurantId);
+                const itemWithRestaurant = cart.find(item => item.restaurantId || item.restaurant?._id || item.restaurant);
                 if (itemWithRestaurant) {
-                    restaurantId = itemWithRestaurant.restaurantId;
+                    restaurantId = itemWithRestaurant.restaurantId || itemWithRestaurant.restaurant?._id || itemWithRestaurant.restaurant;
                 }
             }
 
