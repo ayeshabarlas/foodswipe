@@ -21,8 +21,14 @@ export default function RiderDashboard({ riderId }: RiderDashboardProps) {
     const getEffectiveRiderId = () => {
         if (riderId) return riderId;
         if (typeof window !== 'undefined') {
-            const userInfo = JSON.parse(localStorage.getItem('userInfo') || '{}');
-            return userInfo.riderId || userInfo._id;
+            const userStr = localStorage.getItem('userInfo');
+            if (!userStr) return '';
+            try {
+                const userInfo = JSON.parse(userStr);
+                return userInfo.riderId || userInfo._id || '';
+            } catch (e) {
+                return '';
+            }
         }
         return '';
     };
@@ -30,6 +36,8 @@ export default function RiderDashboard({ riderId }: RiderDashboardProps) {
     const effectiveRiderId = getEffectiveRiderId();
 
     const [riderData, setRiderData] = useState<any>(null);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState<string | null>(null);
     const [isOnline, setIsOnline] = useState(false);
     const [activeTab, setActiveTab] = useState('home');
     const [pendingOrder, setPendingOrder] = useState<any>(null);
@@ -61,16 +69,23 @@ export default function RiderDashboard({ riderId }: RiderDashboardProps) {
     useEffect(() => {
         if (!effectiveRiderId) return;
 
-        const fetchRiderData = async () => {
+        const fetchRiderData = async (showLoading = false) => {
             try {
+                if (showLoading) setLoading(true);
                 const token = JSON.parse(localStorage.getItem("userInfo") || "{}").token;
                 const res = await axios.get(`${API_BASE_URL}/api/riders/${effectiveRiderId}`, {
                     headers: { Authorization: `Bearer ${token}` }
                 });
                 setRiderData(res.data);
                 setIsOnline(res.data.isOnline);
-            } catch (error) {
+                setError(null);
+            } catch (error: any) {
                 console.error('Error fetching rider data:', error);
+                if (!riderData) {
+                    setError(error.response?.data?.message || 'Failed to load rider data');
+                }
+            } finally {
+                if (showLoading) setLoading(false);
             }
         };
 
@@ -84,7 +99,7 @@ export default function RiderDashboard({ riderId }: RiderDashboardProps) {
                     setRecentDeliveries(res.data);
                 }
             } catch (error) {
-                console.log('No deliveries yet');
+                // No deliveries yet
             }
         };
 
@@ -102,12 +117,12 @@ export default function RiderDashboard({ riderId }: RiderDashboardProps) {
             }
         };
 
-        fetchRiderData();
+        fetchRiderData(true);
         fetchDeliveries();
 
-        // Real-time polling every 5 seconds
+        // Real-time polling every 5 seconds (background)
         const interval = setInterval(() => {
-            fetchRiderData();
+            fetchRiderData(false);
             fetchDeliveries();
             if (isOnline) {
                 checkForNewOrders();
@@ -160,6 +175,51 @@ export default function RiderDashboard({ riderId }: RiderDashboardProps) {
             console.error('Error updating status:', error);
         }
     };
+
+    if (!effectiveRiderId) {
+        return (
+            <div className="min-h-screen bg-gray-50 flex flex-col items-center justify-center p-6 text-center">
+                <div className="w-20 h-20 bg-red-50 text-red-500 rounded-full flex items-center justify-center mb-4">
+                    <FaUser size={40} />
+                </div>
+                <h2 className="text-xl font-bold text-gray-900 mb-2">Rider ID not found</h2>
+                <p className="text-gray-500 mb-6">Please login again to access your dashboard.</p>
+                <button 
+                    onClick={() => window.location.href = '/login'}
+                    className="bg-primary text-white px-8 py-3 rounded-2xl font-bold shadow-lg shadow-primary/20"
+                >
+                    Go to Login
+                </button>
+            </div>
+        );
+    }
+
+    if (loading && !riderData) {
+        return (
+            <div className="min-h-screen bg-gray-50 flex flex-col items-center justify-center p-6 text-center">
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mb-4"></div>
+                <p className="text-gray-500 font-medium">Loading your dashboard...</p>
+            </div>
+        );
+    }
+
+    if (error && !riderData) {
+        return (
+            <div className="min-h-screen bg-gray-50 flex flex-col items-center justify-center p-6 text-center">
+                <div className="w-20 h-20 bg-red-50 text-red-500 rounded-full flex items-center justify-center mb-4">
+                    <FaBan size={40} />
+                </div>
+                <h2 className="text-xl font-bold text-gray-900 mb-2">Oops! Something went wrong</h2>
+                <p className="text-gray-500 mb-6">{error}</p>
+                <button 
+                    onClick={() => window.location.reload()}
+                    className="bg-primary text-white px-8 py-3 rounded-2xl font-bold shadow-lg shadow-primary/20"
+                >
+                    Try Again
+                </button>
+            </div>
+        );
+    }
 
     if (!riderData) {
         return (
