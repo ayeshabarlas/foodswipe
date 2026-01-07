@@ -285,7 +285,7 @@ export default function RestaurantProfile({ restaurant: initialRestaurant, onBac
             className="fixed inset-0 bg-gray-50 z-50 overflow-y-auto"
         >
             {/* Header - Dark Theme */}
-            <div className="bg-[#1a1a1a] p-4 flex items-center justify-between sticky top-0 z-30 shadow-md">
+            <div className="bg-[#1a1a1a] p-4 flex items-center justify-between z-30 shadow-md">
                 <button onClick={onBack} className="p-2 text-white hover:bg-white/10 rounded-full transition">
                     <FaBars size={20} />
                 </button>
@@ -401,8 +401,8 @@ export default function RestaurantProfile({ restaurant: initialRestaurant, onBac
 
             {/* Main Content Area */}
             <div className="bg-white min-h-screen">
-                {/* Main Tabs - Sticky */}
-                <div className="flex px-8 pt-4 border-b border-gray-100 sticky top-[68px] bg-white z-20">
+                {/* Main Tabs */}
+                <div className="flex px-8 pt-4 border-b border-gray-100 bg-white z-20">
                     <button
                         onClick={() => setActiveMainTab('videos')}
                         className={`pb-3 pr-8 text-sm font-medium transition-all relative ${activeMainTab === 'videos' ? 'text-gray-900' : 'text-gray-400'}`}
@@ -579,8 +579,8 @@ export default function RestaurantProfile({ restaurant: initialRestaurant, onBac
                             </div>
                         )}
 
-                        {/* Sticky Category Navigation */}
-                        <div className="sticky top-[112px] z-10 bg-white shadow-sm border-b border-gray-100">
+                        {/* Category Navigation */}
+                        <div className="z-10 bg-white shadow-sm border-b border-gray-100">
                             <div className="flex overflow-x-auto no-scrollbar">
                                 {menuSections.map((section) => (
                                     <button
