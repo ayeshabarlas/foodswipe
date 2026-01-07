@@ -5,6 +5,7 @@ const Dish = require('../models/Dish');
 const Rider = require('../models/Rider');
 const Transaction = require('../models/Transaction');
 const { calculateRiderEarning, calculateDeliveryFee } = require('../utils/paymentUtils');
+const { createNotification } = require('./notificationController');
 
 // @desc    Create new order
 // @route   POST /api/orders
@@ -253,6 +254,9 @@ const processOrderCompletion = async (order, distanceKm) => {
             rider.earnings.thisWeek += earnings.netEarning;
             rider.earnings.thisMonth += earnings.netEarning;
             
+            // Increment total orders
+            rider.totalOrders = (rider.totalOrders || 0) + 1;
+            
             await rider.save();
 
             // Create transaction log
@@ -271,6 +275,34 @@ const processOrderCompletion = async (order, distanceKm) => {
                     platformFee: earnings.platformFee
                 }
             });
+
+            // Create Notification for Rider
+            const notification = await createNotification(
+                order.rider,
+                'Payment Received',
+                `PKR ${earnings.netEarning.toLocaleString()} deposited to your account`,
+                'payment',
+                { orderId: order._id, amount: earnings.netEarning }
+            );
+
+            // Emit Real-time Notification
+            if (global.io) {
+                global.io.to(`user_${order.rider}`).emit('notification', notification);
+            }
+
+            // Check for Milestones
+            if (rider.totalOrders % 10 === 0 && rider.totalOrders > 0) {
+                const milestoneNotification = await createNotification(
+                    order.rider,
+                    'Milestone Reached! 🏆',
+                    `Congratulations! You have completed ${rider.totalOrders} deliveries. Keep up the great work!`,
+                    'milestone',
+                    { totalOrders: rider.totalOrders }
+                );
+                if (global.io) {
+                    global.io.to(`user_${order.rider}`).emit('notification', milestoneNotification);
+                }
+            }
         }
     } catch (error) {
         console.error('Process order completion error:', error);

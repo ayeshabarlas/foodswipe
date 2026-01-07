@@ -43,10 +43,25 @@ const getDashboardStats = async (req, res) => {
         ]);
         const revenueToday = revenueResult.length > 0 ? revenueResult[0].totalRevenue : 0;
 
-        // 3. Pending Orders
-        const pendingOrders = await Order.countDocuments({
+        // 3. Status-based Order Counts
+        const pendingCount = await Order.countDocuments({
             restaurant: restaurant._id,
-            status: { $in: ['Pending', 'Accepted', 'Preparing', 'Ready'] }
+            status: 'Pending'
+        });
+
+        const preparingCount = await Order.countDocuments({
+            restaurant: restaurant._id,
+            status: { $in: ['Accepted', 'Preparing'] }
+        });
+
+        const readyCount = await Order.countDocuments({
+            restaurant: restaurant._id,
+            status: 'Ready'
+        });
+
+        const outForDeliveryCount = await Order.countDocuments({
+            restaurant: restaurant._id,
+            status: 'OnTheWay'
         });
 
         // 4. Top Selling Items (All time for now, or add date filter)
@@ -69,7 +84,10 @@ const getDashboardStats = async (req, res) => {
         res.json({
             ordersToday,
             revenueToday,
-            pendingOrders,
+            pending: pendingCount,
+            preparing: preparingCount,
+            ready: readyCount,
+            outForDelivery: outForDeliveryCount,
             topItems,
             isOnline: restaurant.isActive // Assuming isActive controls online/offline
         });

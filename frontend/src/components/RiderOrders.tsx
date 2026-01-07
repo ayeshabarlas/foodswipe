@@ -61,8 +61,10 @@ export default function RiderOrders({ riderId }: RiderOrdersProps) {
             });
             if (res.data) {
                 setOrders(res.data);
-                // Check for active delivery (picked up but not delivered)
-                const active = res.data.find((o: any) => o.status === 'Picked Up' || (o.status === 'OnTheWay' && o.rider === riderId));
+                // Check for active delivery (any status that isn't Delivered or Cancelled)
+                const active = res.data.find((o: any) => 
+                    ['Confirmed', 'OnTheWay', 'Arrived', 'Picked Up', 'ArrivedAtCustomer'].includes(o.status)
+                );
                 setActiveDelivery(active);
             }
 
@@ -142,11 +144,27 @@ export default function RiderOrders({ riderId }: RiderOrdersProps) {
                 { orderId },
                 { headers: { Authorization: `Bearer ${token}` } }
             );
-            toast.success('✅ Order accepted!');
+            toast.success('✅ Order accepted! Let\'s go.');
             fetchOrders();
         } catch (error) {
             console.error('Error accepting order:', error);
             toast.error('Failed to accept order');
+        }
+    };
+
+    const handleUpdateStatus = async (orderId: string, status: string, message: string) => {
+        try {
+            const token = JSON.parse(localStorage.getItem("userInfo") || "{}").token;
+            await axios.put(
+                `${API_BASE_URL}/api/orders/${orderId}/status`,
+                { status },
+                { headers: { Authorization: `Bearer ${token}` } }
+            );
+            toast.success(message);
+            fetchOrders();
+        } catch (error) {
+            console.error(`Error updating status to ${status}:`, error);
+            toast.error('Update failed. Please try again.');
         }
     };
 
@@ -158,7 +176,7 @@ export default function RiderOrders({ riderId }: RiderOrdersProps) {
                 {},
                 { headers: { Authorization: `Bearer ${token}` } }
             );
-            toast.success('📦 Order picked up! Tracking started.');
+            toast.success('📦 Order picked up! On your way to customer.');
             fetchOrders();
         } catch (error) {
             console.error('Error picking up order:', error);
@@ -239,61 +257,161 @@ export default function RiderOrders({ riderId }: RiderOrdersProps) {
                 {/* Active Delivery Tracking Card - Screenshot Style */}
                 {activeDelivery && (
                     <div className="bg-white rounded-3xl shadow-lg overflow-hidden border border-gray-100 animate-in fade-in slide-in-from-bottom-4 duration-500">
+                        {/* Status Header */}
+                        <div className="bg-gradient-to-r from-orange-500 to-red-500 p-4 text-white flex justify-between items-center">
+                            <div className="flex items-center gap-2">
+                                <FaBox />
+                                <span className="font-bold uppercase tracking-wider text-[10px]">
+                                    {activeDelivery.status === 'Confirmed' ? 'Order Accepted' : 
+                                     activeDelivery.status === 'OnTheWay' ? 'Heading to Restaurant' :
+                                     activeDelivery.status === 'Arrived' ? 'At Restaurant' :
+                                     activeDelivery.status === 'Picked Up' ? 'Heading to Customer' :
+                                     activeDelivery.status === 'ArrivedAtCustomer' ? 'At Customer Location' : 'Order Tracking'}
+                                </span>
+                            </div>
+                            <span className="text-[10px] font-bold">#{activeDelivery.orderNumber || activeDelivery._id.slice(-7).toUpperCase()}</span>
+                        </div>
+
                         <div className="p-6">
-                            <div className="flex justify-between items-start mb-6">
-                                <div>
-                                    <div className="flex items-center gap-2 text-orange-500 mb-1">
-                                        <FaBox size={18} />
-                                        <h2 className="text-lg font-bold tracking-tight">Tracking Order</h2>
+                            {activeDelivery.status === 'Confirmed' ? (
+                                /* Screenshot 3: Order Accepted Screen */
+                                <div className="text-center py-8">
+                                    <div className="w-20 h-20 bg-orange-100 text-orange-500 rounded-full flex items-center justify-center mx-auto mb-6">
+                                        <FaCheckCircle size={40} />
                                     </div>
-                                    <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-widest">ORDER #{activeDelivery.orderNumber || activeDelivery._id.slice(-7).toUpperCase()}</p>
-                                </div>
-                                <div className="text-right">
-                                    <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-widest mb-1">ESTIMATED ARRIVAL</p>
-                                    <p className="text-xl font-bold text-green-500">25-35 mins</p>
-                                </div>
-                            </div>
-
-                            {/* Progress Steps */}
-                            <div className="relative flex justify-between items-center mb-10 px-2">
-                                <div className="absolute left-6 right-6 h-1 bg-gray-100 top-[14px] z-0" />
-                                <div 
-                                    className="absolute left-6 h-1 bg-orange-500 top-[14px] z-0 transition-all duration-1000" 
-                                    style={{ 
-                                        width: activeDelivery.status === 'Delivered' ? '100%' : 
-                                               activeDelivery.status === 'Picked Up' ? '66.6%' : 
-                                               activeDelivery.status === 'Arrived' ? '33.3%' : '0%' 
-                                    }}
-                                />
-                                
-                                {[
-                                    { label: 'ACCEPTED', status: 'Confirmed' },
-                                    { label: 'AT STORE', status: 'Arrived' },
-                                    { label: 'PICKED UP', status: 'Picked Up' },
-                                    { label: 'DELIVERED', status: 'Delivered' }
-                                ].map((step, idx) => {
-                                    const statuses = ['Confirmed', 'Preparing', 'Ready', 'OnTheWay', 'Arrived', 'Picked Up', 'Delivered'];
-                                    const currentIdx = statuses.indexOf(activeDelivery.status);
-                                    const stepIdx = statuses.indexOf(step.status);
-                                    const isCompleted = currentIdx >= stepIdx;
+                                    <h2 className="text-2xl font-black text-gray-900 mb-2">Order Accepted!</h2>
+                                    <p className="text-gray-500 mb-8 max-w-[200px] mx-auto">Head to {activeDelivery.restaurant?.name || 'the restaurant'} to pick up the order.</p>
                                     
-                                    return (
-                                        <div key={step.label} className="relative z-10 flex flex-col items-center">
-                                            <div className={`w-7 h-7 rounded-full flex items-center justify-center border-4 border-white shadow-sm transition-colors duration-500 ${isCompleted ? 'bg-orange-500 text-white' : 'bg-gray-100 text-gray-400'}`}>
-                                                {isCompleted ? <FaCheckCircle size={10} /> : <div className="w-1.5 h-1.5 rounded-full bg-current" />}
+                                    <div className="bg-gray-50 rounded-2xl p-4 mb-8 text-left">
+                                        <div className="flex items-start gap-3 mb-4">
+                                            <div className="w-8 h-8 bg-white rounded-full flex items-center justify-center shadow-sm text-orange-500">
+                                                <FaMapMarkerAlt size={14} />
                                             </div>
-                                            <span className={`absolute -bottom-6 whitespace-nowrap text-[8px] font-bold tracking-tight ${isCompleted ? 'text-orange-500' : 'text-gray-300'}`}>
-                                                {step.label}
-                                            </span>
+                                            <div>
+                                                <p className="text-[10px] font-bold text-gray-400 uppercase">Pickup From</p>
+                                                <p className="font-bold text-gray-900">{activeDelivery.restaurant?.name}</p>
+                                                <p className="text-xs text-gray-500 line-clamp-1">{activeDelivery.restaurant?.address}</p>
+                                            </div>
                                         </div>
-                                    );
-                                })}
-                            </div>
+                                    </div>
 
-                            {/* Map Area */}
-                            <div className="rounded-2xl overflow-hidden h-64 border border-gray-100 shadow-inner mt-4">
-                                <OrderTracking order={activeDelivery} userRole="rider" />
-                            </div>
+                                    <button 
+                                        onClick={() => handleUpdateStatus(activeDelivery._id, 'OnTheWay', '🚀 Delivery started!')}
+                                        className="w-full bg-orange-500 hover:bg-orange-600 text-white py-4 rounded-2xl font-black text-lg shadow-lg shadow-orange-200 transition-all active:scale-95"
+                                    >
+                                        START DELIVERY
+                                    </button>
+                                </div>
+                            ) : (
+                                /* Screenshot 4 & 5: Tracking View with Map and Status Buttons */
+                                <>
+                                    <div className="flex justify-between items-start mb-6">
+                                        <div>
+                                            <h2 className="text-lg font-black tracking-tight text-gray-900">
+                                                {activeDelivery.status === 'OnTheWay' || activeDelivery.status === 'Arrived' ? 'Pickup' : 'Delivery'} In Progress
+                                            </h2>
+                                            <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-widest">
+                                                {activeDelivery.status === 'OnTheWay' || activeDelivery.status === 'Arrived' ? 'Restaurant' : 'Customer'}: {activeDelivery.status === 'OnTheWay' || activeDelivery.status === 'Arrived' ? activeDelivery.restaurant?.name : activeDelivery.user?.name}
+                                            </p>
+                                        </div>
+                                        <div className="text-right">
+                                            <p className="text-xl font-black text-orange-500">25-35 <span className="text-xs font-bold">MINS</span></p>
+                                        </div>
+                                    </div>
+
+                                    {/* Progress Steps */}
+                                    <div className="relative flex justify-between items-center mb-10 px-2">
+                                        <div className="absolute left-6 right-6 h-1 bg-gray-100 top-[14px] z-0" />
+                                        <div 
+                                            className="absolute left-6 h-1 bg-orange-500 top-[14px] z-0 transition-all duration-1000" 
+                                            style={{ 
+                                                width: activeDelivery.status === 'Delivered' ? '100%' : 
+                                                       activeDelivery.status === 'Picked Up' || activeDelivery.status === 'ArrivedAtCustomer' ? '66.6%' : 
+                                                       activeDelivery.status === 'Arrived' ? '33.3%' : '0%' 
+                                            }}
+                                        />
+                                        
+                                        {[
+                                            { label: 'ACCEPTED', status: 'Confirmed' },
+                                            { label: 'AT STORE', status: 'Arrived' },
+                                            { label: 'PICKED UP', status: 'Picked Up' },
+                                            { label: 'DELIVERED', status: 'Delivered' }
+                                        ].map((step, idx) => {
+                                            const statuses = ['Confirmed', 'OnTheWay', 'Arrived', 'Picked Up', 'ArrivedAtCustomer', 'Delivered'];
+                                            const currentIdx = statuses.indexOf(activeDelivery.status);
+                                            const stepIdx = statuses.indexOf(step.status);
+                                            const isCompleted = currentIdx >= stepIdx;
+                                            
+                                            return (
+                                                <div key={step.label} className="relative z-10 flex flex-col items-center">
+                                                    <div className={`w-7 h-7 rounded-full flex items-center justify-center border-4 border-white shadow-sm transition-colors duration-500 ${isCompleted ? 'bg-orange-500 text-white' : 'bg-gray-100 text-gray-400'}`}>
+                                                        {isCompleted ? <FaCheckCircle size={10} /> : <div className="w-1.5 h-1.5 rounded-full bg-current" />}
+                                                    </div>
+                                                    <span className={`absolute -bottom-6 whitespace-nowrap text-[8px] font-bold tracking-tight ${isCompleted ? 'text-orange-500' : 'text-gray-300'}`}>
+                                                        {step.label}
+                                                    </span>
+                                                </div>
+                                            );
+                                        })}
+                                    </div>
+
+                                    {/* Map Area */}
+                                    <div className="rounded-2xl overflow-hidden h-64 border border-gray-100 shadow-inner mt-4 mb-6">
+                                        <OrderTracking order={activeDelivery} userRole="rider" />
+                                    </div>
+
+                                    {/* Action Buttons based on status */}
+                                    <div className="space-y-3">
+                                        {activeDelivery.status === 'OnTheWay' && (
+                                            <button 
+                                                onClick={() => handleUpdateStatus(activeDelivery._id, 'Arrived', '📍 Arrived at restaurant!')}
+                                                className="w-full bg-gray-900 hover:bg-black text-white py-4 rounded-2xl font-black shadow-lg transition-all active:scale-95"
+                                            >
+                                                ARRIVED AT RESTAURANT
+                                            </button>
+                                        )}
+                                        {activeDelivery.status === 'Arrived' && (
+                                            <button 
+                                                onClick={() => handlePickupOrder(activeDelivery._id)}
+                                                className="w-full bg-[#FF4D00] hover:bg-[#FF3300] text-white py-4 rounded-2xl font-black shadow-lg transition-all active:scale-95"
+                                            >
+                                                ORDER PICKED UP
+                                            </button>
+                                        )}
+                                        {activeDelivery.status === 'Picked Up' && (
+                                            <button 
+                                                onClick={() => handleUpdateStatus(activeDelivery._id, 'ArrivedAtCustomer', '📍 Arrived at customer location!')}
+                                                className="w-full bg-gray-900 hover:bg-black text-white py-4 rounded-2xl font-black shadow-lg transition-all active:scale-95"
+                                            >
+                                                ARRIVED AT CUSTOMER
+                                            </button>
+                                        )}
+                                        {activeDelivery.status === 'ArrivedAtCustomer' && (
+                                            <button 
+                                                onClick={() => handleDeliverOrder(activeDelivery._id)}
+                                                className="w-full bg-[#00D97E] hover:bg-[#00BD6E] text-white py-4 rounded-2xl font-black shadow-lg transition-all active:scale-95"
+                                            >
+                                                MARK AS DELIVERED
+                                            </button>
+                                        )}
+                                        
+                                        <div className="flex gap-3">
+                                            <button 
+                                                onClick={() => handleChat(activeDelivery)}
+                                                className="flex-1 bg-white border border-gray-100 py-3.5 rounded-2xl font-bold flex items-center justify-center gap-2 text-gray-700 hover:bg-gray-50 transition-all"
+                                            >
+                                                <FaCommentDots className="text-orange-500" /> CHAT
+                                            </button>
+                                            <a 
+                                                href={`tel:${activeDelivery.status === 'OnTheWay' || activeDelivery.status === 'Arrived' ? activeDelivery.restaurant?.contact : activeDelivery.user?.phone}`}
+                                                className="flex-1 bg-white border border-gray-100 py-3.5 rounded-2xl font-bold flex items-center justify-center gap-2 text-gray-700 hover:bg-gray-50 transition-all"
+                                            >
+                                                <FaPhone className="text-green-500" /> CALL
+                                            </a>
+                                        </div>
+                                    </div>
+                                </>
+                            )}
                         </div>
                     </div>
                 )}

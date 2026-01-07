@@ -90,6 +90,28 @@ const getRestaurantById = async (req, res) => {
         }
 
         // Increment profile visits
+        restaurant.analytics.profileVisits += 1;
+        
+        // Update views history for today
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        
+        const historyIndex = restaurant.analytics.viewsHistory.findIndex(
+            h => h.date && new Date(h.date).getTime() === today.getTime()
+        );
+        
+        if (historyIndex > -1) {
+            restaurant.analytics.viewsHistory[historyIndex].views += 1;
+        } else {
+            restaurant.analytics.viewsHistory.push({ date: today, views: 1 });
+        }
+        
+        // Keep only last 30 days of history
+        if (restaurant.analytics.viewsHistory.length > 30) {
+            restaurant.analytics.viewsHistory = restaurant.analytics.viewsHistory.slice(-30);
+        }
+
+        await restaurant.save();
         res.json(restaurant);
     } catch (error) {
         console.error('Get restaurant error:', error);

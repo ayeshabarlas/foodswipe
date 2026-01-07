@@ -22,7 +22,7 @@ interface OrderNotificationProps {
 }
 
 export default function OrderNotificationModal({ order, onAccept, onReject, onClose }: OrderNotificationProps) {
-    const [timeLeft, setTimeLeft] = useState(12);
+    const [timeLeft, setTimeLeft] = useState(15);
 
     useEffect(() => {
         const timer = setInterval(() => {
@@ -40,110 +40,121 @@ export default function OrderNotificationModal({ order, onAccept, onReject, onCl
     }, [onReject]);
 
     return (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-            <div className="bg-white rounded-3xl max-w-sm w-full overflow-hidden shadow-2xl animate-slideUp">
-                {/* Header */}
-                <div className="bg-gradient-to-r from-orange-500 to-pink-600 p-6 text-white relative">
-                    <button
-                        onClick={onClose}
-                        className="absolute top-4 right-4 w-8 h-8 bg-white/20 rounded-full flex items-center justify-center hover:bg-white/30 transition"
-                    >
-                        <FaTimes />
-                    </button>
+        <div className="fixed inset-0 bg-black/80 backdrop-blur-md flex items-end sm:items-center justify-center z-[100] p-0 sm:p-4">
+            <div className="bg-[#111111] w-full max-w-md rounded-t-[40px] sm:rounded-[40px] overflow-hidden shadow-2xl animate-in slide-in-from-bottom-full duration-500">
+                {/* Header with Countdown */}
+                <div className="relative pt-10 pb-6 px-8 text-center">
+                    <div className="absolute top-6 right-6">
+                        <button
+                            onClick={onClose}
+                            className="w-8 h-8 bg-white/5 rounded-full flex items-center justify-center text-white/20 hover:text-white transition-colors"
+                        >
+                            <FaTimes size={12} />
+                        </button>
+                    </div>
 
-                    <h2 className="text-2xl font-bold mb-2">New Order!</h2>
+                    <div className="inline-flex items-center gap-2 bg-[#FF4D00]/10 text-[#FF4D00] px-3 py-1.5 rounded-full mb-6 border border-[#FF4D00]/20">
+                        <div className="w-1.5 h-1.5 bg-[#FF4D00] rounded-full animate-pulse" />
+                        <span className="text-[9px] font-black uppercase tracking-[1.5px]">New Order Request</span>
+                    </div>
 
-                    {/* Countdown Timer */}
-                    <div className="flex items-center justify-center mt-4">
-                        <div className="relative w-20 h-20">
-                            <svg className="w-20 h-20 transform -rotate-90">
-                                <circle
-                                    cx="40"
-                                    cy="40"
-                                    r="36"
-                                    stroke="rgba(255,255,255,0.3)"
-                                    strokeWidth="4"
-                                    fill="none"
-                                />
-                                <circle
-                                    cx="40"
-                                    cy="40"
-                                    r="36"
-                                    stroke="white"
-                                    strokeWidth="4"
-                                    fill="none"
-                                    strokeDasharray={`${2 * Math.PI * 36}`}
-                                    strokeDashoffset={`${2 * Math.PI * 36 * (1 - timeLeft / 12)}`}
-                                    className="transition-all duration-1000"
-                                />
-                            </svg>
-                            <div className="absolute inset-0 flex items-center justify-center">
-                                <span className="text-2xl font-bold">{timeLeft}s</span>
+                    <div className="relative w-28 h-28 mx-auto mb-6">
+                        <svg className="w-full h-full transform -rotate-90">
+                            <circle
+                                cx="56"
+                                cy="56"
+                                r="52"
+                                stroke="rgba(255,255,255,0.03)"
+                                strokeWidth="6"
+                                fill="none"
+                            />
+                            <circle
+                                cx="56"
+                                cy="56"
+                                r="52"
+                                stroke="#FF4D00"
+                                strokeWidth="6"
+                                fill="none"
+                                strokeDasharray={`${2 * Math.PI * 52}`}
+                                strokeDashoffset={`${2 * Math.PI * 52 * (1 - timeLeft / 15)}`}
+                                strokeLinecap="round"
+                                className="transition-all duration-1000 ease-linear"
+                            />
+                        </svg>
+                        <div className="absolute inset-0 flex flex-col items-center justify-center">
+                            <span className="text-3xl font-black text-white leading-none">{timeLeft}</span>
+                            <span className="text-[8px] font-black text-white/30 uppercase tracking-[2px] mt-1">Sec</span>
+                        </div>
+                    </div>
+
+                    <p className="text-white/40 text-[10px] font-black uppercase tracking-[2px] mb-1">Potential Earning</p>
+                    <h2 className="text-white text-4xl font-black tracking-tight">Rs. {order.earnings || 250}</h2>
+                </div>
+
+                {/* Details Card */}
+                <div className="px-5 pb-8">
+                    <div className="bg-white/5 rounded-[32px] p-5 space-y-6 border border-white/5">
+                        {/* Locations */}
+                        <div className="relative space-y-5">
+                            <div className="absolute left-[14px] top-[24px] bottom-[24px] w-[1px] border-l border-dashed border-white/20" />
+                            
+                            <div className="flex items-start gap-4 relative z-10">
+                                <div className="w-7 h-7 bg-[#FF4D00] rounded-lg flex items-center justify-center text-white shadow-lg shadow-[#FF4D00]/20">
+                                    <FaMapMarkerAlt size={10} />
+                                </div>
+                                <div className="flex-1">
+                                    <p className="text-[#FF4D00] text-[8px] font-black uppercase tracking-[1.5px] mb-0.5">Pickup Location</p>
+                                    <p className="text-white font-black text-[13px] leading-tight">{order.restaurant.name}</p>
+                                    <p className="text-white/40 text-[10px] mt-0.5 line-clamp-1">{order.restaurant.address}</p>
+                                </div>
+                            </div>
+
+                            <div className="flex items-start gap-4 relative z-10">
+                                <div className="w-7 h-7 bg-[#00D97E] rounded-lg flex items-center justify-center text-white shadow-lg shadow-[#00D97E]/20">
+                                    <FaMapMarkerAlt size={10} />
+                                </div>
+                                <div className="flex-1">
+                                    <p className="text-[#00D97E] text-[8px] font-black uppercase tracking-[1.5px] mb-0.5">Dropoff Location</p>
+                                    <p className="text-white font-black text-[13px] leading-tight">Customer Address</p>
+                                    <p className="text-white/40 text-[10px] mt-0.5 line-clamp-1">{order.deliveryAddress}</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Stats Grid */}
+                        <div className="grid grid-cols-2 gap-3 pt-4 border-t border-white/5">
+                            <div className="bg-white/5 rounded-2xl p-3.5">
+                                <p className="text-white/30 text-[8px] font-black uppercase tracking-[1.5px] mb-1">Distance</p>
+                                <div className="flex items-center gap-2">
+                                    <FaRoute className="text-[#FF4D00]" size={12} />
+                                    <p className="text-white font-black text-sm">{order.distance || '3.5'} <span className="text-[10px] text-white/20">KM</span></p>
+                                </div>
+                            </div>
+                            <div className="bg-white/5 rounded-2xl p-3.5">
+                                <p className="text-white/30 text-[8px] font-black uppercase tracking-[1.5px] mb-1">Time</p>
+                                <div className="flex items-center gap-2">
+                                    <FaClock className="text-[#00D97E]" size={12} />
+                                    <p className="text-white font-black text-sm">{order.estimatedTime || '15-20'} <span className="text-[10px] text-white/20">MIN</span></p>
+                                </div>
                             </div>
                         </div>
                     </div>
-                </div>
 
-                {/* Order Details */}
-                <div className="p-6 space-y-4">
-                    {/* Pickup Location */}
-                    <div className="flex items-start gap-3 p-4 bg-green-50 rounded-xl">
-                        <div className="w-10 h-10 bg-green-500 rounded-xl flex items-center justify-center text-white shrink-0">
-                            <FaMapMarkerAlt />
-                        </div>
-                        <div className="flex-1">
-                            <p className="text-xs font-medium text-green-700 mb-1">Pickup from</p>
-                            <p className="font-semibold text-gray-900">{order.restaurant.name}</p>
-                            <p className="text-sm text-gray-600 font-light">{order.restaurant.address}</p>
-                        </div>
+                    {/* Action Buttons */}
+                    <div className="flex gap-3 mt-6">
+                        <button
+                            onClick={onReject}
+                            className="flex-1 bg-white/5 hover:bg-white/10 text-white/40 py-4 rounded-2xl font-black uppercase tracking-widest text-[10px] transition-all active:scale-95 border border-white/5"
+                        >
+                            Reject
+                        </button>
+                        <button
+                            onClick={onAccept}
+                            className="flex-[2] bg-[#FF4D00] hover:bg-[#FF3300] text-white py-4 rounded-2xl font-black uppercase tracking-widest text-[10px] shadow-xl shadow-[#FF4D00]/20 transition-all active:scale-95"
+                        >
+                            Accept Order
+                        </button>
                     </div>
-
-                    {/* Delivery Location */}
-                    <div className="flex items-start gap-3 p-4 bg-blue-50 rounded-xl">
-                        <div className="w-10 h-10 bg-blue-500 rounded-xl flex items-center justify-center text-white shrink-0">
-                            <FaMapMarkerAlt />
-                        </div>
-                        <div className="flex-1">
-                            <p className="text-xs font-medium text-blue-700 mb-1">Deliver to</p>
-                            <p className="font-semibold text-gray-900">Customer Address</p>
-                            <p className="text-sm text-gray-600 font-light">{order.deliveryAddress}</p>
-                        </div>
-                    </div>
-
-                    {/* Stats */}
-                    <div className="grid grid-cols-3 gap-3">
-                        <div className="text-center p-3 bg-gray-50 rounded-xl">
-                            <FaRoute className="text-gray-600 mx-auto mb-1" />
-                            <p className="text-xs text-gray-500 mb-1">Distance</p>
-                            <p className="font-bold text-gray-900">{order.distance} km</p>
-                        </div>
-                        <div className="text-center p-3 bg-gray-50 rounded-xl">
-                            <FaDollarSign className="text-green-600 mx-auto mb-1" />
-                            <p className="text-xs text-gray-500 mb-1">Earnings</p>
-                            <p className="font-bold text-green-600">Rs. {order.earnings}</p>
-                        </div>
-                        <div className="text-center p-3 bg-gray-50 rounded-xl">
-                            <FaClock className="text-gray-600 mx-auto mb-1" />
-                            <p className="text-xs text-gray-500 mb-1">Estimate</p>
-                            <p className="font-bold text-gray-900">{order.estimatedTime} min</p>
-                        </div>
-                    </div>
-                </div>
-
-                {/* Actions */}
-                <div className="p-6 pt-0 grid grid-cols-2 gap-3">
-                    <button
-                        onClick={onReject}
-                        className="px-6 py-3 bg-gray-100 text-gray-700 rounded-xl font-semibold hover:bg-gray-200 transition"
-                    >
-                        Reject
-                    </button>
-                    <button
-                        onClick={onAccept}
-                        className="px-6 py-3 bg-gradient-to-r from-orange-500 to-pink-600 text-white rounded-xl font-semibold hover:from-orange-600 hover:to-pink-700 transition shadow-lg"
-                    >
-                        Accept Order
-                    </button>
                 </div>
             </div>
         </div>

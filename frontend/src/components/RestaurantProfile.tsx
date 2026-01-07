@@ -282,10 +282,10 @@ export default function RestaurantProfile({ restaurant: initialRestaurant, onBac
             animate={{ x: 0 }}
             exit={{ x: '100%' }}
             transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-            className="fixed inset-0 bg-gray-50 z-50 overflow-y-auto flex flex-col h-[100dvh]"
+            className="fixed inset-0 bg-gray-50 z-50 overflow-y-auto"
         >
             {/* Header - Dark Theme */}
-            <div className="bg-[#1a1a1a] p-4 flex items-center justify-between sticky top-0 z-20 shadow-md">
+            <div className="bg-[#1a1a1a] p-4 flex items-center justify-between sticky top-0 z-30 shadow-md">
                 <button onClick={onBack} className="p-2 text-white hover:bg-white/10 rounded-full transition">
                     <FaBars size={20} />
                 </button>
@@ -308,7 +308,7 @@ export default function RestaurantProfile({ restaurant: initialRestaurant, onBac
             </div>
 
             {/* Banner Section */}
-            <div className="relative h-64 sm:h-80 w-full overflow-hidden bg-gray-900 flex-shrink-0">
+            <div className="relative h-64 sm:h-80 w-full overflow-hidden bg-gray-900">
                 <img
                     src={getImageUrl(restaurantData.coverImage || restaurantData.logo)}
                     alt="Restaurant Banner"
@@ -369,7 +369,7 @@ export default function RestaurantProfile({ restaurant: initialRestaurant, onBac
             </div>
 
             {/* Stats Bar */}
-            <div className="bg-white px-4 sm:px-8 py-5 flex items-center justify-between border-b border-gray-100 shadow-sm relative z-20 flex-shrink-0">
+            <div className="bg-white px-4 sm:px-8 py-5 flex items-center justify-between border-b border-gray-100 shadow-sm relative z-20">
                 <div className="flex items-center gap-4 sm:gap-12 max-w-[70%] overflow-hidden">
                     <div className="flex flex-col min-w-fit">
                         <span className="text-gray-400 text-[11px] font-normal mb-1 truncate">Distance</span>
@@ -400,9 +400,9 @@ export default function RestaurantProfile({ restaurant: initialRestaurant, onBac
             </div>
 
             {/* Main Content Area */}
-            <div className="flex-1 bg-white overflow-hidden flex flex-col">
-                {/* Main Tabs */}
-                <div className="flex px-8 pt-4 border-b border-gray-100 shrink-0">
+            <div className="bg-white min-h-screen">
+                {/* Main Tabs - Sticky */}
+                <div className="flex px-8 pt-4 border-b border-gray-100 sticky top-[68px] bg-white z-20">
                     <button
                         onClick={() => setActiveMainTab('videos')}
                         className={`pb-3 pr-8 text-sm font-medium transition-all relative ${activeMainTab === 'videos' ? 'text-gray-900' : 'text-gray-400'}`}
@@ -425,7 +425,7 @@ export default function RestaurantProfile({ restaurant: initialRestaurant, onBac
 
             {/* Dish Videos Tab Content */}
             {activeMainTab === 'videos' && (
-                <div className="flex-1 overflow-y-auto bg-white px-4 pb-20">
+                <div className="bg-white px-4 pb-24">
                     <div className="grid grid-cols-2 gap-3 py-4">
                         {(() => {
                             const uniqueDishes = Array.from(new Set(menuSections.flatMap(s => s.items).filter(dish => dish.videoUrl).map(d => d._id)))
@@ -492,8 +492,8 @@ export default function RestaurantProfile({ restaurant: initialRestaurant, onBac
 
             {/* Menu Content */}
             {activeMainTab === 'menu' && (
-                <div className="flex-1 flex flex-col overflow-hidden">
-                    <div className="bg-white px-6 pb-2 shrink-0">
+                <div className="bg-white">
+                    <div className="bg-white px-6 pb-2">
 
                         {/* Vouchers & Deals Section */}
                         {(vouchers.length > 0 || deals.length > 0) && (
@@ -580,7 +580,7 @@ export default function RestaurantProfile({ restaurant: initialRestaurant, onBac
                         )}
 
                         {/* Sticky Category Navigation */}
-                        <div className="sticky top-[72px] z-10 bg-white shadow-sm border-b border-gray-100">
+                        <div className="sticky top-[112px] z-10 bg-white shadow-sm border-b border-gray-100">
                             <div className="flex overflow-x-auto no-scrollbar">
                                 {menuSections.map((section) => (
                                     <button
@@ -612,9 +612,7 @@ export default function RestaurantProfile({ restaurant: initialRestaurant, onBac
 
 
                     {/* Content Area */}
-                    <div className="flex-1 overflow-y-auto bg-gray-50 p-4" onScroll={(e) => {
-                        // Optional: Update active tab on scroll
-                    }}>
+                    <div className="bg-gray-50 p-4 pb-24">
                         {activeTab === 'reviews' ? (
                             <div className="space-y-4">
                                 <div className="flex justify-between items-center mb-4">

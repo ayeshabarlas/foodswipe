@@ -3,12 +3,14 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { API_BASE_URL } from '../utils/config';
-import { FaHome, FaDollarSign, FaClipboardList, FaHeadset, FaUser, FaStar, FaRoute, FaWallet, FaTrophy } from 'react-icons/fa';
+import { FaHome, FaDollarSign, FaClipboardList, FaHeadset, FaUser, FaStar, FaRoute, FaWallet, FaTrophy, FaBell, FaBan, FaClock, FaMapMarkerAlt, FaChevronRight } from 'react-icons/fa';
+import { AnimatePresence } from 'framer-motion';
 import OrderNotificationModal from './OrderNotificationModal';
 import RiderEarnings from './RiderEarnings';
 import RiderProfile from './RiderProfile';
 import RiderSupport from './RiderSupport';
 import RiderOrders from './RiderOrders';
+import NotificationPanel from './NotificationPanel';
 
 interface RiderDashboardProps {
     riderId?: string;
@@ -32,6 +34,29 @@ export default function RiderDashboard({ riderId }: RiderDashboardProps) {
     const [activeTab, setActiveTab] = useState('home');
     const [pendingOrder, setPendingOrder] = useState<any>(null);
     const [recentDeliveries, setRecentDeliveries] = useState<any[]>([]);
+    const [showNotifications, setShowNotifications] = useState(false);
+    const [unreadNotifications, setUnreadNotifications] = useState(0);
+
+    const fetchUnreadCount = async () => {
+        try {
+            const token = JSON.parse(localStorage.getItem("userInfo") || "{}").token;
+            const res = await axios.get(`${API_BASE_URL}/api/notifications`, {
+                headers: { Authorization: `Bearer ${token}` }
+            });
+            const unread = res.data.filter((n: any) => !n.read).length;
+            setUnreadNotifications(unread);
+        } catch (error) {
+            console.error('Error fetching unread count:', error);
+        }
+    };
+
+    useEffect(() => {
+        if (!effectiveRiderId) return;
+
+        fetchUnreadCount();
+        const interval = setInterval(fetchUnreadCount, 30000); // Check every 30 seconds
+        return () => clearInterval(interval);
+    }, [effectiveRiderId]);
 
     useEffect(() => {
         if (!effectiveRiderId) return;
@@ -215,7 +240,7 @@ export default function RiderDashboard({ riderId }: RiderDashboardProps) {
 
     // Home tab (default)
     return (
-        <div className="min-h-screen bg-gray-50 pb-20">
+        <div className="min-h-screen bg-gray-50 pb-20 overflow-x-hidden">
             {/* Account Status Banner */}
             {riderData?.user?.status === 'suspended' && (
                 <div className="bg-red-600 text-white px-4 py-3 text-sm font-bold flex items-center justify-between sticky top-0 z-[100] shadow-lg">
@@ -225,6 +250,7 @@ export default function RiderDashboard({ riderId }: RiderDashboardProps) {
                     </div>
                 </div>
             )}
+            
             {/* Order Notification Modal */}
             {pendingOrder && (
                 <OrderNotificationModal
@@ -235,117 +261,137 @@ export default function RiderDashboard({ riderId }: RiderDashboardProps) {
                 />
             )}
 
-            {/* Header */}
-            <div className="bg-gradient-to-br from-orange-500 via-orange-600 to-pink-600 px-4 pt-6 pb-20 rounded-b-3xl">
-                <div className="flex items-start justify-between mb-4">
+            {/* Header - Screenshot Style */}
+            <div className="bg-gradient-to-br from-[#FF4D00] to-[#FF007A] px-6 pt-8 pb-24 rounded-b-[40px] shadow-lg relative">
+                <div className="flex items-center justify-between mb-8">
                     <div>
-                        <p className="text-white/90 text-xs font-medium uppercase tracking-wider">Welcome back,</p>
-                        <h1 className="text-white text-xl font-bold">{riderData.fullName?.split(' ')[0] || 'Rider'}</h1>
+                        <h1 className="text-white text-3xl font-black tracking-tight mb-1">Available Orders</h1>
+                        <p className="text-white/80 text-sm font-medium">6 orders near you</p>
                     </div>
-                    <div className="w-10 h-10 bg-white rounded-full flex items-center justify-center text-orange-600 font-bold text-base shadow-lg">
-                        {riderData.fullName?.[0] || 'R'}
+                    <div className="relative">
+                        <button 
+                            onClick={() => setShowNotifications(true)}
+                            className="w-12 h-12 bg-white/20 backdrop-blur-md rounded-full flex items-center justify-center text-white relative hover:bg-white/30 transition-colors"
+                        >
+                            <FaBell size={20} />
+                            {unreadNotifications > 0 && (
+                                <span className="absolute -top-1 -right-1 bg-[#FF4D00] text-white text-[10px] font-bold w-5 h-5 rounded-full flex items-center justify-center border-2 border-white">
+                                    {unreadNotifications}
+                                </span>
+                            )}
+                        </button>
                     </div>
                 </div>
 
-                {/* Online/Offline Toggle */}
-                <div className="bg-white/20 backdrop-blur-sm rounded-2xl p-3 flex items-center justify-between">
+                <AnimatePresence>
+                    {showNotifications && (
+                        <NotificationPanel 
+                            riderId={effectiveRiderId} 
+                            onClose={() => setShowNotifications(false)} 
+                            onReadUpdate={fetchUnreadCount}
+                        />
+                    )}
+                </AnimatePresence>
+
+                {/* Potential Earnings Card */}
+                <div className="bg-white/10 backdrop-blur-md border border-white/20 rounded-[28px] p-6 flex items-center justify-between">
                     <div>
-                        <p className="text-white text-sm font-bold">{isOnline ? 'You are Online' : 'You are Offline'}</p>
-                        <p className="text-white/80 text-[10px] font-medium uppercase tracking-wider">{isOnline ? 'Ready for orders' : 'Go online to start earning'}</p>
+                        <p className="text-white/70 text-[10px] font-bold uppercase tracking-[2px] mb-2">Potential Earnings</p>
+                        <div className="flex items-baseline gap-2">
+                            <span className="text-white text-3xl font-black">PKR 1590</span>
+                        </div>
                     </div>
-                    <button
-                        onClick={toggleOnlineStatus}
-                        className={`relative w-12 h-7 rounded-full transition ${isOnline ? 'bg-green-500' : 'bg-gray-300'}`}
-                    >
-                        <div className={`absolute top-1 w-5 h-5 bg-white rounded-full shadow-md transition-transform ${isOnline ? 'translate-x-6' : 'translate-x-1'}`} />
+                    <div className="w-14 h-14 bg-[#00D97E] rounded-full flex items-center justify-center shadow-lg shadow-[#00D97E]/30">
+                        <FaDollarSign className="text-white text-2xl" />
+                    </div>
+                </div>
+            </div>
+
+            {/* Order Filter Tabs */}
+            <div className="px-6 -mt-8 mb-6 overflow-x-auto no-scrollbar">
+                <div className="flex gap-3 pb-2">
+                    <button className="bg-gradient-to-r from-[#FF4D00] to-[#FF007A] text-white px-6 py-3 rounded-2xl font-bold text-sm shadow-lg flex items-center gap-2 shrink-0">
+                        All Orders <span className="bg-white/20 px-2 py-0.5 rounded-lg text-[10px]">6</span>
+                    </button>
+                    <button className="bg-white text-gray-400 px-6 py-3 rounded-2xl font-bold text-sm border border-gray-100 flex items-center gap-2 shrink-0">
+                        Nearby <span className="bg-gray-100 px-2 py-0.5 rounded-lg text-[10px] text-gray-500">2</span>
+                    </button>
+                    <button className="bg-white text-gray-400 px-6 py-3 rounded-2xl font-bold text-sm border border-gray-100 flex items-center gap-2 shrink-0">
+                        High Pay
                     </button>
                 </div>
             </div>
 
-            {/* Stats Grid */}
-            <div className="px-4 -mt-12 mb-6">
-                <div className="grid grid-cols-2 gap-3">
-                    <StatCard
-                        icon={<FaDollarSign className="text-lg" />}
-                        label="Today's Earnings"
-                        value={`Rs. ${riderData.earnings?.today || 0}`}
-                        bgColor="bg-green-500"
-                    />
-                    <StatCard
-                        icon={<FaClipboardList className="text-lg" />}
-                        label="Deliveries"
-                        value={riderData.stats?.totalDeliveries || 0}
-                        bgColor="bg-blue-500"
-                    />
-                    <StatCard
-                        icon={<FaStar className="text-lg" />}
-                        label="Rating"
-                        value={riderData.stats?.rating?.toFixed(1) || '0.0'}
-                        bgColor="bg-yellow-500"
-                    />
-                    <StatCard
-                        icon={<FaTrophy className="text-lg" />}
-                        label="This Week"
-                        value={`Rs. ${riderData.earnings?.thisWeek || 0}`}
-                        bgColor="bg-purple-500"
-                    />
-                </div>
-            </div>
-
-            {/* Quick Actions */}
-            <div className="px-4 mb-6">
-                <h2 className="text-base font-semibold text-gray-800 mb-3 uppercase tracking-wider text-[10px]">Quick Actions</h2>
-                <div className="space-y-2.5">
-                    <ActionItem
-                        icon={<FaRoute className="text-orange-600" />}
-                        title="Navigate to Order"
-                        subtitle="Get directions to pickup location"
-                        bgColor="bg-orange-50"
-                    />
-                    <ActionItem
-                        icon={<FaWallet className="text-orange-600" />}
-                        title="View Earnings"
-                        subtitle="Check your payment details"
-                        bgColor="bg-orange-50"
-                        onClick={() => setActiveTab('earnings')}
-                    />
-                    <ActionItem
-                        icon={<FaTrophy className="text-orange-600" />}
-                        title="Performance"
-                        subtitle="See your ratings & stats"
-                        bgColor="bg-orange-50"
-                    />
-                </div>
-            </div>
-
-            {/* Recent Deliveries */}
-            <div className="px-4 mb-6">
-                <h2 className="text-base font-bold text-gray-800 mb-3 uppercase tracking-wider text-[10px]">Recent Deliveries</h2>
-                <div className="bg-white rounded-2xl overflow-hidden border border-gray-100">
-                    {recentDeliveries.length === 0 ? (
-                        <div className="p-6 text-center text-gray-500">
-                            <p className="text-xs">No deliveries yet</p>
-                        </div>
-                    ) : (
-                        <div className="divide-y divide-gray-50">
-                            {recentDeliveries.map((delivery, idx) => (
-                                <div key={idx} className="p-3.5 flex items-center justify-between hover:bg-gray-50 transition">
-                                    <div className="flex-1">
-                                        <p className="font-bold text-gray-800 text-sm">{delivery.restaurant?.name || 'Restaurant'} <span className="text-gray-400 font-normal text-[10px]">#{delivery.orderNumber}</span></p>
-                                        <p className="text-[10px] text-gray-500 font-medium uppercase tracking-wider">{delivery.timeAgo}</p>
+            {/* Available Orders List - Real Time */}
+            <div className="px-6 space-y-4 mb-24">
+                {recentDeliveries.length > 0 ? (
+                    recentDeliveries.map((order, idx) => (
+                        <div key={idx} className="bg-white rounded-[32px] p-6 shadow-sm border border-gray-50 relative overflow-hidden group active:scale-[0.98] transition-all">
+                            <div className="flex justify-between items-start mb-4">
+                                <div>
+                                    <div className="inline-flex items-center gap-1.5 bg-red-50 text-[#FF4D00] px-3 py-1 rounded-full mb-3">
+                                        <FaClock size={10} className="animate-pulse" />
+                                        <span className="text-[10px] font-bold uppercase tracking-wider">Urgent</span>
                                     </div>
-                                    <div className="text-right">
-                                        <p className="font-bold text-green-600 text-sm">+Rs. {delivery.earnings}</p>
-                                        <div className="flex items-center justify-end gap-1 text-yellow-500 text-[10px] mt-0.5 font-bold">
-                                            <FaStar size={8} />
-                                            <span>{delivery.rating || '5.0'}</span>
-                                        </div>
+                                    <h3 className="text-gray-900 text-lg font-black tracking-tight mb-1">{order.restaurant?.name || 'Pizza House'}</h3>
+                                    <p className="text-gray-400 text-xs font-medium">{order.timeAgo || '2 mins ago'}</p>
+                                </div>
+                                <div className="text-right">
+                                    <p className="text-[#00D97E] text-lg font-black tracking-tight">+PKR {order.earnings || 250}</p>
+                                    <p className="text-gray-400 text-[10px] font-bold uppercase tracking-widest">3 items</p>
+                                </div>
+                            </div>
+
+                            <div className="bg-gray-50 rounded-2xl p-4 space-y-4">
+                                <div className="flex items-start gap-3">
+                                    <div className="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center text-green-500 shrink-0">
+                                        <FaMapMarkerAlt size={14} />
+                                    </div>
+                                    <div>
+                                        <p className="text-gray-400 text-[9px] font-bold uppercase tracking-wider mb-0.5">Pickup</p>
+                                        <p className="text-gray-900 text-xs font-bold line-clamp-1">{order.restaurant?.address || 'Block 5, Gulshan-e-Iqbal'}</p>
                                     </div>
                                 </div>
-                            ))}
+                                <div className="flex items-start gap-3">
+                                    <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center text-blue-500 shrink-0">
+                                        <FaMapMarkerAlt size={14} />
+                                    </div>
+                                    <div>
+                                        <p className="text-gray-400 text-[9px] font-bold uppercase tracking-wider mb-0.5">Delivery</p>
+                                        <p className="text-gray-900 text-xs font-bold line-clamp-1">Apartment 204, DHA Phase 2</p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div className="flex items-center justify-between mt-5 pt-4 border-t border-gray-100">
+                                <div className="flex items-center gap-4">
+                                    <div className="flex items-center gap-1.5 text-gray-500">
+                                        <FaRoute size={14} />
+                                        <span className="text-xs font-bold">3.2 km</span>
+                                    </div>
+                                    <div className="flex items-center gap-1.5 text-gray-500">
+                                        <FaClock size={14} />
+                                        <span className="text-xs font-bold">15 min</span>
+                                    </div>
+                                </div>
+                                <button 
+                                    onClick={() => setPendingOrder(order)}
+                                    className="text-[#FF4D00] text-sm font-black flex items-center gap-1 group-hover:gap-2 transition-all"
+                                >
+                                    View Details <FaChevronRight size={10} />
+                                </button>
+                            </div>
                         </div>
-                    )}
-                </div>
+                    ))
+                ) : (
+                    <div className="bg-white rounded-[32px] p-12 text-center border border-dashed border-gray-200">
+                        <div className="w-20 h-20 bg-gray-50 rounded-full flex items-center justify-center mx-auto mb-4 text-gray-300">
+                            <FaClipboardList size={32} />
+                        </div>
+                        <h3 className="text-gray-900 font-bold mb-1">No orders available</h3>
+                        <p className="text-gray-400 text-xs">Orders near you will appear here in real-time</p>
+                    </div>
+                )}
             </div>
 
             {/* Bottom Navigation */}
@@ -364,6 +410,9 @@ function BottomNav({ activeTab, setActiveTab }: { activeTab: string; setActiveTa
                 <NavItem icon={<FaHeadset />} label="Support" active={activeTab === 'support'} onClick={() => setActiveTab('support')} />
                 <NavItem icon={<FaUser />} label="Profile" active={activeTab === 'profile'} onClick={() => setActiveTab('profile')} />
             </div>
+
+            {/* Bottom Navigation */}
+            <BottomNav activeTab={activeTab} setActiveTab={setActiveTab} />
         </div>
     );
 }

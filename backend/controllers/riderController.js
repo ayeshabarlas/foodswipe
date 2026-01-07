@@ -2,6 +2,7 @@ const Rider = require('../models/Rider');
 const Transaction = require('../models/Transaction');
 const Order = require('../models/Order');
 const { calculateRiderEarning } = require('../utils/paymentUtils');
+const { createNotification } = require('./notificationController');
 
 // @desc    Register a new rider
 // @route   POST /api/riders/register
@@ -248,6 +249,20 @@ const acceptOrder = async (req, res) => {
                 riderName: rider.user?.name || rider.fullName,
                 riderPhone: rider.user?.phone
             });
+        }
+
+        // Create Notification for Rider
+        const notification = await createNotification(
+            rider.user._id,
+            'Order Confirmed',
+            `You have accepted order #${order.orderNumber || order._id.toString().slice(-4)}. Pickup from ${order.restaurant?.name}.`,
+            'order',
+            { orderId: order._id }
+        );
+
+        // Emit Real-time Notification
+        if (req.app && req.app.get('io')) {
+            req.app.get('io').to(`user_${rider.user._id}`).emit('notification', notification);
         }
 
         res.json({ message: 'Order accepted', order });
