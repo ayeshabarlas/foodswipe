@@ -400,9 +400,9 @@ export default function RestaurantProfile({ restaurant: initialRestaurant, onBac
             </div>
 
             {/* Main Content Area */}
-            <div className="flex-1 bg-white">
+            <div className="flex-1 bg-white overflow-hidden flex flex-col">
                 {/* Main Tabs */}
-                <div className="flex px-8 pt-4 border-b border-gray-100">
+                <div className="flex px-8 pt-4 border-b border-gray-100 shrink-0">
                     <button
                         onClick={() => setActiveMainTab('videos')}
                         className={`pb-3 pr-8 text-sm font-medium transition-all relative ${activeMainTab === 'videos' ? 'text-gray-900' : 'text-gray-400'}`}
@@ -425,7 +425,7 @@ export default function RestaurantProfile({ restaurant: initialRestaurant, onBac
 
             {/* Dish Videos Tab Content */}
             {activeMainTab === 'videos' && (
-                <div className="bg-white px-4 pb-20">
+                <div className="flex-1 overflow-y-auto bg-white px-4 pb-20">
                     <div className="grid grid-cols-2 gap-3 py-4">
                         {(() => {
                             const uniqueDishes = Array.from(new Set(menuSections.flatMap(s => s.items).filter(dish => dish.videoUrl).map(d => d._id)))
@@ -450,49 +450,50 @@ export default function RestaurantProfile({ restaurant: initialRestaurant, onBac
                                         />
                                         <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent opacity-80 group-hover:opacity-100 transition-opacity" />
                                     
-                                    {/* Play Icon Overlay */}
-                                    <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity scale-75 group-hover:scale-100 duration-300">
-                                        <div className="w-12 h-12 bg-white/20 backdrop-blur-md rounded-full flex items-center justify-center border border-white/40 shadow-xl">
-                                            <FaPlay className="text-white ml-1 text-sm" />
+                                        {/* Play Icon Overlay */}
+                                        <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity scale-75 group-hover:scale-100 duration-300">
+                                            <div className="w-12 h-12 bg-white/20 backdrop-blur-md rounded-full flex items-center justify-center border border-white/40 shadow-xl">
+                                                <FaPlay className="text-white ml-1 text-sm" />
+                                            </div>
                                         </div>
-                                    </div>
 
-                                    {/* Comment count overlay */}
-                                    <div className="absolute top-3 left-3 bg-black/40 backdrop-blur-md px-2.5 py-1.5 rounded-xl text-white flex items-center gap-1.5 text-[10px] font-bold border border-white/10">
-                                        <FaComment size={10} className="text-primary" />
-                                        <span>{reviews.filter(r => r.dish?._id === dish._id).length}</span>
-                                    </div>
+                                        {/* Comment count overlay */}
+                                        <div className="absolute top-3 left-3 bg-black/40 backdrop-blur-md px-2.5 py-1.5 rounded-xl text-white flex items-center gap-1.5 text-[10px] font-bold border border-white/10">
+                                            <FaComment size={10} className="text-primary" />
+                                            <span>{reviews.filter(r => r.dish?._id === dish._id).length}</span>
+                                        </div>
 
-                                    <div className="absolute bottom-0 left-0 right-0 p-3">
-                                        <p className="text-white font-bold text-xs line-clamp-1 mb-1">{dish.name}</p>
-                                        <div className="flex items-center justify-between">
-                                            <span className="text-primary font-bold text-xs">Rs. {dish.price}</span>
-                                            <div className="flex items-center gap-1">
-                                                <FaStar className="text-yellow-400" size={10} />
-                                                <span className="text-white text-[10px] font-bold">
-                                                    {reviews.filter(r => r.dish?._id === dish._id).length > 0
-                                                        ? (reviews.filter(r => r.dish?._id === dish._id).reduce((acc, r) => acc + r.rating, 0) / reviews.filter(r => r.dish?._id === dish._id).length).toFixed(1)
-                                                        : '5.0'}
-                                                </span>
+                                        <div className="absolute bottom-0 left-0 right-0 p-3">
+                                            <p className="text-white font-bold text-xs line-clamp-1 mb-1">{dish.name}</p>
+                                            <div className="flex items-center justify-between">
+                                                <span className="text-primary font-bold text-xs">Rs. {dish.price}</span>
+                                                <div className="flex items-center gap-1">
+                                                    <FaStar className="text-yellow-400" size={10} />
+                                                    <span className="text-white text-[10px] font-bold">
+                                                        {reviews.filter(r => r.dish?._id === dish._id).length > 0
+                                                            ? (reviews.filter(r => r.dish?._id === dish._id).reduce((acc, r) => acc + r.rating, 0) / reviews.filter(r => r.dish?._id === dish._id).length).toFixed(1)
+                                                            : '5.0'}
+                                                    </span>
+                                                </div>
                                             </div>
                                         </div>
                                     </div>
+                                ))
+                            ) : (
+                                <div className="col-span-2 text-center py-20 bg-gray-50 rounded-3xl border-2 border-dashed border-gray-200">
+                                    <FaPlay className="mx-auto text-gray-300 text-4xl mb-3" />
+                                    <p className="text-gray-500 font-medium">No dish videos available</p>
                                 </div>
-                            ))
-                        ) : (
-                            <div className="col-span-2 text-center py-20 bg-gray-50 rounded-3xl border-2 border-dashed border-gray-200">
-                                <FaPlay className="mx-auto text-gray-300 text-4xl mb-3" />
-                                <p className="text-gray-500 font-medium">No dish videos available</p>
-                            </div>
-                        )}
+                            )
+                        })()}
                     </div>
                 </div>
             )}
 
             {/* Menu Content */}
             {activeMainTab === 'menu' && (
-                <>
-                    <div className="bg-white px-6 pb-2">
+                <div className="flex-1 flex flex-col overflow-hidden">
+                    <div className="bg-white px-6 pb-2 shrink-0">
 
                         {/* Vouchers & Deals Section */}
                         {(vouchers.length > 0 || deals.length > 0) && (
@@ -611,7 +612,7 @@ export default function RestaurantProfile({ restaurant: initialRestaurant, onBac
 
 
                     {/* Content Area */}
-                    <div className="flex-1 bg-gray-50 p-4" onScroll={(e) => {
+                    <div className="flex-1 overflow-y-auto bg-gray-50 p-4" onScroll={(e) => {
                         // Optional: Update active tab on scroll
                     }}>
                         {activeTab === 'reviews' ? (
@@ -732,7 +733,7 @@ export default function RestaurantProfile({ restaurant: initialRestaurant, onBac
                             </div>
                         )}
                     </div>
-                </>
+                </div>
             )
             }
 

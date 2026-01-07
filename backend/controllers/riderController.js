@@ -387,21 +387,6 @@ const getTimeAgo = (date) => {
     return `${Math.floor(seconds / 86400)} day${Math.floor(seconds / 86400) > 1 ? 's' : ''} ago`;
 };
 
-const calculateRiderEarning = (distance) => {
-    const BASE_PAY = 100;
-    const PER_KM_RATE = 20;
-    const PLATFORM_FEE = 15;
-    
-    const grossEarning = BASE_PAY + (distance * PER_KM_RATE);
-    const netEarning = grossEarning - PLATFORM_FEE;
-    
-    return {
-        grossEarning: Math.round(grossEarning),
-        netEarning: Math.round(netEarning),
-        platformFee: PLATFORM_FEE
-    };
-};
-
 // @desc    Get rider's orders
 // @route   GET /api/riders/:id/orders
 // @access  Private
