@@ -47,7 +47,11 @@ export default function RiderDashboard({ riderId }: RiderDashboardProps) {
 
     const fetchUnreadCount = async () => {
         try {
-            const token = JSON.parse(localStorage.getItem("userInfo") || "{}").token;
+            const userStr = localStorage.getItem("userInfo");
+            if (!userStr || userStr === 'undefined') return;
+            const token = JSON.parse(userStr).token;
+            if (!token) return;
+            
             const res = await axios.get(`${API_BASE_URL}/api/notifications`, {
                 headers: { Authorization: `Bearer ${token}` }
             });
@@ -72,12 +76,23 @@ export default function RiderDashboard({ riderId }: RiderDashboardProps) {
         const fetchRiderData = async (showLoading = false) => {
             try {
                 if (showLoading) setLoading(true);
-                const token = JSON.parse(localStorage.getItem("userInfo") || "{}").token;
+                const userStr = localStorage.getItem("userInfo");
+                if (!userStr || userStr === 'undefined') {
+                    setLoading(false);
+                    return;
+                }
+                const token = JSON.parse(userStr).token;
+                if (!token) {
+                    setLoading(false);
+                    return;
+                }
+
                 const res = await axios.get(`${API_BASE_URL}/api/riders/${effectiveRiderId}`, {
                     headers: { Authorization: `Bearer ${token}` }
                 });
                 setRiderData(res.data);
                 setIsOnline(res.data.isOnline);
+                localStorage.setItem('rider_online_status', JSON.stringify(res.data.isOnline));
                 setError(null);
             } catch (error: any) {
                 console.error('Error fetching rider data:', error);
@@ -91,7 +106,11 @@ export default function RiderDashboard({ riderId }: RiderDashboardProps) {
 
         const fetchDeliveries = async () => {
             try {
-                const token = JSON.parse(localStorage.getItem("userInfo") || "{}").token;
+                const userStr = localStorage.getItem("userInfo");
+                if (!userStr || userStr === 'undefined') return;
+                const token = JSON.parse(userStr).token;
+                if (!token) return;
+
                 const res = await axios.get(`${API_BASE_URL}/api/riders/${effectiveRiderId}/deliveries`, {
                     headers: { Authorization: `Bearer ${token}` }
                 });
@@ -105,7 +124,11 @@ export default function RiderDashboard({ riderId }: RiderDashboardProps) {
 
         const checkForNewOrders = async () => {
             try {
-                const token = JSON.parse(localStorage.getItem("userInfo") || "{}").token;
+                const userStr = localStorage.getItem("userInfo");
+                if (!userStr || userStr === 'undefined') return;
+                const token = JSON.parse(userStr).token;
+                if (!token) return;
+
                 const res = await axios.get(`${API_BASE_URL}/api/riders/${effectiveRiderId}/available-orders`, {
                     headers: { Authorization: `Bearer ${token}` }
                 });
@@ -124,13 +147,24 @@ export default function RiderDashboard({ riderId }: RiderDashboardProps) {
         const interval = setInterval(() => {
             fetchRiderData(false);
             fetchDeliveries();
-            if (isOnline) {
+            // Use the latest isOnline from state indirectly or check it here
+            let currentIsOnline = false;
+            try {
+                const status = localStorage.getItem('rider_online_status');
+                if (status && status !== 'undefined') {
+                    currentIsOnline = JSON.parse(status);
+                }
+            } catch (e) {
+                console.error('Error parsing online status:', e);
+            }
+            
+            if (currentIsOnline) {
                 checkForNewOrders();
             }
         }, 5000);
 
         return () => clearInterval(interval);
-    }, [effectiveRiderId, isOnline, pendingOrder]);
+    }, [effectiveRiderId]); // Only depend on effectiveRiderId to avoid loops
 
     const handleAcceptOrder = async () => {
         try {
@@ -171,6 +205,7 @@ export default function RiderDashboard({ riderId }: RiderDashboardProps) {
                 headers: { Authorization: `Bearer ${token}` }
             });
             setIsOnline(newStatus);
+            localStorage.setItem('rider_online_status', JSON.stringify(newStatus));
         } catch (error) {
             console.error('Error updating status:', error);
         }
