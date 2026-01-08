@@ -151,6 +151,11 @@ export default function RiderDashboard({ riderId }: RiderDashboardProps) {
             }
         }, 2000);
 
+        // Safety timeout to stop loading if it hangs
+        const safetyTimer = setTimeout(() => {
+            if (loading) setLoading(false);
+        }, 8000);
+
         // Real-time polling every 5 seconds (background)
         const interval = setInterval(() => {
             fetchRiderData(false);
@@ -174,6 +179,7 @@ export default function RiderDashboard({ riderId }: RiderDashboardProps) {
         return () => {
             clearInterval(interval);
             clearTimeout(timeout);
+            clearTimeout(safetyTimer);
         };
     }, [effectiveRiderId]); // Only depend on effectiveRiderId to avoid loops
 
@@ -503,8 +509,6 @@ export default function RiderDashboard({ riderId }: RiderDashboardProps) {
                 )}
             </div>
 
-            {/* Bottom Navigation */}
-            <BottomNav activeTab={activeTab} setActiveTab={setActiveTab} />
         </div>
     );
 }

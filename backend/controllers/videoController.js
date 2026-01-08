@@ -23,8 +23,8 @@ const getVideoFeed = async (req, res) => {
         // Show dishes that have EITHER a video OR an image
         const query = { 
             $or: [
-                { videoUrl: { $exists: true, $ne: '' } },
-                { imageUrl: { $exists: true, $ne: '' } }
+                { videoUrl: { $ne: '' } },
+                { imageUrl: { $ne: '' } }
             ]
         };
 
@@ -43,8 +43,8 @@ const getVideoFeed = async (req, res) => {
             .sort({ createdAt: -1 })
             .lean();
 
-        // Filter out videos with null restaurants OR unapproved restaurants
-        const validVideos = videos.filter(v => v.restaurant && v.restaurant.verificationStatus === 'approved');
+        // Filter out videos with null restaurants
+        const validVideos = videos.filter(v => v.restaurant);
 
         // Fetch active deals for these restaurants
         const restaurantIds = validVideos.map(v => v.restaurant._id);
