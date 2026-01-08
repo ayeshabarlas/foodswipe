@@ -139,35 +139,75 @@ export default function RestaurantDashboard() {
 
     const handleLogoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
         if (!e.target.files || !e.target.files[0]) return;
+        
+        const file = e.target.files[0];
+        
+        // Basic validation
+        if (!file.type.startsWith('image/')) {
+            alert('Please upload an image file');
+            return;
+        }
+
+        if (file.size > 5 * 1024 * 1024) {
+            alert('Image size should be less than 5MB');
+            return;
+        }
+
         setUploadingLogo(true);
         try {
             const formData = new FormData();
-            formData.append('file', e.target.files[0]);
+            formData.append('file', file);
 
             const userInfo = JSON.parse(localStorage.getItem('userInfo') || '{}');
+            const token = userInfo.token;
+
+            if (!token) {
+                alert('Session expired. Please login again.');
+                return;
+            }
+
+            // 1. Upload the file
+            console.log('Uploading logo file...');
             const { data } = await axios.post(`${API_BASE_URL}/api/upload`, formData, {
                 headers: {
                     'Content-Type': 'multipart/form-data',
-                    Authorization: `Bearer ${userInfo.token}`
+                    Authorization: `Bearer ${token}`
                 }
             });
 
-            const fullUrl = data.imageUrl;
+            const uploadedPath = data.imageUrl;
+            if (!uploadedPath) {
+                throw new Error('No image path returned from server');
+            }
 
-            // Update restaurant logo in backend
-            await axios.put(`${API_BASE_URL}/api/restaurants/store-settings`,
-                { logo: fullUrl },
-                { headers: { Authorization: `Bearer ${userInfo.token}` } }
+            console.log('Logo uploaded to server, path:', uploadedPath);
+
+            // 2. Update restaurant logo in backend
+            // Using store-settings endpoint
+            const updateRes = await axios.put(`${API_BASE_URL}/api/restaurants/store-settings`,
+                { logo: uploadedPath },
+                { headers: { Authorization: `Bearer ${token}` } }
             );
 
-            setRestaurant({ ...restaurant, logo: fullUrl });
-            fetchDashboardData(); // Ensure this is called to refresh state everywhere
+            console.log('Backend updated with new logo path');
+
+            // 3. Update local state immediately
+            if (restaurant) {
+                setRestaurant({ ...restaurant, logo: uploadedPath });
+            }
+            
+            // 4. Force refresh dashboard data to be sure
+            await fetchDashboardData();
+            
             alert('Logo updated successfully!');
-        } catch (error) {
-            console.error('Logo upload failed:', error);
-            alert('Failed to upload logo');
+        } catch (error: any) {
+            console.error('Logo upload/update failed:', error);
+            const errorMsg = error.response?.data?.message || error.message || 'Failed to update logo';
+            alert(`Error: ${errorMsg}`);
         } finally {
             setUploadingLogo(false);
+            // Reset input so same file can be uploaded again if needed
+            if (e.target) e.target.value = '';
         }
     };
 

@@ -357,11 +357,15 @@ const updateStoreSettings = async (req, res) => {
         if (orderLimit !== undefined) restaurant.orderLimit = orderLimit;
         if (notificationPreferences) restaurant.notificationPreferences = notificationPreferences;
         if (req.body.preferences) restaurant.preferences = req.body.preferences;
-        if (logo) restaurant.logo = logo;
+        if (logo) {
+            console.log(`Updating logo for restaurant ${restaurant._id} to: ${logo}`);
+            restaurant.logo = logo;
+        }
 
-        await restaurant.save();
+        const updatedRestaurant = await restaurant.save();
+        console.log(`Restaurant ${restaurant._id} settings saved successfully`);
 
-        res.json(restaurant);
+        res.json(updatedRestaurant);
     } catch (error) {
         console.error('Update store settings error:', error);
         res.status(500).json({ message: 'Failed to update store settings', error: error.message });
