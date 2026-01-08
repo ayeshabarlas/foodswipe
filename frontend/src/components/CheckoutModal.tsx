@@ -204,7 +204,10 @@ export default function CheckoutModal({ isOpen, onClose, cart, total, subtotal, 
             console.error('Error parsing userInfo:', e);
         }
 
-        if (!userInfo.phoneVerified) {
+        // IMPORTANT: If phone is already verified in userInfo, skip phone auth
+        if (userInfo.phoneVerified === true || userInfo.phoneVerified === 'true') {
+            console.log('Phone already verified, proceeding to place order');
+        } else {
             console.log('Phone not verified, showing phone auth modal');
             setShowPhoneAuth(true);
             return;
@@ -252,8 +255,14 @@ export default function CheckoutModal({ isOpen, onClose, cart, total, subtotal, 
                 }
             }
 
+            // Fallback for some structures
+            if (!restaurantId && cart[0].dish?.restaurant) {
+                restaurantId = cart[0].dish.restaurant;
+            }
+
             if (!restaurantId) {
-                alert('System Error: Could not identify the restaurant.');
+                console.error('No restaurant ID found in cart items:', cart);
+                alert('System Error: Could not identify the restaurant. Please try adding items to cart again.');
                 setLoading(false);
                 return;
             }

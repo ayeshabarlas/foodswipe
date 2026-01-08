@@ -25,6 +25,9 @@ interface Dish {
     videoUrl: string;
     imageUrl: string;
     ingredients?: string[];
+    variants?: any[];
+    combos?: any[];
+    drinks?: any[];
     likes?: any[];
     shares?: number;
     restaurant: {
