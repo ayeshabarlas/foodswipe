@@ -85,9 +85,9 @@ export default function RiderProfile({ riderId }: RiderProfileProps) {
     }
 
     return (
-        <div className="min-h-screen bg-[#F8F9FA] pb-24 font-light">
+        <div className="min-h-screen bg-[#F8F9FA] pb-24">
             {/* Header */}
-            <div className="bg-[#008C44] px-6 pt-12 pb-20 rounded-b-[40px] relative overflow-hidden">
+            <div className="bg-orange-500 px-6 pt-12 pb-20 rounded-b-[40px] relative overflow-hidden">
                 <div className="absolute top-0 right-0 w-64 h-64 bg-white/5 rounded-full -mr-20 -mt-20 blur-3xl"></div>
                 <div className="absolute bottom-0 left-0 w-48 h-48 bg-black/5 rounded-full -ml-10 -mb-10 blur-2xl"></div>
                 
@@ -100,7 +100,7 @@ export default function RiderProfile({ riderId }: RiderProfileProps) {
                         >
                             <FaBell className="text-lg" />
                             {unreadCount > 0 && (
-                                <span className="absolute -top-1 -right-1 w-5 h-5 bg-[#FFD700] text-[#008C44] text-[10px] font-bold rounded-full flex items-center justify-center border-2 border-[#008C44]">
+                                <span className="absolute -top-1 -right-1 w-5 h-5 bg-yellow-400 text-orange-600 text-[10px] font-bold rounded-full flex items-center justify-center border-2 border-orange-500">
                                     {unreadCount}
                                 </span>
                             )}
@@ -119,7 +119,7 @@ export default function RiderProfile({ riderId }: RiderProfileProps) {
                         <div className="w-20 h-20 bg-white/20 backdrop-blur-md rounded-[24px] border-2 border-white/30 flex items-center justify-center text-white font-bold text-2xl overflow-hidden shadow-xl">
                             {riderData.fullName?.[0] || 'R'}
                         </div>
-                        <button className="absolute -bottom-1 -right-1 w-7 h-7 bg-[#FFD700] rounded-lg flex items-center justify-center text-[#008C44] text-xs border-2 border-[#008C44] shadow-lg">
+                        <button className="absolute -bottom-1 -right-1 w-7 h-7 bg-yellow-400 rounded-lg flex items-center justify-center text-orange-600 text-xs border-2 border-orange-500 shadow-lg">
                             <FaCamera />
                         </button>
                     </div>
@@ -149,10 +149,10 @@ export default function RiderProfile({ riderId }: RiderProfileProps) {
                             color="bg-yellow-50"
                         />
                         <MetricItem 
-                            icon={<FaCheckCircle className="text-[#008C44]" />} 
+                            icon={<FaCheckCircle className="text-orange-500" />} 
                             label="Deliveries" 
                             value={riderData.stats?.totalDeliveries || 0} 
-                            color="bg-green-50"
+                            color="bg-orange-50"
                         />
                         <MetricItem 
                             icon={<FaCheckCircle className="text-blue-500" />} 
@@ -286,12 +286,12 @@ function DocumentItem({ icon, title, status, verified, onClick }: { icon: React.
                 </div>
                 <div className="text-left">
                     <p className="text-sm font-bold text-gray-900 tracking-tight">{title}</p>
-                    <p className={`text-[10px] font-medium uppercase tracking-wider mt-0.5 ${verified ? 'text-[#008C44]' : 'text-orange-500'}`}>
+                    <p className={`text-[10px] font-medium uppercase tracking-wider mt-0.5 ${verified ? 'text-green-600' : 'text-orange-500'}`}>
                         {status}
                     </p>
                 </div>
             </div>
-            <div className={`w-8 h-8 rounded-lg flex items-center justify-center transition-all ${verified ? 'bg-green-50 text-[#008C44]' : 'bg-gray-50 text-gray-300 group-hover:text-[#008C44]'}`}>
+            <div className={`w-8 h-8 rounded-lg flex items-center justify-center transition-all ${verified ? 'bg-green-50 text-green-600' : 'bg-gray-50 text-gray-300 group-hover:text-orange-500'}`}>
                 {verified ? <FaCheckCircle size={14} /> : <FaChevronRight size={12} />}
             </div>
         </button>
@@ -333,7 +333,7 @@ function UploadModal({ title, onClose, onUpload }: { title: string; onClose: () 
                     <button
                         onClick={handleSimulatedUpload}
                         disabled={uploading}
-                        className={`w-full py-5 bg-[#008C44] text-white font-bold rounded-[24px] shadow-lg shadow-[#008C44]/20 hover:bg-[#007036] transition-all active:scale-[0.98] flex items-center justify-center gap-2 ${uploading ? 'opacity-70' : ''}`}
+                        className={`w-full py-5 bg-orange-500 text-white font-bold rounded-[24px] shadow-lg shadow-orange-100 hover:bg-orange-600 transition-all active:scale-[0.98] flex items-center justify-center gap-2 ${uploading ? 'opacity-70' : ''}`}
                     >
                         {uploading ? (
                             <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
@@ -394,7 +394,7 @@ function SettingsModal({ riderData, riderId, onClose, onUpdate }: { riderData: a
                             <select
                                 value={city}
                                 onChange={(e) => setCity(e.target.value)}
-                                className="w-full px-6 py-4 rounded-2xl border border-gray-100 bg-white text-gray-900 font-medium focus:outline-none focus:ring-2 focus:ring-[#008C44]/20 focus:border-[#008C44] appearance-none shadow-sm transition-all"
+                                className="w-full px-6 py-4 rounded-2xl border border-gray-100 bg-white text-gray-900 font-medium focus:outline-none focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 appearance-none shadow-sm transition-all"
                             >
                                 <option value="Lahore">Lahore</option>
                                 <option value="Karachi">Karachi</option>
@@ -411,7 +411,7 @@ function SettingsModal({ riderData, riderId, onClose, onUpdate }: { riderData: a
                     <button
                         onClick={handleSave}
                         disabled={saving}
-                        className={`w-full py-5 bg-[#008C44] text-white font-bold rounded-[24px] shadow-lg shadow-[#008C44]/20 hover:bg-[#007036] transition-all active:scale-[0.98] mt-4 flex items-center justify-center gap-2 ${saving ? 'opacity-70' : ''}`}
+                        className={`w-full py-5 bg-orange-500 text-white font-bold rounded-[24px] shadow-lg shadow-orange-100 hover:bg-orange-600 transition-all active:scale-[0.98] mt-4 flex items-center justify-center gap-2 ${saving ? 'opacity-70' : ''}`}
                     >
                         {saving ? (
                             <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>

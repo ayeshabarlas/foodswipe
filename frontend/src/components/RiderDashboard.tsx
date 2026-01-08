@@ -120,36 +120,33 @@ const RiderDashboard = ({ riderId: initialRiderId }: { riderId?: string }) => {
     }
 
     const renderHome = () => (
-        <div className="flex flex-col gap-6 animate-in fade-in slide-in-from-bottom-4 duration-500 font-light">
-            {/* Gradient Header */}
-            <div className="relative bg-[#008C44] rounded-b-[40px] px-6 pt-12 pb-14 -mx-4 -mt-4 shadow-lg overflow-hidden">
-                <div className="absolute top-[-20%] right-[-10%] w-64 h-64 bg-white/5 rounded-full blur-3xl" />
-                <div className="absolute bottom-[-10%] left-[-5%] w-48 h-48 bg-black/5 rounded-full blur-2xl" />
-                
-                <div className="relative flex justify-between items-start mb-8 z-10">
+        <div className="flex flex-col gap-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
+            {/* Standard Header */}
+            <div className="bg-white px-4 pt-10 pb-6 -mx-4 -mt-4 border-b border-gray-100">
+                <div className="flex justify-between items-center">
                     <div>
-                        <p className="text-white/70 text-xs font-medium uppercase tracking-widest mb-1">Welcome back,</p>
-                        <h1 className="text-white text-3xl font-bold tracking-tight">{riderData?.fullName || riderData?.user?.name || 'Rider'}</h1>
+                        <p className="text-gray-400 text-[10px] font-bold uppercase tracking-widest mb-1">Welcome back,</p>
+                        <h1 className="text-gray-900 text-2xl font-bold tracking-tight">{riderData?.fullName || riderData?.user?.name || 'Rider'}</h1>
                     </div>
-                    <div className="w-14 h-14 bg-white/20 backdrop-blur-md border border-white/30 rounded-2xl flex items-center justify-center text-white font-bold text-xl shadow-xl">
+                    <div className="w-12 h-12 bg-orange-500 rounded-2xl flex items-center justify-center text-white font-bold text-lg shadow-lg shadow-orange-100">
                         {(riderData?.fullName || riderData?.user?.name || 'R')[0]}
                     </div>
                 </div>
 
                 {/* Status Toggle Card */}
-                <div className="relative bg-white/10 backdrop-blur-md border border-white/20 rounded-[28px] p-6 flex items-center justify-between shadow-xl z-10">
+                <div className="mt-8 bg-gray-50 rounded-[28px] p-6 flex items-center justify-between border border-gray-100">
                     <div>
                         <div className="flex items-center gap-2 mb-1">
-                            <div className={`w-2 h-2 rounded-full ${isOnline ? 'bg-[#FFD700] shadow-[0_0_8px_#FFD700]' : 'bg-white/40'}`} />
-                            <p className="text-white font-bold text-lg tracking-tight">You are {isOnline ? 'Online' : 'Offline'}</p>
+                            <div className={`w-2 h-2 rounded-full ${isOnline ? 'bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.4)]' : 'bg-gray-300'}`} />
+                            <p className="text-gray-900 font-bold text-lg tracking-tight">You are {isOnline ? 'Online' : 'Offline'}</p>
                         </div>
-                        <p className="text-white/70 text-xs font-medium">{isOnline ? 'Looking for new orders' : 'Go online to start earning'}</p>
+                        <p className="text-gray-400 text-xs font-medium">{isOnline ? 'Looking for new orders' : 'Go online to start earning'}</p>
                     </div>
                     <button 
                         onClick={handleToggleOnline}
-                        className={`relative w-16 h-8 rounded-full transition-all duration-500 shadow-inner ${isOnline ? 'bg-[#FFD700]' : 'bg-white/20'}`}
+                        className={`relative w-14 h-7 rounded-full transition-all duration-300 ${isOnline ? 'bg-green-500' : 'bg-gray-200'}`}
                     >
-                        <div className={`absolute top-1 w-6 h-6 bg-white rounded-full transition-all duration-500 shadow-md transform ${isOnline ? 'translate-x-9' : 'translate-x-1'}`} />
+                        <div className={`absolute top-1 w-5 h-5 bg-white rounded-full transition-all duration-300 shadow-sm transform ${isOnline ? 'translate-x-8' : 'translate-x-1'}`} />
                     </button>
                 </div>
             </div>
@@ -160,8 +157,8 @@ const RiderDashboard = ({ riderId: initialRiderId }: { riderId?: string }) => {
                     icon={<FaWallet size={18} />} 
                     label="Today's Earnings" 
                     value={`PKR ${riderData?.earnings?.today || 0}`} 
-                    color="text-[#008C44]" 
-                    bgColor="bg-green-50" 
+                    color="text-orange-500" 
+                    bgColor="bg-orange-50" 
                 />
                 <DashboardStat 
                     icon={<FaBox size={18} />} 
@@ -269,14 +266,14 @@ function ActionItem({ icon, label, sublabel, onClick }: any) {
             onClick={onClick}
             className="w-full flex items-center gap-4 p-5 hover:bg-gray-50 transition-all border-b border-gray-50 last:border-b-0 group"
         >
-            <div className="w-12 h-12 bg-gray-50 rounded-2xl flex items-center justify-center text-gray-400 group-hover:bg-[#008C44]/10 group-hover:text-[#008C44] transition-all shadow-sm">
+            <div className="w-12 h-12 bg-gray-50 rounded-2xl flex items-center justify-center text-gray-400 group-hover:bg-orange-50 group-hover:text-orange-500 transition-all shadow-sm">
                 {icon}
             </div>
             <div className="flex-1 text-left">
                 <p className="text-gray-900 font-bold text-sm tracking-tight">{label}</p>
                 <p className="text-gray-400 text-[10px] font-medium uppercase tracking-wider mt-0.5">{sublabel}</p>
             </div>
-            <FaChevronRight className="text-gray-300 group-hover:text-[#008C44] transition-all text-xs" />
+            <FaChevronRight className="text-gray-300 group-hover:text-orange-500 transition-all text-xs" />
         </button>
     );
 }
@@ -295,13 +292,13 @@ function ActionItem({ icon, label, sublabel, onClick }: any) {
                     <div className="flex bg-gray-100 p-1 rounded-2xl">
                         <button 
                             onClick={() => setOrderFilter('available')}
-                            className={`px-4 py-2 rounded-xl text-[10px] font-bold uppercase tracking-wider transition-all ${orderFilter === 'available' ? 'bg-white text-[#008C44] shadow-sm' : 'text-gray-400'}`}
+                            className={`px-4 py-2 rounded-xl text-[10px] font-bold uppercase tracking-wider transition-all ${orderFilter === 'available' ? 'bg-white text-orange-500 shadow-sm' : 'text-gray-400'}`}
                         >
                             Available
                         </button>
                         <button 
                             onClick={() => setOrderFilter('active')}
-                            className={`px-4 py-2 rounded-xl text-[10px] font-bold uppercase tracking-wider transition-all ${orderFilter === 'active' ? 'bg-white text-[#008C44] shadow-sm' : 'text-gray-400'}`}
+                            className={`px-4 py-2 rounded-xl text-[10px] font-bold uppercase tracking-wider transition-all ${orderFilter === 'active' ? 'bg-white text-orange-500 shadow-sm' : 'text-gray-400'}`}
                         >
                             Active
                         </button>
@@ -356,7 +353,7 @@ function ActionItem({ icon, label, sublabel, onClick }: any) {
                                 </button>
                                 <button 
                                     onClick={() => handleUpdateStatus(order._id, order.status === 'Ready' || order.status === 'OnTheWay' ? 'PickedUp' : 'Delivered')}
-                                    className="flex-[2] bg-[#008C44] text-white py-4 rounded-2xl text-xs font-bold uppercase tracking-widest shadow-lg shadow-green-100 hover:scale-[1.02] active:scale-[0.98] transition-all"
+                                    className="flex-[2] bg-orange-500 text-white py-4 rounded-2xl text-xs font-bold uppercase tracking-widest shadow-lg shadow-orange-100 hover:scale-[1.02] active:scale-[0.98] transition-all"
                                 >
                                     {order.status === 'PickedUp' ? 'Mark Delivered' : 'Accept Order'}
                                 </button>
@@ -422,7 +419,7 @@ function NavButton({ active, onClick, icon, label }: any) {
     return (
         <button 
             onClick={onClick}
-            className={`flex flex-col items-center gap-1.5 px-6 py-3 rounded-2xl transition-all duration-300 ${active ? 'bg-[#008C44] text-white shadow-lg shadow-green-100' : 'text-gray-400 hover:text-gray-600'}`}
+            className={`flex flex-col items-center gap-1.5 px-6 py-3 rounded-2xl transition-all duration-300 ${active ? 'bg-orange-500 text-white shadow-lg shadow-orange-100' : 'text-gray-400 hover:text-gray-600'}`}
         >
             <div className={`${active ? 'scale-110' : ''} transition-transform`}>
                 {icon}

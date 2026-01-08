@@ -119,28 +119,28 @@ export default function RiderEarnings({ riderId }: RiderEarningsProps) {
     };
 
     return (
-        <div className="pb-24 bg-[#F8F9FB] min-h-screen font-light">
+        <div className="pb-24 bg-[#F8F9FB] min-h-screen">
             {/* Header */}
-            <div className="bg-[#008C44] px-6 pt-12 pb-20 rounded-b-[40px] text-white relative">
+            <div className="bg-orange-500 px-6 pt-12 pb-20 rounded-b-[40px] text-white relative">
                 <h1 className="text-xl font-medium mb-8">Earnings</h1>
                 
                 {/* Period Selector */}
                 <div className="flex bg-white/10 backdrop-blur-md p-1 rounded-2xl mb-10">
                     <button 
                         onClick={() => setPeriod('daily')}
-                        className={`flex-1 py-2 rounded-xl text-sm transition-all ${period === 'daily' ? 'bg-white text-[#008C44] font-medium' : 'text-white'}`}
+                        className={`flex-1 py-2 rounded-xl text-sm transition-all ${period === 'daily' ? 'bg-white text-orange-500 font-medium' : 'text-white'}`}
                     >
                         Daily
                     </button>
                     <button 
                         onClick={() => setPeriod('weekly')}
-                        className={`flex-1 py-2 rounded-xl text-sm transition-all ${period === 'weekly' ? 'bg-white text-[#008C44] font-medium' : 'text-white'}`}
+                        className={`flex-1 py-2 rounded-xl text-sm transition-all ${period === 'weekly' ? 'bg-white text-orange-500 font-medium' : 'text-white'}`}
                     >
                         Weekly
                     </button>
                     <button 
                         onClick={() => setPeriod('monthly')}
-                        className={`flex-1 py-2 rounded-xl text-sm transition-all ${period === 'monthly' ? 'bg-white text-[#008C44] font-medium' : 'text-white'}`}
+                        className={`flex-1 py-2 rounded-xl text-sm transition-all ${period === 'monthly' ? 'bg-white text-orange-500 font-medium' : 'text-white'}`}
                     >
                         Monthly
                     </button>
@@ -180,7 +180,7 @@ export default function RiderEarnings({ riderId }: RiderEarningsProps) {
 
             {/* Payout Card */}
             <div className="px-6 mb-8">
-                <div className="bg-gradient-to-br from-[#008C44] via-[#00A852] to-[#00C25E] rounded-[32px] p-6 text-white shadow-xl shadow-green-100 relative overflow-hidden">
+                <div className="bg-gradient-to-br from-orange-500 via-orange-600 to-red-500 rounded-[32px] p-6 text-white shadow-xl shadow-orange-100 relative overflow-hidden">
                     <div className="absolute right-[-20px] top-[-20px] opacity-10">
                         <FaWallet size={120} />
                     </div>
@@ -226,7 +226,7 @@ export default function RiderEarnings({ riderId }: RiderEarningsProps) {
                     </div>
                     <button
                         onClick={() => setIsEditingBank(true)}
-                        className="text-[#008C44] text-[10px] font-bold uppercase tracking-widest hover:bg-green-50 px-4 py-2 rounded-xl transition-all"
+                        className="text-orange-500 text-[10px] font-bold uppercase tracking-widest hover:bg-orange-50 px-4 py-2 rounded-xl transition-all"
                     >
                         Change
                     </button>
@@ -237,7 +237,7 @@ export default function RiderEarnings({ riderId }: RiderEarningsProps) {
             <div className="px-6">
                 <div className="flex justify-between items-center mb-4 px-1">
                     <p className="text-gray-400 text-[10px] font-bold uppercase tracking-widest">Recent Transactions</p>
-                    <button className="text-[#008C44] text-[10px] font-bold uppercase tracking-widest flex items-center gap-1 hover:gap-2 transition-all">
+                    <button className="text-orange-500 text-[10px] font-bold uppercase tracking-widest flex items-center gap-1 hover:gap-2 transition-all">
                         View All <FaArrowRight size={10} />
                     </button>
                 </div>
@@ -253,7 +253,7 @@ export default function RiderEarnings({ riderId }: RiderEarningsProps) {
                                     <p className="text-gray-400 text-[10px] font-medium uppercase tracking-wider mt-0.5">{tx.time || 'Today, 2:30 PM'}</p>
                                 </div>
                             </div>
-                            <p className="text-[#008C44] font-bold text-sm">+PKR {tx.amount.toLocaleString()}</p>
+                            <p className="text-green-600 font-bold text-sm">+PKR {tx.amount.toLocaleString()}</p>
                         </div>
                     )) : (
                         <div className="bg-white p-10 rounded-[32px] border border-dashed border-gray-200 text-center">
@@ -316,7 +316,7 @@ export default function RiderEarnings({ riderId }: RiderEarningsProps) {
                             <button
                                 onClick={handleSaveBankDetails}
                                 disabled={savingBank}
-                                className="flex-1 py-4 rounded-2xl font-bold text-white bg-[#008C44] shadow-lg shadow-green-100 hover:scale-[1.02] transition-all active:scale-[0.98] text-xs uppercase tracking-widest"
+                                className="flex-1 py-4 rounded-2xl font-bold text-white bg-orange-500 shadow-lg shadow-orange-100 hover:scale-[1.02] transition-all active:scale-[0.98] text-xs uppercase tracking-widest"
                             >
                                 {savingBank ? 'Saving...' : 'Save'}
                             </button>
