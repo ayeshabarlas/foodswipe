@@ -19,7 +19,7 @@ const createOrder = async (req, res) => {
             return res.status(401).json({ message: 'User not authenticated' });
         }
 
-        const { items, restaurant, deliveryAddress, totalAmount, paymentMethod, deliveryInstructions, subtotal, deliveryFee } = req.body;
+        const { items, restaurant, deliveryAddress, deliveryLocation, totalAmount, paymentMethod, deliveryInstructions, subtotal, deliveryFee } = req.body;
 
         if (!items || items.length === 0) {
             return res.status(400).json({ message: 'No order items' });
@@ -35,13 +35,30 @@ const createOrder = async (req, res) => {
             return res.status(400).json({ message: 'Restaurant is not yet approved for orders' });
         }
 
-        // Map frontend data to model schema
-        const orderItems = items.map(item => ({
-            name: item.name,
-            qty: item.quantity,
-            image: item.image,
-            price: item.price,
-            product: item.dish
+        // Map frontend data to model schema with fallback for image
+        const orderItems = await Promise.all(items.map(async item => {
+            let itemImage = item.image;
+            const dishId = item.dish || item._id || item.product;
+            
+            // If image is missing, try to fetch it from the Dish model
+            if (!itemImage && dishId) {
+                try {
+                    const dish = await Dish.findById(dishId);
+                    if (dish && dish.image) {
+                        itemImage = dish.image;
+                    }
+                } catch (err) {
+                    console.error('Error fetching dish image for order:', err);
+                }
+            }
+
+            return {
+                name: item.name,
+                qty: item.quantity || item.qty,
+                image: itemImage || '', // Fallback to empty string if still missing
+                price: item.price,
+                product: dishId
+            };
         }));
 
         const shippingAddress = {
@@ -56,6 +73,7 @@ const createOrder = async (req, res) => {
             restaurant,
             orderItems,
             shippingAddress,
+            deliveryLocation: deliveryLocation || null,
             paymentMethod: paymentMethod || 'COD',
             totalPrice: totalAmount,
             subtotal: subtotal || (totalAmount - (deliveryFee || 0)),

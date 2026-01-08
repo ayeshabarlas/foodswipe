@@ -1,19 +1,15 @@
 const getApiUrl = () => {
+  // Priority 1: Environment variable
   let url = process.env.NEXT_PUBLIC_API_URL;
   
-  // If no env var, try to determine based on environment
+  // Priority 2: Production fallback (Hardcoded Koyeb URL)
+  if (!url && process.env.NODE_ENV === 'production') {
+    url = 'https://colossal-anya-foodswipe-a3e25304.koyeb.app';
+  }
+
+  // Priority 3: Localhost fallback
   if (!url) {
-    if (typeof window !== 'undefined') {
-      const host = window.location.hostname;
-      // Force Koyeb URL as primary production API
-      if (host !== 'localhost' && host !== '127.0.0.1' && !host.startsWith('192.168.')) {
-        return 'https://colossal-anya-foodswipe-a3e25304.koyeb.app';
-      }
-    }
-    // Default fallback
-    return process.env.NODE_ENV === 'production' 
-      ? 'https://colossal-anya-foodswipe-a3e25304.koyeb.app' 
-      : 'http://localhost:5000';
+    url = 'http://localhost:8080';
   }
   
   // Ensure protocol
@@ -25,17 +21,17 @@ const getApiUrl = () => {
 };
 
 const getSocketUrl = () => {
+  // Priority 1: Environment variable
   let url = process.env.NEXT_PUBLIC_SOCKET_URL;
+  
+  // Priority 2: Production fallback (Hardcoded Koyeb URL)
+  if (!url && process.env.NODE_ENV === 'production') {
+    url = 'https://colossal-anya-foodswipe-a3e25304.koyeb.app';
+  }
+
+  // Priority 3: Localhost fallback
   if (!url) {
-    if (typeof window !== 'undefined') {
-      const host = window.location.hostname;
-      if (host !== 'localhost' && host !== '127.0.0.1' && !host.startsWith('192.168.')) {
-        return 'https://colossal-anya-foodswipe-a3e25304.koyeb.app';
-      }
-    }
-    return process.env.NODE_ENV === 'production' 
-      ? 'https://colossal-anya-foodswipe-a3e25304.koyeb.app' 
-      : 'http://localhost:5000';
+    url = 'http://localhost:8080';
   }
 
   // Ensure protocol

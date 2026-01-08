@@ -69,6 +69,10 @@ export default function OrderTracking({ order: initialOrder, userRole = 'user', 
             userRole === 'restaurant' ? userInfo.restaurantId : undefined
         );
 
+        if (socket && order._id) {
+            socket.emit('joinOrderChat', { orderId: order._id });
+        }
+
         // Calculate ETA immediately on mount with initial location
         if (riderLocation) {
             calculateETA(riderLocation);
@@ -96,14 +100,14 @@ export default function OrderTracking({ order: initialOrder, userRole = 'user', 
     }, [order?._id, userRole]);
 
     const calculateETA = (currentLoc: { lat: number; lng: number }) => {
-        if (!order?.deliveryAddress) {
+        if (!order?.deliveryLocation && !order?.shippingAddress) {
             setEta('25-35 mins');
             return;
         }
 
-        // Mock customer location (Lahore center for demo if not geocoded)
-        const customerLat = 31.5204;
-        const customerLng = 74.3587;
+        // Use delivery location if available, otherwise fallback to default Lahore center
+        const customerLat = order?.deliveryLocation?.lat || 31.5204;
+        const customerLng = order?.deliveryLocation?.lng || 74.3587;
 
         const dist = Math.sqrt(
             Math.pow(currentLoc.lat - customerLat, 2) +
@@ -133,20 +137,25 @@ export default function OrderTracking({ order: initialOrder, userRole = 'user', 
         ? [order.restaurant.location.coordinates[1], order.restaurant.location.coordinates[0]]
         : [31.4805, 74.2809]; // Johar Town
 
-    const customerLoc: [number, number] = [31.5204, 74.3587]; // Default customer
+    const customerLoc: [number, number] = order.deliveryLocation
+        ? [order.deliveryLocation.lat, order.deliveryLocation.lng]
+        : [31.5204, 74.3587]; // Default customer location if none provided
 
     const riderLoc: [number, number] = riderLocation
         ? [riderLocation.lat, riderLocation.lng]
         : restaurantLoc; // Start at restaurant
 
     const steps = [
-        { label: 'Assigned', status: ['Accepted', 'Preparing', 'Ready', 'OnTheWay', 'Picked Up', 'Delivered'] },
-        { label: 'On Way', status: ['OnTheWay', 'Picked Up', 'Delivered'] },
-        { label: 'Arrived', status: ['Picked Up', 'Delivered'] },
-        { label: 'Picked Up', status: ['Picked Up', 'Delivered'] }
+        { label: 'Accepted', status: ['Accepted', 'Preparing', 'Ready', 'OnTheWay', 'Delivered'] },
+        { label: 'Preparing', status: ['Preparing', 'Ready', 'OnTheWay', 'Delivered'] },
+        { label: 'Ready', status: ['Ready', 'OnTheWay', 'Delivered'] },
+        { label: 'On The Way', status: ['OnTheWay', 'Delivered'] },
+        { label: 'Delivered', status: ['Delivered'] }
     ];
 
-    const currentStepIndex = steps.findLastIndex(step => step.status.includes(order.status));
+    const currentStepIndex = steps.findLastIndex(step => 
+        step.status.some(s => s.toLowerCase() === (order.status || '').toLowerCase().replace(/\s/g, ''))
+    );
 
     return (
         <div className="bg-white rounded-2xl shadow-lg overflow-hidden border border-gray-100">

@@ -70,6 +70,21 @@ const initSocket = (server) => {
             socket.join(`order_${orderId}`);
             console.log(`👤 Client joined chat for order: ${orderId}`);
         });
+
+        // 📍 Real-time Tracking
+        socket.on('updateRiderLocation', (data) => {
+            const { orderId, location } = data;
+            console.log(`📍 Rider location update for order ${orderId}:`, location);
+            // Broadcast to the order room (customer/restaurant)
+            io.to(`order_${orderId}`).emit('riderLocationUpdate', { orderId, location });
+        });
+
+        socket.on('updateOrderStatus', (data) => {
+            const { orderId, status } = data;
+            console.log(`🔄 Order status update for order ${orderId}:`, status);
+            // Broadcast to the order room
+            io.to(`order_${orderId}`).emit('orderStatusUpdate', { _id: orderId, status });
+        });
     });
 
     return io;

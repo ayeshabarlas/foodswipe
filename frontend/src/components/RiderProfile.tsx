@@ -85,51 +85,51 @@ export default function RiderProfile({ riderId }: RiderProfileProps) {
     }
 
     return (
-        <div className="min-h-screen bg-[#F8F9FA] pb-24">
-            {/* Header */}
-            <div className="bg-orange-500 px-6 pt-12 pb-20 rounded-b-[40px] relative overflow-hidden">
-                <div className="absolute top-0 right-0 w-64 h-64 bg-white/5 rounded-full -mr-20 -mt-20 blur-3xl"></div>
-                <div className="absolute bottom-0 left-0 w-48 h-48 bg-black/5 rounded-full -ml-10 -mb-10 blur-2xl"></div>
+        <div className="min-h-screen bg-[#F8F9FA] pb-32 font-light">
+            {/* SS-style Gradient Header */}
+            <div className="bg-gradient-to-br from-orange-500 to-rose-500 px-6 pt-12 pb-32 rounded-b-[40px] relative overflow-hidden">
+                <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full -mr-20 -mt-20 blur-3xl" />
+                <div className="absolute bottom-0 left-0 w-48 h-48 bg-black/10 rounded-full -ml-10 -mb-10 blur-2xl" />
                 
                 <div className="flex justify-between items-center mb-8 relative z-10">
                     <h1 className="text-xl font-medium text-white tracking-tight">Profile</h1>
                     <div className="flex gap-3">
                         <button
                             onClick={() => setIsNotificationsOpen(true)}
-                            className="w-10 h-10 bg-white/10 backdrop-blur-md rounded-xl flex items-center justify-center text-white relative hover:bg-white/20 transition-all"
+                            className="w-10 h-10 bg-white/10 backdrop-blur-md rounded-xl flex items-center justify-center text-white relative hover:bg-white/20 transition-all border border-white/10"
                         >
                             <FaBell className="text-lg" />
                             {unreadCount > 0 && (
-                                <span className="absolute -top-1 -right-1 w-5 h-5 bg-yellow-400 text-orange-600 text-[10px] font-bold rounded-full flex items-center justify-center border-2 border-orange-500">
+                                <span className="absolute -top-1 -right-1 w-5 h-5 bg-white text-orange-600 text-[10px] font-bold rounded-full flex items-center justify-center border-2 border-orange-500">
                                     {unreadCount}
                                 </span>
                             )}
                         </button>
                         <button
                             onClick={() => setIsSettingsOpen(true)}
-                            className="w-10 h-10 bg-white/10 backdrop-blur-md rounded-xl flex items-center justify-center text-white hover:bg-white/20 transition-all"
+                            className="w-10 h-10 bg-white/10 backdrop-blur-md rounded-xl flex items-center justify-center text-white hover:bg-white/20 transition-all border border-white/10"
                         >
                             <FaCog className="text-lg" />
                         </button>
                     </div>
                 </div>
 
-                <div className="flex items-center gap-4 relative z-10">
+                <div className="flex items-center gap-5 relative z-10">
                     <div className="relative">
-                        <div className="w-20 h-20 bg-white/20 backdrop-blur-md rounded-[24px] border-2 border-white/30 flex items-center justify-center text-white font-bold text-2xl overflow-hidden shadow-xl">
+                        <div className="w-24 h-24 bg-white rounded-[32px] flex items-center justify-center text-orange-500 font-bold text-3xl overflow-hidden shadow-2xl border-4 border-white/20">
                             {riderData.fullName?.[0] || 'R'}
                         </div>
-                        <button className="absolute -bottom-1 -right-1 w-7 h-7 bg-yellow-400 rounded-lg flex items-center justify-center text-orange-600 text-xs border-2 border-orange-500 shadow-lg">
+                        <button className="absolute -bottom-1 -right-1 w-8 h-8 bg-white rounded-xl flex items-center justify-center text-orange-500 text-xs shadow-lg border border-orange-100">
                             <FaCamera />
                         </button>
                     </div>
                     <div className="flex-1">
-                        <h2 className="text-2xl font-bold text-white leading-tight">{riderData.fullName || 'Rider'}</h2>
-                        <div className="flex items-center gap-2 mt-1">
-                            <span className="px-2 py-0.5 bg-white/10 backdrop-blur-md rounded-md text-[10px] font-medium text-white/90 border border-white/20 uppercase tracking-wider">
+                        <h2 className="text-3xl font-bold text-white leading-tight">{riderData.fullName || 'Rider'}</h2>
+                        <div className="flex items-center gap-2 mt-2">
+                            <span className="px-3 py-1 bg-white/10 backdrop-blur-md rounded-lg text-[10px] font-bold text-white border border-white/20 uppercase tracking-widest">
                                 {riderData.vehicleType || 'Bike'}
                             </span>
-                            <span className="flex items-center gap-1 text-white/80 text-xs">
+                            <span className="flex items-center gap-1 text-white/80 text-xs font-light">
                                 <FaMapMarkerAlt className="text-[10px]" />
                                 {riderData.city || 'Lahore'}
                             </span>
@@ -138,24 +138,24 @@ export default function RiderProfile({ riderId }: RiderProfileProps) {
                 </div>
             </div>
 
-            {/* Performance Metrics */}
-            <div className="px-6 -mt-12 relative z-10 mb-8">
-                <div className="bg-white rounded-[32px] p-6 shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-gray-50">
-                    <div className="grid grid-cols-2 gap-6">
+            {/* Performance Metrics - Overlapping */}
+            <div className="px-6 -mt-20 relative z-10 mb-8">
+                <div className="bg-white rounded-[40px] p-8 shadow-[0_15px_45px_rgba(0,0,0,0.03)] border border-gray-50">
+                    <div className="grid grid-cols-2 gap-8">
                         <MetricItem 
-                            icon={<FaStar className="text-[#FFD700]" />} 
+                            icon={<FaStar className="text-orange-500" />} 
                             label="Rating" 
-                            value={riderData.stats?.rating?.toFixed(1) || '0.0'} 
-                            color="bg-yellow-50"
-                        />
-                        <MetricItem 
-                            icon={<FaCheckCircle className="text-orange-500" />} 
-                            label="Deliveries" 
-                            value={riderData.stats?.totalDeliveries || 0} 
+                            value={riderData.stats?.rating?.toFixed(1) || '4.8'} 
                             color="bg-orange-50"
                         />
                         <MetricItem 
-                            icon={<FaCheckCircle className="text-blue-500" />} 
+                            icon={<FaCheckCircle className="text-green-500" />} 
+                            label="Deliveries" 
+                            value={riderData.stats?.totalDeliveries || 0} 
+                            color="bg-green-50"
+                        />
+                        <MetricItem 
+                            icon={<FaClock className="text-blue-500" />} 
                             label="On-Time" 
                             value={`${riderData.stats?.onTimeRate || 100}%`} 
                             color="bg-blue-50"
@@ -251,24 +251,24 @@ export default function RiderProfile({ riderId }: RiderProfileProps) {
 function MetricItem({ icon, label, value, color }: { icon: React.ReactNode; label: string; value: string | number; color: string }) {
     return (
         <div className="flex flex-col items-center">
-            <div className={`w-12 h-12 ${color} rounded-2xl flex items-center justify-center mb-2 shadow-sm`}>
-                {icon}
+            <div className={`w-14 h-14 ${color} rounded-[20px] flex items-center justify-center mb-3 shadow-sm`}>
+                <div className="text-xl">{icon}</div>
             </div>
-            <p className="text-[10px] text-gray-400 font-medium uppercase tracking-tighter mb-0.5">{label}</p>
-            <p className="text-lg font-bold text-gray-900 tracking-tight">{value}</p>
+            <p className="text-[10px] text-gray-400 font-bold uppercase tracking-[0.1em] mb-1">{label}</p>
+            <p className="text-xl font-bold text-gray-900 tracking-tight">{value}</p>
         </div>
     );
 }
 
 function InfoItem({ icon, label, value }: { icon: React.ReactNode; label: string; value: string }) {
     return (
-        <div className="flex items-center gap-4 p-5 border-b border-gray-50 last:border-b-0">
-            <div className="w-10 h-10 bg-gray-50 rounded-xl flex items-center justify-center">
+        <div className="flex items-center gap-5 p-6 border-b border-gray-50 last:border-b-0">
+            <div className="w-12 h-12 bg-gray-50 rounded-2xl flex items-center justify-center text-gray-400">
                 {icon}
             </div>
             <div>
-                <p className="text-[10px] text-gray-400 font-medium uppercase tracking-widest mb-0.5">{label}</p>
-                <p className="text-sm font-bold text-gray-900 tracking-tight">{value}</p>
+                <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest mb-1">{label}</p>
+                <p className="text-base font-medium text-gray-900 tracking-tight">{value}</p>
             </div>
         </div>
     );

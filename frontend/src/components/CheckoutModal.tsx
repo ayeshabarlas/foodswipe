@@ -26,6 +26,7 @@ export default function CheckoutModal({ isOpen, onClose, cart, total, subtotal, 
     const [paymentMethod, setPaymentMethod] = useState<'card' | 'cod' | 'jazzcash' | 'easypaisa'>('card');
     const [deliveryInstructions, setDeliveryInstructions] = useState('');
     const [deliveryAddress, setDeliveryAddress] = useState('');
+    const [deliveryLocation, setDeliveryLocation] = useState<{ lat: number, lng: number } | null>(null);
     const [houseNumber, setHouseNumber] = useState('');
     const [promoCode, setPromoCode] = useState('');
     const [loading, setLoading] = useState(false);
@@ -284,6 +285,7 @@ export default function CheckoutModal({ isOpen, onClose, cart, total, subtotal, 
                 restaurant: restaurantId,
                 items: items,
                 deliveryAddress: fullAddress,
+                deliveryLocation: deliveryLocation,
                 subtotal: subtotal,
                 deliveryFee: deliveryFee,
                 totalAmount: finalTotal,
@@ -598,6 +600,13 @@ export default function CheckoutModal({ isOpen, onClose, cart, total, subtotal, 
                                                                         onMouseDown={(e) => {
                                                                             e.preventDefault();
                                                                             setDeliveryAddress(displayAddress);
+                                                                            // Save coordinates
+                                                                            if (feature.geometry && feature.geometry.coordinates) {
+                                                                                setDeliveryLocation({
+                                                                                    lat: feature.geometry.coordinates[1],
+                                                                                    lng: feature.geometry.coordinates[0]
+                                                                                });
+                                                                            }
                                                                             setShowSuggestions(false);
                                                                         }}
                                                                         className="p-3 hover:bg-orange-50 cursor-pointer border-b border-gray-50 last:border-0 flex items-start gap-3 transition-colors"

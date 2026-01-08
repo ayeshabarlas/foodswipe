@@ -90,13 +90,17 @@ const MyOrders = forwardRef<MyOrdersRef, MyOrdersProps>(({ isOpen, onClose, onTr
     };
 
     const getStatusColor = (status: string) => {
-        switch (status.toLowerCase()) {
+        const statusLower = (status || '').toLowerCase().replace(/\s/g, '');
+        switch (statusLower) {
+            case 'ontheway':
             case 'delivering':
-            case 'on the way':
                 return 'bg-orange-100 text-orange-600 border-orange-200';
             case 'preparing':
+            case 'accepted':
             case 'pending':
                 return 'bg-blue-100 text-blue-600 border-blue-200';
+            case 'ready':
+                return 'bg-yellow-100 text-yellow-600 border-yellow-200';
             case 'completed':
             case 'delivered':
                 return 'bg-green-100 text-green-600 border-green-200';
@@ -225,10 +229,10 @@ const MyOrders = forwardRef<MyOrdersRef, MyOrdersProps>(({ isOpen, onClose, onTr
                                             <p className="text-orange-600 font-bold text-lg">Rs. {order.totalAmount}</p>
                                         </div>
 
-                                        {(order.status.toLowerCase() === 'delivering' || order.status.toLowerCase() === 'preparing' || order.status.toLowerCase() === 'pending') && (
+                                        {['pending', 'accepted', 'preparing', 'ready', 'ontheway', 'delivering'].includes((order.status || '').toLowerCase().replace(/\s/g, '')) && (
                                             <button
                                                 onClick={() => onTrackOrder(order._id)}
-                                                className="w-full bg-gradient-orange-red text-white py-3 rounded-full font-bold hover:shadow-lg transition"
+                                                className="w-full bg-gradient-orange-red text-white py-3 rounded-full font-bold hover:shadow-lg transition mt-2"
                                             >
                                                 Track Order
                                             </button>

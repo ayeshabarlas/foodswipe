@@ -119,63 +119,38 @@ export default function RiderEarnings({ riderId }: RiderEarningsProps) {
     };
 
     return (
-        <div className="pb-24 bg-[#F8F9FB] min-h-screen">
+        <div className="pb-32 bg-[#F8F9FB] min-h-screen font-light">
             {/* Header */}
-            <div className="bg-orange-500 px-6 pt-12 pb-20 rounded-b-[40px] text-white relative">
-                <h1 className="text-xl font-medium mb-8">Earnings</h1>
+            <div className="bg-gradient-to-br from-orange-500 to-rose-500 px-6 pt-12 pb-24 rounded-b-[40px] text-white relative overflow-hidden">
+                <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full -mr-20 -mt-20 blur-3xl" />
+                
+                <h1 className="text-xl font-medium mb-8 relative z-10">Earnings</h1>
                 
                 {/* Period Selector */}
-                <div className="flex bg-white/10 backdrop-blur-md p-1 rounded-2xl mb-10">
-                    <button 
-                        onClick={() => setPeriod('daily')}
-                        className={`flex-1 py-2 rounded-xl text-sm transition-all ${period === 'daily' ? 'bg-white text-orange-500 font-medium' : 'text-white'}`}
-                    >
-                        Daily
-                    </button>
-                    <button 
-                        onClick={() => setPeriod('weekly')}
-                        className={`flex-1 py-2 rounded-xl text-sm transition-all ${period === 'weekly' ? 'bg-white text-orange-500 font-medium' : 'text-white'}`}
-                    >
-                        Weekly
-                    </button>
-                    <button 
-                        onClick={() => setPeriod('monthly')}
-                        className={`flex-1 py-2 rounded-xl text-sm transition-all ${period === 'monthly' ? 'bg-white text-orange-500 font-medium' : 'text-white'}`}
-                    >
-                        Monthly
-                    </button>
+                <div className="flex bg-white/10 backdrop-blur-md p-1 rounded-2xl mb-10 relative z-10 border border-white/10">
+                    {['daily', 'weekly', 'monthly'].map((p) => (
+                        <button 
+                            key={p}
+                            onClick={() => setPeriod(p as any)}
+                            className={`flex-1 py-2.5 rounded-xl text-xs transition-all uppercase tracking-widest font-bold ${period === p ? 'bg-white text-orange-500 shadow-lg' : 'text-white/70'}`}
+                        >
+                            {p}
+                        </button>
+                    ))}
                 </div>
 
-                <div className="text-center">
-                    <p className="text-white/70 text-xs mb-2 uppercase tracking-widest">Total This {period.charAt(0).toUpperCase() + period.slice(1)}</p>
-                    <h2 className="text-5xl font-bold mb-2">PKR {earnings.total.toLocaleString()}</h2>
-                    <p className="text-white/80 text-sm font-light">{earnings.deliveries} deliveries completed</p>
+                <div className="text-center relative z-10">
+                    <p className="text-white/60 text-[10px] mb-2 uppercase tracking-[0.2em] font-bold">Total This {period}</p>
+                    <h2 className="text-5xl font-bold mb-2 tracking-tighter">PKR {earnings.total.toLocaleString()}</h2>
+                    <p className="text-white/80 text-xs font-light tracking-wide">{earnings.deliveries} deliveries completed</p>
                 </div>
             </div>
 
             {/* Stats Grid */}
-            <div className="px-6 -mt-12 grid grid-cols-3 gap-3 mb-8">
-                <div className="bg-white p-4 rounded-3xl shadow-lg shadow-gray-100 flex flex-col items-center text-center">
-                    <div className="w-10 h-10 bg-blue-500 rounded-xl flex items-center justify-center text-white mb-2 shadow-md shadow-blue-100">
-                        <FaDollarSign size={16} />
-                    </div>
-                    <p className="text-gray-400 text-[10px] font-medium mb-1">Base Pay</p>
-                    <p className="font-bold text-sm text-gray-900">{earnings.basePay.toLocaleString()}</p>
-                </div>
-                <div className="bg-white p-4 rounded-3xl shadow-lg shadow-gray-100 flex flex-col items-center text-center">
-                    <div className="w-10 h-10 bg-purple-500 rounded-xl flex items-center justify-center text-white mb-2 shadow-md shadow-purple-100">
-                        <FaStar size={16} />
-                    </div>
-                    <p className="text-gray-400 text-[10px] font-medium mb-1">Bonuses</p>
-                    <p className="font-bold text-sm text-gray-900">{earnings.bonuses.toLocaleString()}</p>
-                </div>
-                <div className="bg-white p-4 rounded-3xl shadow-lg shadow-gray-100 flex flex-col items-center text-center">
-                    <div className="w-10 h-10 bg-yellow-500 rounded-xl flex items-center justify-center text-white mb-2 shadow-md shadow-yellow-100">
-                        <FaWallet size={16} />
-                    </div>
-                    <p className="text-gray-400 text-[10px] font-medium mb-1">Tips</p>
-                    <p className="font-bold text-sm text-gray-900">{earnings.tips.toLocaleString()}</p>
-                </div>
+            <div className="px-6 -mt-10 grid grid-cols-3 gap-3 mb-8 relative z-20">
+                <SmallStat icon={<FaDollarSign />} label="Base Pay" value={earnings.basePay} color="bg-blue-500" />
+                <SmallStat icon={<FaStar />} label="Bonuses" value={earnings.bonuses} color="bg-purple-500" />
+                <SmallStat icon={<FaWallet />} label="Tips" value={earnings.tips} color="bg-orange-500" />
             </div>
 
             {/* Payout Card */}
@@ -324,6 +299,18 @@ export default function RiderEarnings({ riderId }: RiderEarningsProps) {
                     </div>
                 </div>
             )}
+        </div>
+    );
+}
+
+function SmallStat({ icon, label, value, color }: { icon: any; label: string; value: number; color: string }) {
+    return (
+        <div className="bg-white p-4 rounded-3xl shadow-[0_10px_30px_rgba(0,0,0,0.02)] flex flex-col items-center text-center border border-gray-50 group hover:border-orange-500/20 transition-all">
+            <div className={`w-10 h-10 ${color} rounded-xl flex items-center justify-center text-white mb-2 shadow-lg shadow-${color.split('-')[1]}-100 group-hover:scale-110 transition-transform`}>
+                <div className="text-sm">{icon}</div>
+            </div>
+            <p className="text-gray-400 text-[9px] font-bold uppercase tracking-widest mb-1">{label}</p>
+            <p className="font-bold text-xs text-gray-900 tracking-tight">{value.toLocaleString()}</p>
         </div>
     );
 }
