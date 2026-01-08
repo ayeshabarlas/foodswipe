@@ -3,6 +3,8 @@ const User = require('../models/User');
 const Restaurant = require('../models/Restaurant');
 const Dish = require('../models/Dish');
 const Rider = require('../models/Rider');
+const RestaurantWallet = require('../models/RestaurantWallet');
+const RiderWallet = require('../models/RiderWallet');
 const Transaction = require('../models/Transaction');
 const { calculateRiderEarning, calculateDeliveryFee } = require('../utils/paymentUtils');
 const { createNotification } = require('./notificationController');
@@ -206,7 +208,7 @@ const updateOrderStatus = async (req, res) => {
 
         // If order is delivered, trigger payment processing
         if (status === 'Delivered') {
-            await processOrderCompletion(order, distanceKm || 5); // Default to 5km if not provided
+            await processOrderCompletion(order, distanceKm || 5, req); // Pass req to access io
         }
 
         await order.save();
@@ -267,83 +269,131 @@ const updateOrderStatus = async (req, res) => {
 /**
  * Helper to process order completion payments
  */
-const processOrderCompletion = async (order, distanceKm) => {
+const processOrderCompletion = async (order, distanceKm = 5, req = null) => {
     try {
         if (!order.rider) return; // No rider assigned
 
-        const earnings = calculateRiderEarning(distanceKm);
-        const deliveryFee = calculateDeliveryFee(distanceKm);
+        // 1. Calculate split payments
+        const subtotal = order.subtotal || 0;
+        const deliveryFee = order.deliveryFee || 0;
+        const discount = order.discount || 0;
+        const commissionRate = order.commissionRate || 10;
+        const gatewayFee = order.paymentMethod !== 'COD' ? subtotal * 0.025 : 0; // 2.5% gateway fee for online payments
 
-        // Update order with payment details
+        const commissionAmount = (subtotal * commissionRate) / 100;
+        const restaurantEarning = subtotal - commissionAmount;
+        const riderEarning = calculateRiderEarning(distanceKm).netEarning; // Use existing rider earning logic
+        const platformRevenue = commissionAmount - gatewayFee;
+
+        // 2. Update order with payment details
         order.distanceKm = distanceKm;
-        order.grossRiderEarning = earnings.grossEarning;
-        order.platformFee = earnings.platformFee;
-        order.netRiderEarning = earnings.netEarning;
-        order.deliveryFeeCustomerPaid = deliveryFee;
+        order.commissionAmount = commissionAmount;
+        order.restaurantEarning = restaurantEarning;
+        order.riderEarning = riderEarning;
+        order.platformRevenue = platformRevenue;
+        order.gatewayFee = gatewayFee;
+        order.isPaid = true; // Mark as paid upon delivery (COD or Online)
+        order.paidAt = new Date();
         order.completedAt = new Date();
+        order.deliveredAt = new Date();
 
-        // Update rider wallet
-        const rider = await Rider.findOne({ user: order.rider });
+        // 3. Update Rider Wallet & Stats
+        const rider = await Rider.findById(order.rider).populate('user');
         if (rider) {
-            const oldBalance = rider.walletBalance || 0;
-            rider.walletBalance = oldBalance + earnings.netEarning;
+            rider.walletBalance = (rider.walletBalance || 0) + riderEarning;
             
             // Update earnings stats
-            rider.earnings.total += earnings.netEarning;
-            rider.earnings.today += earnings.netEarning;
-            rider.earnings.thisWeek += earnings.netEarning;
-            rider.earnings.thisMonth += earnings.netEarning;
+            rider.earnings.total += riderEarning;
+            rider.earnings.today += riderEarning;
+            rider.earnings.thisWeek += riderEarning;
+            rider.earnings.thisMonth += riderEarning;
             
             // Increment total orders
-            rider.totalOrders = (rider.totalOrders || 0) + 1;
-            
+            rider.stats.completedDeliveries = (rider.stats.completedDeliveries || 0) + 1;
+            rider.stats.totalDeliveries = (rider.stats.totalDeliveries || 0) + 1;
+
             await rider.save();
 
-            // Create transaction log
+            // Also update RiderWallet model if it exists
+            let riderWallet = await RiderWallet.findOne({ rider: rider._id });
+            if (riderWallet) {
+                riderWallet.deliveryEarnings += riderEarning;
+                riderWallet.totalEarnings += riderEarning;
+                riderWallet.availableWithdraw += riderEarning;
+                if (order.paymentMethod === 'COD') {
+                    riderWallet.cashCollected += order.totalPrice;
+                    riderWallet.cashToDeposit += order.totalPrice;
+                }
+                await riderWallet.save();
+            }
+
+            // Create Transaction for Rider
             await Transaction.create({
                 entityType: 'rider',
                 entityId: rider._id,
                 entityModel: 'Rider',
                 order: order._id,
                 type: 'earning',
-                amount: earnings.netEarning,
+                amount: riderEarning,
                 balanceAfter: rider.walletBalance,
-                description: `Earning for order #${order._id.toString().slice(-6)}`,
-                metadata: {
-                    distanceKm,
-                    grossEarning: earnings.grossEarning,
-                    platformFee: earnings.platformFee
-                }
+                description: `Earning for order #${order.orderNumber || order._id.toString().slice(-6)}`,
+                metadata: { distanceKm, deliveryFee }
             });
 
             // Create Notification for Rider
+            const riderUserId = rider.user._id || rider.user;
             const notification = await createNotification(
-                order.rider,
+                riderUserId,
                 'Payment Received',
-                `PKR ${earnings.netEarning.toLocaleString()} deposited to your account`,
+                `PKR ${riderEarning.toLocaleString()} deposited to your account`,
                 'payment',
-                { orderId: order._id, amount: earnings.netEarning }
+                { orderId: order._id, amount: riderEarning }
             );
 
             // Emit Real-time Notification
-            if (global.io) {
-                global.io.to(`user_${order.rider}`).emit('notification', notification);
-            }
-
-            // Check for Milestones
-            if (rider.totalOrders % 10 === 0 && rider.totalOrders > 0) {
-                const milestoneNotification = await createNotification(
-                    order.rider,
-                    'Milestone Reached! 🏆',
-                    `Congratulations! You have completed ${rider.totalOrders} deliveries. Keep up the great work!`,
-                    'milestone',
-                    { totalOrders: rider.totalOrders }
-                );
-                if (global.io) {
-                    global.io.to(`user_${order.rider}`).emit('notification', milestoneNotification);
-                }
+            if (req.app && req.app.get('io')) {
+                req.app.get('io').to(`user_${riderUserId}`).emit('notification', notification);
             }
         }
+
+        // 4. Update Restaurant Wallet & Stats
+        let restaurantWallet = await RestaurantWallet.findOne({ restaurant: order.restaurant });
+        if (!restaurantWallet) {
+            restaurantWallet = await RestaurantWallet.create({ restaurant: order.restaurant });
+        }
+
+        restaurantWallet.availableBalance += restaurantEarning;
+        restaurantWallet.totalEarnings += restaurantEarning;
+        restaurantWallet.totalCommissionCollected += commissionAmount;
+        restaurantWallet.pendingPayout += restaurantEarning;
+        await restaurantWallet.save();
+
+        // Create Transaction for Restaurant
+        await Transaction.create({
+            entityType: 'restaurant',
+            entityId: order.restaurant,
+            entityModel: 'Restaurant',
+            order: order._id,
+            type: 'earning',
+            amount: restaurantEarning,
+            balanceAfter: restaurantWallet.availableBalance,
+            description: `Earning for order #${order.orderNumber || order._id.toString().slice(-6)}`,
+            metadata: { subtotal, commissionAmount }
+        });
+
+        // 5. Create Transaction for Admin/Platform (Commission)
+        await Transaction.create({
+            entityType: 'admin',
+            entityId: null, // Platform doesn't have a specific ID in this context
+            order: order._id,
+            type: 'commission',
+            amount: commissionAmount,
+            balanceAfter: 0, // Platform balance not tracked in a single wallet here
+            description: `Commission from order #${order.orderNumber || order._id.toString().slice(-6)}`
+        });
+
+        await order.save();
+
     } catch (error) {
         console.error('Process order completion error:', error);
         throw error;
@@ -364,6 +414,10 @@ const getRestaurantOrders = async (req, res) => {
 
         const orders = await Order.find({ restaurant: restaurant._id })
             .populate('user', 'name email phone')
+            .populate({
+                path: 'rider',
+                populate: { path: 'user', select: 'name phone' }
+            })
             .sort({ createdAt: -1 });
 
         res.json(orders);

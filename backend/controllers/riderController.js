@@ -198,6 +198,7 @@ const getAvailableOrders = async (req, res) => {
                 _id: order._id,
                 orderNumber: order.orderNumber || order._id.toString().slice(-4),
                 status: order.status,
+                rider: order.rider,
                 restaurant: {
                     name: order.restaurant?.name || 'Restaurant',
                     address: order.restaurant?.address || 'Restaurant Address',
@@ -236,19 +237,40 @@ const acceptOrder = async (req, res) => {
 
         order.rider = req.params.id;
         order.riderAcceptedAt = new Date();
+        // If order was Ready, we can keep it Ready but with a rider assigned
+        // or move it to OnTheWay if that's the desired flow.
+        // For now, let's just save the rider assignment.
         await order.save();
 
         const rider = await Rider.findById(req.params.id).populate('user', 'name phone');
         rider.currentOrder = orderId;
         await rider.save();
 
+        // Get fully populated order to emit
+        const updatedOrder = await Order.findById(order._id)
+            .populate('user', 'name email phone')
+            .populate('restaurant', 'name address contact location')
+            .populate({
+                path: 'rider',
+                populate: { path: 'user', select: 'name phone' }
+            });
+
         // Emit socket event to notify restaurant that rider accepted
         if (req.app && req.app.get('io')) {
-            req.app.get('io').to(`restaurant_${order.restaurant._id}`).emit('riderAccepted', {
+            const io = req.app.get('io');
+            const roomName = `restaurant_${order.restaurant._id}`;
+            
+            console.log(`Emitting riderAccepted to ${roomName} for order ${order._id}`);
+            
+            io.to(roomName).emit('riderAccepted', {
                 orderId: order._id,
-                riderName: rider.user?.name || rider.fullName,
-                riderPhone: rider.user?.phone
+                riderName: rider.fullName || rider.user?.name,
+                riderPhone: rider.user?.phone,
+                riderId: rider._id
             });
+
+            // Also emit orderStatusUpdate so the dashboard refreshes the order object
+            io.to(roomName).emit('orderStatusUpdate', updatedOrder);
         }
 
         // Create Notification for Rider
@@ -422,11 +444,11 @@ const getRiderOrders = async (req, res) => {
             riderId = rider._id;
         }
 
-        // Show ALL orders that are Ready or OnTheWay (available for pickup)
+        // Show orders that are Ready or OnTheWay AND don't have a rider assigned (available for pickup)
         // Plus orders already assigned to this specific rider
         const orders = await Order.find({
             $or: [
-                { status: { $in: ['Ready', 'OnTheWay'] } }, // All ready orders
+                { status: { $in: ['Ready', 'OnTheWay'] }, rider: null }, // Available ready orders
                 { rider: riderId } // Orders assigned to this rider
             ]
         })

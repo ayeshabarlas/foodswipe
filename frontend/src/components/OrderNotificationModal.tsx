@@ -88,7 +88,7 @@ export default function OrderNotificationModal({ order, onAccept, onReject, onCl
                     </div>
 
                     <p className="text-white/40 text-[10px] font-black uppercase tracking-[2px] mb-1">Potential Earning</p>
-                    <h2 className="text-white text-4xl font-black tracking-tight">Rs. {order.earnings || 250}</h2>
+                    <h2 className="text-white text-4xl font-black tracking-tight">PKR {order.earnings || 180}</h2>
                 </div>
 
                 {/* Details Card */}

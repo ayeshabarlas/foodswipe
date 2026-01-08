@@ -37,55 +37,46 @@ export default function Home() {
         } catch (e) {}
       }
 
+      // Proactively set logged in state if we have a token and user info
       if (userInfoStr && token) {
+        try {
+          const existingUserInfo = JSON.parse(userInfoStr);
+          if (existingUserInfo && existingUserInfo.role) {
+            setUserRole(existingUserInfo.role);
+            setIsLoggedIn(true);
+            // We still want to verify, but we can do it without blocking the initial render if we want
+            // However, to keep it simple and fix the redirect, we'll continue with the verification
+          }
+        } catch (e) {
+          console.error("Error parsing existing userInfo:", e);
+        }
+
         try {
           // Verify token with backend
           const response = await axios.get(`${API_BASE_URL}/api/auth/me`, {
             headers: { Authorization: `Bearer ${token}` },
-            timeout: 10000 // Increased timeout to 10 seconds
+            timeout: 10000 
           });
 
           const user = response.data;
-
-          // CRITICAL FIX: Merge fresh data with existing userInfo to preserve the token
           const existingUserInfo = JSON.parse(userInfoStr || '{}');
           const updatedUserInfo = { ...existingUserInfo, ...user };
 
-          // Update localStorage with merged data
           localStorage.setItem("userInfo", JSON.stringify(updatedUserInfo));
-          console.log("✅ Session recovered for:", updatedUserInfo.email, "Role:", updatedUserInfo.role);
-
-          if (!updatedUserInfo.role) {
-            console.error("CRITICAL: Role missing in checkAuth response", updatedUserInfo);
-            setUserRole(existingUserInfo.role || ""); // Use existing role as fallback
-          } else {
-            setUserRole(updatedUserInfo.role);
-          }
-
+          setUserRole(updatedUserInfo.role || existingUserInfo.role);
           setIsLoggedIn(true);
 
-          // If admin, allow access to main app (don't redirect)
-          if (user.role === "admin") {
-            // Optional: You might want to show a link to admin dashboard in the UI instead of redirecting
-            // For now, we just let them fall through to the default view
-          }
-
-          // If restaurant owner, check if they have a restaurant profile
-          if (user.role === "restaurant") {
-            console.log('Checking for restaurant for user:', user.email);
+          if (updatedUserInfo.role === "restaurant") {
             setCheckingRestaurant(true);
             try {
               const restaurantResponse = await axios.get(`${API_BASE_URL}/api/restaurants/my-restaurant`, {
                 headers: { Authorization: `Bearer ${token}` },
               });
-              console.log('Restaurant found:', restaurantResponse.data.name);
               if (restaurantResponse.data) {
                 setHasRestaurant(true);
               }
             } catch (error: any) {
-              console.log('Restaurant check error:', error.response?.status, error.response?.data);
               if (error.response?.status === 404) {
-                console.log('No restaurant found - showing create page');
                 setHasRestaurant(false);
               }
             }
@@ -94,25 +85,20 @@ export default function Home() {
         } catch (error: any) {
           console.error("Session verification failed:", error.message);
           
-          const existingUserInfo = JSON.parse(userInfoStr || '{}');
-          
-          // Only logout if it's a definitive authentication error (401 or 403)
           if (error.response && (error.response.status === 401 || error.response.status === 403)) {
             console.log("Authentication expired - logging out");
             localStorage.removeItem("userInfo");
             localStorage.removeItem("token");
             setIsLoggedIn(false);
+            setUserRole("");
           } else {
-            // For other errors (network timeout, 500), preserve the session from localStorage
-            console.log("Network error or server issue - preserving session from localStorage");
-            if (existingUserInfo.role) {
-              setUserRole(existingUserInfo.role);
-              setIsLoggedIn(true);
-            } else {
-              setIsLoggedIn(false);
-            }
+            // Network error - we already set isLoggedIn to true above, so just keep it
+            console.log("Network issue - maintaining local session");
           }
         }
+      } else {
+        setIsLoggedIn(false);
+        setUserRole("");
       }
       setLoading(false);
     };

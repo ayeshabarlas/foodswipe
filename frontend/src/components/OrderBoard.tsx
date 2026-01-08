@@ -38,7 +38,12 @@ interface Message {
     senderName: string;
 }
 
-export default function OrderBoard({ restaurant }: OrderBoardProps) {
+interface OrderBoardProps {
+    restaurant: any;
+    onUpdate?: () => void;
+}
+
+export default function OrderBoard({ restaurant, onUpdate }: OrderBoardProps) {
     const [orders, setOrders] = useState<Order[]>([]);
     const [loading, setLoading] = useState(true);
     const [newOrderPopup, setNewOrderPopup] = useState<Order | null>(null);
@@ -50,6 +55,8 @@ export default function OrderBoard({ restaurant }: OrderBoardProps) {
     const [activeChat, setActiveChat] = useState<Order | null>(null);
     const [prepTimes, setPrepTimes] = useState<Record<string, number>>({});
 
+    const [lastUpdated, setLastUpdated] = useState<Date>(new Date());
+
     const fetchOrders = async () => {
         try {
             const token = JSON.parse(localStorage.getItem('userInfo') || '{}').token;
@@ -57,11 +64,14 @@ export default function OrderBoard({ restaurant }: OrderBoardProps) {
                 headers: { Authorization: `Bearer ${token}` }
             });
             // Ensure we always set an array
-            setOrders(Array.isArray(res.data) ? res.data : []);
+            if (Array.isArray(res.data)) {
+                setOrders(res.data);
+                setLastUpdated(new Date());
+            }
             setLoading(false);
         } catch (error) {
             console.error('Error fetching orders:', error);
-            setOrders([]); // Set empty array on error
+            // Don't clear orders on error, just stop loading
             setLoading(false);
         }
     };
@@ -83,9 +93,15 @@ export default function OrderBoard({ restaurant }: OrderBoardProps) {
             const orderId = updatedOrder._id || updatedOrder.orderId;
             setOrders(prev => prev.map(o => o._id === orderId ? { ...o, ...updatedOrder } : o));
             fetchOrders(); // Refresh to get full details
-        });
+          });
 
-        socket?.on('riderPickedUp', () => {
+          socket?.on('riderAccepted', (data: any) => {
+            console.log('Rider accepted order:', data);
+            toast.success(`Rider ${data.riderName} accepted order #${data.orderId.slice(-4)}`);
+            fetchOrders(); // Refresh to show rider info
+          });
+
+          socket?.on('riderPickedUp', () => {
             fetchOrders();
         });
 
@@ -117,7 +133,15 @@ export default function OrderBoard({ restaurant }: OrderBoardProps) {
                 { headers: { Authorization: `Bearer ${token}` } }
             );
             toast.success(`Order marked as ${status}`);
-            fetchOrders();
+            
+            // Refresh local orders
+            await fetchOrders();
+            
+            // Notify parent dashboard to refresh stats
+            if (onUpdate) {
+                onUpdate();
+            }
+            
             setRejectingOrder(null);
             setCancellationReason('');
         } catch (error) {
@@ -153,15 +177,31 @@ export default function OrderBoard({ restaurant }: OrderBoardProps) {
 
     // Filter orders by status - ensure orders is an array
     const ordersArray = Array.isArray(orders) ? orders : [];
+    
+    // Debug logging to track order status changes
+    console.log('Total orders:', ordersArray.length);
+    console.log('Orders statuses:', ordersArray.map(o => ({ id: o._id.slice(-4), status: o.status })));
+
     const pendingOrders = ordersArray.filter(o => o.status === 'Pending');
     const preparingOrders = ordersArray.filter(o => ['Accepted', 'Preparing'].includes(o.status));
     const readyOrders = ordersArray.filter(o => o.status === 'Ready');
     const completedOrders = ordersArray.filter(o => ['OnTheWay', 'Picked Up', 'Delivered'].includes(o.status));
 
+    console.log('Filtered counts:', {
+        pending: pendingOrders.length,
+        preparing: preparingOrders.length,
+        ready: readyOrders.length,
+        completed: completedOrders.length
+    });
+
     const renderOrderCard = (order: Order) => {
+        if (!order || !order._id) return null;
+
         const initials = order.user?.name
             ? order.user.name.split(' ').map((n: string) => n[0]).join('').toUpperCase().slice(0, 2)
             : '??';
+
+        const orderItems = Array.isArray(order.orderItems) ? order.orderItems : [];
 
         const canTrack = ['OnTheWay', 'Picked Up'].includes(order.status);
         const statusLower = (order.status || '').toLowerCase().replace(/\s/g, '');
@@ -221,10 +261,10 @@ export default function OrderBoard({ restaurant }: OrderBoardProps) {
                         <div className="flex justify-between items-center mb-4">
                             <div className="flex items-center gap-3">
                                 <div className="w-9 h-9 rounded-full bg-blue-500/10 flex items-center justify-center text-blue-600 font-medium text-[10px]">
-                                    {getInitials(order.rider.name)}
+                                    {getInitials(order.rider.fullName || order.rider.user?.name || 'Rider')}
                                 </div>
                                 <div>
-                                    <h5 className="text-[11px] font-medium text-gray-900">{order.rider.name}</h5>
+                                    <h5 className="text-[11px] font-medium text-gray-900">{order.rider.fullName || order.rider.user?.name || 'Delivery Partner'}</h5>
                                     <p className="text-[9px] text-blue-500 font-light">Delivery Partner</p>
                                 </div>
                             </div>
@@ -355,6 +395,34 @@ export default function OrderBoard({ restaurant }: OrderBoardProps) {
 
     return (
         <div className="h-full flex flex-col overflow-hidden bg-[#F8FAFC]">
+            {/* Header Section */}
+            <div className="px-6 pt-6 flex flex-col md:flex-row md:items-center justify-between gap-4">
+                <div>
+                    <h2 className="text-2xl font-black text-gray-800 tracking-tight">Order Management</h2>
+                    <p className="text-gray-500 text-sm font-medium flex items-center gap-2">
+                        Last updated: {lastUpdated.toLocaleTimeString()}
+                        <span className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse"></span>
+                    </p>
+                </div>
+                
+                <div className="flex items-center gap-3">
+                    <button 
+                        onClick={() => fetchOrders()}
+                        className="flex items-center gap-2 bg-white border border-gray-200 text-gray-700 px-4 py-2 rounded-xl text-sm font-bold hover:bg-gray-50 transition shadow-sm"
+                    >
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                        </svg>
+                        REFRESH
+                    </button>
+                    
+                    <div className="flex bg-gray-100 p-1 rounded-xl">
+                        <button className="px-4 py-1.5 rounded-lg text-sm font-bold bg-white text-blue-600 shadow-sm">ACTIVE</button>
+                        <button className="px-4 py-1.5 rounded-lg text-sm font-bold text-gray-500 hover:text-gray-700">HISTORY</button>
+                    </div>
+                </div>
+            </div>
+
             {/* Top Status Cards - New as per Screenshot 2 */}
             <div className="p-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 shrink-0">
                 {/* Pending Card */}

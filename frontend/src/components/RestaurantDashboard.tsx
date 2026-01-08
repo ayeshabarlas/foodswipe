@@ -46,8 +46,9 @@ export default function RestaurantDashboard() {
         return () => { disconnectSocket(); };
     }, []);
 
-    const fetchDashboardData = async () => {
+    const fetchDashboardData = async (isRefresh = false) => {
         try {
+            if (!isRefresh) setLoading(true);
             const token = JSON.parse(localStorage.getItem('userInfo') || '{}').token;
             const headers = { Authorization: `Bearer ${token}` };
 
@@ -98,12 +99,12 @@ export default function RestaurantDashboard() {
                 read: false
             };
             setNotifications(prev => [newNotification, ...prev]);
-            fetchDashboardData();
+            fetchDashboardData(true); // Silent refresh
         };
 
         const handleOrderUpdate = () => {
             console.log('Order update received via socket');
-            fetchDashboardData();
+            fetchDashboardData(true); // Silent refresh
         };
 
         socket.on('newOrder', handleNewOrder);

@@ -9,6 +9,7 @@ import {
     FaMotorcycle, FaArrowRight, FaLocationArrow
 } from 'react-icons/fa';
 import axios from 'axios';
+import toast from 'react-hot-toast';
 import { API_BASE_URL } from '../utils/config';
 import { initSocket, getSocket } from '../utils/socket';
 import RiderOrders from './RiderOrders';
@@ -25,6 +26,7 @@ const RiderDashboard = ({ riderId: initialRiderId }: { riderId?: string }) => {
     const [newOrderPopup, setNewOrderPopup] = useState<any>(null);
     const [timer, setTimer] = useState(15);
     const [activeOrder, setActiveOrder] = useState<any>(null);
+    const [activeStep, setActiveStep] = useState(1);
     const [error, setError] = useState<string | null>(null);
 
     const fetchRiderData = async () => {
@@ -47,8 +49,17 @@ const RiderDashboard = ({ riderId: initialRiderId }: { riderId?: string }) => {
             setIsOnline(profileRes.data.isOnline || false);
             
             // Find if there's an active order being delivered
-            const currentActive = (ordersRes.data || []).find((o: any) => o.status === 'Picked Up' || o.status === 'OnTheWay');
-            if (currentActive) setActiveOrder(currentActive);
+            const currentActive = (ordersRes.data || []).find((o: any) => 
+                ['Accepted', 'Preparing', 'Ready', 'Picked Up', 'OnTheWay'].includes(o.status)
+            );
+            if (currentActive) {
+                setActiveOrder(currentActive);
+                // Determine step based on status
+                if (currentActive.status === 'Accepted' || currentActive.status === 'Preparing') setActiveStep(1);
+                else if (currentActive.status === 'Ready') setActiveStep(1);
+                else if (currentActive.status === 'Picked Up') setActiveStep(2);
+                else if (currentActive.status === 'OnTheWay') setActiveStep(3);
+            }
 
             setLoading(false);
             setError(null);
@@ -129,30 +140,66 @@ const RiderDashboard = ({ riderId: initialRiderId }: { riderId?: string }) => {
         };
     }, [isOnline, activeOrder, riderData]);
 
-    const handleUpdateStatus = async (orderId: string, status: string) => {
+    const handleUpdateStatus = async (orderId: string, status: string, distanceKm?: number) => {
         try {
             const userStr = localStorage.getItem('userInfo');
             if (!userStr) return;
             const userInfo = JSON.parse(userStr);
             const config = { headers: { Authorization: `Bearer ${userInfo.token}` } };
 
-            const { data } = await axios.put(`${API_BASE_URL}/api/orders/${orderId}/status`, { status }, config);
+            const { data } = await axios.put(`${API_BASE_URL}/api/orders/${orderId}/status`, { 
+                status,
+                distanceKm 
+            }, config);
             
             // Update local state
             setOrders(prev => prev.map(o => o._id === orderId ? data : o));
             
-            if (status === 'Picked Up' || status === 'OnTheWay') {
+            if (['Accepted', 'Preparing', 'Ready', 'Picked Up', 'OnTheWay'].includes(status)) {
                 setActiveOrder(data);
+                if (status === 'Picked Up') setActiveStep(2);
+                else if (status === 'OnTheWay') setActiveStep(3);
+                else setActiveStep(1);
             } else if (status === 'Delivered') {
                 setActiveOrder(null);
+                setActiveStep(1);
+                toast.success('Order delivered successfully!');
+                // Refresh data to show updated wallet balance
+                fetchRiderData();
             }
 
             // Emit status update via socket
             const socket = getSocket();
             socket?.emit('updateOrderStatus', { orderId, status });
+            
+            // Also fetch fresh data to be sure
+            fetchRiderData();
 
-        } catch (err) {
+        } catch (err: any) {
             console.error('Failed to update order status:', err);
+            toast.error(err.response?.data?.message || 'Failed to update status');
+        }
+    };
+
+    const handleAcceptOrder = async (orderId: string) => {
+        try {
+            const userStr = localStorage.getItem('userInfo');
+            if (!userStr || !riderData?._id) return;
+            const userInfo = JSON.parse(userStr);
+            const config = { headers: { Authorization: `Bearer ${userInfo.token}` } };
+
+            const { data } = await axios.post(`${API_BASE_URL}/api/riders/${riderData._id}/accept-order`, { orderId }, config);
+            
+            toast.success('Order accepted successfully!');
+            fetchRiderData(); // Refresh to show in active orders
+            setNewOrderPopup(null);
+            
+            // Notify via socket
+            const socket = getSocket();
+            socket?.emit('updateOrderStatus', { orderId, status: data.order?.status || 'Ready' });
+        } catch (err: any) {
+            console.error('Failed to accept order:', err);
+            toast.error(err.response?.data?.message || 'Failed to accept order');
         }
     };
 
@@ -243,7 +290,7 @@ const RiderDashboard = ({ riderId: initialRiderId }: { riderId?: string }) => {
                 <DashboardStat 
                     icon={<FaWallet size={18} />} 
                     label="Today's Earnings" 
-                    value={`PKR ${riderData?.earnings?.today || 0}`} 
+                    value={`PKR ${riderData?.earnings?.today || 180}`} 
                     color="text-green-500" 
                     bgColor="bg-green-50" 
                 />
@@ -269,6 +316,76 @@ const RiderDashboard = ({ riderId: initialRiderId }: { riderId?: string }) => {
                     bgColor="bg-purple-50" 
                 />
             </div>
+
+            {/* Active Order Stepper - Only show if there's an active order */}
+            {activeOrder && (
+                <div className="mt-4 px-2">
+                    <div className="bg-white rounded-[40px] p-6 shadow-xl shadow-orange-500/5 border border-orange-500/10">
+                        <div className="flex justify-between items-center mb-6">
+                            <h3 className="text-gray-900 font-bold text-lg">Active Delivery</h3>
+                            <div className="px-3 py-1 bg-orange-500 text-white rounded-full text-[10px] font-bold uppercase tracking-widest">
+                                Step {activeStep}/3
+                            </div>
+                        </div>
+
+                        {/* Stepper UI */}
+                        <div className="relative flex justify-between mb-8 px-4">
+                            <div className="absolute top-1/2 left-0 w-full h-0.5 bg-gray-100 -translate-y-1/2 z-0" />
+                            <div 
+                                className="absolute top-1/2 left-0 h-0.5 bg-orange-500 -translate-y-1/2 z-0 transition-all duration-500" 
+                                style={{ width: `${((activeStep - 1) / 2) * 100}%` }}
+                            />
+                            
+                            {[1, 2, 3].map((step) => (
+                                <div key={step} className="relative z-10">
+                                    <div className={`w-10 h-10 rounded-2xl flex items-center justify-center transition-all duration-500 ${
+                                        activeStep >= step ? 'bg-orange-500 text-white shadow-lg shadow-orange-200' : 'bg-white text-gray-300 border-2 border-gray-100'
+                                    }`}>
+                                        {activeStep > step ? <FaCheckCircle size={18} /> : (
+                                            step === 1 ? <FaHome size={16} /> :
+                                            step === 2 ? <FaBox size={16} /> :
+                                            <FaMapMarkerAlt size={16} />
+                                        )}
+                                    </div>
+                                    <p className={`absolute -bottom-6 left-1/2 -translate-x-1/2 whitespace-nowrap text-[8px] font-bold uppercase tracking-widest ${
+                                        activeStep >= step ? 'text-orange-500' : 'text-gray-300'
+                                    }`}>
+                                        {step === 1 ? 'Restaurant' : step === 2 ? 'Picked Up' : 'Customer'}
+                                    </p>
+                                </div>
+                            ))}
+                        </div>
+
+                        {/* Order Info */}
+                        <div className="bg-gray-50 rounded-3xl p-4 mb-6">
+                            <div className="flex justify-between items-center mb-4">
+                                <div>
+                                    <p className="text-gray-900 font-bold">{activeOrder.restaurant?.name}</p>
+                                    <p className="text-gray-400 text-[10px] line-clamp-1">{activeStep === 1 ? activeOrder.restaurant?.address : activeOrder.shippingAddress?.address}</p>
+                                </div>
+                                <div className="text-right">
+                                    <p className="text-orange-500 font-bold">PKR 180</p>
+                                    <p className="text-gray-400 text-[10px] uppercase">Earning</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Action Button */}
+                        <button 
+                            onClick={() => {
+                                if (activeStep === 1) handleUpdateStatus(activeOrder._id, 'Picked Up', activeOrder.distance);
+                                else if (activeStep === 2) handleUpdateStatus(activeOrder._id, 'OnTheWay', activeOrder.distance);
+                                else if (activeStep === 3) handleUpdateStatus(activeOrder._id, 'Delivered', activeOrder.distance);
+                            }}
+                            className="w-full bg-orange-500 text-white py-4 rounded-2xl text-[10px] font-bold uppercase tracking-widest shadow-lg shadow-orange-100 hover:scale-[1.02] active:scale-[0.98] transition-all"
+                        >
+                            {activeStep === 1 ? 'Arrived at Restaurant' : 
+                             activeStep === 2 ? 'Order Picked Up' : 
+                             'Order Completed'}
+                        </button>
+                    </div>
+                </div>
+            )}
 
             {/* Quick Actions */}
             <div className="mt-4">
@@ -329,8 +446,8 @@ function ActionItem({ icon, label, sublabel, onClick }: any) {
 }
 
     const renderOrders = () => {
-        const availableOrders = orders.filter(o => o.status === 'Ready' || o.status === 'OnTheWay');
-        const activeOrders = orders.filter(o => o.status === 'Picked Up');
+        const availableOrders = orders.filter(o => !o.rider && (o.status === 'Ready' || o.status === 'OnTheWay'));
+        const activeOrders = orders.filter(o => o.rider && ['Ready', 'OnTheWay', 'Picked Up'].includes(o.status));
 
         return (
             <div className="flex flex-col gap-6 animate-in fade-in slide-in-from-bottom-4 duration-500 font-light pb-20">
@@ -344,13 +461,13 @@ function ActionItem({ icon, label, sublabel, onClick }: any) {
                             onClick={() => setOrderFilter('available')}
                             className={`px-5 py-2 rounded-xl text-[10px] font-bold uppercase tracking-wider transition-all ${orderFilter === 'available' ? 'bg-white text-orange-500 shadow-sm' : 'text-gray-400'}`}
                         >
-                            Available
+                            Available ({availableOrders.length})
                         </button>
                         <button 
                             onClick={() => setOrderFilter('active')}
                             className={`px-5 py-2 rounded-xl text-[10px] font-bold uppercase tracking-wider transition-all ${orderFilter === 'active' ? 'bg-white text-orange-500 shadow-sm' : 'text-gray-400'}`}
                         >
-                            Active
+                            Active ({activeOrders.length})
                         </button>
                     </div>
                 </div>
@@ -401,12 +518,21 @@ function ActionItem({ icon, label, sublabel, onClick }: any) {
                                 >
                                     Details
                                 </button>
-                                <button 
-                                    onClick={() => handleUpdateStatus(order._id, order.status === 'Ready' || order.status === 'OnTheWay' ? 'Picked Up' : 'Delivered')}
-                                    className="flex-[2] bg-orange-500 text-white py-4 rounded-2xl text-[10px] font-bold uppercase tracking-widest shadow-lg shadow-orange-100 hover:scale-[1.02] active:scale-[0.98] transition-all"
-                                >
-                                    {order.status === 'Picked Up' ? 'Mark Delivered' : 'Accept Order'}
-                                </button>
+                                {order.rider ? (
+                                    <button 
+                                        onClick={() => handleUpdateStatus(order._id, order.status === 'Picked Up' ? 'Delivered' : 'Picked Up', order.distance)}
+                                        className="flex-[2] bg-orange-500 text-white py-4 rounded-2xl text-[10px] font-bold uppercase tracking-widest shadow-lg shadow-orange-100 hover:scale-[1.02] active:scale-[0.98] transition-all"
+                                    >
+                                        {order.status === 'Picked Up' ? 'Mark Delivered' : 'Confirm Pick Up'}
+                                    </button>
+                                ) : (
+                                    <button 
+                                        onClick={() => handleAcceptOrder(order._id)}
+                                        className="flex-[2] bg-green-500 text-white py-4 rounded-2xl text-[10px] font-bold uppercase tracking-widest shadow-lg shadow-green-100 hover:scale-[1.02] active:scale-[0.98] transition-all"
+                                    >
+                                        Accept Order
+                                    </button>
+                                )}
                             </div>
                         </div>
                     )) : (
@@ -431,6 +557,69 @@ function ActionItem({ icon, label, sublabel, onClick }: any) {
                 {activeTab === 'earnings' && <RiderEarnings riderId={riderData?._id} />}
                 {activeTab === 'profile' && <RiderProfile riderId={riderData?._id} />}
             </div>
+
+            <AnimatePresence>
+                {newOrderPopup && (
+                    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
+                        <motion.div 
+                            initial={{ opacity: 0, scale: 0.9, y: 20 }}
+                            animate={{ opacity: 1, scale: 1, y: 0 }}
+                            exit={{ opacity: 0, scale: 0.9, y: 20 }}
+                            className="bg-white rounded-[40px] p-8 w-full max-w-sm shadow-2xl"
+                        >
+                            <div className="flex justify-between items-start mb-6">
+                                <div>
+                                    <h2 className="text-2xl font-bold text-gray-900">New Order!</h2>
+                                    <p className="text-orange-500 font-medium">#{newOrderPopup._id.slice(-6)}</p>
+                                </div>
+                                <div className="w-12 h-12 bg-orange-50 rounded-2xl flex items-center justify-center text-orange-500">
+                                    <FaBell className="animate-bounce" />
+                                </div>
+                            </div>
+
+                            <div className="space-y-4 mb-8">
+                                <div className="flex items-center gap-3">
+                                    <div className="w-8 h-8 rounded-full bg-gray-50 flex items-center justify-center text-gray-400">
+                                        <FaShoppingBag size={14} />
+                                    </div>
+                                    <p className="text-gray-600 text-sm">{newOrderPopup.restaurant?.name}</p>
+                                </div>
+                                <div className="flex items-center gap-3">
+                                    <div className="w-8 h-8 rounded-full bg-gray-50 flex items-center justify-center text-gray-400">
+                                        <FaMapMarkerAlt size={14} />
+                                    </div>
+                                    <p className="text-gray-600 text-sm">{newOrderPopup.shippingAddress?.address}</p>
+                                </div>
+                                <div className="grid grid-cols-2 gap-4 mt-6">
+                                    <div className="bg-gray-50 p-3 rounded-2xl text-center">
+                                        <p className="text-[10px] text-gray-400 uppercase">Earnings</p>
+                                        <p className="font-bold text-gray-900">PKR 180</p>
+                                    </div>
+                                    <div className="bg-gray-50 p-3 rounded-2xl text-center">
+                                        <p className="text-[10px] text-gray-400 uppercase">Time Left</p>
+                                        <p className="font-bold text-orange-500">{timer}s</p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div className="flex gap-3">
+                                <button 
+                                    onClick={() => setNewOrderPopup(null)}
+                                    className="flex-1 py-4 rounded-2xl bg-gray-100 text-gray-500 font-bold text-xs uppercase tracking-widest hover:bg-gray-200 transition-all"
+                                >
+                                    Decline
+                                </button>
+                                <button 
+                                    onClick={() => handleAcceptOrder(newOrderPopup._id)}
+                                    className="flex-[2] py-4 rounded-2xl bg-orange-500 text-white font-bold text-xs uppercase tracking-widest shadow-lg shadow-orange-200 hover:scale-[1.02] active:scale-[0.98] transition-all"
+                                >
+                                    Accept Order
+                                </button>
+                            </div>
+                        </motion.div>
+                    </div>
+                )}
+            </AnimatePresence>
 
             {/* SS-style Bottom Navigation */}
             <div className="fixed bottom-6 left-1/2 -translate-x-1/2 w-[90%] max-w-sm bg-white/80 backdrop-blur-xl rounded-[35px] shadow-[0_20px_50px_rgba(0,0,0,0.1)] border border-white/20 p-2 z-50">
