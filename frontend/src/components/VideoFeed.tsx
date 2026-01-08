@@ -376,51 +376,26 @@ export default function VideoFeed() {
 
     const fetchActiveOrder = async () => {
         try {
-            const userInfo = localStorage.getItem('userInfo');
-            if (!userInfo) return;
-            const { token } = JSON.parse(userInfo);
-            const res = await axios.get(`${API_BASE_URL}/api/orders/my-orders`, {
-                headers: { Authorization: `Bearer ${token}` }
+            const userInfoStr = localStorage.getItem('userInfo');
+            if (!userInfoStr) return;
+            const userInfo = JSON.parse(userInfoStr);
+            if (!userInfo.token) return;
+
+            const res = await axios.get(`${API_BASE_URL}/api/orders/user/active`, {
+                headers: { Authorization: `Bearer ${userInfo.token}` }
             });
-            // Find the most recent order that isn't delivered or cancelled
-            const active = res.data.find((o: any) => 
-                !['Delivered', 'Cancelled'].includes(o.status)
-            );
-            setActiveOrder(active);
+
+            if (res.data && res.data.length > 0) {
+                setActiveOrder(res.data[0]); // Take the most recent active order
+            } else {
+                setActiveOrder(null);
+            }
         } catch (error) {
             console.error('Error fetching active order:', error);
         }
     };
 
     useEffect(() => {
-        fetchActiveOrder();
-        const interval = setInterval(fetchActiveOrder, 10000); // Check every 10s
-        return () => clearInterval(interval);
-    }, []);
-
-    const [activeOrder, setActiveOrder] = useState<any>(null);
-
-    // Fetch active orders for the user
-    useEffect(() => {
-        const fetchActiveOrder = async () => {
-            try {
-                const userInfo = JSON.parse(localStorage.getItem('userInfo') || '{}');
-                if (!userInfo.token) return;
-
-                const res = await axios.get(`${API_BASE_URL}/api/orders/user/active`, {
-                    headers: { Authorization: `Bearer ${userInfo.token}` }
-                });
-
-                if (res.data && res.data.length > 0) {
-                    setActiveOrder(res.data[0]); // Take the most recent active order
-                } else {
-                    setActiveOrder(null);
-                }
-            } catch (error) {
-                console.error('Error fetching active order:', error);
-            }
-        };
-
         fetchActiveOrder();
         // Poll for active orders every 30 seconds
         const interval = setInterval(fetchActiveOrder, 30000);
