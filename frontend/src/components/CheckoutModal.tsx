@@ -68,9 +68,13 @@ export default function CheckoutModal({ isOpen, onClose, cart, total, subtotal, 
         onClose();
     };
 
-    // Initialize address from userInfo when modal opens
+    // Initialize address and reset success state from userInfo when modal opens
     useEffect(() => {
         if (isOpen) {
+            // Reset success states for a fresh checkout experience
+            setOrderSuccess(false);
+            setPlacedOrder(null);
+            
             const userInfoStr = localStorage.getItem('userInfo');
             if (userInfoStr) {
                 try {

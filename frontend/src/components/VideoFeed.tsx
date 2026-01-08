@@ -372,6 +372,31 @@ export default function VideoFeed() {
     const { cartCount } = useCart();
     const [showTrackingModal, setShowTrackingModal] = useState(false);
     const [selectedOrderId, setSelectedOrderId] = useState<string | undefined>();
+    const [activeOrder, setActiveOrder] = useState<any>(null);
+
+    const fetchActiveOrder = async () => {
+        try {
+            const userInfo = localStorage.getItem('userInfo');
+            if (!userInfo) return;
+            const { token } = JSON.parse(userInfo);
+            const res = await axios.get(`${API_BASE_URL}/api/orders/my-orders`, {
+                headers: { Authorization: `Bearer ${token}` }
+            });
+            // Find the most recent order that isn't delivered or cancelled
+            const active = res.data.find((o: any) => 
+                !['Delivered', 'Cancelled'].includes(o.status)
+            );
+            setActiveOrder(active);
+        } catch (error) {
+            console.error('Error fetching active order:', error);
+        }
+    };
+
+    useEffect(() => {
+        fetchActiveOrder();
+        const interval = setInterval(fetchActiveOrder, 10000); // Check every 10s
+        return () => clearInterval(interval);
+    }, []);
 
     const handleTrackOrder = (orderId: string) => {
         setSelectedOrderId(orderId);
@@ -494,8 +519,8 @@ export default function VideoFeed() {
 
     return (
         <div className="relative h-screen w-full bg-black">
-            <div className="absolute top-0 left-0 w-full p-3 flex items-center gap-3 z-50 bg-gradient-to-b from-black/60 to-transparent">
-                <button onClick={() => setIsNavOpen(true)} className="p-2.5 rounded-lg text-white transition flex-shrink-0 z-50">
+            <div className="fixed top-4 left-4 right-4 z-[50] flex items-center gap-3">
+                <button onClick={() => setIsNavOpen(true)} className="p-2 text-white flex-shrink-0 cursor-pointer z-50" type="button">
                     <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                         <line x1="3" y1="6" x2="21" y2="6" />
                         <line x1="3" y1="12" x2="21" y2="12" />
@@ -506,7 +531,7 @@ export default function VideoFeed() {
                     <input type="text" placeholder="Search restaurants or dishes" className="w-full bg-white/10 backdrop-blur-sm text-white placeholder-gray-400 rounded-lg px-4 py-2.5 pl-10 outline-none focus:bg-white/15 transition text-sm" />
                     <FaSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={14} />
                 </div>
-                <button onClick={() => { console.log('🛒 Cart clicked!'); setIsCartOpen(true); }} className="relative p-2 text-white flex-shrink-0 cursor-pointer z-50" type="button">
+                <button onClick={() => { console.log('🛒 Cart clicked!'); setIsCartOpen(true); }} className="p-2 text-white flex-shrink-0 cursor-pointer z-50" type="button">
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                         <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z" />
                         <line x1="3" y1="6" x2="21" y2="6" />
@@ -515,6 +540,32 @@ export default function VideoFeed() {
                     {cartCount > 0 && <span className="absolute -top-1 -right-1 bg-primary text-white text-xs font-bold w-5 h-5 flex items-center justify-center rounded-full">{cartCount}</span>}
                 </button>
             </div>
+
+            {/* Active Order Tracking Floating Button */}
+            <AnimatePresence>
+                {activeOrder && (
+                    <motion.button
+                        initial={{ opacity: 0, y: 50, x: '-50%' }}
+                        animate={{ opacity: 1, y: 0, x: '-50%' }}
+                        exit={{ opacity: 0, y: 50, x: '-50%' }}
+                        onClick={() => handleTrackOrder(activeOrder._id)}
+                        className="fixed bottom-24 left-1/2 -translate-x-1/2 z-[50] bg-orange-500 text-white px-6 py-3 rounded-full shadow-lg flex items-center gap-3 border-2 border-white/20 backdrop-blur-sm hover:bg-orange-600 transition-all active:scale-95 group"
+                    >
+                        <div className="relative">
+                            <svg className="w-5 h-5 animate-pulse" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" />
+                            </svg>
+                            <span className="absolute -top-1 -right-1 w-2 h-2 bg-green-400 rounded-full border border-white"></span>
+                        </div>
+                        <div className="flex flex-col items-start">
+                            <span className="text-[10px] font-black uppercase tracking-widest leading-none opacity-80">Track Order</span>
+                            <span className="text-xs font-bold leading-tight">{activeOrder.status}</span>
+                        </div>
+                        <FaChevronRight size={12} className="group-hover:translate-x-1 transition-transform" />
+                    </motion.button>
+                )}
+            </AnimatePresence>
+
             <div className="h-full w-full overflow-y-scroll snap-y snap-mandatory scroll-smooth no-scrollbar" onScroll={handleScroll}>
                 {Array.isArray(dishes) && dishes.map((dish, index) => {
                     let distance: string | undefined;
