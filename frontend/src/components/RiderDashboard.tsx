@@ -6,7 +6,7 @@ import {
     FaHome, FaShoppingBag, FaBox, FaWallet, FaUser,
     FaStar, FaClock, FaMapMarkerAlt, FaChevronRight,
     FaBell, FaCheckCircle, FaExclamationCircle, FaTimes,
-    FaMotorcycle, FaArrowRight, FaNavigation
+    FaMotorcycle, FaArrowRight, FaLocationArrow
 } from 'react-icons/fa';
 import axios from 'axios';
 import { API_BASE_URL } from '../utils/config';
@@ -169,7 +169,7 @@ const RiderDashboard = ({ riderId: initialRiderId }: { riderId?: string }) => {
                 <div className="bg-white rounded-[32px] shadow-sm border border-gray-50 overflow-hidden">
                     <button className="w-full flex items-center gap-4 p-5 hover:bg-gray-50 transition border-b border-gray-50">
                         <div className="w-12 h-12 bg-orange-50 rounded-2xl flex items-center justify-center text-orange-500">
-                            <FaNavigation size={20} />
+                            <FaLocationArrow size={20} />
                         </div>
                         <div className="flex-1 text-left">
                             <p className="text-gray-900 font-bold">Navigate to Order</p>
@@ -342,7 +342,7 @@ const RiderDashboard = ({ riderId: initialRiderId }: { riderId?: string }) => {
                                     </div>
                                     <div className="flex gap-4">
                                         <div className="w-10 h-10 bg-blue-50 rounded-2xl flex items-center justify-center text-blue-500 shrink-0">
-                                            <FaNavigation size={18} />
+                                            <FaLocationArrow size={18} />
                                         </div>
                                         <div>
                                             <p className="text-gray-400 text-xs font-bold uppercase tracking-widest mb-1">Deliver to</p>
@@ -354,7 +354,7 @@ const RiderDashboard = ({ riderId: initialRiderId }: { riderId?: string }) => {
 
                                 <div className="grid grid-cols-3 gap-2 mb-8">
                                     <div className="bg-gray-50 p-3 rounded-2xl text-center">
-                                        <FaNavigation className="mx-auto mb-1 text-gray-400" size={14} />
+                                        <FaLocationArrow className="mx-auto mb-1 text-gray-400" size={14} />
                                         <p className="text-[10px] text-gray-400 font-bold uppercase">Distance</p>
                                         <p className="text-gray-900 font-bold text-xs">{newOrderPopup.distance} km</p>
                                     </div>
