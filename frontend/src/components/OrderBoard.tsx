@@ -4,7 +4,7 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { API_BASE_URL } from '../utils/config';
 import { motion, AnimatePresence } from 'framer-motion';
-import { FaTimes, FaCheck, FaClock, FaMapMarkerAlt, FaCommentDots, FaBan, FaMotorcycle, FaShoppingBag } from 'react-icons/fa';
+import { FaTimes, FaCheck, FaClock, FaMapMarkerAlt, FaCommentDots, FaBan, FaMotorcycle, FaShoppingBag, FaPaperPlane } from 'react-icons/fa';
 import CancelOrderModal from './CancelOrderModal';
 import { initSocket, getSocket, disconnectSocket } from '../utils/socket';
 import toast, { Toaster } from 'react-hot-toast';
@@ -162,120 +162,185 @@ export default function OrderBoard({ restaurant }: OrderBoardProps) {
         const initials = order.user?.name
             ? order.user.name.split(' ').map((n: string) => n[0]).join('').toUpperCase().slice(0, 2)
             : '??';
-        
+
         const canTrack = ['OnTheWay', 'Picked Up'].includes(order.status);
-        
+        const statusLower = (order.status || '').toLowerCase().replace(/\s/g, '');
+
         return (
             <motion.div
                 key={order._id}
                 layout
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="bg-white rounded-2xl p-4 shadow-sm border border-gray-100 hover:shadow-md transition group"
+                className="bg-white rounded-[32px] p-6 shadow-sm border border-gray-100 hover:shadow-xl transition-all duration-300 group"
             >
-                {/* Order Header */}
-                <div className="flex justify-between items-start mb-3">
-                    <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-xl bg-orange-50 flex items-center justify-center text-orange-600 font-bold text-sm">
+                {/* Order Header - Match Screenshot 2/3 */}
+                <div className="flex justify-between items-start mb-6">
+                    <div className="flex items-center gap-4">
+                        <div className="w-11 h-11 rounded-full bg-[#FF7E47]/10 flex items-center justify-center text-[#FF7E47] font-medium text-sm">
                             {initials}
                         </div>
                         <div>
-                            <h4 className="font-bold text-gray-900 text-xs truncate max-w-[120px]">{order.user?.name || 'Guest'}</h4>
-                            <p className="text-[10px] text-gray-400 font-medium">#{order._id.slice(-6)}</p>
+                            <h4 className="font-medium text-gray-900 text-[13px]">{order.user?.name || 'Guest'}</h4>
+                            <p className="text-[10px] text-gray-400 font-light mt-0.5 tracking-tight">Order #{order._id.slice(-4)}</p>
                         </div>
                     </div>
-                    <div className="text-right">
-                        <p className="font-black text-gray-900 text-xs">Rs. {order.totalPrice.toFixed(0)}</p>
-                        <p className="text-[9px] text-gray-400 font-bold uppercase tracking-tighter">
-                            {new Date(order.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                        </p>
+                    <div className={`px-3 py-1 rounded-full text-[9px] font-medium uppercase tracking-widest ${getStatusBadgeColor(order.status)}`}>
+                        {order.status}
                     </div>
                 </div>
 
-                {/* Items Summary */}
-                <div className="bg-gray-50 rounded-xl p-3 mb-3">
-                    <div className="space-y-1.5">
+                {/* Items Summary - Bullet points as Screenshot 2 */}
+                <div className="bg-[#F8FAFC]/50 rounded-2xl p-4 mb-5 border border-gray-50">
+                    <p className="text-[9px] font-medium text-gray-400 uppercase tracking-widest mb-2.5">Items:</p>
+                    <ul className="space-y-1.5">
                         {order.orderItems.map((item, idx) => (
-                            <div key={idx} className="flex justify-between items-center text-[11px]">
-                                <span className="text-gray-600 font-medium">
-                                    <span className="text-orange-600 font-black mr-1">{item.qty}x</span>
-                                    {item.name}
-                                </span>
-                            </div>
+                            <li key={idx} className="flex items-center text-xs text-gray-600 font-light">
+                                <span className="w-1 h-1 rounded-full bg-gray-300 mr-2 shrink-0"></span>
+                                <span className="truncate">{item.name}</span>
+                                {item.qty > 1 && <span className="ml-1.5 text-gray-400 text-[10px] font-medium">x{item.qty}</span>}
+                            </li>
                         ))}
-                    </div>
+                    </ul>
                 </div>
 
-                {/* Actions */}
-                <div className="flex flex-col gap-2">
+                {/* Total & Address */}
+                <div className="flex justify-between items-center mb-5 px-1">
+                    <span className="text-gray-400 text-[11px] font-light">Total Amount</span>
+                    <span className="text-gray-900 text-base font-medium">Rs. {order.totalPrice.toFixed(0)}</span>
+                </div>
+
+                <div className="flex items-start gap-2 mb-6 px-1 text-gray-400">
+                    <FaMapMarkerAlt className="mt-0.5 shrink-0 opacity-40" size={11} />
+                    <span className="text-[10px] font-light leading-relaxed line-clamp-2">{order.shippingAddress?.address}</span>
+                </div>
+
+                {/* Rider Info - Screenshot 3 */}
+                {order.rider && (
+                    <div className="bg-[#EFF6FF]/50 rounded-2xl p-4 mb-6 border border-blue-50/50">
+                        <div className="flex justify-between items-center mb-4">
+                            <div className="flex items-center gap-3">
+                                <div className="w-9 h-9 rounded-full bg-blue-500/10 flex items-center justify-center text-blue-600 font-medium text-[10px]">
+                                    {getInitials(order.rider.name)}
+                                </div>
+                                <div>
+                                    <h5 className="text-[11px] font-medium text-gray-900">{order.rider.name}</h5>
+                                    <p className="text-[9px] text-blue-500 font-light">Delivery Partner</p>
+                                </div>
+                            </div>
+                            <div className="text-right">
+                                <p className="text-[9px] text-blue-500 font-medium uppercase tracking-tighter">ETA: 5 mins</p>
+                            </div>
+                        </div>
+                        {/* Progress Stepper - Match Screenshot 3 */}
+                        <div className="relative pt-1 pb-5 px-2">
+                            <div className="absolute top-2 left-2 right-2 h-[1px] bg-gray-100"></div>
+                            <div className="absolute top-2 left-2 w-1/4 h-[1px] bg-blue-400"></div>
+                            <div className="flex justify-between relative">
+                                {['Assigned', 'On Way', 'Arrived', 'Picked Up'].map((step, i) => (
+                                    <div key={step} className="flex flex-col items-center">
+                                        <div className={`w-2 h-2 rounded-full z-10 border-2 border-white ${i === 0 ? 'bg-blue-400' : 'bg-gray-200'}`}></div>
+                                        <span className="text-[7px] font-medium text-gray-400 absolute -bottom-4 mt-1 whitespace-nowrap tracking-tight">{step}</span>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    </div>
+                )}
+
+                {/* Preparation Time Selection - Screenshot 3 */}
+                {order.status === 'Accepted' && (
+                    <div className="bg-[#FFF7ED] rounded-2xl p-4 mb-6 border border-orange-100">
+                        <p className="text-[10px] font-bold text-orange-600 uppercase tracking-widest mb-3">Preparation Time</p>
+                        <div className="flex gap-2">
+                            <select
+                                className="flex-1 bg-white border border-orange-200 rounded-xl px-4 py-2 text-xs font-bold text-gray-700 focus:ring-orange-500 focus:border-orange-500"
+                                value={prepTimes[order._id] || 20}
+                                onChange={(e) => setPrepTimes({ ...prepTimes, [order._id]: parseInt(e.target.value) })}
+                            >
+                                {[15, 20, 30, 45, 60].map(m => (
+                                    <option key={m} value={m}>{m} minutes</option>
+                                ))}
+                            </select>
+                            <button className="bg-orange-50 text-orange-600 w-10 h-10 rounded-xl font-bold hover:bg-orange-100 transition text-sm">+5</button>
+                            <button className="bg-orange-50 text-orange-600 w-10 h-10 rounded-xl font-bold hover:bg-orange-100 transition text-sm">+10</button>
+                        </div>
+                    </div>
+                )}
+
+                {/* Actions - Refined based on Screenshot 2/3 */}
+                <div className="flex flex-col gap-2.5">
                     {order.status === 'Pending' && (
-                        <div className="grid grid-cols-2 gap-2">
+                        <div className="grid grid-cols-2 gap-2.5">
                             <button
                                 onClick={() => handleAcceptOrder(order._id)}
-                                className="bg-orange-500 hover:bg-orange-600 text-white py-2 rounded-xl font-bold text-[10px] transition shadow-sm shadow-orange-500/20"
+                                className="bg-[#22C55E] hover:bg-[#16A34A] text-white py-3 rounded-2xl font-medium text-[11px] transition shadow-sm"
                             >
                                 ACCEPT
                             </button>
                             <button
                                 onClick={() => setRejectingOrder(order._id)}
-                                className="bg-gray-100 hover:bg-gray-200 text-gray-500 py-2 rounded-xl font-bold text-[10px] transition"
+                                className="bg-[#EF4444] hover:bg-[#DC2626] text-white py-3 rounded-2xl font-medium text-[11px] transition shadow-sm"
                             >
                                 REJECT
                             </button>
                         </div>
                     )}
-                    
+
                     {order.status === 'Accepted' && (
-                        <div className="space-y-2">
-                            <select
-                                className="w-full bg-blue-50 border-none rounded-lg px-2 py-1.5 text-[10px] font-bold text-blue-600 focus:ring-0"
-                                value={prepTimes[order._id] || 25}
-                                onChange={(e) => setPrepTimes({ ...prepTimes, [order._id]: parseInt(e.target.value) })}
-                            >
-                                {[15, 25, 35, 45, 60].map(m => (
-                                    <option key={m} value={m}>{m} MINS PREP</option>
-                                ))}
-                            </select>
-                            <button
-                                onClick={() => updateStatus(order._id, 'Preparing', { prepTime: prepTimes[order._id] || 25 })}
-                                className="w-full bg-blue-500 text-white py-2 rounded-xl font-bold text-[10px] hover:bg-blue-600 transition"
-                            >
-                                START PREPARING
-                            </button>
-                        </div>
+                        <button
+                            onClick={() => updateStatus(order._id, 'Preparing', { prepTime: prepTimes[order._id] || 20 })}
+                            className="w-full bg-blue-500 text-white py-3 rounded-2xl font-medium text-[11px] hover:bg-blue-600 transition shadow-sm"
+                        >
+                            START PREPARING
+                        </button>
                     )}
 
                     {order.status === 'Preparing' && (
-                        <button
-                            onClick={() => updateStatus(order._id, 'Ready')}
-                            className="w-full bg-green-500 text-white py-2 rounded-xl font-bold text-[10px] hover:bg-green-600 transition"
-                        >
-                            MARK AS READY
-                        </button>
+                        <div className="grid grid-cols-2 gap-2.5">
+                            <button
+                                onClick={() => updateStatus(order._id, 'Ready')}
+                                className="bg-[#22C55E] text-white py-3 rounded-2xl font-medium text-[11px] hover:bg-[#16A34A] transition shadow-sm"
+                            >
+                                MARK READY
+                            </button>
+                            <button
+                                className="bg-[#F59E0B] text-white py-3 rounded-2xl font-medium text-[11px] hover:bg-[#D97706] transition shadow-sm"
+                            >
+                                DELAY
+                            </button>
+                        </div>
                     )}
 
                     {order.status === 'Ready' && (
                         <button
                             onClick={() => updateStatus(order._id, 'OnTheWay')}
-                            className="w-full bg-purple-500 text-white py-2 rounded-xl font-bold text-[10px] hover:bg-purple-600 transition"
+                            className="w-full bg-purple-500 text-white py-3 rounded-2xl font-medium text-[11px] hover:bg-purple-600 transition shadow-sm"
                         >
                             HAND TO RIDER
                         </button>
                     )}
 
-                    <div className="grid grid-cols-2 gap-2">
+                    <div className="flex gap-2">
                         <button
                             onClick={() => setActiveChat(order)}
-                            className="flex items-center justify-center gap-1.5 py-1.5 rounded-lg bg-gray-50 text-gray-500 font-bold text-[9px] hover:bg-gray-100 transition border border-gray-100"
+                            className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl bg-gray-50 text-gray-400 font-medium text-[10px] hover:bg-gray-100 transition border border-gray-100/50"
                         >
-                            <FaCommentDots size={10} /> CHAT
+                            <FaCommentDots size={12} className="opacity-60" />
+                            <span>CHAT</span>
+                        </button>
+                        <button
+                            onClick={() => setCancellingOrderId(order._id)}
+                            className="w-10 h-10 flex items-center justify-center rounded-xl bg-red-50/50 text-red-400 hover:bg-red-50 transition border border-red-100/30"
+                        >
+                            <FaBan size={12} />
                         </button>
                         {canTrack && (
                             <button
                                 onClick={() => setTrackingOrder(order)}
-                                className="flex items-center justify-center gap-1.5 py-1.5 rounded-lg bg-blue-50 text-blue-600 font-bold text-[9px] hover:bg-blue-100 transition border border-blue-100"
+                                className="w-10 h-10 flex items-center justify-center rounded-xl bg-blue-50/50 text-blue-400 hover:bg-blue-50 transition border border-blue-100/30"
                             >
-                                <FaMotorcycle size={10} /> TRACK
+                                <FaMotorcycle size={14} />
                             </button>
                         )}
                     </div>
@@ -289,7 +354,82 @@ export default function OrderBoard({ restaurant }: OrderBoardProps) {
     }
 
     return (
-        <div className="h-full flex flex-col overflow-hidden">
+        <div className="h-full flex flex-col overflow-hidden bg-[#F8FAFC]">
+            {/* Top Status Cards - New as per Screenshot 2 */}
+            <div className="p-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 shrink-0">
+                {/* Pending Card */}
+                <div className="bg-white rounded-3xl p-5 shadow-sm border border-gray-100 relative overflow-hidden group">
+                    <div className="relative z-10">
+                        <div className="flex justify-between items-start mb-4">
+                            <div className="w-10 h-10 bg-orange-50 rounded-2xl flex items-center justify-center">
+                                <FaClock className="text-orange-500 text-lg" />
+                            </div>
+                            <span className="text-[9px] font-medium text-orange-500 uppercase tracking-widest bg-orange-50 px-2 py-0.5 rounded-full">New</span>
+                        </div>
+                        <div className="flex items-end justify-between">
+                            <div>
+                                <h2 className="text-3xl font-medium text-gray-900 mb-0.5">{pendingOrders.length}</h2>
+                                <p className="text-[11px] font-light text-gray-400">Pending Orders</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                {/* Preparing Card */}
+                <div className="bg-white rounded-3xl p-5 shadow-sm border border-gray-100 relative overflow-hidden group">
+                    <div className="relative z-10">
+                        <div className="flex justify-between items-start mb-4">
+                            <div className="w-10 h-10 bg-blue-50 rounded-2xl flex items-center justify-center">
+                                <FaShoppingBag className="text-blue-500 text-lg" />
+                            </div>
+                            <span className="text-[9px] font-medium text-blue-500 uppercase tracking-widest bg-blue-50 px-2 py-0.5 rounded-full">Preparing</span>
+                        </div>
+                        <div className="flex items-end justify-between">
+                            <div>
+                                <h2 className="text-3xl font-medium text-gray-900 mb-0.5">{preparingOrders.length}</h2>
+                                <p className="text-[11px] font-light text-gray-400">In Kitchen</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                {/* Ready Card */}
+                <div className="bg-white rounded-3xl p-5 shadow-sm border border-gray-100 relative overflow-hidden group">
+                    <div className="relative z-10">
+                        <div className="flex justify-between items-start mb-4">
+                            <div className="w-10 h-10 bg-green-50 rounded-2xl flex items-center justify-center">
+                                <FaCheck className="text-green-500 text-lg" />
+                            </div>
+                            <span className="text-[9px] font-medium text-green-500 uppercase tracking-widest bg-green-50 px-2 py-0.5 rounded-full">Ready</span>
+                        </div>
+                        <div className="flex items-end justify-between">
+                            <div>
+                                <h2 className="text-3xl font-medium text-gray-900 mb-0.5">{readyOrders.length}</h2>
+                                <p className="text-[11px] font-light text-gray-400">For Pickup</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                {/* Out for Delivery Card */}
+                <div className="bg-white rounded-3xl p-5 shadow-sm border border-gray-100 relative overflow-hidden group">
+                    <div className="relative z-10">
+                        <div className="flex justify-between items-start mb-4">
+                            <div className="w-10 h-10 bg-purple-50 rounded-2xl flex items-center justify-center">
+                                <FaPaperPlane className="text-purple-500 text-lg" />
+                            </div>
+                            <span className="text-[9px] font-medium text-purple-500 uppercase tracking-widest bg-purple-50 px-2 py-0.5 rounded-full">Out</span>
+                        </div>
+                        <div className="flex items-end justify-between">
+                            <div>
+                                <h2 className="text-3xl font-medium text-gray-900 mb-0.5">{completedOrders.length}</h2>
+                                <p className="text-[11px] font-light text-gray-400">Out for Delivery</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
             {/* Tracking Modal */}
             <AnimatePresence>
                 {trackingOrder && (
@@ -337,70 +477,97 @@ export default function OrderBoard({ restaurant }: OrderBoardProps) {
                             animate={{ scale: 1, y: 0 }}
                             exit={{ scale: 0.9, y: 20 }}
                             onClick={(e) => e.stopPropagation()}
-                            className="bg-white rounded-3xl p-6 sm:p-8 max-w-md w-full shadow-2xl max-h-[90vh] overflow-y-auto"
+                            className="bg-white rounded-[40px] p-8 max-w-md w-full shadow-2xl overflow-hidden relative"
                         >
-                            {/* Header */}
-                            <div className="flex items-center justify-between mb-6">
-                                <div className="flex items-center gap-3">
-                                    <div className="w-12 h-12 sm:w-14 sm:h-14 bg-orange-500 rounded-full flex items-center justify-center">
-                                        <FaClock className="text-white text-xl sm:text-2xl" />
+                            {/* Header - Screenshot 1 */}
+                            <div className="flex items-center justify-between mb-8">
+                                <div className="flex items-center gap-4">
+                                    <div className="w-14 h-14 bg-[#FF4D00] rounded-full flex items-center justify-center shadow-lg shadow-orange-500/30">
+                                        <FaClock className="text-white text-2xl" />
                                     </div>
                                     <div>
-                                        <h2 className="text-lg sm:text-xl font-bold text-gray-900">New Order Arrived!</h2>
-                                        <p className="text-xs sm:text-sm text-gray-500">Order #{newOrderPopup._id.slice(-4)}</p>
+                                        <h2 className="text-xl font-black text-[#FF4D00]">New Order Arrived!</h2>
+                                        <p className="text-sm text-gray-400 font-bold tracking-tight">Order #{newOrderPopup._id.slice(-4)}</p>
                                     </div>
                                 </div>
-                                <div className="w-12 h-12 sm:w-14 sm:h-14 border-4 border-orange-500 rounded-full flex items-center justify-center">
-                                    <span className="text-orange-500 font-bold text-sm">{countdown}s</span>
+                                <div className="w-16 h-16 relative flex items-center justify-center">
+                                    <svg className="w-full h-full transform -rotate-90">
+                                        <circle
+                                            cx="32"
+                                            cy="32"
+                                            r="28"
+                                            stroke="currentColor"
+                                            strokeWidth="3"
+                                            fill="transparent"
+                                            className="text-gray-100"
+                                        />
+                                        <circle
+                                            cx="32"
+                                            cy="32"
+                                            r="28"
+                                            stroke="currentColor"
+                                            strokeWidth="3"
+                                            fill="transparent"
+                                            strokeDasharray={175.9}
+                                            strokeDashoffset={175.9 * (1 - countdown / 60)}
+                                            className="text-[#FF4D00] transition-all duration-1000"
+                                        />
+                                    </svg>
+                                    <span className="absolute text-[#FF4D00] font-black text-lg">{countdown}s</span>
                                 </div>
                             </div>
 
-                            {/* Customer */}
-                            <div className="flex items-center gap-3 mb-6">
-                                <div className="w-12 h-12 bg-blue-500 rounded-full flex items-center justify-center text-white font-bold">
+                            {/* Customer - Screenshot 1 */}
+                            <div className="bg-[#F8FAFC] rounded-3xl p-5 mb-6 flex items-center gap-4 border border-gray-50">
+                                <div className="w-14 h-14 bg-[#3B82F6] rounded-full flex items-center justify-center text-white font-black text-lg shadow-md">
                                     {getInitials(newOrderPopup.user?.name || 'Guest')}
                                 </div>
                                 <div>
-                                    <h3 className="font-semibold text-gray-900">{newOrderPopup.user?.name}</h3>
-                                    <p className="text-xs text-gray-500">Regular Customer</p>
+                                    <h3 className="font-black text-gray-900 text-lg">{newOrderPopup.user?.name}</h3>
+                                    <p className="text-xs text-blue-500 font-bold uppercase tracking-wider">Regular Customer</p>
                                 </div>
                             </div>
 
                             {/* Address */}
-                            <div className="flex items-start gap-2 mb-6 text-gray-600">
-                                <FaMapMarkerAlt className="mt-1" />
-                                <span className="text-sm">{newOrderPopup.shippingAddress?.address}</span>
+                            <div className="flex items-start gap-3 mb-8 px-2 text-gray-500">
+                                <FaMapMarkerAlt className="mt-1 shrink-0 text-gray-400" size={18} />
+                                <span className="text-sm font-bold leading-relaxed">{newOrderPopup.shippingAddress?.address}</span>
                             </div>
 
-                            {/* Items */}
-                            <div className="mb-6">
-                                <p className="font-semibold text-gray-700 mb-3">Order Items</p>
-                                {newOrderPopup.orderItems.map((item, idx) => (
-                                    <div key={idx} className="flex justify-between mb-2">
-                                        <span className="text-gray-700">{item.name}</span>
-                                        <span className="font-semibold text-gray-900">Rs. {item.price.toFixed(2)}</span>
-                                    </div>
-                                ))}
-                                <div className="border-t border-gray-200 pt-3 mt-3 flex justify-between font-bold text-gray-900">
-                                    <span>Total</span>
-                                    <span>Rs. {newOrderPopup.totalPrice.toFixed(2)}</span>
+                            {/* Items List - Match Screenshot 1 */}
+                            <div className="mb-8">
+                                <p className="text-xs font-black text-gray-400 uppercase tracking-widest mb-4 px-2">Order Items</p>
+                                <div className="space-y-3">
+                                    {newOrderPopup.orderItems.map((item, idx) => (
+                                        <div key={idx} className="bg-[#F8FAFC] rounded-2xl p-4 flex justify-between items-center group hover:bg-white hover:shadow-md transition-all border border-transparent hover:border-gray-100">
+                                            <div>
+                                                <span className="block font-black text-gray-900 text-sm">{item.name}</span>
+                                                <span className="text-[10px] text-gray-400 font-bold uppercase tracking-wider">Default Options</span>
+                                            </div>
+                                            <span className="font-black text-gray-900 text-sm">Rs. {item.price.toFixed(0)}</span>
+                                        </div>
+                                    ))}
+                                </div>
+                                <div className="border-t-2 border-dashed border-gray-100 pt-6 mt-6 px-2 flex justify-between items-end">
+                                    <span className="text-gray-400 font-black text-sm uppercase tracking-widest">Total</span>
+                                    <span className="text-[#FF4D00] text-3xl font-black">Rs. {newOrderPopup.totalPrice.toFixed(0)}</span>
                                 </div>
                             </div>
 
-                            {/* Actions */}
-                            <div className="flex gap-3">
+                            {/* Actions - Gradient Buttons as Screenshot 1 */}
+                            <div className="flex gap-4">
                                 <button
                                     onClick={() => {
                                         setRejectingOrder(newOrderPopup._id);
                                         setNewOrderPopup(null);
                                     }}
-                                    className="flex-1 bg-red-500 hover:bg-red-600 text-white px-6 py-4 rounded-2xl font-bold transition"
+                                    className="flex-1 bg-gradient-to-r from-[#FF416C] to-[#FF4B2B] hover:shadow-xl hover:shadow-red-500/30 text-white px-6 py-4.5 rounded-[24px] font-black text-sm transition-all active:scale-95"
                                 >
                                     Reject
                                 </button>
                                 <button
                                     onClick={() => handleAcceptOrder(newOrderPopup._id)}
-                                    className="flex-1 bg-green-500 hover:bg-green-600 text-white px-6 py-4 rounded-2xl font-bold transition"
+                                    className="flex-1 bg-gradient-to-r from-[#00b09b] to-[#96c93d] hover:shadow-xl hover:shadow-green-500/30 text-white px-6 py-4.5 rounded-[24px] font-black text-sm transition-all active:scale-95"
                                 >
                                     Accept Order
                                 </button>

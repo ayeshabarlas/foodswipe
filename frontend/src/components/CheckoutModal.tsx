@@ -196,7 +196,7 @@ export default function CheckoutModal({ isOpen, onClose, cart, total, subtotal, 
     const handlePlaceOrder = async () => {
         console.log('handlePlaceOrder initiated');
 
-        // Check phone verification directly from localStorage to avoid state sync issues
+        // Check phone verification directly from localStorage and state to avoid state sync issues
         const userInfoStr = localStorage.getItem('userInfo');
         let userInfo: any = {};
         try {
@@ -205,8 +205,8 @@ export default function CheckoutModal({ isOpen, onClose, cart, total, subtotal, 
             console.error('Error parsing userInfo:', e);
         }
 
-        // IMPORTANT: If phone is already verified in userInfo, skip phone auth
-        if (userInfo.phoneVerified === true || userInfo.phoneVerified === 'true') {
+        // IMPORTANT: If phone is already verified in state or userInfo, skip phone auth
+        if (phoneVerified || userInfo.phoneVerified === true || userInfo.phoneVerified === 'true') {
             console.log('Phone already verified, proceeding to place order');
         } else {
             console.log('Phone not verified, showing phone auth modal');

@@ -16,7 +16,7 @@ const orderSchema = mongoose.Schema(
             {
                 name: { type: String, required: true },
                 qty: { type: Number, required: true },
-                image: { type: String },
+                image: { type: String, required: false },
                 price: { type: Number, required: true },
                 product: {
                     type: mongoose.Schema.Types.ObjectId,
@@ -35,10 +35,6 @@ const orderSchema = mongoose.Schema(
             lat: { type: Number },
             lng: { type: Number },
         },
-        deliveryLocation: {
-            lat: { type: Number },
-            lng: { type: Number },
-        },
         paymentMethod: {
             type: String,
             required: true,
@@ -52,6 +48,7 @@ const orderSchema = mongoose.Schema(
         orderNumber: {
             type: String,
             unique: true,
+            sparse: true,
         },
         subtotal: {
             type: Number,
@@ -127,7 +124,7 @@ const orderSchema = mongoose.Schema(
         },
         rider: {
             type: mongoose.Schema.Types.ObjectId,
-            ref: 'User',
+            ref: 'Rider',
             default: null,
         },
         distanceKm: {

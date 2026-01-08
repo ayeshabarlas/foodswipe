@@ -8,13 +8,17 @@ const checkPhoneVerification = async (req, res, next) => {
         const user = await User.findById(req.user.id);
 
         if (!user) {
-            return res.status(404).json({ message: 'User not found' });
+            return res.status(404).json({ message: 'User not found. Please login again.' });
         }
 
         // Only require phone verification for customers
-        if (user.role === 'customer' && !user.phoneVerified) {
+        // Check for both boolean true and string "true"
+        const isVerified = user.phoneVerified === true || user.phoneVerified === 'true';
+        
+        if (user.role === 'customer' && !isVerified) {
+            console.log(`Phone verification required for user: ${user._id}`);
             return res.status(403).json({
-                message: 'Phone verification required',
+                message: 'Phone verification required to place orders',
                 requiresPhoneVerification: true,
                 phoneVerified: false
             });
@@ -22,8 +26,11 @@ const checkPhoneVerification = async (req, res, next) => {
 
         next();
     } catch (error) {
-        console.error('Phone verification check error:', error);
-        return res.status(500).json({ message: 'Server error' });
+        console.error('Phone verification middleware error:', error);
+        return res.status(500).json({ 
+            message: 'Internal server error during phone verification check',
+            error: error.message 
+        });
     }
 };
 

@@ -191,10 +191,10 @@ const RiderDashboard = ({ riderId: initialRiderId }: { riderId?: string }) => {
                 
                 <div className="relative z-10 flex justify-between items-center mb-8">
                     <div>
-                        <p className="text-white/80 text-xs font-light mb-1">Welcome back,</p>
-                        <h1 className="text-white text-3xl font-bold tracking-tight">{riderData?.fullName || riderData?.user?.name || 'Rider'}</h1>
+                        <p className="text-white/80 text-[10px] font-light mb-1">Welcome back,</p>
+                        <h1 className="text-white text-2xl font-medium tracking-tight">{riderData?.fullName || riderData?.user?.name || 'Rider'}</h1>
                     </div>
-                    <div className="w-14 h-14 bg-white rounded-full flex items-center justify-center text-orange-500 font-bold text-xl shadow-xl border-4 border-white/20">
+                    <div className="w-12 h-12 bg-white rounded-full flex items-center justify-center text-orange-500 font-medium text-lg shadow-xl border-4 border-white/20">
                         {(riderData?.fullName || riderData?.user?.name || 'R')[0]}
                     </div>
                 </div>
@@ -202,14 +202,14 @@ const RiderDashboard = ({ riderId: initialRiderId }: { riderId?: string }) => {
                 {/* SS-style Status Toggle */}
                 <div className="relative z-10 bg-white/10 backdrop-blur-md rounded-[32px] p-6 flex items-center justify-between border border-white/20">
                     <div>
-                        <p className="text-white text-lg font-medium tracking-tight">You are {isOnline ? 'Online' : 'Offline'}</p>
-                        <p className="text-white/70 text-xs font-light">{isOnline ? 'Looking for new orders' : 'Go online to start earning'}</p>
+                        <p className="text-white text-base font-light tracking-tight">You are {isOnline ? 'Online' : 'Offline'}</p>
+                        <p className="text-white/70 text-[10px] font-extralight">{isOnline ? 'Looking for new orders' : 'Go online to start earning'}</p>
                     </div>
                     <button 
                         onClick={handleToggleOnline}
-                        className={`relative w-16 h-8 rounded-full transition-all duration-300 ${isOnline ? 'bg-white' : 'bg-white/30'}`}
+                        className={`relative w-14 h-7 rounded-full transition-all duration-300 ${isOnline ? 'bg-white' : 'bg-white/30'}`}
                     >
-                        <div className={`absolute top-1 w-6 h-6 rounded-full transition-all duration-300 shadow-sm transform ${isOnline ? 'translate-x-9 bg-orange-500' : 'translate-x-1 bg-white'}`} />
+                        <div className={`absolute top-0.5 w-6 h-6 rounded-full transition-all duration-300 shadow-sm transform ${isOnline ? 'translate-x-7 bg-orange-500' : 'translate-x-0.5 bg-white'}`} />
                     </button>
                 </div>
             </div>
@@ -217,53 +217,53 @@ const RiderDashboard = ({ riderId: initialRiderId }: { riderId?: string }) => {
             {/* Stats Grid - Overlapping Header */}
             <div className="grid grid-cols-2 gap-4 -mt-20 relative z-20 px-2">
                 <DashboardStat 
-                    icon={<FaWallet size={20} />} 
+                    icon={<FaWallet size={18} />} 
                     label="Today's Earnings" 
                     value={`PKR ${riderData?.earnings?.today || 0}`} 
                     color="text-green-500" 
-                    bgColor="bg-green-500" 
+                    bgColor="bg-green-50" 
                 />
                 <DashboardStat 
-                    icon={<FaBox size={20} />} 
+                    icon={<FaBox size={18} />} 
                     label="Deliveries" 
                     value={riderData?.totalOrders || 0} 
                     color="text-blue-500" 
-                    bgColor="bg-blue-500" 
+                    bgColor="bg-blue-50" 
                 />
                 <DashboardStat 
-                    icon={<FaStar size={20} />} 
+                    icon={<FaStar size={18} />} 
                     label="Rating" 
                     value={riderData?.rating || '4.8'} 
                     color="text-orange-500" 
-                    bgColor="bg-orange-500" 
+                    bgColor="bg-orange-50" 
                 />
                 <DashboardStat 
-                    icon={<FaClock size={20} />} 
+                    icon={<FaClock size={18} />} 
                     label="This Week" 
                     value={`PKR ${riderData?.earnings?.thisWeek || 0}`} 
                     color="text-purple-500" 
-                    bgColor="bg-purple-500" 
+                    bgColor="bg-purple-50" 
                 />
             </div>
 
             {/* Quick Actions */}
             <div className="mt-4">
-                <h3 className="text-gray-400 font-light text-sm mb-4 px-4">Quick Actions</h3>
-                <div className="bg-white rounded-[40px] shadow-[0_10px_40px_rgba(0,0,0,0.03)] border border-gray-50 overflow-hidden">
+                <h3 className="text-gray-400 font-light text-[11px] uppercase tracking-widest mb-4 px-4">Quick Actions</h3>
+                <div className="bg-white rounded-[35px] shadow-[0_10px_40px_rgba(0,0,0,0.02)] border border-gray-50 overflow-hidden">
                     <ActionItem 
-                        icon={<FaLocationArrow size={18} />} 
+                        icon={<FaLocationArrow size={16} />} 
                         label="Navigate to Order" 
                         sublabel="Get directions to pickup location" 
                         onClick={() => {}} 
                     />
                     <ActionItem 
-                        icon={<FaWallet size={18} />} 
+                        icon={<FaWallet size={16} />} 
                         label="View Earnings" 
                         sublabel="Check your payment details" 
                         onClick={() => setActiveTab('earnings')} 
                     />
                     <ActionItem 
-                        icon={<FaStar size={18} />} 
+                        icon={<FaStar size={16} />} 
                         label="Performance" 
                         sublabel="See your ratings & stats" 
                         onClick={() => setActiveTab('profile')} 
@@ -275,13 +275,13 @@ const RiderDashboard = ({ riderId: initialRiderId }: { riderId?: string }) => {
 
 function DashboardStat({ icon, label, value, color, bgColor }: any) {
     return (
-        <div className="bg-white p-5 rounded-[35px] shadow-[0_10px_40px_rgba(0,0,0,0.02)] border border-gray-50 flex flex-col gap-3">
-            <div className={`w-11 h-11 ${bgColor} text-white rounded-2xl flex items-center justify-center shadow-lg shadow-${color.split('-')[1]}-100`}>
+        <div className="bg-white p-5 rounded-[30px] shadow-[0_10px_40px_rgba(0,0,0,0.01)] border border-gray-50 flex flex-col gap-3">
+            <div className={`w-10 h-10 ${bgColor} ${color} rounded-2xl flex items-center justify-center`}>
                 {icon}
             </div>
             <div>
-                <p className="text-gray-400 text-[10px] font-bold uppercase tracking-widest mb-0.5">{label}</p>
-                <p className="text-gray-900 text-lg font-bold tracking-tight">{value}</p>
+                <p className="text-gray-400 text-[9px] font-light uppercase tracking-widest mb-0.5">{label}</p>
+                <p className="text-gray-900 text-base font-medium tracking-tight">{value}</p>
             </div>
         </div>
     );
@@ -291,14 +291,14 @@ function ActionItem({ icon, label, sublabel, onClick }: any) {
     return (
         <button 
             onClick={onClick}
-            className="w-full flex items-center gap-5 p-6 hover:bg-gray-50 transition-all border-b border-gray-50 last:border-b-0 group"
+            className="w-full flex items-center gap-5 p-5 hover:bg-gray-50 transition-all border-b border-gray-50 last:border-b-0 group"
         >
-            <div className="w-14 h-14 bg-orange-50 rounded-2xl flex items-center justify-center text-orange-500 group-hover:scale-110 transition-all shadow-sm">
-                <div className="text-xl">{icon}</div>
+            <div className="w-12 h-12 bg-gray-50 rounded-2xl flex items-center justify-center text-gray-400 group-hover:text-orange-500 group-hover:bg-orange-50 transition-all">
+                <div className="text-lg">{icon}</div>
             </div>
             <div className="flex-1 text-left">
-                <p className="text-gray-900 font-bold text-base tracking-tight">{label}</p>
-                <p className="text-gray-400 text-xs font-light mt-0.5">{sublabel}</p>
+                <p className="text-gray-800 font-medium text-sm tracking-tight">{label}</p>
+                <p className="text-gray-400 text-[10px] font-light mt-0.5">{sublabel}</p>
             </div>
         </button>
     );
