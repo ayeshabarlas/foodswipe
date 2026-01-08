@@ -21,6 +21,20 @@ const createOrder = async (req, res) => {
 
         const { items, restaurant, deliveryAddress, totalAmount, paymentMethod, deliveryInstructions, subtotal, deliveryFee } = req.body;
 
+        if (!items || items.length === 0) {
+            return res.status(400).json({ message: 'No order items' });
+        }
+
+        // Check if restaurant exists and is approved
+        const restaurantExists = await Restaurant.findById(restaurant);
+        if (!restaurantExists) {
+            return res.status(404).json({ message: 'Restaurant not registered or not found' });
+        }
+
+        if (restaurantExists.verificationStatus !== 'approved') {
+            return res.status(400).json({ message: 'Restaurant is not yet approved for orders' });
+        }
+
         // Map frontend data to model schema
         const orderItems = items.map(item => ({
             name: item.name,

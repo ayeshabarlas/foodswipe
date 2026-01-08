@@ -15,6 +15,17 @@ interface Variant {
     price: number;
 }
 
+interface Combo {
+    title: string;
+    items?: string[];
+    price: number;
+}
+
+interface Drink {
+    name: string;
+    price: number;
+}
+
 interface Dish {
     _id: string;
     name: string;
@@ -24,6 +35,8 @@ interface Dish {
     imageUrl: string;
     ingredients?: string[];
     variants?: Variant[];
+    combos?: Combo[];
+    drinks?: Drink[];
     restaurant: {
         _id: string;
         name: string;
@@ -155,6 +168,71 @@ export default function DishDetails({ dish, onClose }: DishDetailsProps) {
 
                     <p className="text-gray-600 leading-relaxed text-sm">{dish.description}</p>
                 </div>
+
+                {/* Combos Section */}
+                {dish.combos && dish.combos.length > 0 && (
+                    <div className="mb-6">
+                        <h3 className="text-sm font-bold text-gray-900 mb-3">Available Combos</h3>
+                        <div className="space-y-3">
+                            {dish.combos.map((combo, idx) => (
+                                 <div key={idx} className="flex items-center justify-between p-4 rounded-2xl bg-gray-50 border border-gray-100">
+                                     <div>
+                                         <p className="font-bold text-gray-800">{combo.title}</p>
+                                         <p className="text-sm text-primary font-medium">Rs. {combo.price}</p>
+                                         {combo.items && combo.items.length > 0 && (
+                                             <p className="text-xs text-gray-500 mt-1">{combo.items.join(', ')}</p>
+                                         )}
+                                     </div>
+                                     <button 
+                                         onClick={() => {
+                                             addToCart({
+                                                 _id: `${dish._id}-combo-${idx}`,
+                                                 name: `${dish.name} + ${combo.title}`,
+                                                 price: combo.price,
+                                                 quantity: 1,
+                                                 restaurantId: dish.restaurant._id,
+                                                 restaurantName: dish.restaurant.name
+                                             });
+                                             alert(`${combo.title} added to cart!`);
+                                         }}
+                                         className="px-4 py-2 bg-white text-primary border border-primary rounded-xl font-bold hover:bg-primary hover:text-white transition"
+                                     >
+                                         Add Combo
+                                     </button>
+                                 </div>
+                             ))}
+                        </div>
+                    </div>
+                )}
+
+                {/* Drinks Section */}
+                {dish.drinks && dish.drinks.length > 0 && (
+                    <div className="mb-6">
+                        <h3 className="text-sm font-bold text-gray-900 mb-3">Add Drinks</h3>
+                        <div className="grid grid-cols-2 gap-3">
+                            {dish.drinks.map((drink, idx) => (
+                                <div 
+                                    key={idx} 
+                                    onClick={() => {
+                                        addToCart({
+                                            _id: `${dish._id}-drink-${idx}`,
+                                            name: `${drink.name}`,
+                                            price: drink.price,
+                                            quantity: 1,
+                                            restaurantId: dish.restaurant._id,
+                                            restaurantName: dish.restaurant.name
+                                        });
+                                        alert(`${drink.name} added to cart!`);
+                                    }}
+                                    className="p-4 rounded-2xl bg-gray-50 border border-gray-100 flex flex-col items-center text-center cursor-pointer hover:border-primary transition"
+                                >
+                                    <p className="font-bold text-gray-800">{drink.name}</p>
+                                    <p className="text-sm text-primary font-bold">Rs. {drink.price}</p>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                )}
 
                 {/* Variants Selection */}
                 {dish.variants && dish.variants.length > 0 && (

@@ -74,13 +74,16 @@ export default function DashboardMenu() {
             };
 
             if (editingDish) {
-                await axios.put(`${API_BASE_URL}/api/dishes/${editingDish._id}`, payload, config);
+                const res = await axios.put(`${API_BASE_URL}/api/dishes/${editingDish._id}`, payload, config);
+                setDishes(dishes.map(d => d._id === editingDish._id ? res.data : d));
             } else {
-                await axios.post(`${API_BASE_URL}/api/dishes`, payload, config);
+                const res = await axios.post(`${API_BASE_URL}/api/dishes`, payload, config);
+                setDishes([res.data, ...dishes]);
             }
 
             setShowModal(false);
             setEditingDish(null);
+            // Optional: call fetchDishes to ensure everything is synced with server
             fetchDishes();
         } catch (error: any) {
             console.error('Error saving dish:', error);

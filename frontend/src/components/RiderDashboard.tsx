@@ -222,29 +222,11 @@ export default function RiderDashboard({ riderId }: RiderDashboardProps) {
         }
     };
 
-    if (!effectiveRiderId) {
-        return (
-            <div className="min-h-screen bg-gray-50 flex flex-col items-center justify-center p-6 text-center">
-                <div className="w-20 h-20 bg-red-50 text-red-500 rounded-full flex items-center justify-center mb-4">
-                    <FaUser size={40} />
-                </div>
-                <h2 className="text-xl font-bold text-gray-900 mb-2">Rider ID not found</h2>
-                <p className="text-gray-500 mb-6">Please login again to access your dashboard.</p>
-                <button 
-                    onClick={() => window.location.href = '/login'}
-                    className="bg-primary text-white px-8 py-3 rounded-2xl font-bold shadow-lg shadow-primary/20"
-                >
-                    Go to Login
-                </button>
-            </div>
-        );
-    }
-
     if (loading && !riderData) {
         return (
-            <div className="min-h-screen bg-gray-50 flex flex-col items-center justify-center p-6 text-center">
-                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mb-4"></div>
-                <p className="text-gray-500 font-medium">Loading your dashboard...</p>
+            <div className="min-h-screen bg-gray-50 flex flex-col items-center justify-center">
+                <div className="w-12 h-12 border-4 border-orange-500 border-t-transparent rounded-full animate-spin mb-4"></div>
+                <p className="text-gray-500 font-medium">Loading Rider Dashboard...</p>
             </div>
         );
     }
@@ -252,16 +234,37 @@ export default function RiderDashboard({ riderId }: RiderDashboardProps) {
     if (error && !riderData) {
         return (
             <div className="min-h-screen bg-gray-50 flex flex-col items-center justify-center p-6 text-center">
-                <div className="w-20 h-20 bg-red-50 text-red-500 rounded-full flex items-center justify-center mb-4">
-                    <FaBan size={40} />
+                <div className="w-16 h-16 bg-red-100 text-red-600 rounded-full flex items-center justify-center mb-4 text-2xl">
+                    <FaBan />
                 </div>
-                <h2 className="text-xl font-bold text-gray-900 mb-2">Oops! Something went wrong</h2>
-                <p className="text-gray-500 mb-6">{error}</p>
+                <h2 className="text-xl font-bold text-gray-800 mb-2">Oops! Something went wrong</h2>
+                <p className="text-gray-600 mb-6">{error}</p>
                 <button 
                     onClick={() => window.location.reload()}
-                    className="bg-primary text-white px-8 py-3 rounded-2xl font-bold shadow-lg shadow-primary/20"
+                    className="px-6 py-2 bg-orange-500 text-white rounded-full font-bold hover:bg-orange-600 transition"
                 >
                     Try Again
+                </button>
+            </div>
+        );
+    }
+
+    if (!effectiveRiderId) {
+        return (
+            <div className="min-h-screen bg-gray-50 flex flex-col items-center justify-center p-6 text-center">
+                <div className="w-16 h-16 bg-orange-100 text-orange-600 rounded-full flex items-center justify-center mb-4 text-2xl">
+                    <FaUser />
+                </div>
+                <h2 className="text-xl font-bold text-gray-800 mb-2">Rider ID Missing</h2>
+                <p className="text-gray-600 mb-6">We couldn't find your rider profile. Please try logging in again.</p>
+                <button 
+                    onClick={() => {
+                        localStorage.removeItem('userInfo');
+                        window.location.href = '/login';
+                    }}
+                    className="px-6 py-2 bg-orange-500 text-white rounded-full font-bold hover:bg-orange-600 transition"
+                >
+                    Go to Login
                 </button>
             </div>
         );
