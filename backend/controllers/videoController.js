@@ -20,7 +20,13 @@ const getVideoFeed = async (req, res) => {
     try {
         const { page = 1, limit = 10, category } = req.query;
 
-        const query = { videoUrl: { $exists: true, $ne: '' } };
+        // Show dishes that have EITHER a video OR an image
+        const query = { 
+            $or: [
+                { videoUrl: { $exists: true, $ne: '' } },
+                { imageUrl: { $exists: true, $ne: '' } }
+            ]
+        };
 
         if (category) {
             query.category = category;
@@ -29,7 +35,7 @@ const getVideoFeed = async (req, res) => {
         const videos = await Dish.find(query)
             .populate({
                 path: 'restaurant',
-                select: 'name logo rating location address contact',
+                select: 'name logo rating location address contact verificationStatus',
             })
             .populate('likes', 'name')
             .limit(parseInt(limit))
@@ -37,8 +43,8 @@ const getVideoFeed = async (req, res) => {
             .sort({ createdAt: -1 })
             .lean();
 
-        // Filter out videos with null restaurants
-        const validVideos = videos.filter(v => v.restaurant);
+        // Filter out videos with null restaurants OR unapproved restaurants
+        const validVideos = videos.filter(v => v.restaurant && v.restaurant.verificationStatus === 'approved');
 
         // Fetch active deals for these restaurants
         const restaurantIds = validVideos.map(v => v.restaurant._id);
