@@ -147,10 +147,19 @@ const RiderDashboard = ({ riderId: initialRiderId }: { riderId?: string }) => {
             const userInfo = JSON.parse(userStr);
             const config = { headers: { Authorization: `Bearer ${userInfo.token}` } };
 
-            const { data } = await axios.put(`${API_BASE_URL}/api/orders/${orderId}/status`, { 
-                status,
-                distanceKm 
-            }, config);
+            let response;
+            if (status === 'Delivered') {
+                response = await axios.post(`${API_BASE_URL}/api/orders/${orderId}/complete`, { 
+                    distanceKm: distanceKm || 5 
+                }, config);
+            } else {
+                response = await axios.put(`${API_BASE_URL}/api/orders/${orderId}/status`, { 
+                    status,
+                    distanceKm 
+                }, config);
+            }
+            
+            const { data } = response;
             
             // Update local state
             setOrders(prev => prev.map(o => o._id === orderId ? data : o));
@@ -520,7 +529,7 @@ function ActionItem({ icon, label, sublabel, onClick }: any) {
                                 </button>
                                 {order.rider ? (
                                     <button 
-                                        onClick={() => handleUpdateStatus(order._id, order.status === 'Picked Up' ? 'Delivered' : 'Picked Up', order.distance)}
+                                        onClick={() => handleUpdateStatus(order._id, order.status === 'Picked Up' ? 'Delivered' : 'Picked Up', order.distance || order.distanceKm)}
                                         className="flex-[2] bg-orange-500 text-white py-4 rounded-2xl text-[10px] font-bold uppercase tracking-widest shadow-lg shadow-orange-100 hover:scale-[1.02] active:scale-[0.98] transition-all"
                                     >
                                         {order.status === 'Picked Up' ? 'Mark Delivered' : 'Confirm Pick Up'}

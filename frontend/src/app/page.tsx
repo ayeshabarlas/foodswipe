@@ -26,6 +26,7 @@ export default function Home() {
     const checkAuth = async () => {
       const userInfoStr = localStorage.getItem("userInfo");
       let token = localStorage.getItem("token");
+      const savedHasRestaurant = localStorage.getItem("hasRestaurant") === "true";
 
       if (userInfoStr && !token) {
         try {
@@ -44,8 +45,9 @@ export default function Home() {
           if (existingUserInfo && existingUserInfo.role) {
             setUserRole(existingUserInfo.role);
             setIsLoggedIn(true);
-            // We still want to verify, but we can do it without blocking the initial render if we want
-            // However, to keep it simple and fix the redirect, we'll continue with the verification
+            if (existingUserInfo.role === "restaurant" && savedHasRestaurant) {
+              setHasRestaurant(true);
+            }
           }
         } catch (e) {
           console.error("Error parsing existing userInfo:", e);
@@ -67,17 +69,22 @@ export default function Home() {
           setIsLoggedIn(true);
 
           if (updatedUserInfo.role === "restaurant") {
-            setCheckingRestaurant(true);
+            // Only show loader if we don't already know we have a restaurant
+            if (!savedHasRestaurant) {
+              setCheckingRestaurant(true);
+            }
             try {
               const restaurantResponse = await axios.get(`${API_BASE_URL}/api/restaurants/my-restaurant`, {
                 headers: { Authorization: `Bearer ${token}` },
               });
               if (restaurantResponse.data) {
                 setHasRestaurant(true);
+                localStorage.setItem("hasRestaurant", "true");
               }
             } catch (error: any) {
               if (error.response?.status === 404) {
                 setHasRestaurant(false);
+                localStorage.removeItem("hasRestaurant");
               }
             }
             setCheckingRestaurant(false);
@@ -108,6 +115,7 @@ export default function Home() {
 
   const handleRestaurantCreated = () => {
     setHasRestaurant(true);
+    localStorage.setItem("hasRestaurant", "true");
   };
 
   // Show splash screen first
@@ -161,11 +169,13 @@ export default function Home() {
             if (restaurantResponse.data) {
               console.log("Restaurant profile found");
               setHasRestaurant(true);
+              localStorage.setItem("hasRestaurant", "true");
             }
           } catch (error: any) {
             console.log("Restaurant profile check failed:", error.message);
             if (error.response?.status === 404) {
               setHasRestaurant(false);
+              localStorage.removeItem("hasRestaurant");
             }
           }
           setCheckingRestaurant(false);

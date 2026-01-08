@@ -398,6 +398,35 @@ export default function VideoFeed() {
         return () => clearInterval(interval);
     }, []);
 
+    const [activeOrder, setActiveOrder] = useState<any>(null);
+
+    // Fetch active orders for the user
+    useEffect(() => {
+        const fetchActiveOrder = async () => {
+            try {
+                const userInfo = JSON.parse(localStorage.getItem('userInfo') || '{}');
+                if (!userInfo.token) return;
+
+                const res = await axios.get(`${API_BASE_URL}/api/orders/user/active`, {
+                    headers: { Authorization: `Bearer ${userInfo.token}` }
+                });
+
+                if (res.data && res.data.length > 0) {
+                    setActiveOrder(res.data[0]); // Take the most recent active order
+                } else {
+                    setActiveOrder(null);
+                }
+            } catch (error) {
+                console.error('Error fetching active order:', error);
+            }
+        };
+
+        fetchActiveOrder();
+        // Poll for active orders every 30 seconds
+        const interval = setInterval(fetchActiveOrder, 30000);
+        return () => clearInterval(interval);
+    }, []);
+
     const handleTrackOrder = (orderId: string) => {
         setSelectedOrderId(orderId);
         setShowTrackingModal(true);
@@ -519,26 +548,50 @@ export default function VideoFeed() {
 
     return (
         <div className="relative h-screen w-full bg-black">
-            <div className="fixed top-4 left-4 right-4 z-[50] flex items-center gap-3">
-                <button onClick={() => setIsNavOpen(true)} className="p-2 text-white flex-shrink-0 cursor-pointer z-50" type="button">
-                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                        <line x1="3" y1="6" x2="21" y2="6" />
-                        <line x1="3" y1="12" x2="21" y2="12" />
-                        <line x1="3" y1="18" x2="21" y2="18" />
-                    </svg>
-                </button>
-                <div className="flex-1 relative">
-                    <input type="text" placeholder="Search restaurants or dishes" className="w-full bg-white/10 backdrop-blur-sm text-white placeholder-gray-400 rounded-lg px-4 py-2.5 pl-10 outline-none focus:bg-white/15 transition text-sm" />
-                    <FaSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={14} />
+            <div className="fixed top-4 left-4 right-4 z-[50] flex flex-col gap-3">
+                <div className="flex items-center gap-3">
+                    <button onClick={() => setIsNavOpen(true)} className="p-2 text-white flex-shrink-0 cursor-pointer z-50" type="button">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                            <line x1="3" y1="6" x2="21" y2="6" />
+                            <line x1="3" y1="12" x2="21" y2="12" />
+                            <line x1="3" y1="18" x2="21" y2="18" />
+                        </svg>
+                    </button>
+                    <div className="flex-1 relative">
+                        <input type="text" placeholder="Search restaurants or dishes" className="w-full bg-white/10 backdrop-blur-sm text-white placeholder-gray-400 rounded-lg px-4 py-2.5 pl-10 outline-none focus:bg-white/15 transition text-sm" />
+                        <FaSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={14} />
+                    </div>
+                    <button onClick={() => { console.log('🛒 Cart clicked!'); setIsCartOpen(true); }} className="p-2 text-white flex-shrink-0 cursor-pointer z-50" type="button">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                            <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z" />
+                            <line x1="3" y1="6" x2="21" y2="6" />
+                            <path d="M16 10a4 4 0 0 1-8 0" />
+                        </svg>
+                        {cartCount > 0 && <span className="absolute -top-1 -right-1 bg-primary text-white text-xs font-bold w-5 h-5 flex items-center justify-center rounded-full">{cartCount}</span>}
+                    </button>
                 </div>
-                <button onClick={() => { console.log('🛒 Cart clicked!'); setIsCartOpen(true); }} className="p-2 text-white flex-shrink-0 cursor-pointer z-50" type="button">
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                        <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z" />
-                        <line x1="3" y1="6" x2="21" y2="6" />
-                        <path d="M16 10a4 4 0 0 1-8 0" />
-                    </svg>
-                    {cartCount > 0 && <span className="absolute -top-1 -right-1 bg-primary text-white text-xs font-bold w-5 h-5 flex items-center justify-center rounded-full">{cartCount}</span>}
-                </button>
+
+                {/* Active Order Tracking Bar - Screenshot 1 Style */}
+                {activeOrder && (
+                    <motion.div 
+                        initial={{ y: -20, opacity: 0 }}
+                        animate={{ y: 0, opacity: 1 }}
+                        onClick={() => handleTrackOrder(activeOrder._id)}
+                        className="bg-white/95 backdrop-blur-md rounded-full px-5 py-3 flex items-center justify-between shadow-xl cursor-pointer border border-white/20"
+                    >
+                        <div className="flex items-center gap-3">
+                            <div className="w-8 h-8 bg-gray-100 rounded-full flex items-center justify-center text-gray-400">
+                                <FaMapMarkerAlt size={14} />
+                            </div>
+                            <span className="text-gray-900 font-bold text-sm tracking-tight">Order Tracking</span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                            <span className="bg-orange-500 text-white text-[10px] font-black uppercase px-3 py-1 rounded-full tracking-wider animate-pulse">
+                                Active
+                            </span>
+                        </div>
+                    </motion.div>
+                )}
             </div>
 
             <div className="h-full w-full overflow-y-scroll snap-y snap-mandatory scroll-smooth no-scrollbar" onScroll={handleScroll}>

@@ -298,7 +298,12 @@ const processOrderCompletion = async (order, distanceKm = 5, req = null) => {
         order.deliveredAt = new Date();
 
         // 3. Update Rider Wallet & Stats
-        const rider = await Rider.findById(order.rider).populate('user');
+        // Try to find rider by ID or by user ID to be safe
+        let rider = await Rider.findById(order.rider).populate('user');
+        if (!rider) {
+            rider = await Rider.findOne({ user: order.rider }).populate('user');
+        }
+
         if (rider) {
             rider.walletBalance = (rider.walletBalance || 0) + riderEarning;
             
@@ -525,9 +530,33 @@ const completeOrder = async (req, res) => {
     }
 };
 
+// @desc    Get active orders for logged in user
+// @route   GET /api/orders/user/active
+// @access  Private
+const getActiveUserOrders = async (req, res) => {
+    try {
+        const orders = await Order.find({
+            user: req.user._id,
+            status: { $in: ['Pending', 'Accepted', 'Preparing', 'Ready', 'OnTheWay', 'Confirmed', 'Arrived', 'Picked Up', 'ArrivedAtCustomer'] }
+        })
+            .sort({ createdAt: -1 })
+            .populate('restaurant', 'name address logo location')
+            .populate({
+                path: 'rider',
+                populate: { path: 'user', select: 'name phone' }
+            });
+
+        res.json(orders);
+    } catch (error) {
+        console.error('Get active user orders error:', error);
+        res.status(500).json({ message: 'Server error', error: error.message });
+    }
+};
+
 module.exports = {
     createOrder,
     getUserOrders,
+    getActiveUserOrders,
     getOrderById,
     updateOrderStatus,
     completeOrder,

@@ -39,12 +39,18 @@ export default function RestaurantDashboard() {
 
     useEffect(() => {
         const userInfo = JSON.parse(localStorage.getItem('userInfo') || '{}');
-        if (userInfo && userInfo._id) {
-            const newSocket = initSocket(userInfo._id, 'restaurant', userInfo.restaurantId);
+        const resId = restaurant?._id || userInfo.restaurantId;
+        
+        if (userInfo && userInfo._id && resId) {
+            console.log("Initializing dashboard socket with resId:", resId);
+            const newSocket = initSocket(userInfo._id, 'restaurant', resId);
             setSocket(newSocket);
         }
-        return () => { disconnectSocket(); };
-    }, []);
+        
+        return () => { 
+            if (socket) disconnectSocket(); 
+        };
+    }, [restaurant?._id]);
 
     const fetchDashboardData = async (isRefresh = false) => {
         try {

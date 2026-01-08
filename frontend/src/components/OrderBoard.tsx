@@ -77,9 +77,17 @@ export default function OrderBoard({ restaurant, onUpdate }: OrderBoardProps) {
     };
 
     useEffect(() => {
-        fetchOrders();
+        if (restaurant?._id) {
+            fetchOrders();
+        }
+    }, [restaurant?._id]);
+
+    useEffect(() => {
         const userInfo = JSON.parse(localStorage.getItem('userInfo') || '{}');
         const resId = restaurant?._id || userInfo.restaurantId;
+        
+        if (!resId) return;
+
         const socket = initSocket(userInfo._id, 'restaurant', resId);
 
         socket?.on('newOrder', (order: Order) => {
