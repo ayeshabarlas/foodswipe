@@ -24,15 +24,25 @@ export default function Home() {
   const [checkingRestaurant, setCheckingRestaurant] = useState(false);
   useEffect(() => {
     const checkAuth = async () => {
-      const userInfo = localStorage.getItem("userInfo");
-      const token = localStorage.getItem("token");
+      const userInfoStr = localStorage.getItem("userInfo");
+      let token = localStorage.getItem("token");
 
-      if (userInfo && token) {
+      if (userInfoStr && !token) {
+        try {
+          const ui = JSON.parse(userInfoStr);
+          if (ui.token) {
+            token = ui.token;
+            localStorage.setItem("token", token);
+          }
+        } catch (e) {}
+      }
+
+      if (userInfoStr && token) {
         try {
           // Verify token with backend
           const response = await axios.get(`${API_BASE_URL}/api/auth/me`, {
             headers: { Authorization: `Bearer ${token}` },
-            timeout: 5000 // 5 second timeout
+            timeout: 10000 // Increased timeout to 10 seconds
           });
 
           const user = response.data;
@@ -47,11 +57,7 @@ export default function Home() {
 
           if (!updatedUserInfo.role) {
             console.error("CRITICAL: Role missing in checkAuth response", updatedUserInfo);
-            // Do not default to customer if we want strict role handling
-            // But if it's genuinely missing, we might be stuck. 
-            // For now, let's just log it and NOT set a default, 
-            // which might trigger the 'Navigation Error' screen if userRole remains empty.
-            setUserRole("");
+            setUserRole(existingUserInfo.role || ""); // Use existing role as fallback
           } else {
             setUserRole(updatedUserInfo.role);
           }
@@ -85,12 +91,27 @@ export default function Home() {
             }
             setCheckingRestaurant(false);
           }
-        } catch (error) {
-          console.error("Session expired or invalid:", error);
-          // If verification fails, logout
-          localStorage.removeItem("userInfo");
-          localStorage.removeItem("token");
-          setIsLoggedIn(false);
+        } catch (error: any) {
+          console.error("Session verification failed:", error.message);
+          
+          const existingUserInfo = JSON.parse(userInfo || '{}');
+          
+          // Only logout if it's a definitive authentication error (401 or 403)
+          if (error.response && (error.response.status === 401 || error.response.status === 403)) {
+            console.log("Authentication expired - logging out");
+            localStorage.removeItem("userInfo");
+            localStorage.removeItem("token");
+            setIsLoggedIn(false);
+          } else {
+            // For other errors (network timeout, 500), preserve the session from localStorage
+            console.log("Network error or server issue - preserving session from localStorage");
+            if (existingUserInfo.role) {
+              setUserRole(existingUserInfo.role);
+              setIsLoggedIn(true);
+            } else {
+              setIsLoggedIn(false);
+            }
+          }
         }
       }
       setLoading(false);

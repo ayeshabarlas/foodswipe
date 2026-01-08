@@ -39,7 +39,7 @@ const RiderDashboard = ({ riderId: initialRiderId }: { riderId?: string }) => {
             // Fetch profile and orders in parallel
             const [profileRes, ordersRes] = await Promise.all([
                 axios.get(`${API_BASE_URL}/api/riders/my-profile`, config),
-                axios.get(`${API_BASE_URL}/api/riders/orders`, config).catch(() => ({ data: [] }))
+                axios.get(`${API_BASE_URL}/api/riders/${userInfo._id}/orders`, config).catch(() => ({ data: [] }))
             ]);
 
             setRiderData(profileRes.data);
@@ -47,7 +47,7 @@ const RiderDashboard = ({ riderId: initialRiderId }: { riderId?: string }) => {
             setIsOnline(profileRes.data.isOnline || false);
             
             // Find if there's an active order being delivered
-            const currentActive = ordersRes.data?.find((o: any) => o.status === 'PickedUp' || o.status === 'OnTheWay');
+            const currentActive = (ordersRes.data || []).find((o: any) => o.status === 'Picked Up' || o.status === 'OnTheWay');
             if (currentActive) setActiveOrder(currentActive);
 
             setLoading(false);
@@ -136,12 +136,12 @@ const RiderDashboard = ({ riderId: initialRiderId }: { riderId?: string }) => {
             const userInfo = JSON.parse(userStr);
             const config = { headers: { Authorization: `Bearer ${userInfo.token}` } };
 
-            const { data } = await axios.put(`${API_BASE_URL}/api/riders/orders/${orderId}/status`, { status }, config);
+            const { data } = await axios.put(`${API_BASE_URL}/api/orders/${orderId}/status`, { status }, config);
             
             // Update local state
             setOrders(prev => prev.map(o => o._id === orderId ? data : o));
             
-            if (status === 'PickedUp' || status === 'OnTheWay') {
+            if (status === 'Picked Up' || status === 'OnTheWay') {
                 setActiveOrder(data);
             } else if (status === 'Delivered') {
                 setActiveOrder(null);
@@ -330,7 +330,7 @@ function ActionItem({ icon, label, sublabel, onClick }: any) {
 
     const renderOrders = () => {
         const availableOrders = orders.filter(o => o.status === 'Ready' || o.status === 'OnTheWay');
-        const activeOrders = orders.filter(o => o.status === 'PickedUp');
+        const activeOrders = orders.filter(o => o.status === 'Picked Up');
 
         return (
             <div className="flex flex-col gap-6 animate-in fade-in slide-in-from-bottom-4 duration-500 font-light pb-20">
@@ -402,10 +402,10 @@ function ActionItem({ icon, label, sublabel, onClick }: any) {
                                     Details
                                 </button>
                                 <button 
-                                    onClick={() => handleUpdateStatus(order._id, order.status === 'Ready' || order.status === 'OnTheWay' ? 'PickedUp' : 'Delivered')}
+                                    onClick={() => handleUpdateStatus(order._id, order.status === 'Ready' || order.status === 'OnTheWay' ? 'Picked Up' : 'Delivered')}
                                     className="flex-[2] bg-orange-500 text-white py-4 rounded-2xl text-[10px] font-bold uppercase tracking-widest shadow-lg shadow-orange-100 hover:scale-[1.02] active:scale-[0.98] transition-all"
                                 >
-                                    {order.status === 'PickedUp' ? 'Mark Delivered' : 'Accept Order'}
+                                    {order.status === 'Picked Up' ? 'Mark Delivered' : 'Accept Order'}
                                 </button>
                             </div>
                         </div>

@@ -68,7 +68,7 @@ export default function CheckoutModal({ isOpen, onClose, cart, total, subtotal, 
         onClose();
     };
 
-    // Initialize address and reset success state from userInfo when modal opens
+    // Initialize address and reset success state from userInfo when modal opens/closes
     useEffect(() => {
         if (isOpen) {
             // Reset success states for a fresh checkout experience
@@ -84,6 +84,10 @@ export default function CheckoutModal({ isOpen, onClose, cart, total, subtotal, 
                     console.error('Error parsing userInfo for address:', e);
                 }
             }
+        } else {
+            // Also reset when closing to be absolutely sure
+            setOrderSuccess(false);
+            setPlacedOrder(null);
         }
     }, [isOpen]);
 

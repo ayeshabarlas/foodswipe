@@ -81,7 +81,7 @@ export default function OrderBoard({ restaurant }: OrderBoardProps) {
 
         socket?.on('orderStatusUpdate', (updatedOrder: any) => {
             const orderId = updatedOrder._id || updatedOrder.orderId;
-            setOrders(prev => prev.map(o => o._id === orderId ? { ...o, status: updatedOrder.status } : o));
+            setOrders(prev => prev.map(o => o._id === orderId ? { ...o, ...updatedOrder } : o));
             fetchOrders(); // Refresh to get full details
         });
 

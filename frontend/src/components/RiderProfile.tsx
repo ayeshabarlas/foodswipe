@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { API_BASE_URL } from '../utils/config';
-import { FaStar, FaCheckCircle, FaUser, FaPhone, FaEnvelope, FaBicycle, FaMapMarkerAlt, FaBell, FaCog, FaSignOutAlt, FaChevronRight, FaTimes, FaCamera, FaIdCard, FaCarSide } from 'react-icons/fa';
+import { FaStar, FaCheckCircle, FaUser, FaPhone, FaEnvelope, FaBicycle, FaMapMarkerAlt, FaBell, FaCog, FaSignOutAlt, FaChevronRight, FaTimes, FaCamera, FaIdCard, FaCarSide, FaClock } from 'react-icons/fa';
 
 interface RiderProfileProps {
     riderId: string;

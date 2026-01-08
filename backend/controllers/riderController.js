@@ -408,13 +408,26 @@ const getTimeAgo = (date) => {
 const getRiderOrders = async (req, res) => {
     try {
         const Order = require('../models/Order');
+        let riderId = req.params.id;
+
+        // If the ID provided is a User ID, find the associated Rider ID
+        const rider = await Rider.findOne({ 
+            $or: [
+                { _id: riderId },
+                { user: riderId }
+            ]
+        });
+
+        if (rider) {
+            riderId = rider._id;
+        }
 
         // Show ALL orders that are Ready or OnTheWay (available for pickup)
         // Plus orders already assigned to this specific rider
         const orders = await Order.find({
             $or: [
                 { status: { $in: ['Ready', 'OnTheWay'] } }, // All ready orders
-                { rider: req.params.id } // Orders assigned to this rider
+                { rider: riderId } // Orders assigned to this rider
             ]
         })
             .populate('restaurant', 'name address location')

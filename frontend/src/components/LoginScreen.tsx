@@ -34,12 +34,6 @@ export default function LoginScreen({ onLogin }: LoginScreenProps) {
     const [error, setError] = useState("");
     const router = useRouter();
 
-    useEffect(() => {
-        // Clear any stale session data when login screen appears
-        localStorage.removeItem("userInfo");
-        localStorage.removeItem("token");
-    }, []);
-
     const handleGoogleSignIn = async () => {
         try {
             setLoading(true);
