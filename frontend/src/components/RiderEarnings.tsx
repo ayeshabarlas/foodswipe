@@ -3,7 +3,7 @@
 import React, { useState } from 'react';
 import axios from 'axios';
 import { API_BASE_URL } from '../utils/config';
-import { FaDollarSign, FaStar, FaDownload, FaWallet, FaHistory } from 'react-icons/fa';
+import { FaDollarSign, FaStar, FaDownload, FaWallet, FaHistory, FaArrowRight, FaUniversity } from 'react-icons/fa';
 
 interface RiderEarningsProps {
     riderId: string;
@@ -18,7 +18,7 @@ export default function RiderEarnings({ riderId }: RiderEarningsProps) {
         tips: 0,
         deliveries: 0,
         pendingPayout: 0,
-        nextPayoutDate: '-'
+        nextPayoutDate: 'Friday, Dec 1'
     });
     const [transactions, setTransactions] = useState<any[]>([]);
     const [bankDetails, setBankDetails] = useState({
@@ -30,11 +30,10 @@ export default function RiderEarnings({ riderId }: RiderEarningsProps) {
     const [savingBank, setSavingBank] = useState(false);
 
     React.useEffect(() => {
-        // Fetch real earnings data
         const fetchEarnings = async () => {
             try {
                 const token = JSON.parse(localStorage.getItem("userInfo") || "{}").token;
-                const res = await axios.get(`${API_BASE_URL}/api/riders/${riderId}/earnings`, {
+                const res = await axios.get(`${API_BASE_URL}/api/riders/${riderId}/earnings?period=${period}`, {
                     headers: { Authorization: `Bearer ${token}` }
                 });
                 setEarnings(res.data);
@@ -72,14 +71,7 @@ export default function RiderEarnings({ riderId }: RiderEarningsProps) {
         fetchEarnings();
         fetchTransactions();
         fetchRiderDetails();
-
-        const interval = setInterval(() => {
-            fetchEarnings();
-            fetchTransactions();
-        }, 10000);
-
-        return () => clearInterval(interval);
-    }, [riderId]);
+    }, [riderId, period]);
 
     const handleSaveBankDetails = async () => {
         setSavingBank(true);
@@ -116,7 +108,7 @@ export default function RiderEarnings({ riderId }: RiderEarningsProps) {
             });
             alert('Cashout request submitted successfully!');
             // Refresh data
-            const res = await axios.get(`${API_BASE_URL}/api/riders/${riderId}/earnings`, {
+            const res = await axios.get(`${API_BASE_URL}/api/riders/${riderId}/earnings?period=${period}`, {
                 headers: { Authorization: `Bearer ${token}` }
             });
             setEarnings(res.data);
@@ -127,145 +119,206 @@ export default function RiderEarnings({ riderId }: RiderEarningsProps) {
     };
 
     return (
-        <div className="pb-24">
+        <div className="pb-24 bg-[#F8F9FB] min-h-screen font-light">
             {/* Header */}
-            <div className="bg-gradient-to-r from-green-500 to-emerald-600 px-6 pt-8 pb-6 rounded-b-3xl text-white mb-6">
-                <h1 className="text-2xl font-bold mb-2">Earnings</h1>
-                <div className="flex items-end gap-2">
-                    <h2 className="text-4xl font-bold">Rs. {earnings.total.toLocaleString()}</h2>
-                    <p className="mb-2 opacity-90">this week</p>
+            <div className="bg-[#008C44] px-6 pt-12 pb-20 rounded-b-[40px] text-white relative">
+                <h1 className="text-xl font-medium mb-8">Earnings</h1>
+                
+                {/* Period Selector */}
+                <div className="flex bg-white/10 backdrop-blur-md p-1 rounded-2xl mb-10">
+                    <button 
+                        onClick={() => setPeriod('daily')}
+                        className={`flex-1 py-2 rounded-xl text-sm transition-all ${period === 'daily' ? 'bg-white text-[#008C44] font-medium' : 'text-white'}`}
+                    >
+                        Daily
+                    </button>
+                    <button 
+                        onClick={() => setPeriod('weekly')}
+                        className={`flex-1 py-2 rounded-xl text-sm transition-all ${period === 'weekly' ? 'bg-white text-[#008C44] font-medium' : 'text-white'}`}
+                    >
+                        Weekly
+                    </button>
+                    <button 
+                        onClick={() => setPeriod('monthly')}
+                        className={`flex-1 py-2 rounded-xl text-sm transition-all ${period === 'monthly' ? 'bg-white text-[#008C44] font-medium' : 'text-white'}`}
+                    >
+                        Monthly
+                    </button>
+                </div>
+
+                <div className="text-center">
+                    <p className="text-white/70 text-xs mb-2 uppercase tracking-widest">Total This {period.charAt(0).toUpperCase() + period.slice(1)}</p>
+                    <h2 className="text-5xl font-bold mb-2">PKR {earnings.total.toLocaleString()}</h2>
+                    <p className="text-white/80 text-sm font-light">{earnings.deliveries} deliveries completed</p>
                 </div>
             </div>
 
             {/* Stats Grid */}
-            <div className="px-6 grid grid-cols-2 gap-4 mb-6">
-                <div className="bg-white p-4 rounded-2xl shadow-sm border border-gray-100">
-                    <p className="text-gray-500 text-xs mb-1">Base Pay</p>
-                    <p className="font-bold text-lg text-gray-900">Rs. {earnings.basePay.toLocaleString()}</p>
+            <div className="px-6 -mt-12 grid grid-cols-3 gap-3 mb-8">
+                <div className="bg-white p-4 rounded-3xl shadow-lg shadow-gray-100 flex flex-col items-center text-center">
+                    <div className="w-10 h-10 bg-blue-500 rounded-xl flex items-center justify-center text-white mb-2 shadow-md shadow-blue-100">
+                        <FaDollarSign size={16} />
+                    </div>
+                    <p className="text-gray-400 text-[10px] font-medium mb-1">Base Pay</p>
+                    <p className="font-bold text-sm text-gray-900">{earnings.basePay.toLocaleString()}</p>
                 </div>
-                <div className="bg-white p-4 rounded-2xl shadow-sm border border-gray-100">
-                    <p className="text-gray-500 text-xs mb-1">Tips</p>
-                    <p className="font-bold text-lg text-gray-900">Rs. {earnings.tips.toLocaleString()}</p>
+                <div className="bg-white p-4 rounded-3xl shadow-lg shadow-gray-100 flex flex-col items-center text-center">
+                    <div className="w-10 h-10 bg-purple-500 rounded-xl flex items-center justify-center text-white mb-2 shadow-md shadow-purple-100">
+                        <FaStar size={16} />
+                    </div>
+                    <p className="text-gray-400 text-[10px] font-medium mb-1">Bonuses</p>
+                    <p className="font-bold text-sm text-gray-900">{earnings.bonuses.toLocaleString()}</p>
                 </div>
-                <div className="bg-white p-4 rounded-2xl shadow-sm border border-gray-100">
-                    <p className="text-gray-500 text-xs mb-1">Deliveries</p>
-                    <p className="font-bold text-lg text-gray-900">{earnings.deliveries}</p>
-                </div>
-                <div className="bg-white p-4 rounded-2xl shadow-sm border border-gray-100">
-                    <p className="text-gray-500 text-xs mb-1">Bonus</p>
-                    <p className="font-bold text-lg text-gray-900">Rs. {earnings.bonuses.toLocaleString()}</p>
+                <div className="bg-white p-4 rounded-3xl shadow-lg shadow-gray-100 flex flex-col items-center text-center">
+                    <div className="w-10 h-10 bg-yellow-500 rounded-xl flex items-center justify-center text-white mb-2 shadow-md shadow-yellow-100">
+                        <FaWallet size={16} />
+                    </div>
+                    <p className="text-gray-400 text-[10px] font-medium mb-1">Tips</p>
+                    <p className="font-bold text-sm text-gray-900">{earnings.tips.toLocaleString()}</p>
                 </div>
             </div>
 
             {/* Payout Card */}
-            <div className="px-6 mb-6">
-                <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
-                    <div className="flex justify-between items-center mb-4">
-                        <div>
-                            <p className="text-gray-500 text-sm">Pending Payout</p>
-                            <h3 className="text-2xl font-bold text-gray-900">Rs. {earnings.pendingPayout.toLocaleString()}</h3>
-                        </div>
-                        <button
-                            onClick={handleCashout}
-                            disabled={earnings.pendingPayout === 0}
-                            className="bg-green-500 text-white px-4 py-2 rounded-xl text-sm font-semibold hover:bg-green-600 transition disabled:opacity-50 disabled:cursor-not-allowed"
-                        >
-                            Cash Out
-                        </button>
+            <div className="px-6 mb-8">
+                <div className="bg-gradient-to-br from-[#008C44] via-[#00A852] to-[#00C25E] rounded-[32px] p-6 text-white shadow-xl shadow-green-100 relative overflow-hidden">
+                    <div className="absolute right-[-20px] top-[-20px] opacity-10">
+                        <FaWallet size={120} />
                     </div>
-                    <div className="border-t border-gray-100 pt-4">
-                        <div className="flex justify-between items-center mb-2">
-                            <p className="font-semibold text-gray-900">Bank Account</p>
+                    <div className="relative z-10">
+                        <div className="flex justify-between items-start mb-4">
+                            <div>
+                                <p className="text-white/70 text-sm font-light mb-1">Pending Payout</p>
+                                <h3 className="text-3xl font-bold">PKR {earnings.pendingPayout.toLocaleString()}</h3>
+                            </div>
+                            <div className="w-12 h-12 bg-white/20 backdrop-blur-md rounded-2xl flex items-center justify-center">
+                                <FaWallet size={24} />
+                            </div>
+                        </div>
+                        <div className="flex justify-between items-end mt-8">
+                            <p className="text-white/80 text-xs">Next payout: <span className="font-medium">{earnings.nextPayoutDate}</span></p>
                             <button
-                                onClick={() => setIsEditingBank(true)}
-                                className="text-orange-500 text-sm font-semibold hover:text-orange-600"
+                                onClick={handleCashout}
+                                className="bg-white/20 backdrop-blur-md text-white px-6 py-2.5 rounded-2xl text-[10px] font-bold uppercase tracking-widest hover:bg-white/30 transition border border-white/30"
                             >
-                                Change
+                                Cash Out
                             </button>
                         </div>
-                        <p className="text-sm text-gray-600">{bankDetails.bankName || 'No Bank Added'} - **** {bankDetails.accountNumber ? bankDetails.accountNumber.slice(-4) : '0000'}</p>
-                        <p className="text-xs text-gray-400 mt-1">{bankDetails.accountTitle || 'No Account Title'}</p>
                     </div>
                 </div>
             </div>
 
-            {/* Transaction History */}
+            {/* Bank Account Section */}
+            <div className="px-6 mb-8">
+                <p className="text-gray-400 text-[10px] font-bold uppercase tracking-widest mb-4 px-1">Bank Account</p>
+                <div className="bg-white rounded-[24px] p-5 shadow-[0_4px_20px_rgb(0,0,0,0.03)] border border-gray-50 flex items-center justify-between">
+                    <div className="flex items-center gap-4">
+                        <div className="w-12 h-12 bg-gray-50 rounded-2xl flex items-center justify-center text-gray-400">
+                            <FaUniversity size={20} />
+                        </div>
+                        <div className="flex-1">
+                            <p className="text-gray-900 font-bold text-sm tracking-tight">
+                                {bankDetails.bankName || 'Add Bank Account'}
+                            </p>
+                            <p className="text-gray-400 text-[10px] font-medium uppercase tracking-wider mt-0.5">
+                                **** {bankDetails.accountNumber ? bankDetails.accountNumber.slice(-4) : 'XXXX'} • {bankDetails.accountTitle || 'No title set'}
+                            </p>
+                        </div>
+                    </div>
+                    <button
+                        onClick={() => setIsEditingBank(true)}
+                        className="text-[#008C44] text-[10px] font-bold uppercase tracking-widest hover:bg-green-50 px-4 py-2 rounded-xl transition-all"
+                    >
+                        Change
+                    </button>
+                </div>
+            </div>
+
+            {/* Recent Transactions */}
             <div className="px-6">
-                <h3 className="font-bold text-gray-900 mb-4">Recent Transactions</h3>
-                <div className="space-y-4">
-                    {transactions.map((tx, index) => (
-                        <div key={index} className="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 flex items-center justify-between">
+                <div className="flex justify-between items-center mb-4 px-1">
+                    <p className="text-gray-400 text-[10px] font-bold uppercase tracking-widest">Recent Transactions</p>
+                    <button className="text-[#008C44] text-[10px] font-bold uppercase tracking-widest flex items-center gap-1 hover:gap-2 transition-all">
+                        View All <FaArrowRight size={10} />
+                    </button>
+                </div>
+                <div className="space-y-3">
+                    {transactions.length > 0 ? transactions.map((tx, index) => (
+                        <div key={index} className="bg-white p-4 rounded-[24px] shadow-[0_4px_20px_rgb(0,0,0,0.03)] border border-gray-50 flex items-center justify-between group">
                             <div className="flex items-center gap-4">
-                                <div className={`w-10 h-10 rounded-full flex items-center justify-center ${tx.type.includes('tip') ? 'bg-yellow-100 text-yellow-600' : 'bg-green-100 text-green-600'
-                                    }`}>
-                                    {tx.type.includes('tip') ? <FaWallet /> : <FaHistory />}
+                                <div className="w-12 h-12 bg-blue-50 rounded-2xl flex items-center justify-center text-blue-500 group-hover:scale-110 transition-transform">
+                                    <FaDollarSign size={18} />
                                 </div>
                                 <div>
-                                    <p className="font-semibold text-gray-900">Order {tx.id}</p>
-                                    <p className="text-xs text-gray-500">{tx.time}</p>
+                                    <p className="text-gray-900 font-bold text-sm tracking-tight">#{tx.id?.slice(-5) || '12345'}</p>
+                                    <p className="text-gray-400 text-[10px] font-medium uppercase tracking-wider mt-0.5">{tx.time || 'Today, 2:30 PM'}</p>
                                 </div>
                             </div>
-                            <p className="font-bold text-gray-900">+Rs. {tx.amount.toLocaleString()}</p>
+                            <p className="text-[#008C44] font-bold text-sm">+PKR {tx.amount.toLocaleString()}</p>
                         </div>
-                    ))}
-                    {transactions.length === 0 && (
-                        <p className="text-center text-gray-500 py-4">No transactions yet</p>
+                    )) : (
+                        <div className="bg-white p-10 rounded-[32px] border border-dashed border-gray-200 text-center">
+                            <div className="w-16 h-16 bg-gray-50 rounded-full flex items-center justify-center mx-auto mb-4">
+                                <FaHistory className="text-gray-200" size={24} />
+                            </div>
+                            <p className="text-gray-400 text-xs font-medium">No transactions found</p>
+                        </div>
                     )}
                 </div>
             </div>
 
             {/* Bank Details Modal */}
             {isEditingBank && (
-                <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 px-4">
-                    <div className="bg-white rounded-3xl w-full max-w-md p-6">
-                        <h3 className="text-xl font-bold text-gray-900 mb-4">Edit Bank Details</h3>
+                <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-end sm:items-center justify-center z-[100] p-0 sm:p-4">
+                    <div className="bg-white rounded-t-[40px] sm:rounded-[40px] w-full max-w-sm p-8 shadow-2xl animate-slide-up">
+                        <div className="w-12 h-1 bg-gray-100 rounded-full mx-auto mb-8 sm:hidden"></div>
+                        <h3 className="text-2xl font-bold text-gray-900 mb-8 tracking-tight">Bank Details</h3>
 
-                        <div className="space-y-4">
+                        <div className="space-y-5">
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">Bank Name</label>
+                                <label className="block text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-2">Bank Name</label>
                                 <input
                                     type="text"
                                     value={bankDetails.bankName}
                                     onChange={(e) => setBankDetails({ ...bankDetails, bankName: e.target.value })}
-                                    className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-orange-500"
+                                    className="w-full px-5 py-4 rounded-2xl bg-gray-50 border-none focus:ring-2 focus:ring-orange-500 text-sm font-medium"
                                     placeholder="e.g. HBL, Meezan Bank"
                                 />
                             </div>
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">Account Title</label>
+                                <label className="block text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-2">Account Title</label>
                                 <input
                                     type="text"
                                     value={bankDetails.accountTitle}
                                     onChange={(e) => setBankDetails({ ...bankDetails, accountTitle: e.target.value })}
-                                    className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-orange-500"
+                                    className="w-full px-5 py-4 rounded-2xl bg-gray-50 border-none focus:ring-2 focus:ring-orange-500 text-sm font-medium"
                                     placeholder="Account Holder Name"
                                 />
                             </div>
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">Account Number / IBAN</label>
+                                <label className="block text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-2">Account Number / IBAN</label>
                                 <input
                                     type="text"
                                     value={bankDetails.accountNumber}
                                     onChange={(e) => setBankDetails({ ...bankDetails, accountNumber: e.target.value })}
-                                    className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-orange-500"
+                                    className="w-full px-5 py-4 rounded-2xl bg-gray-50 border-none focus:ring-2 focus:ring-orange-500 text-sm font-medium"
                                     placeholder="Account Number"
                                 />
                             </div>
                         </div>
 
-                        <div className="flex gap-3 mt-6">
+                        <div className="flex gap-3 mt-8">
                             <button
                                 onClick={() => setIsEditingBank(false)}
-                                className="flex-1 py-3 rounded-xl font-semibold text-gray-600 bg-gray-100 hover:bg-gray-200 transition"
+                                className="flex-1 py-4 rounded-2xl font-bold text-gray-400 bg-gray-100 hover:bg-gray-200 transition-all text-xs uppercase tracking-widest"
                             >
                                 Cancel
                             </button>
                             <button
                                 onClick={handleSaveBankDetails}
                                 disabled={savingBank}
-                                className="flex-1 py-3 rounded-xl font-semibold text-white bg-orange-500 hover:bg-orange-600 transition disabled:opacity-50"
+                                className="flex-1 py-4 rounded-2xl font-bold text-white bg-[#008C44] shadow-lg shadow-green-100 hover:scale-[1.02] transition-all active:scale-[0.98] text-xs uppercase tracking-widest"
                             >
-                                {savingBank ? 'Saving...' : 'Save Details'}
+                                {savingBank ? 'Saving...' : 'Save'}
                             </button>
                         </div>
                     </div>
