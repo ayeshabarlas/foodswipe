@@ -48,7 +48,7 @@ export default function Home() {
           const user = response.data;
 
           // CRITICAL FIX: Merge fresh data with existing userInfo to preserve the token
-          const existingUserInfo = JSON.parse(userInfo || '{}');
+          const existingUserInfo = JSON.parse(userInfoStr || '{}');
           const updatedUserInfo = { ...existingUserInfo, ...user };
 
           // Update localStorage with merged data
@@ -94,7 +94,7 @@ export default function Home() {
         } catch (error: any) {
           console.error("Session verification failed:", error.message);
           
-          const existingUserInfo = JSON.parse(userInfo || '{}');
+          const existingUserInfo = JSON.parse(userInfoStr || '{}');
           
           // Only logout if it's a definitive authentication error (401 or 403)
           if (error.response && (error.response.status === 401 || error.response.status === 403)) {

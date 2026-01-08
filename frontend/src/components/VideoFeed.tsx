@@ -541,31 +541,6 @@ export default function VideoFeed() {
                 </button>
             </div>
 
-            {/* Active Order Tracking Floating Button */}
-            <AnimatePresence>
-                {activeOrder && (
-                    <motion.button
-                        initial={{ opacity: 0, y: 50, x: '-50%' }}
-                        animate={{ opacity: 1, y: 0, x: '-50%' }}
-                        exit={{ opacity: 0, y: 50, x: '-50%' }}
-                        onClick={() => handleTrackOrder(activeOrder._id)}
-                        className="fixed bottom-24 left-1/2 -translate-x-1/2 z-[50] bg-orange-500 text-white px-6 py-3 rounded-full shadow-lg flex items-center gap-3 border-2 border-white/20 backdrop-blur-sm hover:bg-orange-600 transition-all active:scale-95 group"
-                    >
-                        <div className="relative">
-                            <svg className="w-5 h-5 animate-pulse" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                                <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" />
-                            </svg>
-                            <span className="absolute -top-1 -right-1 w-2 h-2 bg-green-400 rounded-full border border-white"></span>
-                        </div>
-                        <div className="flex flex-col items-start">
-                            <span className="text-[10px] font-black uppercase tracking-widest leading-none opacity-80">Track Order</span>
-                            <span className="text-xs font-bold leading-tight">{activeOrder.status}</span>
-                        </div>
-                        <FaChevronRight size={12} className="group-hover:translate-x-1 transition-transform" />
-                    </motion.button>
-                )}
-            </AnimatePresence>
-
             <div className="h-full w-full overflow-y-scroll snap-y snap-mandatory scroll-smooth no-scrollbar" onScroll={handleScroll}>
                 {Array.isArray(dishes) && dishes.map((dish, index) => {
                     let distance: string | undefined;
@@ -587,7 +562,13 @@ export default function VideoFeed() {
                 {selectedRestaurant && <RestaurantProfile restaurant={selectedRestaurant} onBack={() => setSelectedRestaurant(null)} />}
             </AnimatePresence>
             <CartDrawer isOpen={isCartOpen} onClose={() => setIsCartOpen(false)} onTrackOrder={handleTrackOrder} />
-            <NavDrawer isOpen={isNavOpen} onClose={() => setIsNavOpen(false)} user={user} onOpenProfile={() => setIsProfileOpen(true)} />
+            <NavDrawer 
+                isOpen={isNavOpen} 
+                onClose={() => setIsNavOpen(false)} 
+                user={user} 
+                onOpenProfile={() => setIsProfileOpen(true)}
+                activeOrderId={activeOrder?._id}
+            />
             <ProfileModal isOpen={isProfileOpen} onClose={() => setIsProfileOpen(false)} user={user} />
             <OrderTracking isOpen={showTrackingModal} onClose={() => setShowTrackingModal(false)} orderId={selectedOrderId} />
             {showLocationPrompt && <LocationPermission onAllow={handleAllowLocation} onDeny={handleDenyLocation} />}

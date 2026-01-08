@@ -36,9 +36,10 @@ interface NavDrawerProps {
     onClose: () => void;
     user: any;
     onOpenProfile?: () => void;
+    activeOrderId?: string;
 }
 
-export default function NavDrawer({ isOpen, onClose, user, onOpenProfile }: NavDrawerProps) {
+export default function NavDrawer({ isOpen, onClose, user, onOpenProfile, activeOrderId }: NavDrawerProps) {
     const router = useRouter();
     const [showProfileModal, setShowProfileModal] = useState(false);
     const [showOrdersModal, setShowOrdersModal] = useState(false);
@@ -119,10 +120,17 @@ export default function NavDrawer({ isOpen, onClose, user, onOpenProfile }: NavD
                     icon: FaMapMarkerAlt,
                     label: 'Order Tracking',
                     onClick: () => {
-                        setShowTrackingModal(true);
-                        onClose();
+                        if (activeOrderId) {
+                            setSelectedOrderId(activeOrderId);
+                            setShowTrackingModal(true);
+                            onClose();
+                        } else {
+                            // If no active order, maybe show orders history instead or a message
+                            setShowOrdersModal(true);
+                            onClose();
+                        }
                     },
-                    badge: null
+                    badge: activeOrderId ? 'Active' : null
                 },
                 {
                     icon: FaTicketAlt,
