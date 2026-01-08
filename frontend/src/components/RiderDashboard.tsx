@@ -36,7 +36,7 @@ export default function RiderDashboard({ riderId }: RiderDashboardProps) {
     const effectiveRiderId = getEffectiveRiderId();
 
     const [riderData, setRiderData] = useState<any>(null);
-    const [loading, setLoading] = useState(true);
+    const [loading, setLoading] = useState(false); // Start as false to avoid initial flash if not needed
     const [error, setError] = useState<string | null>(null);
     const [isOnline, setIsOnline] = useState(false);
     const [activeTab, setActiveTab] = useState('home');
@@ -143,6 +143,14 @@ export default function RiderDashboard({ riderId }: RiderDashboardProps) {
         fetchRiderData(true);
         fetchDeliveries();
 
+        // Check if we need to auto-create profile (if data still null after 2s)
+        const timeout = setTimeout(() => {
+            if (!riderData && !error && loading) {
+                console.log("Still loading, retrying fetch...");
+                fetchRiderData(true);
+            }
+        }, 2000);
+
         // Real-time polling every 5 seconds (background)
         const interval = setInterval(() => {
             fetchRiderData(false);
@@ -163,7 +171,10 @@ export default function RiderDashboard({ riderId }: RiderDashboardProps) {
             }
         }, 5000);
 
-        return () => clearInterval(interval);
+        return () => {
+            clearInterval(interval);
+            clearTimeout(timeout);
+        };
     }, [effectiveRiderId]); // Only depend on effectiveRiderId to avoid loops
 
     const handleAcceptOrder = async () => {
