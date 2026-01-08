@@ -545,28 +545,6 @@ export default function VideoFeed() {
                         {cartCount > 0 && <span className="absolute -top-1 -right-1 bg-primary text-white text-xs font-bold w-5 h-5 flex items-center justify-center rounded-full">{cartCount}</span>}
                     </button>
                 </div>
-
-                {/* Active Order Tracking Bar - Screenshot 1 Style */}
-                {activeOrder && (
-                    <motion.div 
-                        initial={{ y: -20, opacity: 0 }}
-                        animate={{ y: 0, opacity: 1 }}
-                        onClick={() => handleTrackOrder(activeOrder._id)}
-                        className="bg-white/95 backdrop-blur-md rounded-full px-5 py-3 flex items-center justify-between shadow-xl cursor-pointer border border-white/20"
-                    >
-                        <div className="flex items-center gap-3">
-                            <div className="w-8 h-8 bg-gray-100 rounded-full flex items-center justify-center text-gray-400">
-                                <FaMapMarkerAlt size={14} />
-                            </div>
-                            <span className="text-gray-900 font-bold text-sm tracking-tight">Order Tracking</span>
-                        </div>
-                        <div className="flex items-center gap-2">
-                            <span className="bg-orange-500 text-white text-[10px] font-black uppercase px-3 py-1 rounded-full tracking-wider animate-pulse">
-                                Active
-                            </span>
-                        </div>
-                    </motion.div>
-                )}
             </div>
 
             <div className="h-full w-full overflow-y-scroll snap-y snap-mandatory scroll-smooth no-scrollbar" onScroll={handleScroll}>

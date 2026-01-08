@@ -272,35 +272,88 @@ export default function RiderOrders({ riderId }: RiderOrdersProps) {
                             <span className="text-[10px] font-bold">#{activeDelivery.orderNumber || activeDelivery._id.slice(-7).toUpperCase()}</span>
                         </div>
 
-                        <div className="p-6">
+                        <div className="p-0">
                             {activeDelivery.status === 'Confirmed' ? (
-                                /* Screenshot 3: Order Accepted Screen */
-                                <div className="text-center py-8">
-                                    <div className="w-20 h-20 bg-orange-100 text-orange-500 rounded-full flex items-center justify-center mx-auto mb-6">
-                                        <FaCheckCircle size={40} />
-                                    </div>
-                                    <h2 className="text-2xl font-black text-gray-900 mb-2">Order Accepted!</h2>
-                                    <p className="text-gray-500 mb-8 max-w-[200px] mx-auto">Head to {activeDelivery.restaurant?.name || 'the restaurant'} to pick up the order.</p>
-                                    
-                                    <div className="bg-gray-50 rounded-2xl p-4 mb-8 text-left">
-                                        <div className="flex items-start gap-3 mb-4">
-                                            <div className="w-8 h-8 bg-white rounded-full flex items-center justify-center shadow-sm text-orange-500">
-                                                <FaMapMarkerAlt size={14} />
-                                            </div>
-                                            <div>
-                                                <p className="text-[10px] font-bold text-gray-400 uppercase">Pickup From</p>
-                                                <p className="font-bold text-gray-900">{activeDelivery.restaurant?.name}</p>
-                                                <p className="text-xs text-gray-500 line-clamp-1">{activeDelivery.restaurant?.address}</p>
+                                /* Screenshot 2: Order Accepted Screen */
+                                <div className="flex flex-col bg-gray-50">
+                                    {/* Map Area at the top */}
+                                    <div className="h-[250px] w-full relative">
+                                        <OrderTracking order={activeDelivery} userRole="rider" />
+                                        <div className="absolute top-4 left-4 right-4 flex justify-between items-center pointer-events-none">
+                                            <div className="bg-white/90 backdrop-blur-md px-3 py-1.5 rounded-full shadow-sm flex items-center gap-2">
+                                                <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
+                                                <span className="text-[10px] font-black uppercase tracking-wider text-gray-800">Live Location</span>
                                             </div>
                                         </div>
                                     </div>
 
-                                    <button 
-                                        onClick={() => handleUpdateStatus(activeDelivery._id, 'OnTheWay', '🚀 Delivery started!')}
-                                        className="w-full bg-orange-500 hover:bg-orange-600 text-white py-4 rounded-2xl font-black text-lg shadow-lg shadow-orange-200 transition-all active:scale-95"
-                                    >
-                                        START DELIVERY
-                                    </button>
+                                    {/* Order Details Card */}
+                                    <div className="px-4 -mt-10 pb-8 relative z-10">
+                                        <div className="bg-white rounded-[32px] p-6 shadow-xl shadow-gray-200/50 border border-gray-100">
+                                            <div className="flex items-center justify-center mb-6">
+                                                <div className="w-16 h-16 bg-green-50 rounded-full flex items-center justify-center text-green-500">
+                                                    <FaCheckCircle size={32} />
+                                                </div>
+                                            </div>
+                                            
+                                            <h2 className="text-2xl font-black text-center text-[#FF4D00] mb-1">Order Accepted!</h2>
+                                            <p className="text-gray-400 text-center text-xs font-bold mb-8">You've successfully accepted this delivery</p>
+
+                                            <div className="space-y-6">
+                                                <div className="flex items-center justify-between pb-4 border-b border-gray-50">
+                                                    <span className="text-gray-400 font-bold text-xs uppercase tracking-wider">Order Summary</span>
+                                                    <span className="text-gray-900 font-black text-sm">Order ID <span className="text-gray-400 ml-1">#{activeDelivery.orderNumber || activeDelivery._id.slice(-6).toUpperCase()}</span></span>
+                                                </div>
+
+                                                <div className="space-y-4">
+                                                    <div className="flex gap-4">
+                                                        <div className="w-10 h-10 bg-orange-50 rounded-2xl flex items-center justify-center text-orange-500 flex-shrink-0">
+                                                            <FaMapMarkerAlt size={16} />
+                                                        </div>
+                                                        <div>
+                                                            <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Pickup from</p>
+                                                            <p className="font-black text-gray-900 text-sm">{activeDelivery.restaurant?.name}</p>
+                                                            <p className="text-[11px] font-bold text-gray-500 mt-0.5">1.2 km away</p>
+                                                        </div>
+                                                    </div>
+
+                                                    <div className="flex gap-4">
+                                                        <div className="w-10 h-10 bg-pink-50 rounded-2xl flex items-center justify-center text-pink-500 flex-shrink-0">
+                                                            <FaMapMarkerAlt size={16} />
+                                                        </div>
+                                                        <div>
+                                                            <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Deliver to</p>
+                                                            <p className="font-black text-gray-900 text-sm line-clamp-1">{activeDelivery.user?.address || 'Customer Location'}</p>
+                                                            <p className="text-[11px] font-bold text-gray-500 mt-0.5">3.5 km from restaurant</p>
+                                                        </div>
+                                                    </div>
+                                                </div>
+
+                                                <div className="pt-4 border-t border-gray-50 space-y-3">
+                                                    <div className="flex justify-between items-center">
+                                                        <div className="flex items-center gap-2 text-gray-400 font-bold text-xs">
+                                                            <span>$</span> You'll earn
+                                                        </div>
+                                                        <span className="text-[#FF4D00] font-black text-lg">PKR 180</span>
+                                                    </div>
+                                                    <div className="flex justify-between items-center">
+                                                        <div className="flex items-center gap-2 text-gray-400 font-bold text-xs">
+                                                            <FaClock /> Estimated time
+                                                        </div>
+                                                        <span className="text-gray-900 font-black text-sm">25-30 mins</span>
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            <button 
+                                                onClick={() => handleUpdateStatus(activeDelivery._id, 'OnTheWay', '🚀 Delivery started!')}
+                                                className="w-full mt-8 bg-gradient-to-r from-orange-500 to-pink-600 hover:from-orange-600 hover:to-pink-700 text-white py-4 rounded-2xl font-black text-sm shadow-lg shadow-orange-200 transition-all active:scale-[0.98] flex items-center justify-center gap-2"
+                                            >
+                                                <FaMapMarkerAlt size={14} />
+                                                START DELIVERY
+                                            </button>
+                                        </div>
+                                    </div>
                                 </div>
                             ) : (
                                 /* Screenshot 4 & 5: Tracking View with Map and Status Buttons */
