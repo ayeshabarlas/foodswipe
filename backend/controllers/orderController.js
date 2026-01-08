@@ -232,20 +232,28 @@ const updateOrderStatus = async (req, res) => {
             // Always notify admin about any order status update
             io.to('admin').emit('order_updated', updatedOrder);
 
-            // When order is ready and handed to rider, notify all available riders
-            if (status === 'OnTheWay') {
+            // When order is ready, notify all available riders
+            if (status === 'Ready') {
                 io.to('riders').emit('newOrderAvailable', {
-                    orderId: updatedOrder._id,
+                    _id: updatedOrder._id,
                     restaurant: {
                         _id: updatedOrder.restaurant._id,
                         name: updatedOrder.restaurant.name,
                         address: updatedOrder.restaurant.address,
                         location: updatedOrder.restaurant.location
                     },
-                    deliveryAddress: updatedOrder.shippingAddress.address,
+                    shippingAddress: {
+                        address: updatedOrder.shippingAddress.address
+                    },
                     totalPrice: updatedOrder.totalPrice,
-                    orderItems: updatedOrder.orderItems
+                    orderItems: updatedOrder.orderItems,
+                    createdAt: updatedOrder.createdAt
                 });
+            }
+
+            // Also notify specifically assigned rider if any
+            if (order.rider) {
+                io.to(`user_${order.rider}`).emit('orderStatusUpdate', updatedOrder);
             }
         }
 

@@ -59,6 +59,11 @@ const RiderDashboard = ({ riderId: initialRiderId }: { riderId?: string }) => {
         }
     };
 
+    const playNotificationSound = () => {
+        const audio = new Audio('https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3');
+        audio.play().catch(e => console.log('Audio play failed:', e));
+    };
+
     useEffect(() => {
         fetchRiderData();
         
@@ -80,6 +85,25 @@ const RiderDashboard = ({ riderId: initialRiderId }: { riderId?: string }) => {
         if (!riderData?.user?._id) return;
 
         const socket = initSocket(riderData.user._id, 'rider', undefined, riderData._id);
+
+        if (socket) {
+            socket.on('newOrderAvailable', (order) => {
+                console.log('New order available for rider:', order);
+                if (isOnline) {
+                    setNewOrderPopup(order);
+                    setTimer(60); // Set to 60s as per screenshot
+                    playNotificationSound();
+                }
+            });
+
+            socket.on('orderStatusUpdate', (updatedOrder) => {
+                console.log('Order status update received:', updatedOrder);
+                setOrders(prev => prev.map(o => o._id === updatedOrder._id ? updatedOrder : o));
+                if (activeOrder?._id === updatedOrder._id) {
+                    setActiveOrder(updatedOrder);
+                }
+            });
+        }
 
         let watchId: number;
 

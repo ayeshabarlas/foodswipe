@@ -75,7 +75,7 @@ export default function OrderBoard({ restaurant }: OrderBoardProps) {
         socket?.on('newOrder', (order: Order) => {
             setOrders(prev => [order, ...prev]);
             setNewOrderPopup(order);
-            setCountdown(60);
+            setCountdown(30);
             playNotificationSound();
         });
 

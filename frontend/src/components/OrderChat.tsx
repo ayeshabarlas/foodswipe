@@ -31,6 +31,11 @@ export default function OrderChat({ orderId, isOpen, onClose, userRole, userName
         messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
     };
 
+    const playMessageSound = () => {
+        const audio = new Audio('https://assets.mixkit.co/active_storage/sfx/2357/2357-preview.mp3');
+        audio.play().catch(e => console.log('Audio play failed:', e));
+    };
+
     useEffect(() => {
         if (isOpen && socket) {
             socket.emit('joinOrderChat', { orderId });
@@ -38,6 +43,10 @@ export default function OrderChat({ orderId, isOpen, onClose, userRole, userName
             const handleMessage = (data: { orderId: string; message: Message }) => {
                 if (data.orderId === orderId) {
                     setMessages(prev => [...prev, data.message]);
+                    // Play sound if message is from someone else
+                    if (data.message.sender !== userRole) {
+                        playMessageSound();
+                    }
                 }
             };
 
