@@ -1,51 +1,32 @@
 const admin = require('firebase-admin');
-const fs = require('fs');
-const path = require('path');
 
-// Check if service account is provided via path or environment variables
-// For this setup, we'll assume the user might provide the path to the JSON file
-// or we can parse the JSON content from an env var if they prefer.
-
-const serviceAccountJson = process.env.FIREBASE_SERVICE_ACCOUNT_JSON;
-
-console.log('🔥 Firebase Admin SDK Initialization Check');
-
-if (serviceAccountJson && serviceAccountJson.trim() !== '') {
+if (!admin.apps.length) {
+    console.log('🔥 Firebase Admin SDK Initialization Check');
     try {
-        if (admin.apps.length > 0) {
-            console.log('✅ Firebase Admin SDK already initialized');
-        } else {
+        const serviceAccountVar = process.env.FIREBASE_SERVICE_ACCOUNT_JSON;
+        
+        if (serviceAccountVar) {
             let serviceAccount;
-            const trimmedJson = serviceAccountJson.trim();
-
-            if (trimmedJson.startsWith('{')) {
-                // Clean common JSON copy-paste issues
-                const cleanJson = trimmedJson.replace(/\\n/g, "\\n");
-                serviceAccount = JSON.parse(cleanJson);
-            } else {
-                // If it's not a JSON string, assume it's a file path (for local dev)
-                const resolvedPath = path.resolve(__dirname, '..', trimmedJson);
-                if (fs.existsSync(resolvedPath)) {
-                    serviceAccount = require(resolvedPath);
-                } else {
-                    console.warn(`⚠️  Firebase Service Account file not found at: ${resolvedPath}`);
-                }
-            }
-
-            if (serviceAccount) {
+            try {
+                // Try to parse if it's a stringified JSON
+                serviceAccount = typeof serviceAccountVar === 'string' ? JSON.parse(serviceAccountVar) : serviceAccountVar;
+                
                 admin.initializeApp({
                     credential: admin.credential.cert(serviceAccount)
                 });
                 console.log('✅ Firebase Admin SDK initialized successfully');
+            } catch (parseErr) {
+                console.error('❌ Firebase Service Account Parse Error:', parseErr.message);
+                console.warn('⚠️ Firebase initialized without credentials (limited functionality)');
+                admin.initializeApp();
             }
+        } else {
+            console.warn('⚠️ FIREBASE_SERVICE_ACCOUNT_JSON is missing. Using default initialization.');
+            admin.initializeApp();
         }
     } catch (error) {
-        console.error("❌ Firebase Initialization Error:", error.message);
-        console.warn("Server will start without Firebase authentication features.");
+        console.error('❌ Firebase Initialization Critical Error:', error.message);
     }
-} else {
-    console.warn("⚠️  Firebase Admin SDK not initialized. FIREBASE_SERVICE_ACCOUNT_JSON is empty or missing.");
 }
-
 
 module.exports = admin;
