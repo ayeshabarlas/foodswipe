@@ -32,17 +32,7 @@ app.get('/health', (req, res) => {
 });
 
 // 3. MIDDLEWARE
-app.use(cors({
-    origin: function (origin, callback) {
-        // Allow all origins in production for now to fix CORS issues, 
-        // or you can restrict it to your vercel app URL
-        callback(null, true);
-    },
-    credentials: true,
-    methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept', 'X-CSRF-Token']
-}));
-
+app.use(cors()); // Super permissive for Vercel debugging
 app.use(express.json());
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 app.use('/api/uploads', express.static(path.join(__dirname, 'uploads')));

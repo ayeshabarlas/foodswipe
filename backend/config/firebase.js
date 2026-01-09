@@ -16,7 +16,9 @@ if (serviceAccountJson && serviceAccountJson.trim() !== '') {
         const trimmedJson = serviceAccountJson.trim();
 
         if (trimmedJson.startsWith('{')) {
-            serviceAccount = JSON.parse(trimmedJson);
+            // Clean common JSON copy-paste issues
+            const cleanJson = trimmedJson.replace(/\\n/g, "\\n");
+            serviceAccount = JSON.parse(cleanJson);
         } else {
             // If it's not a JSON string, assume it's a file path (for local dev)
             const resolvedPath = path.resolve(__dirname, '..', trimmedJson);
