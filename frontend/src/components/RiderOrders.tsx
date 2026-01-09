@@ -22,7 +22,8 @@ export default function RiderOrders({ riderId }: RiderOrdersProps) {
     const [filter, setFilter] = useState<'active' | 'completed' | 'all'>('active');
     const [activeDelivery, setActiveDelivery] = useState<any>(null);
     const [isChatOpen, setIsChatOpen] = useState(false);
-    const userInfo = JSON.parse(localStorage.getItem("userInfo") || "{}");
+    const [selectedOrder, setSelectedOrder] = useState<any>(null);
+    const [showDetailsModal, setShowDetailsModal] = useState(false);
 
     // Track location if there's an active delivery
     const { location } = useGeolocation(!!activeDelivery);
@@ -198,7 +199,7 @@ export default function RiderOrders({ riderId }: RiderOrdersProps) {
             const gross = BASE_PAY + (dist * PER_KM_RATE);
             const net = gross - PLATFORM_FEE;
 
-            // Updated to use the new /complete endpoint
+            // Updated to use the correct API_BASE_URL
             await axios.post(
                 `${API_BASE_URL}/api/orders/${orderId}/complete`,
                 { distanceKm: dist },
@@ -227,6 +228,11 @@ export default function RiderOrders({ riderId }: RiderOrdersProps) {
     const handleChat = (order: any) => {
         setActiveChat(order);
         setIsChatOpen(true);
+    };
+
+    const handleViewDetails = (order: any) => {
+        setSelectedOrder(order);
+        setShowDetailsModal(true);
     };
 
     return (
@@ -476,14 +482,15 @@ export default function RiderOrders({ riderId }: RiderOrdersProps) {
                     </h3>
                     {filteredOrders.map(order => (
                         <OrderCard 
-                            key={order._id} 
-                            order={order} 
-                            riderId={riderId} 
-                            onAccept={handleAcceptOrder} 
-                            onPickup={handlePickupOrder}
-                            onDeliver={handleDeliverOrder}
-                            onChat={handleChat}
-                        />
+                                key={order._id} 
+                                order={order} 
+                                riderId={riderId}
+                                onAccept={handleAcceptOrder}
+                                onPickup={handlePickupOrder}
+                                onDeliver={handleDeliverOrder}
+                                onChat={handleChat}
+                                onViewDetails={handleViewDetails}
+                            />
                     ))}
                     {filteredOrders.length === 0 && (
                         <div className="flex flex-col items-center justify-center py-16 text-gray-400 bg-white rounded-3xl border border-dashed border-gray-200">
@@ -558,12 +565,97 @@ export default function RiderOrders({ riderId }: RiderOrdersProps) {
                 </div>
             )}
 
+            {/* Order Details Modal */}
+            {showDetailsModal && selectedOrder && (
+                <div className="fixed inset-0 bg-black/60 backdrop-blur-md flex items-end sm:items-center justify-center z-[110] p-0 sm:p-4">
+                    <div className="bg-white w-full max-w-lg rounded-t-[2.5rem] sm:rounded-[2.5rem] overflow-hidden shadow-2xl animate-in slide-in-from-bottom duration-300 max-h-[90vh] flex flex-col">
+                        <div className="p-6 border-b border-gray-100 flex justify-between items-center bg-white sticky top-0 z-10">
+                            <div>
+                                <h3 className="text-xl font-black text-gray-900">Order Details</h3>
+                                <p className="text-xs font-bold text-gray-400 uppercase tracking-widest">#{selectedOrder.orderNumber}</p>
+                            </div>
+                            <button 
+                                onClick={() => setShowDetailsModal(false)}
+                                className="w-10 h-10 bg-gray-50 rounded-full flex items-center justify-center text-gray-400 hover:bg-gray-100 transition"
+                            >
+                                <FaTimes />
+                            </button>
+                        </div>
+
+                        <div className="p-6 overflow-y-auto space-y-8">
+                            {/* Items List */}
+                            <div>
+                                <h4 className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-4">Items Summary</h4>
+                                <div className="space-y-4">
+                                    {(selectedOrder.items || selectedOrder.orderItems || []).map((item: any, idx: number) => (
+                                        <div key={idx} className="flex justify-between items-center bg-gray-50 p-4 rounded-2xl">
+                                            <div className="flex items-center gap-3">
+                                                <div className="w-8 h-8 bg-white rounded-xl flex items-center justify-center font-black text-orange-500 shadow-sm border border-orange-50">
+                                                    {item.quantity}x
+                                                </div>
+                                                <span className="font-bold text-gray-900">{item.name || (item.dish && item.dish.name)}</span>
+                                            </div>
+                                            <span className="font-black text-gray-900">Rs. {item.price || (item.dish && item.dish.price)}</span>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+
+                            {/* Customer & Address */}
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                                <div className="bg-orange-50/50 p-5 rounded-3xl border border-orange-100/50">
+                                    <h4 className="text-[10px] font-black text-orange-400 uppercase tracking-widest mb-2">Customer</h4>
+                                    <p className="font-black text-gray-900 text-lg mb-1">{selectedOrder.customer?.name || 'Guest User'}</p>
+                                    <p className="text-xs font-bold text-orange-600/70">{selectedOrder.customer?.phone || 'No phone provided'}</p>
+                                </div>
+                                <div className="bg-blue-50/50 p-5 rounded-3xl border border-blue-100/50">
+                                    <h4 className="text-[10px] font-black text-blue-400 uppercase tracking-widest mb-2">Payment</h4>
+                                    <p className="font-black text-gray-900 text-lg mb-1">{selectedOrder.paymentMethod || 'COD'}</p>
+                                    <p className="text-xs font-bold text-blue-600/70">Total: Rs. {selectedOrder.totalAmount || selectedOrder.totalPrice}</p>
+                                </div>
+                            </div>
+
+                            {/* Delivery Address */}
+                            <div className="bg-gray-50 p-5 rounded-3xl border border-gray-100">
+                                <h4 className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Delivery Address</h4>
+                                <p className="font-bold text-gray-900 leading-relaxed">{selectedOrder.deliveryAddress || 'No address provided'}</p>
+                            </div>
+                        </div>
+
+                        <div className="p-6 bg-white border-t border-gray-100">
+                            <button
+                                onClick={() => setShowDetailsModal(false)}
+                                className="w-full bg-gray-900 hover:bg-black text-white py-4 rounded-2xl font-black transition shadow-lg shadow-gray-200"
+                            >
+                                CLOSE DETAILS
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
             <Toaster />
         </div>
     );
 }
 
-function OrderCard({ order, riderId, onAccept, onPickup, onDeliver, onChat }: { order: any; riderId: string; onAccept: (id: string) => void; onPickup: (id: string) => void; onDeliver: (id: string) => void; onChat: (order: any) => void }) {
+function OrderCard({ 
+    order, 
+    riderId, 
+    onAccept, 
+    onPickup, 
+    onDeliver, 
+    onChat,
+    onViewDetails 
+}: { 
+    order: any; 
+    riderId: string; 
+    onAccept: (id: string) => void; 
+    onPickup: (id: string) => void; 
+    onDeliver: (id: string) => void; 
+    onChat: (order: any) => void;
+    onViewDetails: (order: any) => void;
+}) {
     // Rider Earning Logic implementation
     const calculateEarnings = () => {
         if (order.netRiderEarning) return order.netRiderEarning;
@@ -679,38 +771,47 @@ function OrderCard({ order, riderId, onAccept, onPickup, onDeliver, onChat }: { 
             </div>
 
             {/* Actions */}
-            {canAccept && (
+            <div className="flex flex-col gap-2">
                 <button
-                    onClick={() => onAccept(order._id)}
-                    className="w-full bg-green-500 hover:bg-green-600 text-white py-3 rounded-xl font-semibold transition"
+                    onClick={() => onViewDetails(order)}
+                    className="w-full bg-gray-100 hover:bg-gray-200 text-gray-700 py-3 rounded-xl font-bold transition flex items-center justify-center gap-2"
                 >
-                    Accept Order
+                    <FaBox size={14} /> View Details
                 </button>
-            )}
 
-            {canPickup && (
-                <button
-                    onClick={() => onPickup(order._id)}
-                    className="w-full bg-orange-500 hover:bg-orange-600 text-white py-3 rounded-xl font-semibold transition flex items-center justify-center gap-2"
-                >
-                    <FaBox /> Mark as Picked Up
-                </button>
-            )}
+                {canAccept && (
+                    <button
+                        onClick={() => onAccept(order._id)}
+                        className="w-full bg-green-500 hover:bg-green-600 text-white py-3 rounded-xl font-black transition shadow-lg shadow-green-100"
+                    >
+                        Accept Order
+                    </button>
+                )}
 
-            {isPickedUp && (
-                <button
-                    onClick={() => onDeliver(order._id)}
-                    className="w-full bg-green-600 hover:bg-green-700 text-white py-3 rounded-xl font-semibold transition flex items-center justify-center gap-2"
-                >
-                    <FaCheckCircle /> Mark as Delivered
-                </button>
-            )}
+                {canPickup && (
+                    <button
+                        onClick={() => onPickup(order._id)}
+                        className="w-full bg-orange-500 hover:bg-orange-600 text-white py-3 rounded-xl font-black transition flex items-center justify-center gap-2 shadow-lg shadow-orange-100"
+                    >
+                        <FaBox /> Mark as Picked Up
+                    </button>
+                )}
 
-            {isAssignedToOther && (
-                <div className="w-full bg-gray-100 text-gray-600 py-3 rounded-xl font-semibold text-center">
-                    Assigned to Another Rider
-                </div>
-            )}
+                {(isPickedUp || order.status === 'ArrivedAtCustomer') && (
+                    <button
+                        onClick={() => onDeliver(order._id)}
+                        className="w-full bg-green-600 hover:bg-green-700 text-white py-3 rounded-xl font-black transition flex items-center justify-center gap-2 shadow-lg shadow-green-200"
+                    >
+                        <FaCheckCircle /> Mark as Delivered
+                    </button>
+                )}
+
+                {isAssignedToOther && (
+                    <div className="w-full bg-gray-100 text-gray-500 py-3 rounded-xl font-bold text-center border border-gray-200">
+                        Assigned to Another Rider
+                    </div>
+                )}
+            </div>
         </div>
     );
 }

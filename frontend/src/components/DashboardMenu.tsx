@@ -37,23 +37,31 @@ export default function DashboardMenu() {
     const fetchDishes = async () => {
         try {
             const userInfo = JSON.parse(localStorage.getItem('userInfo') || '{}');
-            if (!userInfo.token) {
-                console.warn('DashboardMenu: No auth token found in localStorage');
+            const token = userInfo.token || localStorage.getItem('token');
+            
+            if (!token) {
+                console.warn('DashboardMenu: No auth token found');
                 return;
             }
-            const config = { headers: { Authorization: `Bearer ${userInfo.token}` } };
+            const config = { headers: { Authorization: `Bearer ${token}` } };
 
-            console.log('DashboardMenu: Fetching restaurant info...');
-            const restaurantRes = await axios.get(`${API_BASE_URL}/api/restaurants/my-restaurant`, config);
-            console.log('DashboardMenu: Restaurant info received:', restaurantRes.data);
-            setRestaurant(restaurantRes.data);
+            // Fetch restaurant and dishes in parallel for better performance
+            const [restaurantRes, dishesRes] = await Promise.all([
+                axios.get(`${API_BASE_URL}/api/restaurants/my-restaurant`, config),
+                axios.get(`${API_BASE_URL}/api/dishes/my-dishes`, config)
+            ]);
 
-            console.log('DashboardMenu: Fetching dishes...');
-            const response = await axios.get(`${API_BASE_URL}/api/dishes/my-dishes`, config);
-            console.log('DashboardMenu: Dishes received:', response.data);
-            setDishes(response.data);
+            if (restaurantRes.data) {
+                setRestaurant(restaurantRes.data);
+            }
+
+            if (Array.isArray(dishesRes.data)) {
+                console.log(`DashboardMenu: Fetched ${dishesRes.data.length} dishes`);
+                setDishes(dishesRes.data);
+            }
         } catch (error: any) {
             console.error('DashboardMenu: Error fetching data:', error.response?.data || error.message);
+            // Don't clear dishes on error to prevent them from "disappearing" from UI
         }
     };
 

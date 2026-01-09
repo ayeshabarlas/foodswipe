@@ -91,32 +91,41 @@ export default function OrderBoard({ restaurant, onUpdate }: OrderBoardProps) {
         const socket = initSocket(userInfo._id, 'restaurant', resId);
 
         socket?.on('newOrder', (order: Order) => {
-            setOrders(prev => [order, ...prev]);
+            console.log('OrderBoard: New order received via socket:', order);
+            setOrders(prev => {
+                const exists = prev.find(o => o._id === order._id);
+                if (exists) return prev;
+                return [order, ...prev];
+            });
             setNewOrderPopup(order);
             setCountdown(30);
             playNotificationSound();
         });
 
         socket?.on('orderStatusUpdate', (updatedOrder: any) => {
+            console.log('OrderBoard: Order status update via socket:', updatedOrder);
             const orderId = updatedOrder._id || updatedOrder.orderId;
             setOrders(prev => prev.map(o => o._id === orderId ? { ...o, ...updatedOrder } : o));
-            fetchOrders(); // Refresh to get full details
+            // Instead of full fetch, we update locally, but fetch after a delay to ensure DB consistency
+            setTimeout(fetchOrders, 1000);
           });
 
           socket?.on('riderAccepted', (data: any) => {
-            console.log('Rider accepted order:', data);
+            console.log('OrderBoard: Rider accepted order via socket:', data);
             toast.success(`Rider ${data.riderName} accepted order #${data.orderId.slice(-4)}`);
-            fetchOrders(); // Refresh to show rider info
+            fetchOrders();
           });
 
-          socket?.on('riderPickedUp', () => {
+          socket?.on('riderPickedUp', (data: any) => {
+            console.log('OrderBoard: Rider picked up order via socket:', data);
             fetchOrders();
         });
 
         return () => {
-            disconnectSocket();
+            // We don't necessarily want to disconnect here if the component re-renders
+            // socket.off('newOrder'); etc. could be used instead
         };
-    }, []);
+    }, [restaurant?._id]);
 
     useEffect(() => {
         if (newOrderPopup && countdown > 0) {
