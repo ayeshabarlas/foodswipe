@@ -11,7 +11,15 @@ const app = express();
 const server = http.createServer(app);
 const PORT = Number(process.env.PORT) || 8080;
 
-// 🚀 1. IMMEDIATE PORT BINDING (Essential for Railway/Koyeb)
+// 🚀 0. ENV CHECK
+const requiredEnv = ['MONGO_URI', 'JWT_SECRET'];
+requiredEnv.forEach(env => {
+    if (!process.env[env]) {
+        console.error(`❌ CRITICAL: Environment variable ${env} is missing!`);
+    }
+});
+
+// 🚀 1. IMMEDIATE PORT BINDING
 if (process.env.NODE_ENV !== 'production' || !process.env.VERCEL) {
     server.listen(PORT, '0.0.0.0', () => {
         console.log(`🚀 SERVER IS LIVE ON PORT ${PORT}`);
@@ -24,18 +32,16 @@ app.get('/health', (req, res) => {
 });
 
 // 3. MIDDLEWARE
-app.use((req, res, next) => {
-    const origin = req.headers.origin;
-    res.setHeader('Access-Control-Allow-Origin', origin || '*');
-    res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, PATCH, DELETE, OPTIONS');
-    res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With, Accept');
-    res.setHeader('Access-Control-Allow-Credentials', 'true');
-    
-    if (req.method === 'OPTIONS') {
-        return res.status(200).end();
-    }
-    next();
-});
+app.use(cors({
+    origin: function (origin, callback) {
+        // Allow all origins in production for now to fix CORS issues, 
+        // or you can restrict it to your vercel app URL
+        callback(null, true);
+    },
+    credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept', 'X-CSRF-Token']
+}));
 
 app.use(express.json());
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
