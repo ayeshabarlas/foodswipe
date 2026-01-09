@@ -16,7 +16,7 @@ const nextConfig = {
             },
             {
                 protocol: 'https',
-                hostname: 'colossal-anya-foodswipe-a3e25304.koyeb.app',
+                hostname: 'foodswipe-backend.vercel.app',
             }
         ],
     },

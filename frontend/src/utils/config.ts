@@ -2,9 +2,9 @@ const getApiUrl = () => {
   // Priority 1: Environment variable
   let url = process.env.NEXT_PUBLIC_API_URL;
   
-  // Priority 2: Production fallback (Hardcoded Koyeb URL)
+  // Priority 2: Production fallback (Hardcoded Vercel URL)
   if (!url && process.env.NODE_ENV === 'production') {
-    url = 'https://colossal-anya-foodswipe-a3e25304.koyeb.app';
+    url = 'https://foodswipe-backend.vercel.app';
   }
 
   // Priority 3: Localhost fallback
@@ -24,9 +24,9 @@ const getSocketUrl = () => {
   // Priority 1: Environment variable
   let url = process.env.NEXT_PUBLIC_SOCKET_URL;
   
-  // Priority 2: Production fallback (Hardcoded Koyeb URL)
+  // Priority 2: Production fallback (Hardcoded Vercel URL)
   if (!url && process.env.NODE_ENV === 'production') {
-    url = 'https://colossal-anya-foodswipe-a3e25304.koyeb.app';
+    url = 'https://foodswipe-backend.vercel.app';
   }
 
   // Priority 3: Localhost fallback
