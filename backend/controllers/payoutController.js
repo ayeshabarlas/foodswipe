@@ -1,6 +1,13 @@
 const Payout = require('../models/Payout');
 const Order = require('../models/Order');
 const Restaurant = require('../models/Restaurant');
+const Dish = require('../models/Dish');
+
+// Helper to get restaurant product IDs
+const getRestaurantProductIds = async (restaurantId) => {
+    const dishes = await Dish.find({ restaurant: restaurantId });
+    return dishes.map(dish => dish._id);
+};
 
 // Helper to get current week's start and end dates
 const getCurrentWeekRange = () => {
