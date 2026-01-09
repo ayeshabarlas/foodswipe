@@ -11,28 +11,14 @@ const app = express();
 const server = http.createServer(app);
 const PORT = Number(process.env.PORT) || 8080;
 
-// 🚀 0. ENV CHECK
-const requiredEnv = ['MONGO_URI', 'JWT_SECRET'];
-requiredEnv.forEach(env => {
-    if (!process.env[env]) {
-        console.error(`❌ CRITICAL: Environment variable ${env} is missing!`);
-    }
-});
+// 🚀 1. CORS (Must be FIRST)
+app.use(cors()); 
 
-// 🚀 1. IMMEDIATE PORT BINDING
-if (process.env.NODE_ENV !== 'production' || !process.env.VERCEL) {
-    server.listen(PORT, '0.0.0.0', () => {
-        console.log(`🚀 SERVER IS LIVE ON PORT ${PORT}`);
-    });
-}
+// 🚀 2. HEALTH CHECK
+app.get('/health', (req, res) => res.status(200).send('OK'));
+app.get('/api/test', (req, res) => res.json({ message: 'Backend is reachable!' }));
 
-// 🚀 2. HEALTH CHECK (No Middleware to block it)
-app.get('/health', (req, res) => {
-    res.status(200).send('OK');
-});
-
-// 3. MIDDLEWARE
-app.use(cors()); // Super permissive for Vercel debugging
+// 🚀 3. MIDDLEWARE
 app.use(express.json());
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 app.use('/api/uploads', express.static(path.join(__dirname, 'uploads')));
@@ -60,31 +46,43 @@ app.use('/api/finance', require('./routes/financeRoutes'));
 app.use('/api/verifications', require('./routes/verificationRoutes'));
 app.use('/api/tickets', require('./routes/ticketRoutes'));
 
-// 5. ASYNC INITIALIZATION (Doesn't block server startup)
+// 🚀 5. GLOBAL ERROR HANDLER (Prevents Crash)
+app.use((err, req, res, next) => {
+    console.error('🔥 SERVER ERROR:', err.message);
+    res.status(500).json({
+        message: 'Internal Server Error',
+        error: process.env.NODE_ENV === 'production' ? 'Check server logs' : err.message
+    });
+});
+
+// 🚀 6. INITIALIZE
 const initializeApp = async () => {
     try {
-        // Init Pusher (Now safe even if keys are missing)
+        console.log('⏳ Initializing Backend...');
+        
+        // ENV CHECK
+        if (!process.env.MONGO_URI) console.error('❌ MONGO_URI missing!');
+        if (!process.env.JWT_SECRET) console.error('❌ JWT_SECRET missing!');
+
+        // Init Pusher
         initSocket();
         
         // DB Connection
-        if (process.env.USE_MOCK_DB !== 'true') {
-            await connectDB();
-            
-            // Seeder (Only run in dev, not on Vercel startup to avoid timeouts)
-            if (process.env.NODE_ENV !== 'production') {
-                require('./seederFunction')().catch(e => console.error('Seeder Error:', e));
-            }
-        }
+        await connectDB();
+        
+        console.log('✅ Backend Ready!');
     } catch (err) {
-        console.error('🔥 Initialization Error:', err);
+        console.error('🔥 Fatal Initialization Error:', err.message);
     }
 };
 
-// Start initialization but don't await it here to allow module export
 initializeApp();
 
-// Global Error Handlers
-process.on('uncaughtException', (err) => console.error('🔥 UNCAUGHT:', err));
-process.on('unhandledRejection', (err) => console.error('🔥 UNHANDLED:', err));
+// Port binding for local dev
+if (process.env.NODE_ENV !== 'production' || !process.env.VERCEL) {
+    server.listen(PORT, '0.0.0.0', () => {
+        console.log(`🚀 SERVER IS LIVE ON PORT ${PORT}`);
+    });
+}
 
 module.exports = app;
