@@ -36,26 +36,32 @@ app.get('/', (req, res) => {
 });
 
 // 🚀 4. API ROUTES
-app.use('/api/auth', require('./routes/authRoutes'));
-app.use('/api/users', require('./routes/userRoutes'));
-app.use('/api/restaurants', require('./routes/restaurantRoutes'));
-app.use('/api/dishes', require('./routes/dishRoutes'));
-app.use('/api/orders', require('./routes/orderRoutes'));
-app.use('/api/videos', require('./routes/videoRoutes'));
-app.use('/api/upload', require('./routes/uploadRoutes'));
-app.use('/api/chat', require('./routes/chatRoutes'));
-app.use('/api/vouchers', require('./routes/voucherRoutes'));
-app.use('/api/dashboard', require('./routes/dashboardRoutes'));
-app.use('/api/payouts', require('./routes/payoutRoutes'));
-app.use('/api/promotions', require('./routes/promotionRoutes'));
-app.use('/api/deals', require('./routes/dealRoutes'));
-app.use('/api/reviews', require('./routes/reviewRoutes'));
-app.use('/api/riders', require('./routes/riderRoutes'));
-app.use('/api/notifications', require('./routes/notificationRoutes'));
-app.use('/api/admin', require('./routes/adminRoutes'));
-app.use('/api/finance', require('./routes/financeRoutes'));
-app.use('/api/verifications', require('./routes/verificationRoutes'));
-app.use('/api/tickets', require('./routes/ticketRoutes'));
+console.log('🛣️ Loading Routes...');
+try {
+    app.use('/api/auth', require('./routes/authRoutes'));
+    app.use('/api/users', require('./routes/userRoutes'));
+    app.use('/api/restaurants', require('./routes/restaurantRoutes'));
+    app.use('/api/dishes', require('./routes/dishRoutes'));
+    app.use('/api/orders', require('./routes/orderRoutes'));
+    app.use('/api/videos', require('./routes/videoRoutes'));
+    app.use('/api/upload', require('./routes/uploadRoutes'));
+    app.use('/api/chat', require('./routes/chatRoutes'));
+    app.use('/api/vouchers', require('./routes/voucherRoutes'));
+    app.use('/api/dashboard', require('./routes/dashboardRoutes'));
+    app.use('/api/payouts', require('./routes/payoutRoutes'));
+    app.use('/api/promotions', require('./routes/promotionRoutes'));
+    app.use('/api/deals', require('./routes/dealRoutes'));
+    app.use('/api/reviews', require('./routes/reviewRoutes'));
+    app.use('/api/riders', require('./routes/riderRoutes'));
+    app.use('/api/notifications', require('./routes/notificationRoutes'));
+    app.use('/api/admin', require('./routes/adminRoutes'));
+    app.use('/api/finance', require('./routes/financeRoutes'));
+    app.use('/api/verifications', require('./routes/verificationRoutes'));
+    app.use('/api/tickets', require('./routes/ticketRoutes'));
+    console.log('✅ All Routes Loaded');
+} catch (routeErr) {
+    console.error('🔥 ROUTE LOADING ERROR:', routeErr.message);
+}
 
 // 🚀 5. STATIC FILES
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
