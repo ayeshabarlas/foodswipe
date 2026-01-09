@@ -143,7 +143,7 @@ export default function OrderTracking({ order: initialOrder, userRole = 'user', 
                 </div>
 
                 {/* Map Area */}
-                <div className="flex-1 relative bg-gray-200">
+                <div className="h-[300px] relative bg-gray-200">
                     <MapComponent
                         restaurantLoc={restaurantLoc}
                         customerLoc={customerLoc}
@@ -152,76 +152,63 @@ export default function OrderTracking({ order: initialOrder, userRole = 'user', 
                     />
                     
                     {/* Live Tracking Map Overlay Text */}
-                    <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 pointer-events-none flex flex-col items-center">
-                        <div className="w-16 h-16 bg-orange-500/10 rounded-full flex items-center justify-center mb-2">
-                            <div className="w-12 h-12 bg-orange-500 rounded-full flex items-center justify-center text-white shadow-lg">
-                                <FaMotorcycle size={24} />
-                            </div>
-                        </div>
-                        <span className="bg-white/90 backdrop-blur-md px-4 py-1 rounded-full text-[10px] font-black uppercase tracking-widest text-gray-900 shadow-sm">
+                    <div className="absolute top-4 left-1/2 -translate-x-1/2 pointer-events-none flex flex-col items-center z-10">
+                        <span className="bg-white/90 backdrop-blur-md px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest text-gray-900 shadow-lg border border-gray-100">
                             Live tracking map
                         </span>
                     </div>
+                </div>
 
-                    {/* Rider Nearby Card - Screenshot Style */}
-                    {order.rider && (
-                        <div className="absolute bottom-6 left-6 right-6 bg-[#FFF8F4] border border-orange-100 rounded-[32px] p-6 shadow-2xl z-10">
-                            <div className="flex items-start gap-4 mb-6">
-                                <div className="w-12 h-12 bg-orange-500 rounded-full flex items-center justify-center text-white shadow-lg shadow-orange-500/20">
-                                    <FaMotorcycle size={20} />
+                {/* Quick Chat Actions - New Prominent Section */}
+                <div className="bg-white px-6 py-4 border-b border-gray-100 shadow-sm z-20">
+                    {order.rider ? (
+                        <div className="flex flex-col gap-3">
+                            <div className="flex items-center justify-between">
+                                <div className="flex items-center gap-3">
+                                    <div className="w-10 h-10 bg-orange-500 rounded-full flex items-center justify-center text-white shadow-lg shadow-orange-500/20">
+                                        <FaMotorcycle size={18} />
+                                    </div>
+                                    <div>
+                                        <h4 className="font-black text-gray-900 text-sm">{order.rider.fullName || 'Rider'} is nearby</h4>
+                                        <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Your delivery partner</p>
+                                    </div>
                                 </div>
-                                <div className="flex-1">
-                                    <h4 className="font-black text-gray-900 text-lg">Your rider is nearby</h4>
-                                    <p className="text-sm font-medium text-gray-500">
-                                        <span className="text-gray-900 font-bold">{order.rider.fullName || 'Rider'}</span> is delivering your order
-                                    </p>
+                                <div className="flex gap-2">
+                                    <button 
+                                        onClick={() => setIsChatOpen(true)}
+                                        className="w-10 h-10 bg-orange-50 text-orange-500 rounded-xl flex items-center justify-center hover:bg-orange-100 transition-all border border-orange-100"
+                                    >
+                                        <FaCommentDots size={18} />
+                                    </button>
                                 </div>
-                                <button 
-                                    onClick={() => setIsChatOpen(true)}
-                                    className="w-12 h-12 bg-white text-orange-500 border-2 border-orange-500 rounded-2xl flex items-center justify-center hover:bg-orange-50 transition-all shadow-sm"
-                                    title="Chat with Rider"
-                                >
-                                    <FaCommentDots size={20} />
-                                </button>
                             </div>
-                            <div className="flex gap-3">
+                            <div className="flex gap-2">
                                 <button 
                                     onClick={() => setIsChatOpen(true)}
-                                    className="flex-1 bg-orange-500 text-white py-4 rounded-2xl font-black text-center shadow-lg shadow-orange-500/30 hover:bg-orange-600 transition-all"
+                                    className="flex-1 bg-orange-500 text-white py-3 rounded-xl font-black text-sm shadow-lg shadow-orange-500/20 hover:bg-orange-600 transition-all"
                                 >
                                     Chat with Rider
                                 </button>
                                 <button 
-                                    onClick={() => {
-                                        // For now, we use the same chat modal but it would be better to have separate rooms
-                                        // or a way to select who you are chatting with.
-                                        // But the requirement says "Chat with Restaurant" too.
-                                        setIsChatOpen(true);
-                                    }}
-                                    className="flex-1 bg-white text-orange-500 border-2 border-orange-500 py-4 rounded-2xl font-black hover:bg-orange-50 transition-all"
+                                    onClick={() => setIsChatOpen(true)}
+                                    className="flex-1 bg-white text-orange-500 border-2 border-orange-500 py-3 rounded-xl font-black text-sm hover:bg-orange-50 transition-all"
                                 >
                                     Chat with Shop
                                 </button>
                             </div>
                         </div>
-                    )}
-
-                    {!order.rider && (
-                        <div className="absolute bottom-6 left-6 right-6 bg-white border border-gray-100 rounded-[32px] p-6 shadow-2xl z-10">
-                            <div className="flex items-center justify-between mb-4">
-                                <div>
-                                    <h4 className="font-black text-gray-900 text-lg">Preparing your order</h4>
-                                    <p className="text-xs font-bold text-gray-400 uppercase tracking-widest">Restaurant is working on it</p>
-                                </div>
-                                <div className="w-10 h-10 bg-orange-50 rounded-full flex items-center justify-center text-orange-500">
-                                    <FaBox />
-                                </div>
+                    ) : (
+                        <div className="flex items-center justify-between gap-4">
+                            <div className="flex-1">
+                                <h4 className="font-black text-gray-900 text-sm">Need to ask something?</h4>
+                                <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Chat with the restaurant</p>
                             </div>
                             <button 
                                 onClick={() => setIsChatOpen(true)}
-                                className="w-full bg-orange-500 text-white py-4 rounded-2xl font-black text-center shadow-lg shadow-orange-500/30 hover:bg-orange-600 transition-all"
+                                className="bg-orange-500 text-white px-6 py-3 rounded-xl font-black text-sm shadow-lg shadow-orange-500/20 hover:bg-orange-600 transition-all flex items-center gap-2"
                             >
-                                Chat with Restaurant
+                                <FaCommentDots size={16} />
+                                Chat Now
                             </button>
                         </div>
                     )}

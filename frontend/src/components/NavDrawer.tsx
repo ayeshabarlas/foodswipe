@@ -117,6 +117,20 @@ export default function NavDrawer({ isOpen, onClose, user, onOpenProfile, active
                     badge: null  // Removed mock badge
                 },
                 {
+                    icon: FaMapMarkerAlt,
+                    label: 'Order Tracking',
+                    onClick: () => {
+                        if (activeOrderId) {
+                            setSelectedOrderId(activeOrderId);
+                            setShowTrackingModal(true);
+                        } else {
+                            setShowOrdersModal(true);
+                        }
+                        onClose();
+                    },
+                    badge: activeOrderId ? '1' : null
+                },
+                {
                     icon: FaTicketAlt,
                     label: 'Discounts & Vouchers',
                     onClick: () => {
