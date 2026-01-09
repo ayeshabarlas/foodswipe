@@ -72,17 +72,22 @@ app.use((err, req, res, next) => {
 // 🚀 7. INITIALIZE (Non-blocking)
 const startServer = async () => {
     try {
+        console.log('🔌 Initializing Pusher...');
         initSocket();
-        // Don't await DB connection here to prevent Vercel timeout
+        
+        console.log('🔌 Connecting to MongoDB (Non-blocking)...');
         connectDB().then(success => {
             if (success) console.log('✅ DB Connected');
-            else console.error('❌ DB Connection Failed');
+            else console.error('❌ DB Connection Failed - Check MONGO_URI');
+        }).catch(err => {
+            console.error('🔥 DB Connection Promise Error:', err.message);
         });
     } catch (err) {
         console.error('🔥 Initialization Error:', err);
     }
 };
 
+console.log('🚀 Calling startServer()...');
 startServer();
 
 // Local server for development
