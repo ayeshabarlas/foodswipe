@@ -1,5 +1,6 @@
 const Message = require('../models/Message');
 const Order = require('../models/Order');
+const { triggerEvent } = require('../socket');
 
 // @desc    Get chat history for an order
 // @route   GET /api/chat/:orderId
@@ -30,6 +31,43 @@ exports.getChatHistory = async (req, res) => {
         res.json(messages);
     } catch (error) {
         console.error('Get chat history error:', error);
+        res.status(500).json({ message: 'Server error', error: error.message });
+    }
+};
+
+// @desc    Send a new message
+// @route   POST /api/chat/:orderId
+// @access  Private
+exports.sendMessage = async (req, res) => {
+    try {
+        const { orderId } = req.params;
+        const { text, senderRole, senderName } = req.body;
+
+        const message = await Message.create({
+            order: orderId,
+            sender: req.user._id,
+            senderRole,
+            senderName,
+            text
+        });
+
+        // Trigger Pusher event for real-time chat
+        triggerEvent(`order-${orderId}`, 'newMessage', {
+            orderId,
+            message: {
+                id: message._id,
+                text: message.text,
+                sender: message.senderRole,
+                senderName: message.senderName,
+                senderId: message.sender,
+                timestamp: new Date(message.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+                createdAt: message.createdAt
+            }
+        });
+
+        res.status(201).json(message);
+    } catch (error) {
+        console.error('Send message error:', error);
         res.status(500).json({ message: 'Server error', error: error.message });
     }
 };

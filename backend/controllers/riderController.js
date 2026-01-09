@@ -4,6 +4,8 @@ const Order = require('../models/Order');
 const { calculateRiderEarning } = require('../utils/paymentUtils');
 const { createNotification } = require('./notificationController');
 
+const { triggerEvent } = require('../socket');
+
 // @desc    Register a new rider
 // @route   POST /api/riders/register
 // @access  Private (Rider role)
@@ -28,9 +30,7 @@ const registerRider = async (req, res) => {
         });
 
         // Notify admins about new registration
-        if (req.app.get('io')) {
-            req.app.get('io').to('admin').emit('rider_registered', rider);
-        }
+        triggerEvent('admin', 'rider_registered', rider);
 
         res.status(201).json(rider);
     } catch (error) {
@@ -266,23 +266,15 @@ const acceptOrder = async (req, res) => {
                 populate: { path: 'user', select: 'name phone' }
             });
 
-        // Emit socket event to notify restaurant that rider accepted
-        if (req.app && req.app.get('io')) {
-            const io = req.app.get('io');
-            const roomName = `restaurant_${order.restaurant._id}`;
-            
-            console.log(`Emitting riderAccepted to ${roomName} for order ${order._id}`);
-            
-            io.to(roomName).emit('riderAccepted', {
-                orderId: order._id,
-                riderName: rider.fullName || rider.user?.name,
-                riderPhone: rider.user?.phone,
-                riderId: rider._id
-            });
+        // Trigger Pusher events to notify restaurant and user
+        triggerEvent(`restaurant-${order.restaurant._id}`, 'riderAccepted', {
+            orderId: order._id,
+            riderName: rider.fullName || rider.user?.name,
+            riderPhone: rider.user?.phone,
+            riderId: rider._id
+        });
 
-            // Also emit orderStatusUpdate so the dashboard refreshes the order object
-            io.to(roomName).emit('orderStatusUpdate', updatedOrder);
-        }
+        triggerEvent(`restaurant-${order.restaurant._id}`, 'orderStatusUpdate', updatedOrder);
 
         // Create Notification for Rider
         const notification = await createNotification(
@@ -294,9 +286,7 @@ const acceptOrder = async (req, res) => {
         );
 
         // Emit Real-time Notification
-        if (req.app && req.app.get('io')) {
-            req.app.get('io').to(`user_${rider.user._id}`).emit('notification', notification);
-        }
+        triggerEvent(`user-${rider.user._id}`, 'notification', notification);
 
         res.json({ message: 'Order accepted', order });
     } catch (error) {
@@ -532,32 +522,31 @@ const updateBankDetails = async (req, res) => {
 // @access  Private
 const updateLocation = async (req, res) => {
     try {
-        const { lat, lng, orderId } = req.body;
-        const io = req.app.get('io');
+        const { lat, lng } = req.body;
 
         // If there's an active order, update its rider location
-        if (orderId) {
-            const Order = require('../models/Order');
-            const order = await Order.findById(orderId).populate('user').populate('restaurant');
+        const activeOrder = await Order.findOne({
+            rider: req.params.id,
+            status: { $in: ['Accepted', 'Preparing', 'Ready', 'OnTheWay', 'Arrived', 'Picked Up', 'ArrivedAtCustomer'] }
+        }).populate('user').populate('restaurant');
 
-            if (order) {
-                order.riderLocation = { lat, lng };
-                await order.save();
+        if (activeOrder) {
+            activeOrder.riderLocation = { lat, lng };
+            await activeOrder.save();
 
-                // Emit to customer and restaurant rooms
-                if (order.user) {
-                    io.to(`user_${order.user._id}`).emit('riderLocationUpdate', {
-                        orderId,
-                        location: { lat, lng }
-                    });
-                }
+            // Trigger Pusher events for real-time tracking
+            if (activeOrder.user) {
+                triggerEvent(`user-${activeOrder.user._id}`, 'riderLocationUpdate', {
+                    orderId: activeOrder._id,
+                    location: { lat, lng }
+                });
+            }
 
-                if (order.restaurant) {
-                    io.to(`restaurant_${order.restaurant._id}`).emit('riderLocationUpdate', {
-                        orderId,
-                        location: { lat, lng }
-                    });
-                }
+            if (activeOrder.restaurant) {
+                triggerEvent(`restaurant-${activeOrder.restaurant._id}`, 'riderLocationUpdate', {
+                    orderId: activeOrder._id,
+                    location: { lat, lng }
+                });
             }
         }
 
@@ -585,19 +574,18 @@ const markPickedUp = async (req, res) => {
         // But we can emit a specific event for pickup
         await order.save();
 
-        const io = req.app.get('io');
-
-        // Notify restaurant
+        // Trigger Pusher events
         if (order.restaurant) {
-            io.to(`restaurant_${order.restaurant._id}`).emit('riderPickedUp', {
+            triggerEvent(`restaurant-${order.restaurant._id}`, 'riderPickedUp', {
                 orderId: order._id,
+                status: 'Picked Up',
                 pickedUpAt: order.pickedUpAt
             });
         }
 
         // Notify customer
         if (order.user) {
-            io.to(`user_${order.user._id}`).emit('orderStatusUpdate', {
+            triggerEvent(`user-${order.user._id}`, 'orderStatusUpdate', {
                 orderId: order._id,
                 status: 'Picked Up',
                 pickedUpAt: order.pickedUpAt

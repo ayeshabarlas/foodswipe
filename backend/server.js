@@ -58,10 +58,9 @@ app.use('/api/tickets', require('./routes/ticketRoutes'));
 // 5. ASYNC INITIALIZATION (Doesn't block server startup)
 const initializeApp = async () => {
     try {
-        // Init Socket.io
-        const io = initSocket(server);
-        app.set('io', io);
-
+        // Init Pusher
+        initSocket();
+        
         // DB Connection
         if (process.env.USE_MOCK_DB !== 'true') {
             const connected = await connectDB();
@@ -82,4 +81,4 @@ initializeApp();
 process.on('uncaughtException', (err) => console.error('🔥 UNCAUGHT:', err));
 process.on('unhandledRejection', (err) => console.error('🔥 UNHANDLED:', err));
 
-module.exports = { io: () => app.get('io') };
+module.exports = app;

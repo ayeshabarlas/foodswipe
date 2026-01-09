@@ -7,7 +7,7 @@ const RestaurantWallet = require('../models/RestaurantWallet');
 const RiderWallet = require('../models/RiderWallet');
 const Transaction = require('../models/Transaction');
 const { calculateRiderEarning, calculateDeliveryFee } = require('../utils/paymentUtils');
-const { createNotification } = require('./notificationController');
+const { triggerEvent } = require('../socket');
 
 // @desc    Create new order
 // @route   POST /api/orders
@@ -105,18 +105,111 @@ const createOrder = async (req, res) => {
             .populate('user', 'name email phone')
             .populate('restaurant', 'name address contact');
 
-        // Emit socket event for real-time update to restaurant and admin
-        if (req.app.get('io')) {
-            const io = req.app.get('io');
-            io.to(`restaurant_${restaurant}`).emit('newOrder', populatedOrder);
-            io.to('admin').emit('order_created', populatedOrder);
+const { triggerEvent } = require('../socket');
+
+// @desc    Create new order
+// @route   POST /api/orders
+// @access  Private
+const createOrder = async (req, res) => {
+    try {
+        console.log('createOrder body:', req.body);
+        console.log('createOrder user:', req.user);
+
+        if (!req.user) {
+            return res.status(401).json({ message: 'User not authenticated' });
         }
+
+        const { items, restaurant, deliveryAddress, deliveryLocation, totalAmount, paymentMethod, deliveryInstructions, subtotal, deliveryFee } = req.body;
+
+        if (!items || items.length === 0) {
+            return res.status(400).json({ message: 'No order items' });
+        }
+
+        // Check if restaurant exists and is approved
+        const restaurantExists = await Restaurant.findById(restaurant);
+        if (!restaurantExists) {
+            return res.status(404).json({ message: 'Restaurant not registered or not found' });
+        }
+
+        if (restaurantExists.verificationStatus !== 'approved') {
+            return res.status(400).json({ message: 'Restaurant is not yet approved for orders' });
+        }
+
+        // Map frontend data to model schema with fallback for image
+        const orderItems = await Promise.all(items.map(async item => {
+            let itemImage = item.image;
+            const dishId = item.dish || item._id || item.product;
+            
+            // If image is missing, try to fetch it from the Dish model
+            if (!itemImage && dishId) {
+                try {
+                    const dish = await Dish.findById(dishId);
+                    if (dish && dish.image) {
+                        itemImage = dish.image;
+                    }
+                } catch (err) {
+                    console.error('Error fetching dish image for order:', err);
+                }
+            }
+
+            return {
+                name: item.name,
+                qty: item.quantity || item.qty,
+                image: itemImage || '', // Fallback to empty string if still missing
+                price: item.price,
+                product: dishId
+            };
+        }));
+
+        const shippingAddress = {
+            address: deliveryInstructions ? `${deliveryAddress} (Note: ${deliveryInstructions})` : deliveryAddress,
+            city: 'Lahore', // Default for now
+            postalCode: '54000', // Default for now
+            country: 'Pakistan' // Default for now
+        };
+
+        const order = await Order.create({
+            user: req.user._id,
+            restaurant,
+            orderItems,
+            shippingAddress,
+            deliveryLocation: deliveryLocation || null,
+            paymentMethod: paymentMethod || 'COD',
+            totalPrice: totalAmount,
+            subtotal: subtotal || (totalAmount - (deliveryFee || 0)),
+            deliveryFee: deliveryFee || 0,
+            deliveryFeeCustomerPaid: deliveryFee || 0,
+            status: 'Pending',
+        });
+
+        // Auto-decrement stock for ordered items
+        for (const item of items) {
+            if (item.dish) {
+                const dish = await Dish.findById(item.dish);
+                if (dish && dish.stockQuantity !== null) {
+                    const newStock = dish.stockQuantity - item.quantity;
+                    dish.stockQuantity = Math.max(0, newStock);
+
+                    if (newStock < 0) {
+                        console.warn(`Warning: Dish "${dish.name}" stock went negative. OrderID: ${order._id}`);
+                    }
+
+                    await dish.save();
+                }
+            }
+        }
+
+        const populatedOrder = await Order.findById(order._id)
+            .populate('user', 'name email phone')
+            .populate('restaurant', 'name address contact');
+
+        // Emit Pusher events for real-time update to restaurant and admin
+        triggerEvent(`restaurant-${restaurant}`, 'newOrder', populatedOrder);
+        triggerEvent('admin', 'order_created', populatedOrder);
 
         res.status(201).json(populatedOrder);
     } catch (error) {
         console.error('createOrder Error:', error);
-        const fs = require('fs');
-        fs.writeFileSync('backend_error.log', `Error: ${error.message}\nStack: ${error.stack}\nBody: ${JSON.stringify(req.body, null, 2)}\nUser: ${JSON.stringify(req.user)}\n`);
         res.status(500).json({ message: 'Server error', error: error.message });
     }
 };
@@ -221,42 +314,38 @@ const updateOrderStatus = async (req, res) => {
                 populate: { path: 'user', select: 'name phone' }
             });
 
-        // Emit socket events for real-time updates
-        if (req.app.get('io')) {
-            const io = req.app.get('io');
+        // Emit Pusher events for real-time updates
+        // Notify specific user about their order update
+        triggerEvent(`user-${order.user._id}`, 'orderStatusUpdate', updatedOrder);
 
-            // Notify specific user about their order update
-            io.to(`user_${order.user._id}`).emit('orderStatusUpdate', updatedOrder);
+        // Notify restaurant about order update
+        triggerEvent(`restaurant-${order.restaurant._id}`, 'orderStatusUpdate', updatedOrder);
 
-            // Notify restaurant about order update
-            io.to(`restaurant_${order.restaurant._id}`).emit('orderStatusUpdate', updatedOrder);
+        // Always notify admin about any order status update
+        triggerEvent('admin', 'order_updated', updatedOrder);
 
-            // Always notify admin about any order status update
-            io.to('admin').emit('order_updated', updatedOrder);
+        // When order is ready, notify all available riders
+        if (status === 'Ready') {
+            triggerEvent('riders', 'newOrderAvailable', {
+                _id: updatedOrder._id,
+                restaurant: {
+                    _id: updatedOrder.restaurant._id,
+                    name: updatedOrder.restaurant.name,
+                    address: updatedOrder.restaurant.address,
+                    location: updatedOrder.restaurant.location
+                },
+                shippingAddress: {
+                    address: updatedOrder.shippingAddress.address
+                },
+                totalPrice: updatedOrder.totalPrice,
+                orderItems: updatedOrder.orderItems,
+                createdAt: updatedOrder.createdAt
+            });
+        }
 
-            // When order is ready, notify all available riders
-            if (status === 'Ready') {
-                io.to('riders').emit('newOrderAvailable', {
-                    _id: updatedOrder._id,
-                    restaurant: {
-                        _id: updatedOrder.restaurant._id,
-                        name: updatedOrder.restaurant.name,
-                        address: updatedOrder.restaurant.address,
-                        location: updatedOrder.restaurant.location
-                    },
-                    shippingAddress: {
-                        address: updatedOrder.shippingAddress.address
-                    },
-                    totalPrice: updatedOrder.totalPrice,
-                    orderItems: updatedOrder.orderItems,
-                    createdAt: updatedOrder.createdAt
-                });
-            }
-
-            // Also notify specifically assigned rider if any
-            if (order.rider) {
-                io.to(`user_${order.rider}`).emit('orderStatusUpdate', updatedOrder);
-            }
+        // Also notify specifically assigned rider if any
+        if (order.rider) {
+            triggerEvent(`rider-${order.rider._id}`, 'orderStatusUpdate', updatedOrder);
         }
 
         res.json(updatedOrder);
@@ -356,9 +445,7 @@ const processOrderCompletion = async (order, distanceKm = 5, req = null) => {
             );
 
             // Emit Real-time Notification
-            if (req.app && req.app.get('io')) {
-                req.app.get('io').to(`user_${riderUserId}`).emit('notification', notification);
-            }
+            triggerEvent(`user-${riderUserId}`, 'notification', notification);
         }
 
         // 4. Update Restaurant Wallet & Stats
@@ -472,13 +559,11 @@ const cancelOrder = async (req, res) => {
         }
 
         // Emit socket event for real-time update (customer notification)
-        if (req.app.get('io')) {
-            req.app.get('io').emit('orderCancelled', {
-                orderId: order._id,
-                reason,
-                userId: order.user
-            });
-        }
+        triggerEvent(`user-${order.user}`, 'orderCancelled', {
+            orderId: order._id,
+            reason,
+            userId: order.user
+        });
 
         res.json({ message: 'Order cancelled successfully', order });
     } catch (error) {
@@ -515,13 +600,10 @@ const completeOrder = async (req, res) => {
                 populate: { path: 'user', select: 'name phone' }
             });
 
-        // Emit socket events
-        if (req.app.get('io')) {
-            const io = req.app.get('io');
-            io.to(`user_${order.user}`).emit('orderStatusUpdate', updatedOrder);
-            io.to(`restaurant_${order.restaurant}`).emit('orderStatusUpdate', updatedOrder);
-            io.to('admin').emit('order_updated', updatedOrder);
-        }
+        // Emit Pusher events
+        triggerEvent(`user-${order.user}`, 'orderStatusUpdate', updatedOrder);
+        triggerEvent(`restaurant-${order.restaurant}`, 'orderStatusUpdate', updatedOrder);
+        triggerEvent('admin', 'order_updated', updatedOrder);
 
         res.json(updatedOrder);
     } catch (error) {
@@ -553,6 +635,35 @@ const getActiveUserOrders = async (req, res) => {
     }
 };
 
+// @desc    Update order location (Rider live tracking)
+// @route   POST /api/orders/:id/location
+// @access  Private (Rider)
+const updateOrderLocation = async (req, res) => {
+    try {
+        const { location } = req.body;
+        const order = await Order.findById(req.params.id);
+
+        if (!order) {
+            return res.status(404).json({ message: 'Order not found' });
+        }
+
+        // Update location in DB
+        order.deliveryLocation = location;
+        await order.save();
+
+        // Trigger Pusher event for real-time tracking
+        triggerEvent(`user-${order.user}`, 'riderLocationUpdate', {
+            orderId: order._id,
+            location
+        });
+
+        res.json({ success: true });
+    } catch (error) {
+        console.error('Update order location error:', error);
+        res.status(500).json({ message: 'Server error', error: error.message });
+    }
+};
+
 module.exports = {
     createOrder,
     getUserOrders,
@@ -562,4 +673,5 @@ module.exports = {
     completeOrder,
     getRestaurantOrders,
     cancelOrder,
+    updateOrderLocation
 };

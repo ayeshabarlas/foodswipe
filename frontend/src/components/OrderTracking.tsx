@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState } from 'react';
 import { FaMotorcycle, FaPhone, FaCheck, FaCommentDots, FaTimes, FaMapMarkerAlt, FaChevronRight, FaBox, FaClock } from 'react-icons/fa';
-import { initSocket, getSocket } from '../utils/socket';
+import { initSocket, getSocket, subscribeToChannel, unsubscribeFromChannel } from '../utils/socket';
 import axios from 'axios';
 import { API_BASE_URL } from '../utils/config';
 import dynamic from 'next/dynamic';
@@ -58,28 +58,28 @@ export default function OrderTracking({ order: initialOrder, userRole = 'user', 
     useEffect(() => {
         if (!order || !isOpen) return;
 
-        const socket = initSocket(userInfo._id, userRole,
+        const pusher = initSocket(userInfo._id, userRole,
             userRole === 'restaurant' ? userInfo.restaurantId : undefined
         );
 
-        if (socket && order._id) {
-            socket.emit('joinOrderChat', { orderId: order._id });
+        const userChannel = subscribeToChannel(`user-${userInfo._id}`);
+        
+        if (userChannel) {
+            userChannel.bind('riderLocationUpdate', (data: any) => {
+                if (data.orderId === order._id) {
+                    setRiderLocation(data.location);
+                }
+            });
+
+            userChannel.bind('orderStatusUpdate', (updatedOrder: any) => {
+                if (updatedOrder._id === order._id) {
+                    setOrder(updatedOrder);
+                }
+            });
         }
 
-        socket?.on('riderLocationUpdate', (data: any) => {
-            if (data.orderId === order._id) {
-                setRiderLocation(data.location);
-            }
-        });
-
-        socket?.on('orderStatusUpdate', (updatedOrder: any) => {
-            if (updatedOrder._id === order._id) {
-                setOrder(updatedOrder);
-            }
-        });
-
         return () => {
-            // Socket utility handles cleanup
+            unsubscribeFromChannel(`user-${userInfo._id}`);
         };
     }, [order?._id, userRole, isOpen]);
 

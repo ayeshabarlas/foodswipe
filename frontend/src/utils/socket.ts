@@ -1,50 +1,60 @@
-import { io, Socket } from 'socket.io-client';
-import { SOCKET_URL } from './config';
+import Pusher from 'pusher-js';
 
-let socket: Socket | null = null;
+let pusher: Pusher | null = null;
+let activeChannels: Set<string> = new Set();
+
+const PUSHER_KEY = process.env.NEXT_PUBLIC_PUSHER_KEY || '';
+const PUSHER_CLUSTER = process.env.NEXT_PUBLIC_PUSHER_CLUSTER || 'ap2';
 
 export const initSocket = (userId: string, role: string, restaurantId?: string, riderId?: string) => {
-    if (socket && socket.connected) {
-        return socket;
+    if (!pusher) {
+        pusher = new Pusher(PUSHER_KEY, {
+            cluster: PUSHER_CLUSTER,
+        });
+        console.log('✅ Pusher Client initialized');
     }
 
-    socket = io(SOCKET_URL, {
-        transports: ['websocket', 'polling'],
-        reconnection: true,
-        reconnectionDelay: 1000,
-        reconnectionAttempts: 5,
-    });
+    // Subscribe to channels based on role (replacing rooms)
+    if (role === 'admin') {
+        subscribeToChannel('admin');
+    } else if (role === 'restaurant' && restaurantId) {
+        subscribeToChannel(`restaurant-${restaurantId}`);
+    } else if (role === 'rider' && riderId) {
+        subscribeToChannel(`rider-${riderId}`);
+        subscribeToChannel('riders');
+    } else if (userId) {
+        subscribeToChannel(`user-${userId}`);
+    }
 
-    socket.on('connect', () => {
-        console.log('✅ Socket connected:', socket?.id);
+    return pusher;
+};
 
-        // Join appropriate rooms based on role
-        socket?.emit('join', {
-            userId,
-            role,
-            restaurantId,
-            riderId
-        });
-    });
+export const subscribeToChannel = (channelName: string) => {
+    if (!pusher || activeChannels.has(channelName)) return null;
+    
+    const channel = pusher.subscribe(channelName);
+    activeChannels.add(channelName);
+    console.log(`📡 Subscribed to channel: ${channelName}`);
+    return channel;
+};
 
-    socket.on('disconnect', () => {
-        console.log('❌ Socket disconnected');
-    });
-
-    socket.on('connect_error', (error) => {
-        console.error('Socket connection error:', error);
-    });
-
-    return socket;
+export const unsubscribeFromChannel = (channelName: string) => {
+    if (!pusher || !activeChannels.has(channelName)) return;
+    
+    pusher.unsubscribe(channelName);
+    activeChannels.delete(channelName);
+    console.log(`🚫 Unsubscribed from channel: ${channelName}`);
 };
 
 export const getSocket = () => {
-    return socket;
+    return pusher;
 };
 
 export const disconnectSocket = () => {
-    if (socket) {
-        socket.disconnect();
-        socket = null;
+    if (pusher) {
+        activeChannels.forEach(channel => pusher?.unsubscribe(channel));
+        activeChannels.clear();
+        pusher.disconnect();
+        pusher = null;
     }
 };

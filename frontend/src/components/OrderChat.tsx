@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { FaTimes, FaCommentDots, FaPaperPlane } from 'react-icons/fa';
-import { getSocket } from '../utils/socket';
+import { getSocket, subscribeToChannel, unsubscribeFromChannel } from '../utils/socket';
 import axios from 'axios';
 import { API_BASE_URL } from '../utils/config';
 
@@ -83,67 +83,70 @@ export default function OrderChat({ orderId, isOpen, onClose, userRole, userName
         fetchHistory();
     }, [isOpen, orderId]);
 
-    // Socket Listener
+    // Pusher Listener
     useEffect(() => {
-        if (isOpen && socket) {
-            socket.emit('joinOrderChat', { orderId });
+        if (isOpen && orderId) {
+            const channel = subscribeToChannel(`order-${orderId}`);
             
-            const handleMessage = (data: { orderId: string; message: any }) => {
-                if (data.orderId === orderId) {
-                    const newMsg: Message = {
-                        id: data.message.id || Date.now().toString(),
-                        text: data.message.text,
-                        sender: data.message.sender,
-                        senderName: data.message.senderName,
-                        senderId: data.message.senderId,
-                        timestamp: data.message.timestamp || new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-                        createdAt: data.message.createdAt || new Date().toISOString()
-                    };
-
-                    setMessages(prev => {
-                        // Avoid duplicates
-                        if (prev.find(m => m.id === newMsg.id)) return prev;
-                        return [...prev, newMsg];
-                    });
-
-                    if (data.message.senderId !== userId) {
-                        playMessageSound();
+            if (channel) {
+                channel.bind('newMessage', (data: { orderId: string; message: any }) => {
+                    if (data.orderId === orderId) {
+                        const newMsg: Message = {
+                            id: data.message.id || Date.now().toString(),
+                            text: data.message.text,
+                            sender: data.message.sender,
+                            senderName: data.message.senderName,
+                            senderId: data.message.senderId,
+                            timestamp: data.message.timestamp || new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+                            createdAt: data.message.createdAt || new Date().toISOString()
+                        };
+                        
+                        setMessages(prev => {
+                            // Avoid duplicate messages
+                            if (prev.find(m => m.id === newMsg.id)) return prev;
+                            return [...prev, newMsg];
+                        });
+                        
+                        if (newMsg.senderId !== userId) {
+                            playMessageSound();
+                        }
                     }
-                }
-            };
-
-            socket.on('orderMessage', handleMessage);
-
+                });
+            }
+            
             return () => {
-                socket.off('orderMessage', handleMessage);
+                unsubscribeFromChannel(`order-${orderId}`);
             };
         }
-    }, [isOpen, orderId, socket, userId]);
+    }, [isOpen, orderId, userId]);
 
     useEffect(() => {
         scrollToBottom();
     }, [messages]);
 
-    const handleSendMessage = () => {
-        if (!currentMessage.trim() || !socket || isChatDisabled) return;
+    const handleSendMessage = async () => {
+        if (!currentMessage.trim() || isChatDisabled) return;
 
-        const messageData = {
-            text: currentMessage,
-            sender: userRole,
-            senderName: userName,
-            senderId: userId,
-            timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-        };
-
-        socket.emit('sendOrderMessage', {
-            orderId,
-            message: messageData
-        });
-
-        // Optimistically add to local state with temporary ID
-        const tempId = Date.now().toString();
-        setMessages(prev => [...prev, { ...messageData, id: tempId, sender: userRole as any }]);
+        const messageText = currentMessage;
         setCurrentMessage('');
+
+        try {
+            const userInfo = JSON.parse(localStorage.getItem('userInfo') || '{}');
+            const config = {
+                headers: {
+                    Authorization: `Bearer ${userInfo.token}`,
+                },
+            };
+
+            await axios.post(`${API_BASE_URL}/api/chat/${orderId}`, {
+                text: messageText,
+                senderRole: userRole,
+                senderName: userName
+            }, config);
+
+        } catch (error) {
+            console.error('Error sending message:', error);
+        }
     };
 
     return (

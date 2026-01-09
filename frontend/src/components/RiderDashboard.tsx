@@ -11,7 +11,7 @@ import {
 import axios from 'axios';
 import toast from 'react-hot-toast';
 import { API_BASE_URL } from '../utils/config';
-import { initSocket, getSocket } from '../utils/socket';
+import { initSocket, getSocket, subscribeToChannel, unsubscribeFromChannel } from '../utils/socket';
 import RiderOrders from './RiderOrders';
 import RiderEarnings from './RiderEarnings';
 import RiderProfile from './RiderProfile';
@@ -96,27 +96,33 @@ const RiderDashboard = ({ riderId: initialRiderId }: { riderId?: string }) => {
         };
     }, []);
 
-    // Socket and Geolocation Logic
+    // Pusher and Geolocation Logic
     useEffect(() => {
         if (!riderData?.user?._id) return;
 
-        const socket = initSocket(riderData.user._id, 'rider', undefined, riderData._id);
+        const pusher = initSocket(riderData.user._id, 'rider', undefined, riderData._id);
+        
+        // Subscribe to relevant channels
+        const riderChannel = subscribeToChannel(`rider-${riderData._id}`);
+        const ridersChannel = subscribeToChannel('riders');
 
-        if (socket) {
-            socket.on('newOrderAvailable', (order) => {
-                console.log('New order available for rider:', order);
-                if (isOnline) {
-                    setNewOrderPopup(order);
-                    setTimer(60); // Set to 60s as per screenshot
-                    playNotificationSound();
-                }
-            });
-
-            socket.on('orderStatusUpdate', (updatedOrder) => {
+        if (riderChannel) {
+            riderChannel.bind('orderStatusUpdate', (updatedOrder: any) => {
                 console.log('Order status update received:', updatedOrder);
                 setOrders(prev => prev.map(o => o._id === updatedOrder._id ? updatedOrder : o));
                 if (activeOrder?._id === updatedOrder._id) {
                     setActiveOrder(updatedOrder);
+                }
+            });
+        }
+
+        if (ridersChannel) {
+            ridersChannel.bind('newOrderAvailable', (order: any) => {
+                console.log('New order available for rider:', order);
+                if (isOnline) {
+                    setNewOrderPopup(order);
+                    setTimer(60);
+                    playNotificationSound();
                 }
             });
         }
@@ -126,13 +132,17 @@ const RiderDashboard = ({ riderId: initialRiderId }: { riderId?: string }) => {
         if (isOnline && activeOrder) {
             if (navigator.geolocation) {
                 watchId = navigator.geolocation.watchPosition(
-                    (position) => {
+                    async (position) => {
                         const { latitude, longitude } = position.coords;
-                        console.log('Sending rider location:', latitude, longitude);
-                        socket?.emit('updateRiderLocation', {
-                            orderId: activeOrder._id,
-                            location: { lat: latitude, lng: longitude }
-                        });
+                        console.log('Sending rider location via API:', latitude, longitude);
+                        try {
+                            // Using API instead of socket.emit for reliability on serverless
+                            await axios.post(`${API_BASE_URL}/orders/${activeOrder._id}/location`, {
+                                location: { lat: latitude, lng: longitude }
+                            });
+                        } catch (err) {
+                            console.error('Error updating location:', err);
+                        }
                     },
                     (error) => console.error('Geolocation error:', error),
                     { enableHighAccuracy: true, distanceFilter: 10 }
@@ -142,6 +152,8 @@ const RiderDashboard = ({ riderId: initialRiderId }: { riderId?: string }) => {
 
         return () => {
             if (watchId) navigator.geolocation.clearWatch(watchId);
+            unsubscribeFromChannel(`rider-${riderData._id}`);
+            unsubscribeFromChannel('riders');
         };
     }, [isOnline, activeOrder, riderData]);
 
