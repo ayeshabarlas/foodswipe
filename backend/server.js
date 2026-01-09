@@ -12,9 +12,11 @@ const server = http.createServer(app);
 const PORT = Number(process.env.PORT) || 8080;
 
 // 🚀 1. IMMEDIATE PORT BINDING (Essential for Railway/Koyeb)
-server.listen(PORT, '0.0.0.0', () => {
-    console.log(`🚀 SERVER IS LIVE ON PORT ${PORT}`);
-});
+if (process.env.NODE_ENV !== 'production' || !process.env.VERCEL) {
+    server.listen(PORT, '0.0.0.0', () => {
+        console.log(`🚀 SERVER IS LIVE ON PORT ${PORT}`);
+    });
+}
 
 // 🚀 2. HEALTH CHECK (No Middleware to block it)
 app.get('/health', (req, res) => {
