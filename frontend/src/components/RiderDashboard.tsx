@@ -15,6 +15,9 @@ import { initSocket, getSocket } from '../utils/socket';
 import RiderOrders from './RiderOrders';
 import RiderEarnings from './RiderEarnings';
 import RiderProfile from './RiderProfile';
+import dynamic from 'next/dynamic';
+
+const OrderTracking = dynamic(() => import('./OrderTracking'), { ssr: false });
 
 const RiderDashboard = ({ riderId: initialRiderId }: { riderId?: string }) => {
     const [activeTab, setActiveTab] = useState('home');
@@ -28,6 +31,8 @@ const RiderDashboard = ({ riderId: initialRiderId }: { riderId?: string }) => {
     const [activeOrder, setActiveOrder] = useState<any>(null);
     const [activeStep, setActiveStep] = useState(1);
     const [error, setError] = useState<string | null>(null);
+    const [showTrackingModal, setShowTrackingModal] = useState(false);
+    const [selectedOrderForTracking, setSelectedOrderForTracking] = useState<any>(null);
 
     const fetchRiderData = async () => {
         try {
@@ -491,7 +496,9 @@ function ActionItem({ icon, label, sublabel, onClick }: any) {
                                     </div>
                                     <div>
                                         <p className="text-gray-900 font-bold text-lg tracking-tight">{order.restaurant?.name || 'Restaurant'}</p>
-                                        <p className="text-gray-400 text-[10px] font-light uppercase tracking-widest mt-1">#{order._id.slice(-6)} • {new Date(order.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</p>
+                                        <p className="text-gray-400 text-[10px] font-light uppercase tracking-widest mt-1">
+                                            #{order._id.slice(-6)} • {order.createdAt ? new Date(order.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'Just now'}
+                                        </p>
                                     </div>
                                 </div>
                                 <div className="px-4 py-1.5 bg-green-50 text-green-600 rounded-full text-[10px] font-bold uppercase tracking-widest">
@@ -527,6 +534,17 @@ function ActionItem({ icon, label, sublabel, onClick }: any) {
                                 >
                                     Details
                                 </button>
+                                {order.rider && (
+                                    <button 
+                                        onClick={() => {
+                                            setSelectedOrderForTracking(order);
+                                            setShowTrackingModal(true);
+                                        }} 
+                                        className="flex-1 bg-blue-50 text-blue-500 py-4 rounded-2xl text-[10px] font-bold uppercase tracking-widest hover:bg-blue-100 transition-all"
+                                    >
+                                        Track
+                                    </button>
+                                )}
                                 {order.rider ? (
                                     <button 
                                         onClick={() => handleUpdateStatus(order._id, order.status === 'Picked Up' ? 'Delivered' : 'Picked Up', order.distance || order.distanceKm)}
@@ -562,7 +580,7 @@ function ActionItem({ icon, label, sublabel, onClick }: any) {
         <div className="min-h-screen bg-[#F8F9FA] pb-32 font-light overflow-x-hidden">
             <div className="max-w-md mx-auto px-4 pt-4">
                 {activeTab === 'home' && renderHome()}
-                {activeTab === 'orders' && renderOrders()}
+                {activeTab === 'orders' && <RiderOrders riderId={riderData?._id} />}
                 {activeTab === 'earnings' && <RiderEarnings riderId={riderData?._id} />}
                 {activeTab === 'profile' && <RiderProfile riderId={riderData?._id} />}
             </div>
@@ -659,6 +677,18 @@ function ActionItem({ icon, label, sublabel, onClick }: any) {
                     />
                 </div>
             </div>
+
+            {selectedOrderForTracking && (
+                <OrderTracking 
+                    isOpen={showTrackingModal}
+                    onClose={() => {
+                        setShowTrackingModal(false);
+                        setSelectedOrderForTracking(null);
+                    }}
+                    order={selectedOrderForTracking}
+                    userRole="rider"
+                />
+            )}
         </div>
     );
 }
