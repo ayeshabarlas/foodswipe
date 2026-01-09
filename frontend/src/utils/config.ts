@@ -17,7 +17,16 @@ const getApiUrl = () => {
     url = `https://${url}`;
   }
   
-  return url.endsWith('/') ? url.slice(0, -1) : url;
+  // Strip trailing slash
+  url = url.endsWith('/') ? url.slice(0, -1) : url;
+
+  // IMPORTANT: Strip /api from the end if it exists, 
+  // because components add /api/ themselves in their axios calls
+  if (url.endsWith('/api')) {
+    url = url.slice(0, -4);
+  }
+  
+  return url;
 };
 
 const getSocketUrl = () => {

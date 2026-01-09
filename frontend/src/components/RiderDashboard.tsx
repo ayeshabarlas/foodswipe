@@ -137,7 +137,7 @@ const RiderDashboard = ({ riderId: initialRiderId }: { riderId?: string }) => {
                         console.log('Sending rider location via API:', latitude, longitude);
                         try {
                             // Using API instead of socket.emit for reliability on serverless
-                            await axios.post(`${API_BASE_URL}/orders/${activeOrder._id}/location`, {
+                            await axios.post(`${API_BASE_URL}/api/orders/${activeOrder._id}/location`, {
                                 location: { lat: latitude, lng: longitude }
                             });
                         } catch (err) {

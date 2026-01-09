@@ -248,8 +248,6 @@ export default function RiderOrders({ riderId }: RiderOrdersProps) {
         }
     };
 
-    const [activeChat, setActiveChat] = useState<any>(null);
-
     const handleChat = (order: any) => {
         setActiveChat(order);
         setIsChatOpen(true);
