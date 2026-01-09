@@ -1,35 +1,41 @@
+console.log('🚀 Backend Server Starting...');
+
 require('dotenv').config();
 const express = require('express');
-const http = require('http');
 const cors = require('cors');
-const mongoose = require('mongoose');
 const path = require('path');
 const { initSocket } = require('./socket');
 const connectDB = require('./config/db');
 
 const app = express();
-const PORT = Number(process.env.PORT) || 8080;
 
-// 🚀 2. CORS (Use the package for reliability)
+// 🚀 1. CORS & MIDDLEWARE
 app.use(cors());
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
 
-// 🚀 3. REQUEST LOGGING
+// 🚀 2. REQUEST LOGGING
 app.use((req, res, next) => {
-    console.log(`📡 ${req.method} ${req.url}`);
+    console.log(`📡 [${new Date().toISOString()}] ${req.method} ${req.url}`);
     next();
 });
 
-// 🚀 2. HEALTH CHECK
-app.get('/health', (req, res) => res.status(200).json({ status: 'OK', message: 'Backend is healthy' }));
-app.get('/api/test', (req, res) => res.json({ message: 'Backend is reachable!' }));
+// 🚀 3. HEALTH & ROOT
+app.get('/health', (req, res) => {
+    console.log('💓 Health check requested');
+    res.status(200).json({ 
+        status: 'OK', 
+        timestamp: new Date().toISOString(),
+        env: process.env.NODE_ENV,
+        vercel: !!process.env.VERCEL
+    });
+});
 
-// 🚀 3. MIDDLEWARE
-app.use(express.json());
-app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
-app.use('/api/uploads', express.static(path.join(__dirname, 'uploads')));
+app.get('/', (req, res) => {
+    res.status(200).send('<h1>Foodswipe API is Live and Running!</h1><p>Status: OK</p>');
+});
 
-// 4. API ROUTES
-app.get('/', (req, res) => res.send('Foodswipe API is Live and Running!'));
+// 🚀 4. API ROUTES
 app.use('/api/auth', require('./routes/authRoutes'));
 app.use('/api/users', require('./routes/userRoutes'));
 app.use('/api/restaurants', require('./routes/restaurantRoutes'));
@@ -51,42 +57,39 @@ app.use('/api/finance', require('./routes/financeRoutes'));
 app.use('/api/verifications', require('./routes/verificationRoutes'));
 app.use('/api/tickets', require('./routes/ticketRoutes'));
 
-// 🚀 5. GLOBAL ERROR HANDLER (Prevents Crash)
+// 🚀 5. STATIC FILES
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+
+// 🚀 6. GLOBAL ERROR HANDLER
 app.use((err, req, res, next) => {
-    console.error('🔥 SERVER ERROR:', err.message);
+    console.error('🔥 SERVER ERROR:', err);
     res.status(500).json({
         message: 'Internal Server Error',
-        error: process.env.NODE_ENV === 'production' ? 'Check server logs' : err.message
+        error: err.message
     });
 });
 
-// 🚀 6. INITIALIZE
-const initializeApp = async () => {
+// 🚀 7. INITIALIZE (Non-blocking)
+const startServer = async () => {
     try {
-        console.log('⏳ Initializing Backend...');
-        
-        // ENV CHECK
-        if (!process.env.MONGO_URI) console.error('❌ MONGO_URI missing!');
-        if (!process.env.JWT_SECRET) console.error('❌ JWT_SECRET missing!');
-
-        // Init Pusher
         initSocket();
-        
-        // DB Connection
-        await connectDB();
-        
-        console.log('✅ Backend Ready!');
+        // Don't await DB connection here to prevent Vercel timeout
+        connectDB().then(success => {
+            if (success) console.log('✅ DB Connected');
+            else console.error('❌ DB Connection Failed');
+        });
     } catch (err) {
-        console.error('🔥 Fatal Initialization Error:', err.message);
+        console.error('🔥 Initialization Error:', err);
     }
 };
 
-initializeApp();
+startServer();
 
-// Port binding for local dev
+// Local server for development
 if (process.env.NODE_ENV !== 'production' && !process.env.VERCEL) {
-    app.listen(PORT, '0.0.0.0', () => {
-        console.log(`🚀 SERVER IS LIVE ON PORT ${PORT}`);
+    const PORT = process.env.PORT || 8080;
+    app.listen(PORT, () => {
+        console.log(`🚀 LOCAL SERVER ON PORT ${PORT}`);
     });
 }
 

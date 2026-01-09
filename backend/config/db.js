@@ -1,6 +1,13 @@
 const mongoose = require('mongoose');
 
+let isConnected = false;
+
 const connectDB = async () => {
+    if (isConnected) {
+        console.log('✅ Using existing MongoDB connection');
+        return true;
+    }
+
     try {
         let mongoUri = process.env.MONGO_URI;
         if (!mongoUri) {
@@ -13,6 +20,7 @@ const connectDB = async () => {
             connectTimeoutMS: 10000,
         });
 
+        isConnected = !!conn.connections[0].readyState;
         console.log(`✅ MongoDB Connected: ${conn.connection.host}`);
         return true;
     } catch (error) {
