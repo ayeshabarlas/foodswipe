@@ -22,8 +22,10 @@ export default function RiderOrders({ riderId }: RiderOrdersProps) {
     const [filter, setFilter] = useState<'active' | 'completed' | 'all'>('active');
     const [activeDelivery, setActiveDelivery] = useState<any>(null);
     const [isChatOpen, setIsChatOpen] = useState(false);
+    const [activeChat, setActiveChat] = useState<any>(null);
     const [selectedOrder, setSelectedOrder] = useState<any>(null);
     const [showDetailsModal, setShowDetailsModal] = useState(false);
+    const userInfo = JSON.parse(localStorage.getItem('userInfo') || '{}');
 
     // Track location if there's an active delivery
     const { location } = useGeolocation(!!activeDelivery);
@@ -510,6 +512,8 @@ export default function RiderOrders({ riderId }: RiderOrdersProps) {
                 }}
                 userRole="rider"
                 userName={userInfo.name || 'Rider'}
+                userId={userInfo._id}
+                orderStatus={activeChat?.status}
             />
 
             {/* Order Completion Summary Modal */}
@@ -731,9 +735,10 @@ function OrderCard({
                             {isAssignedToMe && (
                                 <button
                                     onClick={() => onChat(order)}
-                                    className="p-2 bg-orange-100 text-orange-600 rounded-lg hover:bg-orange-200 transition"
+                                    className="flex items-center gap-1.5 px-3 py-1.5 bg-orange-50 text-orange-500 rounded-xl hover:bg-orange-100 transition-all border border-orange-100/50"
                                 >
-                                    <FaCommentDots />
+                                    <FaCommentDots size={14} />
+                                    <span className="text-[10px] font-bold uppercase tracking-wider">Chat</span>
                                 </button>
                             )}
                         </div>

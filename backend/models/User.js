@@ -43,6 +43,10 @@ const userSchema = mongoose.Schema(
             type: String,
             default: '',
         },
+        houseNumber: {
+            type: String,
+            default: '',
+        },
         avatar: {
             type: String,
             default: '',

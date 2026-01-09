@@ -54,6 +54,8 @@ export default function OrderBoard({ restaurant, onUpdate }: OrderBoardProps) {
     const [trackingOrder, setTrackingOrder] = useState<Order | null>(null);
     const [activeChat, setActiveChat] = useState<Order | null>(null);
     const [prepTimes, setPrepTimes] = useState<Record<string, number>>({});
+    
+    const userInfo = JSON.parse(localStorage.getItem('userInfo') || '{}');
 
     const [lastUpdated, setLastUpdated] = useState<Date>(new Date());
 
@@ -328,79 +330,110 @@ export default function OrderBoard({ restaurant, onUpdate }: OrderBoardProps) {
                 {/* Actions - Refined based on Screenshot 2/3 */}
                 <div className="flex flex-col gap-2.5">
                     {order.status === 'Pending' && (
-                        <div className="grid grid-cols-2 gap-2.5">
+                        <div className="flex gap-2.5">
                             <button
                                 onClick={() => handleAcceptOrder(order._id)}
-                                className="bg-[#22C55E] hover:bg-[#16A34A] text-white py-3 rounded-2xl font-medium text-[11px] transition shadow-sm"
+                                className="flex-1 bg-[#22C55E] hover:bg-[#16A34A] text-white py-3 rounded-2xl font-medium text-[11px] transition shadow-sm"
                             >
                                 ACCEPT
                             </button>
                             <button
                                 onClick={() => setRejectingOrder(order._id)}
-                                className="bg-[#EF4444] hover:bg-[#DC2626] text-white py-3 rounded-2xl font-medium text-[11px] transition shadow-sm"
+                                className="flex-1 bg-[#EF4444] hover:bg-[#DC2626] text-white py-3 rounded-2xl font-medium text-[11px] transition shadow-sm"
                             >
                                 REJECT
+                            </button>
+                            <button
+                                onClick={() => setActiveChat(order)}
+                                className="w-11 h-11 flex items-center justify-center rounded-2xl bg-gray-50 text-gray-400 hover:bg-gray-100 transition border border-gray-100/50 shadow-sm"
+                            >
+                                <FaCommentDots size={16} />
+                            </button>
+                            <button
+                                onClick={() => setCancellingOrderId(order._id)}
+                                className="w-11 h-11 flex items-center justify-center rounded-2xl bg-red-50/50 text-red-400 hover:bg-red-50 transition border border-red-100/30"
+                            >
+                                <FaBan size={14} />
                             </button>
                         </div>
                     )}
 
                     {order.status === 'Accepted' && (
-                        <button
-                            onClick={() => updateStatus(order._id, 'Preparing', { prepTime: prepTimes[order._id] || 20 })}
-                            className="w-full bg-blue-500 text-white py-3 rounded-2xl font-medium text-[11px] hover:bg-blue-600 transition shadow-sm"
-                        >
-                            START PREPARING
-                        </button>
+                        <div className="flex gap-2.5">
+                            <button
+                                onClick={() => updateStatus(order._id, 'Preparing', { prepTime: prepTimes[order._id] || 20 })}
+                                className="flex-1 bg-blue-500 text-white py-3 rounded-2xl font-medium text-[11px] hover:bg-blue-600 transition shadow-sm"
+                            >
+                                START PREPARING
+                            </button>
+                            <button
+                                onClick={() => setActiveChat(order)}
+                                className="w-11 h-11 flex items-center justify-center rounded-2xl bg-gray-50 text-gray-400 hover:bg-gray-100 transition border border-gray-100/50 shadow-sm"
+                            >
+                                <FaCommentDots size={16} />
+                            </button>
+                        </div>
                     )}
 
                     {order.status === 'Preparing' && (
-                        <div className="grid grid-cols-2 gap-2.5">
+                        <div className="flex gap-2.5">
                             <button
                                 onClick={() => updateStatus(order._id, 'Ready')}
-                                className="bg-[#22C55E] text-white py-3 rounded-2xl font-medium text-[11px] hover:bg-[#16A34A] transition shadow-sm"
+                                className="flex-1 bg-[#22C55E] text-white py-3 rounded-2xl font-medium text-[11px] hover:bg-[#16A34A] transition shadow-sm"
                             >
                                 MARK READY
                             </button>
                             <button
-                                className="bg-[#F59E0B] text-white py-3 rounded-2xl font-medium text-[11px] hover:bg-[#D97706] transition shadow-sm"
+                                className="flex-1 bg-[#F59E0B] text-white py-3 rounded-2xl font-medium text-[11px] hover:bg-[#D97706] transition shadow-sm"
                             >
                                 DELAY
+                            </button>
+                            <button
+                                onClick={() => setActiveChat(order)}
+                                className="w-11 h-11 flex items-center justify-center rounded-2xl bg-gray-50 text-gray-400 hover:bg-gray-100 transition border border-gray-100/50 shadow-sm"
+                            >
+                                <FaCommentDots size={16} />
                             </button>
                         </div>
                     )}
 
                     {order.status === 'Ready' && (
-                        <button
-                            onClick={() => updateStatus(order._id, 'OnTheWay')}
-                            className="w-full bg-purple-500 text-white py-3 rounded-2xl font-medium text-[11px] hover:bg-purple-600 transition shadow-sm"
-                        >
-                            HAND TO RIDER
-                        </button>
+                        <div className="flex gap-2.5">
+                            <button
+                                onClick={() => updateStatus(order._id, 'OnTheWay')}
+                                className="flex-1 bg-purple-500 text-white py-3 rounded-2xl font-medium text-[11px] hover:bg-purple-600 transition shadow-sm"
+                            >
+                                HAND TO RIDER
+                            </button>
+                            <button
+                                onClick={() => setActiveChat(order)}
+                                className="w-11 h-11 flex items-center justify-center rounded-2xl bg-gray-50 text-gray-400 hover:bg-gray-100 transition border border-gray-100/50 shadow-sm"
+                            >
+                                <FaCommentDots size={16} />
+                            </button>
+                        </div>
                     )}
 
-                    <div className="flex gap-2">
-                        <button
-                            onClick={() => setActiveChat(order)}
-                            className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl bg-gray-50 text-gray-400 font-medium text-[10px] hover:bg-gray-100 transition border border-gray-100/50"
-                        >
-                            <FaCommentDots size={12} className="opacity-60" />
-                            <span>CHAT</span>
-                        </button>
-                        <button
-                            onClick={() => setCancellingOrderId(order._id)}
-                            className="w-10 h-10 flex items-center justify-center rounded-xl bg-red-50/50 text-red-400 hover:bg-red-50 transition border border-red-100/30"
-                        >
-                            <FaBan size={12} />
-                        </button>
-                        {canTrack && (
+                    {(order.status === 'OnTheWay' || order.status === 'Picked Up' || order.status === 'Delivered') && (
+                        <div className="flex gap-2.5">
+                            {canTrack && (
+                                <button
+                                    onClick={() => setTrackingOrder(order)}
+                                    className="flex-1 flex items-center justify-center gap-2 py-3 rounded-2xl bg-blue-50/50 text-blue-500 font-medium text-[11px] hover:bg-blue-50 transition border border-blue-100/30"
+                                >
+                                    <FaMotorcycle size={14} />
+                                    TRACK RIDER
+                                </button>
+                            )}
                             <button
-                                onClick={() => setTrackingOrder(order)}
-                                className="w-10 h-10 flex items-center justify-center rounded-xl bg-blue-50/50 text-blue-400 hover:bg-blue-50 transition border border-blue-100/30"
+                                onClick={() => setActiveChat(order)}
+                                className={`${canTrack ? 'w-11' : 'flex-1'} h-11 flex items-center justify-center rounded-2xl bg-gray-50 text-gray-400 hover:bg-gray-100 transition border border-gray-100/50 shadow-sm`}
                             >
-                                <FaMotorcycle size={14} />
+                                <FaCommentDots size={16} />
+                                {!canTrack && <span className="ml-2 text-[11px]">CHAT WITH CUSTOMER</span>}
                             </button>
-                        )}
-                    </div>
+                        </div>
+                    )}
                 </div>
             </motion.div>
         );
@@ -817,6 +850,8 @@ export default function OrderBoard({ restaurant, onUpdate }: OrderBoardProps) {
                     onClose={() => setActiveChat(null)}
                     userRole="restaurant"
                     userName={restaurant?.name || 'Restaurant'}
+                    userId={userInfo._id}
+                    orderStatus={activeChat.status}
                 />
             )}
 

@@ -14,6 +14,7 @@ const getUserProfile = async (req, res) => {
                 role: user.role,
                 phone: user.phone,
                 address: user.address,
+                houseNumber: user.houseNumber,
             });
         } else {
             res.status(404).json({ message: 'User not found' });
@@ -35,6 +36,7 @@ const updateUserProfile = async (req, res) => {
             user.email = req.body.email || user.email;
             user.phone = req.body.phone || user.phone;
             user.address = req.body.address || user.address;
+            user.houseNumber = req.body.houseNumber || user.houseNumber;
 
             const updatedUser = await user.save();
 
@@ -45,6 +47,7 @@ const updateUserProfile = async (req, res) => {
                 role: updatedUser.role,
                 phone: updatedUser.phone,
                 address: updatedUser.address,
+                houseNumber: updatedUser.houseNumber,
                 token: req.headers.authorization.split(' ')[1],
             });
         } else {

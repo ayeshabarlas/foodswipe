@@ -170,27 +170,59 @@ export default function OrderTracking({ order: initialOrder, userRole = 'user', 
                                 <div className="w-12 h-12 bg-orange-500 rounded-full flex items-center justify-center text-white shadow-lg shadow-orange-500/20">
                                     <FaMotorcycle size={20} />
                                 </div>
-                                <div>
+                                <div className="flex-1">
                                     <h4 className="font-black text-gray-900 text-lg">Your rider is nearby</h4>
                                     <p className="text-sm font-medium text-gray-500">
                                         <span className="text-gray-900 font-bold">{order.rider.fullName || 'Rider'}</span> is delivering your order
                                     </p>
                                 </div>
-                            </div>
-                            <div className="flex gap-3">
-                                <a 
-                                    href={`tel:${order.rider.phoneNumber || ''}`}
-                                    className="flex-1 bg-orange-500 text-white py-4 rounded-2xl font-black text-center shadow-lg shadow-orange-500/30 hover:bg-orange-600 transition-all"
-                                >
-                                    Call Rider
-                                </a>
                                 <button 
                                     onClick={() => setIsChatOpen(true)}
-                                    className="flex-1 bg-white text-orange-500 border-2 border-orange-500 py-4 rounded-2xl font-black hover:bg-orange-50 transition-all"
+                                    className="w-12 h-12 bg-white text-orange-500 border-2 border-orange-500 rounded-2xl flex items-center justify-center hover:bg-orange-50 transition-all shadow-sm"
+                                    title="Chat with Rider"
                                 >
-                                    Message
+                                    <FaCommentDots size={20} />
                                 </button>
                             </div>
+                            <div className="flex gap-3">
+                                <button 
+                                    onClick={() => setIsChatOpen(true)}
+                                    className="flex-1 bg-orange-500 text-white py-4 rounded-2xl font-black text-center shadow-lg shadow-orange-500/30 hover:bg-orange-600 transition-all"
+                                >
+                                    Chat with Rider
+                                </button>
+                                <button 
+                                    onClick={() => {
+                                        // For now, we use the same chat modal but it would be better to have separate rooms
+                                        // or a way to select who you are chatting with.
+                                        // But the requirement says "Chat with Restaurant" too.
+                                        setIsChatOpen(true);
+                                    }}
+                                    className="flex-1 bg-white text-orange-500 border-2 border-orange-500 py-4 rounded-2xl font-black hover:bg-orange-50 transition-all"
+                                >
+                                    Chat with Shop
+                                </button>
+                            </div>
+                        </div>
+                    )}
+
+                    {!order.rider && (
+                        <div className="absolute bottom-6 left-6 right-6 bg-white border border-gray-100 rounded-[32px] p-6 shadow-2xl z-10">
+                            <div className="flex items-center justify-between mb-4">
+                                <div>
+                                    <h4 className="font-black text-gray-900 text-lg">Preparing your order</h4>
+                                    <p className="text-xs font-bold text-gray-400 uppercase tracking-widest">Restaurant is working on it</p>
+                                </div>
+                                <div className="w-10 h-10 bg-orange-50 rounded-full flex items-center justify-center text-orange-500">
+                                    <FaBox />
+                                </div>
+                            </div>
+                            <button 
+                                onClick={() => setIsChatOpen(true)}
+                                className="w-full bg-orange-500 text-white py-4 rounded-2xl font-black text-center shadow-lg shadow-orange-500/30 hover:bg-orange-600 transition-all"
+                            >
+                                Chat with Restaurant
+                            </button>
                         </div>
                     )}
                 </div>
@@ -242,6 +274,8 @@ export default function OrderTracking({ order: initialOrder, userRole = 'user', 
                     onClose={() => setIsChatOpen(false)}
                     userRole={userRole === 'user' ? 'customer' : 'restaurant'}
                     userName={userInfo.name || 'User'}
+                    userId={userInfo._id}
+                    orderStatus={order.status}
                 />
             </motion.div>
         </AnimatePresence>

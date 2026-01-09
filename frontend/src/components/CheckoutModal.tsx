@@ -80,6 +80,7 @@ export default function CheckoutModal({ isOpen, onClose, cart, total, subtotal, 
                 try {
                     const userInfo = JSON.parse(userInfoStr);
                     setDeliveryAddress(userInfo.address || '');
+                    setHouseNumber(userInfo.houseNumber || '');
                 } catch (e) {
                     console.error('Error parsing userInfo for address:', e);
                 }
@@ -318,15 +319,22 @@ export default function CheckoutModal({ isOpen, onClose, cart, total, subtotal, 
             // Sync address to user profile if changed
             try {
                 const currentUser = JSON.parse(localStorage.getItem('userInfo') || '{}');
-                if (currentUser && currentUser.address !== deliveryAddress) {
+                if (currentUser && (currentUser.address !== deliveryAddress || currentUser.houseNumber !== houseNumber)) {
                     // Update local storage first for immediate feedback
-                    const updatedUser = { ...currentUser, address: deliveryAddress };
+                    const updatedUser = { 
+                        ...currentUser, 
+                        address: deliveryAddress,
+                        houseNumber: houseNumber 
+                    };
                     localStorage.setItem('userInfo', JSON.stringify(updatedUser));
 
                     // Update backend
                     await axios.put(
                         `${API_BASE_URL}/api/auth/profile`,
-                        { address: deliveryAddress },
+                        { 
+                            address: deliveryAddress,
+                            houseNumber: houseNumber 
+                        },
                         { headers: { Authorization: `Bearer ${token}` } }
                     );
                 }

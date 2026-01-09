@@ -1,4 +1,5 @@
 const socketIO = require('socket.io');
+const Message = require('./models/Message');
 
 let io;
 
@@ -56,12 +57,33 @@ const initSocket = (server) => {
         });
 
         // 💬 Order Chat System
-        socket.on('sendOrderMessage', (data) => {
-            const { orderId, message, recipients } = data;
+        socket.on('sendOrderMessage', async (data) => {
+            const { orderId, message } = data;
             console.log(`💬 Message in Order ${orderId}:`, message.text);
 
-            // Broadcast to everyone in the order room except the sender
-            socket.to(`order_${orderId}`).emit('orderMessage', { orderId, message });
+            try {
+                // Save to database
+                const newMessage = await Message.create({
+                    order: orderId,
+                    sender: message.senderId, // Need to make sure senderId is passed
+                    senderRole: message.sender,
+                    senderName: message.senderName,
+                    text: message.text
+                });
+
+                // Broadcast to everyone in the order room except the sender
+                // Use the saved message data to ensure consistency (like timestamp)
+                socket.to(`order_${orderId}`).emit('orderMessage', { 
+                    orderId, 
+                    message: {
+                        ...message,
+                        id: newMessage._id,
+                        createdAt: newMessage.createdAt
+                    } 
+                });
+            } catch (error) {
+                console.error('Error saving socket message:', error);
+            }
         });
 
         // Join specific order room for chat

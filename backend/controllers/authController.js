@@ -307,6 +307,7 @@ const updateProfile = async (req, res) => {
             user.email = req.body.email || user.email;
             user.phone = req.body.phone || user.phone;
             user.address = req.body.address || user.address;
+            user.houseNumber = req.body.houseNumber || user.houseNumber;
             user.avatar = req.body.avatar || user.avatar;
             if (req.body.password) {
                 user.password = req.body.password;
@@ -320,6 +321,7 @@ const updateProfile = async (req, res) => {
                 phoneVerified: updatedUser.phoneVerified,
                 role: updatedUser.role,
                 address: updatedUser.address,
+                houseNumber: updatedUser.houseNumber,
                 avatar: updatedUser.avatar,
                 token: generateToken(updatedUser._id),
                 createdAt: updatedUser.createdAt

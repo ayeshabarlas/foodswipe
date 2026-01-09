@@ -2,15 +2,19 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { FaTimes, FaCommentDots, FaCheck, FaPaperPlane } from 'react-icons/fa';
+import { FaTimes, FaCommentDots, FaPaperPlane } from 'react-icons/fa';
 import { getSocket } from '../utils/socket';
+import axios from 'axios';
+import { API_BASE_URL } from '../utils/config';
 
 interface Message {
     id: string;
     text: string;
-    sender: 'customer' | 'restaurant' | 'rider';
+    sender: 'customer' | 'restaurant' | 'rider' | 'support';
     senderName: string;
+    senderId?: string;
     timestamp: string;
+    createdAt?: string;
 }
 
 interface OrderChatProps {
@@ -19,32 +23,90 @@ interface OrderChatProps {
     onClose: () => void;
     userRole: 'customer' | 'restaurant' | 'rider';
     userName: string;
+    userId: string;
+    orderStatus?: string;
 }
 
-export default function OrderChat({ orderId, isOpen, onClose, userRole, userName }: OrderChatProps) {
+export default function OrderChat({ orderId, isOpen, onClose, userRole, userName, userId, orderStatus }: OrderChatProps) {
     const [messages, setMessages] = useState<Message[]>([]);
     const [currentMessage, setCurrentMessage] = useState('');
+    const [loading, setLoading] = useState(false);
     const messagesEndRef = useRef<HTMLDivElement>(null);
     const socket = getSocket();
+
+    const isChatDisabled = orderStatus === 'Delivered' || orderStatus === 'Cancelled';
 
     const scrollToBottom = () => {
         messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
     };
 
     const playMessageSound = () => {
-        const audio = new Audio('https://assets.mixkit.co/active_storage/sfx/2357/2357-preview.mp3');
-        audio.play().catch(e => console.log('Audio play failed:', e));
+        try {
+            const audio = new Audio('https://assets.mixkit.co/active_storage/sfx/2357/2357-preview.mp3');
+            audio.play().catch(e => console.log('Audio play failed:', e));
+        } catch (e) {}
     };
 
+    // Fetch Chat History
+    useEffect(() => {
+        const fetchHistory = async () => {
+            if (!isOpen || !orderId) return;
+            
+            setLoading(true);
+            try {
+                const userInfo = JSON.parse(localStorage.getItem('userInfo') || '{}');
+                const config = {
+                    headers: {
+                        Authorization: `Bearer ${userInfo.token}`,
+                    },
+                };
+                const { data } = await axios.get(`${API_BASE_URL}/api/chat/${orderId}`, config);
+                
+                const formattedMessages: Message[] = data.map((msg: any) => ({
+                    id: msg._id,
+                    text: msg.text,
+                    sender: msg.senderRole,
+                    senderName: msg.senderName,
+                    senderId: msg.sender,
+                    timestamp: new Date(msg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+                    createdAt: msg.createdAt
+                }));
+                
+                setMessages(formattedMessages);
+            } catch (error) {
+                console.error('Error fetching chat history:', error);
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        fetchHistory();
+    }, [isOpen, orderId]);
+
+    // Socket Listener
     useEffect(() => {
         if (isOpen && socket) {
             socket.emit('joinOrderChat', { orderId });
             
-            const handleMessage = (data: { orderId: string; message: Message }) => {
+            const handleMessage = (data: { orderId: string; message: any }) => {
                 if (data.orderId === orderId) {
-                    setMessages(prev => [...prev, data.message]);
-                    // Play sound if message is from someone else
-                    if (data.message.sender !== userRole) {
+                    const newMsg: Message = {
+                        id: data.message.id || Date.now().toString(),
+                        text: data.message.text,
+                        sender: data.message.sender,
+                        senderName: data.message.senderName,
+                        senderId: data.message.senderId,
+                        timestamp: data.message.timestamp || new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+                        createdAt: data.message.createdAt || new Date().toISOString()
+                    };
+
+                    setMessages(prev => {
+                        // Avoid duplicates
+                        if (prev.find(m => m.id === newMsg.id)) return prev;
+                        return [...prev, newMsg];
+                    });
+
+                    if (data.message.senderId !== userId) {
                         playMessageSound();
                     }
                 }
@@ -56,31 +118,31 @@ export default function OrderChat({ orderId, isOpen, onClose, userRole, userName
                 socket.off('orderMessage', handleMessage);
             };
         }
-    }, [isOpen, orderId, socket]);
+    }, [isOpen, orderId, socket, userId]);
 
     useEffect(() => {
         scrollToBottom();
     }, [messages]);
 
     const handleSendMessage = () => {
-        if (!currentMessage.trim() || !socket) return;
+        if (!currentMessage.trim() || !socket || isChatDisabled) return;
 
-        const messageData: Message = {
-            id: Date.now().toString(),
+        const messageData = {
             text: currentMessage,
             sender: userRole,
             senderName: userName,
+            senderId: userId,
             timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
         };
 
         socket.emit('sendOrderMessage', {
             orderId,
-            message: messageData,
-            recipients: ['customer', 'restaurant', 'rider'].filter(r => r !== userRole)
+            message: messageData
         });
 
-        // Optimistically add to local state
-        setMessages(prev => [...prev, messageData]);
+        // Optimistically add to local state with temporary ID
+        const tempId = Date.now().toString();
+        setMessages(prev => [...prev, { ...messageData, id: tempId, sender: userRole as any }]);
         setCurrentMessage('');
     };
 
@@ -91,7 +153,7 @@ export default function OrderChat({ orderId, isOpen, onClose, userRole, userName
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
                     exit={{ opacity: 0 }}
-                    className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[60] flex items-end sm:items-center justify-center p-0 sm:p-4"
+                    className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[150] flex items-end sm:items-center justify-center p-0 sm:p-4"
                     onClick={onClose}
                 >
                     <motion.div
@@ -99,83 +161,99 @@ export default function OrderChat({ orderId, isOpen, onClose, userRole, userName
                         animate={{ y: 0 }}
                         exit={{ y: '100%' }}
                         onClick={(e) => e.stopPropagation()}
-                        className="bg-white rounded-t-3xl sm:rounded-3xl w-full max-w-lg h-[80vh] sm:h-[600px] flex flex-col overflow-hidden shadow-2xl"
+                        className="bg-white rounded-t-[2.5rem] sm:rounded-[2.5rem] w-full max-w-lg h-[85vh] sm:h-[650px] flex flex-col overflow-hidden shadow-2xl"
                     >
                         {/* Header */}
-                        <div className="p-4 bg-gradient-to-r from-orange-500 to-red-600 text-white flex items-center justify-between shadow-lg">
-                            <div className="flex items-center gap-3">
-                                <div className="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center">
-                                    <FaCommentDots size={20} />
+                        <div className="p-6 bg-white border-b border-gray-100 flex items-center justify-between">
+                            <div className="flex items-center gap-4">
+                                <div className="w-12 h-12 bg-orange-50 rounded-2xl flex items-center justify-center text-orange-500">
+                                    <FaCommentDots size={24} />
                                 </div>
                                 <div>
-                                    <h3 className="font-bold text-base">Order Chat</h3>
-                                    <p className="text-[10px] opacity-90 uppercase tracking-widest font-black">
-                                        ACTIVE SUPPORT FOR ORDER #{orderId.slice(-6)}
+                                    <h3 className="font-black text-gray-900 text-lg">Order Chat</h3>
+                                    <p className="text-[10px] text-gray-400 uppercase tracking-[0.2em] font-black">
+                                        Support for #{orderId.slice(-6)}
                                     </p>
                                 </div>
                             </div>
                             <button
                                 onClick={onClose}
-                                className="w-8 h-8 rounded-full bg-white/20 hover:bg-white/30 flex items-center justify-center transition backdrop-blur-md"
+                                className="w-10 h-10 rounded-full bg-gray-50 hover:bg-gray-100 flex items-center justify-center transition text-gray-400"
                             >
-                                <FaTimes size={16} />
+                                <FaTimes size={18} />
                             </button>
                         </div>
 
                         {/* Messages */}
-                        <div className="flex-1 overflow-y-auto p-6 space-y-6 bg-white custom-scrollbar">
-                            {messages.map((msg, idx) => (
-                                <div
-                                    key={idx}
-                                    className={`flex flex-col ${msg.sender === userRole ? 'items-end' : 'items-start'}`}
-                                >
-                                    <div
-                                        className={`max-w-[75%] px-5 py-3 rounded-2xl text-sm font-medium shadow-sm ${msg.sender === userRole
-                                            ? 'bg-orange-500 text-white rounded-tr-none'
-                                            : 'bg-gray-100 text-gray-800 rounded-tl-none'
-                                            }`}
-                                    >
-                                        <p>{msg.text}</p>
-                                    </div>
-                                    <div className="flex items-center gap-2 mt-1.5 px-1">
-                                        <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">
-                                            {msg.sender === userRole ? 'YOU' : msg.senderName.toUpperCase()}
-                                        </span>
-                                        <span className="text-[10px] text-gray-300">•</span>
-                                        <span className="text-[10px] font-medium text-gray-400">{msg.timestamp}</span>
-                                    </div>
+                        <div className="flex-1 overflow-y-auto p-6 space-y-6 bg-gray-50/30 custom-scrollbar">
+                            {loading ? (
+                                <div className="h-full flex items-center justify-center">
+                                    <div className="w-8 h-8 border-4 border-orange-500 border-t-transparent rounded-full animate-spin"></div>
                                 </div>
-                            ))}
-                            <div ref={messagesEndRef} />
-                            {messages.length === 0 && (
-                                <div className="h-full flex flex-col items-center justify-center text-gray-300 space-y-3">
-                                    <div className="w-16 h-16 bg-gray-50 rounded-full flex items-center justify-center">
-                                        <FaCommentDots size={32} />
-                                    </div>
-                                    <p className="text-xs font-bold uppercase tracking-widest">Start the conversation</p>
-                                </div>
+                            ) : (
+                                <>
+                                    {messages.map((msg, idx) => (
+                                        <div
+                                            key={msg.id || idx}
+                                            className={`flex flex-col ${msg.senderId === userId ? 'items-end' : 'items-start'}`}
+                                        >
+                                            <div
+                                                className={`max-w-[80%] px-5 py-3.5 rounded-2xl text-sm font-bold shadow-sm ${msg.senderId === userId
+                                                    ? 'bg-orange-500 text-white rounded-tr-none'
+                                                    : 'bg-white text-gray-800 rounded-tl-none border border-gray-100'
+                                                    }`}
+                                            >
+                                                <p className="leading-relaxed">{msg.text}</p>
+                                            </div>
+                                            <div className="flex items-center gap-2 mt-2 px-1">
+                                                <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">
+                                                    {msg.senderId === userId ? 'YOU' : msg.senderName.toUpperCase()}
+                                                </span>
+                                                <span className="text-[10px] text-gray-300">•</span>
+                                                <span className="text-[10px] font-bold text-gray-400">{msg.timestamp}</span>
+                                            </div>
+                                        </div>
+                                    ))}
+                                    <div ref={messagesEndRef} />
+                                    {messages.length === 0 && !loading && (
+                                        <div className="h-full flex flex-col items-center justify-center text-gray-300 space-y-4">
+                                            <div className="w-20 h-20 bg-white rounded-[2rem] shadow-sm flex items-center justify-center text-gray-100">
+                                                <FaCommentDots size={40} />
+                                            </div>
+                                            <p className="text-[10px] font-black uppercase tracking-[0.2em]">No messages yet</p>
+                                        </div>
+                                    )}
+                                </>
                             )}
                         </div>
 
                         {/* Input */}
-                        <div className="p-4 bg-white border-t border-gray-50 mb-2">
-                            <div className="flex gap-3 items-center bg-gray-50 rounded-2xl px-4 py-1.5 border border-gray-100 focus-within:ring-2 focus-within:ring-orange-500/10 focus-within:border-orange-500 transition-all">
-                                <input
-                                    type="text"
-                                    value={currentMessage}
-                                    onChange={(e) => setCurrentMessage(e.target.value)}
-                                    onKeyPress={(e) => e.key === 'Enter' && handleSendMessage()}
-                                    placeholder="Type your message..."
-                                    className="flex-1 bg-transparent border-none py-3 text-sm focus:outline-none"
-                                />
-                                <button
-                                    onClick={handleSendMessage}
-                                    disabled={!currentMessage.trim()}
-                                    className="w-10 h-10 bg-orange-500 hover:bg-orange-600 disabled:opacity-30 disabled:hover:bg-orange-500 text-white rounded-xl flex items-center justify-center transition-all shadow-md active:scale-90"
-                                >
-                                    <FaPaperPlane size={16} />
-                                </button>
-                            </div>
+                        <div className="p-6 bg-white border-t border-gray-100">
+                            {isChatDisabled ? (
+                                <div className="bg-gray-50 rounded-2xl p-4 text-center">
+                                    <p className="text-xs font-bold text-gray-400 uppercase tracking-widest">
+                                        Chat disabled - Order {orderStatus}
+                                    </p>
+                                </div>
+                            ) : (
+                                <div className="flex gap-4 items-center bg-gray-50 rounded-[1.5rem] px-5 py-2 border border-gray-100 focus-within:ring-4 focus-within:ring-orange-500/5 focus-within:border-orange-500/20 transition-all">
+                                    <input
+                                        type="text"
+                                        value={currentMessage}
+                                        onChange={(e) => setCurrentMessage(e.target.value)}
+                                        onKeyPress={(e) => e.key === 'Enter' && handleSendMessage()}
+                                        placeholder="Type your message..."
+                                        className="flex-1 bg-transparent border-none py-4 text-sm font-bold focus:outline-none placeholder:text-gray-300"
+                                    />
+                                    <button
+                                        onClick={handleSendMessage}
+                                        disabled={!currentMessage.trim()}
+                                        className="w-12 h-12 bg-orange-500 hover:bg-orange-600 disabled:opacity-30 disabled:hover:bg-orange-500 text-white rounded-2xl flex items-center justify-center transition-all shadow-lg shadow-orange-200 active:scale-95"
+                                    >
+                                        <FaPaperPlane size={18} />
+                                    </button>
+                                </div>
+                            )}
                         </div>
                     </motion.div>
                 </motion.div>
