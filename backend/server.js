@@ -60,15 +60,15 @@ app.use('/api/tickets', require('./routes/ticketRoutes'));
 // 5. ASYNC INITIALIZATION (Doesn't block server startup)
 const initializeApp = async () => {
     try {
-        // Init Pusher
+        // Init Pusher (Now safe even if keys are missing)
         initSocket();
         
         // DB Connection
         if (process.env.USE_MOCK_DB !== 'true') {
-            const connected = await connectDB();
-            if (connected) {
-                console.log('✅ MongoDB Connected Successfully');
-                // Seeder (non-blocking)
+            await connectDB();
+            
+            // Seeder (Only run in dev, not on Vercel startup to avoid timeouts)
+            if (process.env.NODE_ENV !== 'production') {
                 require('./seederFunction')().catch(e => console.error('Seeder Error:', e));
             }
         }
@@ -77,6 +77,7 @@ const initializeApp = async () => {
     }
 };
 
+// Start initialization but don't await it here to allow module export
 initializeApp();
 
 // Global Error Handlers
