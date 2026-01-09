@@ -8,14 +8,24 @@ const { initSocket } = require('./socket');
 const connectDB = require('./config/db');
 
 const app = express();
-const server = http.createServer(app);
 const PORT = Number(process.env.PORT) || 8080;
 
-// 🚀 1. CORS (Must be FIRST)
-app.use(cors()); 
+// 🚀 1. CORS (Manual for Vercel Reliability)
+app.use((req, res, next) => {
+    const origin = req.headers.origin;
+    res.setHeader('Access-Control-Allow-Origin', origin || '*');
+    res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, PATCH, DELETE, OPTIONS');
+    res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With, Accept');
+    res.setHeader('Access-Control-Allow-Credentials', 'true');
+    
+    if (req.method === 'OPTIONS') {
+        return res.status(200).end();
+    }
+    next();
+});
 
 // 🚀 2. HEALTH CHECK
-app.get('/health', (req, res) => res.status(200).send('OK'));
+app.get('/health', (req, res) => res.status(200).json({ status: 'OK', message: 'Backend is healthy' }));
 app.get('/api/test', (req, res) => res.json({ message: 'Backend is reachable!' }));
 
 // 🚀 3. MIDDLEWARE
@@ -79,8 +89,8 @@ const initializeApp = async () => {
 initializeApp();
 
 // Port binding for local dev
-if (process.env.NODE_ENV !== 'production' || !process.env.VERCEL) {
-    server.listen(PORT, '0.0.0.0', () => {
+if (process.env.NODE_ENV !== 'production' && !process.env.VERCEL) {
+    app.listen(PORT, '0.0.0.0', () => {
         console.log(`🚀 SERVER IS LIVE ON PORT ${PORT}`);
     });
 }
