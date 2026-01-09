@@ -10,19 +10,19 @@ const connectDB = require('./config/db');
 const app = express();
 const PORT = Number(process.env.PORT) || 8080;
 
-// 🚀 1. CORS (Manual for Vercel Reliability)
+// 🚀 1. REQUEST LOGGING
 app.use((req, res, next) => {
-    const origin = req.headers.origin;
-    res.setHeader('Access-Control-Allow-Origin', origin || '*');
-    res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, PATCH, DELETE, OPTIONS');
-    res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With, Accept');
-    res.setHeader('Access-Control-Allow-Credentials', 'true');
-    
-    if (req.method === 'OPTIONS') {
-        return res.status(200).end();
-    }
+    console.log(`📡 ${req.method} ${req.url}`);
     next();
 });
+
+// 🚀 2. CORS (Use the package for reliability)
+app.use(cors({
+    origin: true, // Allow all origins
+    credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept']
+}));
 
 // 🚀 2. HEALTH CHECK
 app.get('/health', (req, res) => res.status(200).json({ status: 'OK', message: 'Backend is healthy' }));
