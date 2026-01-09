@@ -12,28 +12,32 @@ console.log('🔥 Firebase Admin SDK Initialization Check');
 
 if (serviceAccountJson && serviceAccountJson.trim() !== '') {
     try {
-        let serviceAccount;
-        const trimmedJson = serviceAccountJson.trim();
-
-        if (trimmedJson.startsWith('{')) {
-            // Clean common JSON copy-paste issues
-            const cleanJson = trimmedJson.replace(/\\n/g, "\\n");
-            serviceAccount = JSON.parse(cleanJson);
+        if (admin.apps.length > 0) {
+            console.log('✅ Firebase Admin SDK already initialized');
         } else {
-            // If it's not a JSON string, assume it's a file path (for local dev)
-            const resolvedPath = path.resolve(__dirname, '..', trimmedJson);
-            if (fs.existsSync(resolvedPath)) {
-                serviceAccount = require(resolvedPath);
-            } else {
-                console.warn(`⚠️  Firebase Service Account file not found at: ${resolvedPath}`);
-            }
-        }
+            let serviceAccount;
+            const trimmedJson = serviceAccountJson.trim();
 
-        if (serviceAccount) {
-            admin.initializeApp({
-                credential: admin.credential.cert(serviceAccount)
-            });
-            console.log('✅ Firebase Admin SDK initialized successfully');
+            if (trimmedJson.startsWith('{')) {
+                // Clean common JSON copy-paste issues
+                const cleanJson = trimmedJson.replace(/\\n/g, "\\n");
+                serviceAccount = JSON.parse(cleanJson);
+            } else {
+                // If it's not a JSON string, assume it's a file path (for local dev)
+                const resolvedPath = path.resolve(__dirname, '..', trimmedJson);
+                if (fs.existsSync(resolvedPath)) {
+                    serviceAccount = require(resolvedPath);
+                } else {
+                    console.warn(`⚠️  Firebase Service Account file not found at: ${resolvedPath}`);
+                }
+            }
+
+            if (serviceAccount) {
+                admin.initializeApp({
+                    credential: admin.credential.cert(serviceAccount)
+                });
+                console.log('✅ Firebase Admin SDK initialized successfully');
+            }
         }
     } catch (error) {
         console.error("❌ Firebase Initialization Error:", error.message);

@@ -10,19 +10,14 @@ const connectDB = require('./config/db');
 const app = express();
 const PORT = Number(process.env.PORT) || 8080;
 
-// 🚀 1. REQUEST LOGGING
+// 🚀 2. CORS (Use the package for reliability)
+app.use(cors());
+
+// 🚀 3. REQUEST LOGGING
 app.use((req, res, next) => {
     console.log(`📡 ${req.method} ${req.url}`);
     next();
 });
-
-// 🚀 2. CORS (Use the package for reliability)
-app.use(cors({
-    origin: true, // Allow all origins
-    credentials: true,
-    methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept']
-}));
 
 // 🚀 2. HEALTH CHECK
 app.get('/health', (req, res) => res.status(200).json({ status: 'OK', message: 'Backend is healthy' }));
