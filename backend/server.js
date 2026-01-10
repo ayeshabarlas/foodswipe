@@ -5,7 +5,7 @@ const express = require('express');
 const cors = require('cors');
 const path = require('path');
 const { initSocket } = require('./socket');
-const connectDB = require('./config/db');
+const { connectDB, getDbStatus } = require('./config/db');
 
 const app = express();
 
@@ -23,8 +23,15 @@ app.use((req, res, next) => {
 // 🚀 3. HEALTH & ROOT
 app.get('/health', async (req, res) => {
     console.log('💓 Health check requested');
-    const mongoose = require('mongoose');
-    const dbStatus = mongoose.connection.readyState;
+    const dbStatus = getDbStatus();
+    
+    // If not connected, try one more time (lazy connect)
+    if (!dbStatus.isConnected) {
+        console.log('🔌 DB not connected, retrying...');
+        await connectDB();
+    }
+
+    const updatedStatus = getDbStatus();
     const statusMap = {
         0: 'disconnected',
         1: 'connected',
@@ -34,7 +41,8 @@ app.get('/health', async (req, res) => {
     
     res.status(200).json({ 
         status: 'OK', 
-        db: statusMap[dbStatus] || 'unknown',
+        db: statusMap[updatedStatus.readyState] || 'unknown',
+        dbError: updatedStatus.lastError,
         timestamp: new Date().toISOString(),
         env: process.env.NODE_ENV,
         vercel: !!process.env.VERCEL
