@@ -21,10 +21,20 @@ app.use((req, res, next) => {
 });
 
 // 🚀 3. HEALTH & ROOT
-app.get('/health', (req, res) => {
+app.get('/health', async (req, res) => {
     console.log('💓 Health check requested');
+    const mongoose = require('mongoose');
+    const dbStatus = mongoose.connection.readyState;
+    const statusMap = {
+        0: 'disconnected',
+        1: 'connected',
+        2: 'connecting',
+        3: 'disconnecting'
+    };
+    
     res.status(200).json({ 
         status: 'OK', 
+        db: statusMap[dbStatus] || 'unknown',
         timestamp: new Date().toISOString(),
         env: process.env.NODE_ENV,
         vercel: !!process.env.VERCEL
