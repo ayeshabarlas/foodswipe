@@ -104,7 +104,7 @@ export default function Sidebar({ activeTab, setActiveTab, onLogout }: SidebarPr
                             <FaShoppingBag className="text-lg" />
                         </div>
                         <div>
-                            <h1 className="text-sm font-black text-gray-800 tracking-tight leading-none uppercase">FoodSwipe</h1>
+                            <h1 className="text-sm font-bold text-gray-800 tracking-tight leading-none uppercase">FoodSwipe</h1>
                             <p className="text-[9px] text-gray-400 font-bold tracking-widest mt-0.5 uppercase">Admin Panel</p>
                         </div>
                     </div>
@@ -157,7 +157,7 @@ export default function Sidebar({ activeTab, setActiveTab, onLogout }: SidebarPr
                 {/* Logout & Support Section */}
                 <div className="p-3 border-t border-gray-50 space-y-1">
                     <div className="px-3 py-2 bg-gray-50 rounded-xl mb-2">
-                        <p className="text-[8px] text-gray-400 font-black uppercase tracking-widest mb-1">Support</p>
+                        <p className="text-[8px] text-gray-400 font-bold uppercase tracking-widest mb-1">Support</p>
                         <a 
                             href="mailto:app.foodswipehelp@gmail.com" 
                             className="text-[9px] font-bold text-gray-600 hover:text-orange-600 transition-colors truncate block"

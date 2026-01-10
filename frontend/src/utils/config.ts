@@ -1,13 +1,18 @@
 const getApiUrl = () => {
-  // Priority 1: Environment variable
+  // Priority 1: Force localhost if we are on localhost in browser
+  if (typeof window !== 'undefined' && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')) {
+    return 'http://localhost:8080';
+  }
+
+  // Priority 2: Environment variable
   let url = process.env.NEXT_PUBLIC_API_URL;
   
-  // Priority 2: Production fallback (Hardcoded Vercel URL)
+  // Priority 3: Production fallback (Hardcoded Vercel URL)
   if (!url && process.env.NODE_ENV === 'production') {
     url = 'https://foodswipe-backend.vercel.app';
   }
 
-  // Priority 3: Localhost fallback
+  // Priority 4: Localhost fallback
   if (!url) {
     url = 'http://localhost:8080';
   }

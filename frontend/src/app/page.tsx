@@ -224,6 +224,24 @@ export default function Home() {
     );
   }
 
+  // Admin flow
+  if (userRole === "admin") {
+    return (
+      <div className="h-screen w-full bg-black overflow-y-auto">
+        <div className="p-8 text-white text-center">
+          <h1 className="text-2xl font-bold mb-4">Admin Dashboard</h1>
+          <p className="mb-8">Redirecting to Admin Panel...</p>
+          <button 
+            onClick={() => router.push('/admin')}
+            className="px-6 py-2 bg-orange-500 rounded-lg"
+          >
+            Go to Admin Dashboard
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   // Customer feed for customers
   if (userRole === "customer") {
     return (

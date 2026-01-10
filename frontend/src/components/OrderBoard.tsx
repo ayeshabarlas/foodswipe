@@ -6,7 +6,7 @@ import { API_BASE_URL } from '../utils/config';
 import { motion, AnimatePresence } from 'framer-motion';
 import { FaTimes, FaCheck, FaClock, FaMapMarkerAlt, FaCommentDots, FaBan, FaMotorcycle, FaShoppingBag, FaPaperPlane } from 'react-icons/fa';
 import CancelOrderModal from './CancelOrderModal';
-import { initSocket, getSocket, disconnectSocket } from '../utils/socket';
+import { initSocket, getSocket, disconnectSocket, subscribeToChannel } from '../utils/socket';
 import toast, { Toaster } from 'react-hot-toast';
 import dynamic from 'next/dynamic';
 import OrderChat from './OrderChat';
@@ -19,7 +19,7 @@ interface Order {
     user: { _id: string; name: string; phone: string; email: string };
     orderItems: { name: string; qty: number; price: number; product: string }[];
     totalPrice: number;
-    status: 'Pending' | 'Accepted' | 'Preparing' | 'Ready' | 'OnTheWay' | 'Delivered' | 'Cancelled' | 'Picked Up';
+    status: 'Pending' | 'Accepted' | 'Preparing' | 'Ready' | 'OnTheWay' | 'Delivered' | 'Cancelled' | 'Picked Up' | 'Arrived' | 'ArrivedAtCustomer';
     createdAt: string;
     shippingAddress: { address: string };
     paymentMethod: string;
@@ -90,38 +90,41 @@ export default function OrderBoard({ restaurant, onUpdate }: OrderBoardProps) {
         
         if (!resId) return;
 
-        const socket = initSocket(userInfo._id, 'restaurant', resId);
+        initSocket(userInfo._id, 'restaurant', resId);
+        const channel = subscribeToChannel(`restaurant-${resId}`);
 
-        socket?.on('newOrder', (order: Order) => {
-            console.log('OrderBoard: New order received via socket:', order);
-            setOrders(prev => {
-                const exists = prev.find(o => o._id === order._id);
-                if (exists) return prev;
-                return [order, ...prev];
+        if (channel) {
+            channel.bind('newOrder', (order: Order) => {
+                console.log('OrderBoard: New order received via socket:', order);
+                setOrders(prev => {
+                    const exists = prev.find(o => o._id === order._id);
+                    if (exists) return prev;
+                    return [order, ...prev];
+                });
+                setNewOrderPopup(order);
+                setCountdown(30);
+                playNotificationSound();
             });
-            setNewOrderPopup(order);
-            setCountdown(30);
-            playNotificationSound();
-        });
 
-        socket?.on('orderStatusUpdate', (updatedOrder: any) => {
-            console.log('OrderBoard: Order status update via socket:', updatedOrder);
-            const orderId = updatedOrder._id || updatedOrder.orderId;
-            setOrders(prev => prev.map(o => o._id === orderId ? { ...o, ...updatedOrder } : o));
-            // Instead of full fetch, we update locally, but fetch after a delay to ensure DB consistency
-            setTimeout(fetchOrders, 1000);
-          });
+            channel.bind('orderStatusUpdate', (updatedOrder: any) => {
+                console.log('OrderBoard: Order status update via socket:', updatedOrder);
+                const orderId = updatedOrder._id || updatedOrder.orderId;
+                setOrders(prev => prev.map(o => o._id === orderId ? { ...o, ...updatedOrder } : o));
+                // Instead of full fetch, we update locally, but fetch after a delay to ensure DB consistency
+                setTimeout(fetchOrders, 1000);
+            });
 
-          socket?.on('riderAccepted', (data: any) => {
-            console.log('OrderBoard: Rider accepted order via socket:', data);
-            toast.success(`Rider ${data.riderName} accepted order #${data.orderId.slice(-4)}`);
-            fetchOrders();
-          });
+            channel.bind('riderAccepted', (data: any) => {
+                console.log('OrderBoard: Rider accepted order via socket:', data);
+                toast.success(`Rider ${data.riderName} accepted order #${data.orderId.slice(-4)}`);
+                fetchOrders();
+            });
 
-          socket?.on('riderPickedUp', (data: any) => {
-            console.log('OrderBoard: Rider picked up order via socket:', data);
-            fetchOrders();
-        });
+            channel.bind('riderPickedUp', (data: any) => {
+                console.log('OrderBoard: Rider picked up order via socket:', data);
+                fetchOrders();
+            });
+        }
 
         return () => {
             // We don't necessarily want to disconnect here if the component re-renders
@@ -188,6 +191,8 @@ export default function OrderBoard({ restaurant, onUpdate }: OrderBoardProps) {
             case 'Ready': return 'bg-green-100 text-green-700';
             case 'OnTheWay': return 'bg-purple-100 text-purple-700';
             case 'Picked Up': return 'bg-purple-100 text-purple-700';
+            case 'Arrived': return 'bg-indigo-100 text-indigo-700';
+            case 'ArrivedAtCustomer': return 'bg-green-100 text-green-700';
             case 'Delivered': return 'bg-gray-100 text-gray-700';
             case 'Cancelled': return 'bg-red-100 text-red-700';
             default: return 'bg-gray-100 text-gray-700';
@@ -204,7 +209,7 @@ export default function OrderBoard({ restaurant, onUpdate }: OrderBoardProps) {
     const pendingOrders = ordersArray.filter(o => o.status === 'Pending');
     const preparingOrders = ordersArray.filter(o => ['Accepted', 'Preparing'].includes(o.status));
     const readyOrders = ordersArray.filter(o => o.status === 'Ready');
-    const completedOrders = ordersArray.filter(o => ['OnTheWay', 'Picked Up', 'Delivered'].includes(o.status));
+    const completedOrders = ordersArray.filter(o => ['OnTheWay', 'Picked Up', 'Arrived', 'ArrivedAtCustomer', 'Delivered'].includes(o.status));
 
     console.log('Filtered counts:', {
         pending: pendingOrders.length,
@@ -288,7 +293,7 @@ export default function OrderBoard({ restaurant, onUpdate }: OrderBoardProps) {
                                 </div>
                             </div>
                             <div className="text-right">
-                                <p className="text-[9px] text-blue-500 font-medium uppercase tracking-tighter">ETA: 5 mins</p>
+                                <p className="text-[10px] text-blue-500 font-bold uppercase tracking-wider">ETA: 5 MINS</p>
                             </div>
                         </div>
                         {/* Progress Stepper - Match Screenshot 3 */}
@@ -448,7 +453,7 @@ export default function OrderBoard({ restaurant, onUpdate }: OrderBoardProps) {
             {/* Header Section */}
             <div className="px-6 pt-6 flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div>
-                    <h2 className="text-2xl font-black text-gray-800 tracking-tight">Order Management</h2>
+                    <h2 className="text-2xl font-bold text-gray-800 tracking-tight">Order Management</h2>
                     <p className="text-gray-500 text-sm font-medium flex items-center gap-2">
                         Last updated: {lastUpdated.toLocaleTimeString()}
                         <span className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse"></span>
@@ -600,13 +605,13 @@ export default function OrderBoard({ restaurant, onUpdate }: OrderBoardProps) {
                             {/* Header - Screenshot 1 */}
                             <div className="flex items-center justify-between mb-8">
                                 <div className="flex items-center gap-4">
-                                    <div className="w-14 h-14 bg-[#FF4D00] rounded-full flex items-center justify-center shadow-lg shadow-orange-500/30">
+                                    <div className="w-14 h-14 bg-gradient-to-br from-[#FF4D00] to-[#FF8C00] rounded-full flex items-center justify-center shadow-lg shadow-orange-500/30">
                                         <FaClock className="text-white text-2xl" />
                                     </div>
                                     <div>
-                                        <h2 className="text-xl font-black text-[#FF4D00]">New Order Arrived!</h2>
-                                        <p className="text-sm text-gray-400 font-bold tracking-tight">Order #{newOrderPopup._id.slice(-4)}</p>
-                                    </div>
+                                         <h2 className="text-xl font-bold text-[#FF4D00]">New Order Arrived!</h2>
+                                         <p className="text-sm text-gray-400 font-bold tracking-tight">Order #{newOrderPopup._id.slice(-4)}</p>
+                                     </div>
                                 </div>
                                 <div className="w-16 h-16 relative flex items-center justify-center">
                                     <svg className="w-full h-full transform -rotate-90">
@@ -631,20 +636,20 @@ export default function OrderBoard({ restaurant, onUpdate }: OrderBoardProps) {
                                             className="text-[#FF4D00] transition-all duration-1000"
                                         />
                                     </svg>
-                                    <span className="absolute text-[#FF4D00] font-black text-lg">{countdown}s</span>
-                                </div>
-                            </div>
-
-                            {/* Customer - Screenshot 1 */}
-                            <div className="bg-[#F8FAFC] rounded-3xl p-5 mb-6 flex items-center gap-4 border border-gray-50">
-                                <div className="w-14 h-14 bg-[#3B82F6] rounded-full flex items-center justify-center text-white font-black text-lg shadow-md">
-                                    {getInitials(newOrderPopup.user?.name || 'Guest')}
-                                </div>
-                                <div>
-                                    <h3 className="font-black text-gray-900 text-lg">{newOrderPopup.user?.name}</h3>
-                                    <p className="text-xs text-blue-500 font-bold uppercase tracking-wider">Regular Customer</p>
-                                </div>
-                            </div>
+                                     <span className="absolute text-[#FF4D00] font-bold text-lg">{countdown}s</span>
+                                 </div>
+                             </div>
+ 
+                             {/* Customer - Screenshot 1 */}
+                             <div className="bg-[#F8FAFC] rounded-3xl p-5 mb-6 flex items-center gap-4 border border-gray-50">
+                                 <div className="w-14 h-14 bg-[#3B82F6] rounded-full flex items-center justify-center text-white font-bold text-lg shadow-md">
+                                     {getInitials(newOrderPopup.user?.name || 'Guest')}
+                                 </div>
+                                 <div>
+                                     <h3 className="font-bold text-gray-900 text-lg">{newOrderPopup.user?.name}</h3>
+                                     <p className="text-xs text-blue-500 font-bold uppercase tracking-wider">Regular Customer</p>
+                                 </div>
+                             </div>
 
                             {/* Address */}
                             <div className="flex items-start gap-3 mb-8 px-2 text-gray-500">
@@ -653,43 +658,43 @@ export default function OrderBoard({ restaurant, onUpdate }: OrderBoardProps) {
                             </div>
 
                             {/* Items List - Match Screenshot 1 */}
-                            <div className="mb-8">
-                                <p className="text-xs font-black text-gray-400 uppercase tracking-widest mb-4 px-2">Order Items</p>
-                                <div className="space-y-3">
-                                    {newOrderPopup.orderItems.map((item, idx) => (
-                                        <div key={idx} className="bg-[#F8FAFC] rounded-2xl p-4 flex justify-between items-center group hover:bg-white hover:shadow-md transition-all border border-transparent hover:border-gray-100">
-                                            <div>
-                                                <span className="block font-black text-gray-900 text-sm">{item.name}</span>
-                                                <span className="text-[10px] text-gray-400 font-bold uppercase tracking-wider">Default Options</span>
-                                            </div>
-                                            <span className="font-black text-gray-900 text-sm">Rs. {item.price.toFixed(0)}</span>
-                                        </div>
-                                    ))}
-                                </div>
-                                <div className="border-t-2 border-dashed border-gray-100 pt-6 mt-6 px-2 flex justify-between items-end">
-                                    <span className="text-gray-400 font-black text-sm uppercase tracking-widest">Total</span>
-                                    <span className="text-[#FF4D00] text-3xl font-black">Rs. {newOrderPopup.totalPrice.toFixed(0)}</span>
-                                </div>
-                            </div>
+                             <div className="mb-8">
+                                 <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-4 px-2">Order Items</p>
+                                 <div className="space-y-3">
+                                     {newOrderPopup.orderItems.map((item, idx) => (
+                                         <div key={idx} className="bg-[#F8FAFC] rounded-2xl p-4 flex justify-between items-center group hover:bg-white hover:shadow-md transition-all border border-transparent hover:border-gray-100">
+                                             <div>
+                                                 <span className="block font-bold text-gray-900 text-sm">{item.name}</span>
+                                                 <span className="text-[10px] text-gray-400 font-bold uppercase tracking-wider">Default Options</span>
+                                             </div>
+                                             <span className="font-bold text-gray-900 text-sm">Rs. {item.price.toFixed(0)}</span>
+                                         </div>
+                                     ))}
+                                 </div>
+                                 <div className="border-t-2 border-dashed border-gray-100 pt-6 mt-6 px-2 flex justify-between items-end">
+                                     <span className="text-gray-400 font-bold text-sm uppercase tracking-widest">Total</span>
+                                     <span className="text-[#FF4D00] text-3xl font-bold">Rs. {newOrderPopup.totalPrice.toFixed(0)}</span>
+                                 </div>
+                             </div>
 
-                            {/* Actions - Gradient Buttons as Screenshot 1 */}
-                            <div className="flex gap-4">
-                                <button
-                                    onClick={() => {
-                                        setRejectingOrder(newOrderPopup._id);
-                                        setNewOrderPopup(null);
-                                    }}
-                                    className="flex-1 bg-gradient-to-r from-[#FF416C] to-[#FF4B2B] hover:shadow-xl hover:shadow-red-500/30 text-white px-6 py-4.5 rounded-[24px] font-black text-sm transition-all active:scale-95"
-                                >
-                                    Reject
-                                </button>
-                                <button
-                                    onClick={() => handleAcceptOrder(newOrderPopup._id)}
-                                    className="flex-1 bg-gradient-to-r from-[#00b09b] to-[#96c93d] hover:shadow-xl hover:shadow-green-500/30 text-white px-6 py-4.5 rounded-[24px] font-black text-sm transition-all active:scale-95"
-                                >
-                                    Accept Order
-                                </button>
-                            </div>
+                             {/* Actions - Gradient Buttons as Screenshot 1 */}
+                             <div className="flex gap-4">
+                                 <button
+                                     onClick={() => {
+                                         setRejectingOrder(newOrderPopup._id);
+                                         setNewOrderPopup(null);
+                                     }}
+                                     className="flex-1 bg-gradient-to-r from-[#FF416C] to-[#FF4B2B] hover:shadow-xl hover:shadow-red-500/30 text-white px-6 py-4.5 rounded-[24px] font-bold text-sm transition-all active:scale-95"
+                                 >
+                                     Reject
+                                 </button>
+                                 <button
+                                     onClick={() => handleAcceptOrder(newOrderPopup._id)}
+                                     className="flex-1 bg-gradient-to-r from-[#00b09b] to-[#96c93d] hover:shadow-xl hover:shadow-green-500/30 text-white px-6 py-4.5 rounded-[24px] font-bold text-sm transition-all active:scale-95"
+                                 >
+                                     Accept Order
+                                 </button>
+                             </div>
                         </motion.div>
                     </motion.div>
                 )}
@@ -756,7 +761,7 @@ export default function OrderBoard({ restaurant, onUpdate }: OrderBoardProps) {
                             <div className="w-2 h-2 rounded-full bg-orange-500 shadow-[0_0_8px_rgba(249,115,22,0.5)]"></div>
                             New Orders
                         </span>
-                        <span className="bg-orange-100 text-orange-600 px-2 py-0.5 rounded-lg font-black">
+                        <span className="bg-orange-100 text-orange-600 px-2 py-0.5 rounded-lg font-bold">
                             {pendingOrders.length}
                         </span>
                     </h3>
@@ -779,7 +784,7 @@ export default function OrderBoard({ restaurant, onUpdate }: OrderBoardProps) {
                             <div className="w-2 h-2 rounded-full bg-blue-500 shadow-[0_0_8px_rgba(59,130,246,0.5)] animate-pulse"></div>
                             Preparing
                         </span>
-                        <span className="bg-blue-100 text-blue-600 px-2 py-0.5 rounded-lg font-black">
+                        <span className="bg-blue-100 text-blue-600 px-2 py-0.5 rounded-lg font-bold">
                             {preparingOrders.length}
                         </span>
                     </h3>
@@ -802,7 +807,7 @@ export default function OrderBoard({ restaurant, onUpdate }: OrderBoardProps) {
                             <div className="w-2 h-2 rounded-full bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.5)]"></div>
                             Ready
                         </span>
-                        <span className="bg-green-100 text-green-600 px-2 py-0.5 rounded-lg font-black">
+                        <span className="bg-green-100 text-green-600 px-2 py-0.5 rounded-lg font-bold">
                             {readyOrders.length}
                         </span>
                     </h3>
@@ -825,7 +830,7 @@ export default function OrderBoard({ restaurant, onUpdate }: OrderBoardProps) {
                             <div className="w-2 h-2 rounded-full bg-purple-500 shadow-[0_0_8px_rgba(168,85,247,0.5)]"></div>
                             Active
                         </span>
-                        <span className="bg-purple-100 text-purple-600 px-2 py-0.5 rounded-lg font-black">
+                        <span className="bg-purple-100 text-purple-600 px-2 py-0.5 rounded-lg font-bold">
                             {completedOrders.length}
                         </span>
                     </h3>

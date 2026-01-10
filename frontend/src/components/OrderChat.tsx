@@ -156,7 +156,7 @@ export default function OrderChat({ orderId, isOpen, onClose, userRole, userName
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
                     exit={{ opacity: 0 }}
-                    className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[150] flex items-end sm:items-center justify-center p-0 sm:p-4"
+                    className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[9999] flex items-end sm:items-center justify-center p-0 sm:p-4"
                     onClick={onClose}
                 >
                     <motion.div
@@ -173,22 +173,19 @@ export default function OrderChat({ orderId, isOpen, onClose, userRole, userName
                                     <FaCommentDots size={24} />
                                 </div>
                                 <div>
-                                    <h3 className="font-black text-gray-900 text-lg">Order Chat</h3>
-                                    <p className="text-[10px] text-gray-400 uppercase tracking-[0.2em] font-black">
-                                        Support for #{orderId.slice(-6)}
+                                    <h3 className="font-bold text-gray-900 text-lg">Order Chat</h3>
+                                    <p className="text-[10px] text-gray-400 uppercase tracking-[0.2em] font-bold">
+                                        Active • Status: {orderStatus || 'Processing'}
                                     </p>
                                 </div>
                             </div>
-                            <button
-                                onClick={onClose}
-                                className="w-10 h-10 rounded-full bg-gray-50 hover:bg-gray-100 flex items-center justify-center transition text-gray-400"
-                            >
-                                <FaTimes size={18} />
+                            <button onClick={onClose} className="p-2 hover:bg-gray-100 rounded-full transition-colors">
+                                <FaTimes className="text-gray-400" />
                             </button>
                         </div>
 
-                        {/* Messages */}
-                        <div className="flex-1 overflow-y-auto p-6 space-y-6 bg-gray-50/30 custom-scrollbar">
+                        {/* Messages Area */}
+                        <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-[#F8F9FA]">
                             {loading ? (
                                 <div className="h-full flex items-center justify-center">
                                     <div className="w-8 h-8 border-4 border-orange-500 border-t-transparent rounded-full animate-spin"></div>
@@ -202,14 +199,14 @@ export default function OrderChat({ orderId, isOpen, onClose, userRole, userName
                                         >
                                             <div
                                                 className={`max-w-[80%] px-5 py-3.5 rounded-2xl text-sm font-bold shadow-sm ${msg.senderId === userId
-                                                    ? 'bg-orange-500 text-white rounded-tr-none'
-                                                    : 'bg-white text-gray-800 rounded-tl-none border border-gray-100'
-                                                    }`}
+                                                    ? 'bg-gradient-to-br from-orange-500 to-red-500 text-white rounded-tr-none'
+                                                    : 'bg-white text-gray-800 rounded-tl-none border border-gray-100 shadow-sm'
+                                            }`}
                                             >
                                                 <p className="leading-relaxed">{msg.text}</p>
                                             </div>
                                             <div className="flex items-center gap-2 mt-2 px-1">
-                                                <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">
+                                                <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">
                                                     {msg.senderId === userId ? 'YOU' : msg.senderName.toUpperCase()}
                                                 </span>
                                                 <span className="text-[10px] text-gray-300">•</span>
@@ -223,7 +220,7 @@ export default function OrderChat({ orderId, isOpen, onClose, userRole, userName
                                             <div className="w-20 h-20 bg-white rounded-[2rem] shadow-sm flex items-center justify-center text-gray-100">
                                                 <FaCommentDots size={40} />
                                             </div>
-                                            <p className="text-[10px] font-black uppercase tracking-[0.2em]">No messages yet</p>
+                                            <p className="text-[10px] font-bold uppercase tracking-[0.2em]">No messages yet</p>
                                         </div>
                                     )}
                                 </>
@@ -251,7 +248,7 @@ export default function OrderChat({ orderId, isOpen, onClose, userRole, userName
                                     <button
                                         onClick={handleSendMessage}
                                         disabled={!currentMessage.trim()}
-                                        className="w-12 h-12 bg-orange-500 hover:bg-orange-600 disabled:opacity-30 disabled:hover:bg-orange-500 text-white rounded-2xl flex items-center justify-center transition-all shadow-lg shadow-orange-200 active:scale-95"
+                                        className="w-12 h-12 bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600 disabled:opacity-30 disabled:hover:from-orange-500 disabled:hover:to-red-500 text-white rounded-2xl flex items-center justify-center transition-all shadow-lg shadow-orange-200 active:scale-95"
                                     >
                                         <FaPaperPlane size={18} />
                                     </button>

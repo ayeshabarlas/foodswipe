@@ -271,7 +271,7 @@ const RiderDashboard = ({ riderId: initialRiderId }: { riderId?: string }) => {
                 <p className="text-red-500 font-bold mb-4">{error}</p>
                 <button 
                     onClick={fetchRiderData}
-                    className="px-8 py-3 bg-orange-500 text-white rounded-2xl font-bold shadow-lg shadow-orange-200"
+                    className="px-8 py-3 bg-gradient-to-r from-orange-500 to-red-500 text-white rounded-2xl font-bold shadow-lg shadow-orange-200"
                 >
                     Retry
                 </button>
@@ -349,7 +349,7 @@ const RiderDashboard = ({ riderId: initialRiderId }: { riderId?: string }) => {
                     <div className="bg-white rounded-[40px] p-6 shadow-xl shadow-orange-500/5 border border-orange-500/10">
                         <div className="flex justify-between items-center mb-6">
                             <h3 className="text-gray-900 font-bold text-lg">Active Delivery</h3>
-                            <div className="px-3 py-1 bg-orange-500 text-white rounded-full text-[10px] font-bold uppercase tracking-widest">
+                            <div className="px-3 py-1 bg-gradient-to-r from-orange-500 to-red-500 text-white rounded-full text-[10px] font-bold uppercase tracking-widest">
                                 Step {activeStep}/3
                             </div>
                         </div>
@@ -358,7 +358,7 @@ const RiderDashboard = ({ riderId: initialRiderId }: { riderId?: string }) => {
                         <div className="relative flex justify-between mb-8 px-4">
                             <div className="absolute top-1/2 left-0 w-full h-0.5 bg-gray-100 -translate-y-1/2 z-0" />
                             <div 
-                                className="absolute top-1/2 left-0 h-0.5 bg-orange-500 -translate-y-1/2 z-0 transition-all duration-500" 
+                                className="absolute top-1/2 left-0 h-0.5 bg-gradient-to-r from-orange-500 to-red-500 -translate-y-1/2 z-0 transition-all duration-500" 
                                 style={{ width: `${((activeStep - 1) / 2) * 100}%` }}
                             />
                             
@@ -403,7 +403,7 @@ const RiderDashboard = ({ riderId: initialRiderId }: { riderId?: string }) => {
                                 else if (activeStep === 2) handleUpdateStatus(activeOrder._id, 'OnTheWay', activeOrder.distance);
                                 else if (activeStep === 3) handleUpdateStatus(activeOrder._id, 'Delivered', activeOrder.distance);
                             }}
-                            className="w-full bg-orange-500 text-white py-4 rounded-2xl text-[10px] font-bold uppercase tracking-widest shadow-lg shadow-orange-100 hover:scale-[1.02] active:scale-[0.98] transition-all"
+                            className="w-full bg-gradient-to-r from-orange-500 to-red-500 text-white py-4 rounded-2xl text-[10px] font-bold uppercase tracking-widest shadow-lg shadow-orange-100 hover:scale-[1.02] active:scale-[0.98] transition-all"
                         >
                             {activeStep === 1 ? 'Arrived at Restaurant' : 
                              activeStep === 2 ? 'Order Picked Up' : 
@@ -560,7 +560,7 @@ function ActionItem({ icon, label, sublabel, onClick }: any) {
                                 {order.rider ? (
                                     <button 
                                         onClick={() => handleUpdateStatus(order._id, order.status === 'Picked Up' ? 'Delivered' : 'Picked Up', order.distance || order.distanceKm)}
-                                        className="flex-[2] bg-orange-500 text-white py-4 rounded-2xl text-[10px] font-bold uppercase tracking-widest shadow-lg shadow-orange-100 hover:scale-[1.02] active:scale-[0.98] transition-all"
+                                        className="flex-[2] bg-gradient-to-r from-orange-500 to-red-500 text-white py-4 rounded-2xl text-[10px] font-bold uppercase tracking-widest shadow-lg shadow-orange-100 hover:scale-[1.02] active:scale-[0.98] transition-all"
                                     >
                                         {order.status === 'Picked Up' ? 'Mark Delivered' : 'Confirm Pick Up'}
                                     </button>
@@ -650,7 +650,7 @@ function ActionItem({ icon, label, sublabel, onClick }: any) {
                                 </button>
                                 <button 
                                     onClick={() => handleAcceptOrder(newOrderPopup._id)}
-                                    className="flex-[2] py-4 rounded-2xl bg-orange-500 text-white font-bold text-xs uppercase tracking-widest shadow-lg shadow-orange-200 hover:scale-[1.02] active:scale-[0.98] transition-all"
+                                    className="flex-[2] py-4 rounded-2xl bg-gradient-to-r from-orange-500 to-red-500 text-white font-bold text-xs uppercase tracking-widest shadow-lg shadow-orange-200 hover:scale-[1.02] active:scale-[0.98] transition-all"
                                 >
                                     Accept Order
                                 </button>
@@ -711,7 +711,7 @@ function NavButton({ active, onClick, icon, label }: any) {
             onClick={onClick}
             className={`flex flex-col items-center justify-center gap-1 transition-all duration-500 rounded-[28px] ${
                 active 
-                ? 'bg-orange-500 text-white px-6 py-3 shadow-lg shadow-orange-200' 
+                ? 'bg-gradient-to-r from-orange-500 to-red-500 text-white px-6 py-3 shadow-lg shadow-orange-200' 
                 : 'text-gray-400 px-4 py-3'
             }`}
         >

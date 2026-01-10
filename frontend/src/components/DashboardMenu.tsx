@@ -211,7 +211,7 @@ export default function DashboardMenu() {
                             <div className="p-4">
                                 <div className="flex justify-between items-start mb-1">
                                     <h3 className="font-bold text-gray-900 line-clamp-1">{dish.name}</h3>
-                                    <span className="text-orange-600 font-black text-sm whitespace-nowrap">Rs. {dish.price}</span>
+                                    <span className="text-orange-600 font-bold text-sm whitespace-nowrap">Rs. {dish.price}</span>
                                 </div>
                                 <p className="text-gray-500 text-xs line-clamp-2 mb-4 h-8">{dish.description}</p>
                                 <div className="flex flex-wrap gap-2">

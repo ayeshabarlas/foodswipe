@@ -280,6 +280,7 @@ export default function CustomersView() {
 
     function formatTimeAgo(dateString: string) {
         const date = new Date(dateString);
+        if (isNaN(date.getTime())) return 'Recently';
         const now = new Date();
         const diff = Math.floor((now.getTime() - date.getTime()) / 1000); // seconds
 

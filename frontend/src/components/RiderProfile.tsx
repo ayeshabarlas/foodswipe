@@ -68,7 +68,7 @@ export default function RiderProfile({ riderId }: RiderProfileProps) {
                 <p className="text-red-500 mb-4">{error}</p>
                 <button
                     onClick={() => window.location.reload()}
-                    className="px-6 py-2 bg-orange-500 text-white rounded-xl"
+                    className="px-6 py-2 bg-gradient-to-r from-orange-500 to-red-500 text-white rounded-xl font-bold shadow-md hover:from-orange-600 hover:to-red-600 transition-all"
                 >
                     Retry
                 </button>
@@ -333,7 +333,7 @@ function UploadModal({ title, onClose, onUpload }: { title: string; onClose: () 
                     <button
                         onClick={handleSimulatedUpload}
                         disabled={uploading}
-                        className={`w-full py-5 bg-orange-500 text-white font-bold rounded-[24px] shadow-lg shadow-orange-100 hover:bg-orange-600 transition-all active:scale-[0.98] flex items-center justify-center gap-2 ${uploading ? 'opacity-70' : ''}`}
+                        className={`w-full py-5 bg-gradient-to-r from-orange-500 to-red-500 text-white font-bold rounded-[24px] shadow-lg shadow-orange-100 hover:from-orange-600 hover:to-red-600 transition-all active:scale-[0.98] flex items-center justify-center gap-2 ${uploading ? 'opacity-70' : ''}`}
                     >
                         {uploading ? (
                             <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
@@ -411,7 +411,7 @@ function SettingsModal({ riderData, riderId, onClose, onUpdate }: { riderData: a
                     <button
                         onClick={handleSave}
                         disabled={saving}
-                        className={`w-full py-5 bg-orange-500 text-white font-bold rounded-[24px] shadow-lg shadow-orange-100 hover:bg-orange-600 transition-all active:scale-[0.98] mt-4 flex items-center justify-center gap-2 ${saving ? 'opacity-70' : ''}`}
+                        className={`w-full py-5 bg-gradient-to-r from-orange-500 to-red-500 text-white font-bold rounded-[24px] shadow-lg shadow-orange-100 hover:from-orange-600 hover:to-red-600 transition-all active:scale-[0.98] mt-4 flex items-center justify-center gap-2 ${saving ? 'opacity-70' : ''}`}
                     >
                         {saving ? (
                             <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>

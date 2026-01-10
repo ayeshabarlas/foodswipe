@@ -51,12 +51,17 @@ export default function KitchenDisplay() {
     }, []);
 
     const getTimeAgo = (date: string) => {
-        const diff = Math.floor((Date.now() - new Date(date).getTime()) / 60000);
-        return diff === 0 ? 'Just now' : `${diff} min${diff > 1 ? 's' : ''} ago`;
+        const created = new Date(date).getTime();
+        if (isNaN(created)) return 'Recently';
+        const diff = Math.floor((Date.now() - created) / 60000);
+        if (diff < 1) return 'Just now';
+        return `${diff} min${diff > 1 ? 's' : ''} ago`;
     };
 
     const getTimeRemaining = (createdAt: string, estimatedTime: number = 20) => {
-        const elapsed = Math.floor((Date.now() - new Date(createdAt).getTime()) / 60000);
+        const created = new Date(createdAt).getTime();
+        if (isNaN(created)) return estimatedTime;
+        const elapsed = Math.floor((Date.now() - created) / 60000);
         const remaining = estimatedTime - elapsed;
         return Math.max(0, remaining);
     };
@@ -95,7 +100,7 @@ export default function KitchenDisplay() {
                 {order.orderItems.map((item, idx) => (
                     <div key={idx} className="flex items-center justify-between p-2 bg-gray-700/30 rounded-lg">
                         <span className="text-white text-sm">{item.name}</span>
-                        <span className="bg-orange-500 text-white px-2 py-0.5 rounded-full text-xs font-bold">
+                        <span className="bg-gradient-to-r from-orange-500 to-red-500 text-white px-2 py-0.5 rounded-full text-xs font-bold">
                             x{item.qty}
                         </span>
                     </div>
@@ -117,7 +122,7 @@ export default function KitchenDisplay() {
             <div className="bg-gradient-to-r from-gray-800 to-gray-900 rounded-2xl p-6 border border-gray-700">
                 <div className="flex items-center justify-between">
                     <div className="flex items-center gap-4">
-                        <div className="p-3 bg-orange-500 rounded-xl">
+                        <div className="p-3 bg-gradient-to-br from-orange-500 to-red-500 rounded-xl">
                             <FaUtensils className="text-2xl text-white" />
                         </div>
                         <div>
@@ -137,7 +142,7 @@ export default function KitchenDisplay() {
 
                 <div className="flex items-center gap-6 mt-6">
                     <div className="flex items-center gap-2">
-                        <div className="w-8 h-8 bg-orange-500 rounded-lg flex items-center justify-center text-white font-bold">
+                        <div className="w-8 h-8 bg-gradient-to-br from-orange-500 to-red-500 rounded-lg flex items-center justify-center text-white font-bold">
                             {newOrders.length}
                         </div>
                         <span className="text-orange-400 font-medium">New</span>
@@ -161,7 +166,7 @@ export default function KitchenDisplay() {
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                 {/* New Orders */}
                 <div className="space-y-4">
-                    <div className="bg-orange-500/20 border-2 border-orange-500 rounded-xl p-4">
+                    <div className="bg-gradient-to-r from-orange-500/20 to-red-500/20 border-2 border-orange-500 rounded-xl p-4">
                         <div className="flex items-center gap-2 text-white font-bold">
                             <FaClock className="text-xl" />
                             <span>New Orders ({newOrders.length})</span>

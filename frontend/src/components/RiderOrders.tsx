@@ -4,7 +4,7 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { API_BASE_URL } from '../utils/config';
 import { FaBox, FaCheckCircle, FaClock, FaTimes, FaMapMarkerAlt, FaPhone, FaCommentDots, FaBell, FaDollarSign, FaMotorcycle, FaRoute } from 'react-icons/fa';
-import { initSocket, disconnectSocket, getSocket } from '../utils/socket';
+import { initSocket, disconnectSocket, getSocket, subscribeToChannel } from '../utils/socket';
 import toast, { Toaster } from 'react-hot-toast';
 import { useGeolocation } from '../utils/useGeolocation';
 import dynamic from 'next/dynamic';
@@ -88,42 +88,50 @@ export default function RiderOrders({ riderId }: RiderOrdersProps) {
         fetchOrders();
 
         const userInfo = JSON.parse(localStorage.getItem("userInfo") || "{}");
-        const socket = initSocket(userInfo._id, 'rider', undefined, riderId);
+        initSocket(userInfo._id, 'rider', undefined, riderId);
 
-        socket?.on('newOrderAvailable', (orderData: any) => {
-            console.log('New order available for riders:', orderData);
+        // Subscribe to channels and bind events
+        const ridersChannel = subscribeToChannel('riders');
+        const personalChannel = subscribeToChannel(`rider-${riderId}`);
 
-            // Play notification sound using Web Audio API
-            try {
-                const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
-                const oscillator = audioContext.createOscillator();
-                const gainNode = audioContext.createGain();
+        if (ridersChannel) {
+            ridersChannel.bind('newOrderAvailable', (orderData: any) => {
+                console.log('New order available for riders:', orderData);
 
-                oscillator.connect(gainNode);
-                gainNode.connect(audioContext.destination);
+                // Play notification sound
+                try {
+                    const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
+                    const oscillator = audioContext.createOscillator();
+                    const gainNode = audioContext.createGain();
 
-                oscillator.frequency.value = 800;
-                oscillator.type = 'sine';
+                    oscillator.connect(gainNode);
+                    gainNode.connect(audioContext.destination);
 
-                gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
-                gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.5);
+                    oscillator.frequency.value = 800;
+                    oscillator.type = 'sine';
 
-                oscillator.start(audioContext.currentTime);
-                oscillator.stop(audioContext.currentTime + 0.5);
-            } catch (err) {
-                console.log('Audio notification failed:', err);
-            }
+                    gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
+                    gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.5);
 
-            toast.success('🆕 New order available!', {
-                duration: 5000,
-                position: 'top-center',
+                    oscillator.start(audioContext.currentTime);
+                    oscillator.stop(audioContext.currentTime + 0.5);
+                } catch (err) {
+                    console.log('Audio notification failed:', err);
+                }
+
+                toast.success('🆕 New order available!', {
+                    duration: 5000,
+                    position: 'top-center',
+                });
+                fetchOrders();
             });
-            fetchOrders();
-        });
+        }
 
-        socket?.on('orderStatusUpdate', () => {
-            fetchOrders();
-        });
+        if (personalChannel) {
+            personalChannel.bind('orderStatusUpdate', () => {
+                fetchOrders();
+            });
+        }
 
         return () => {
             disconnectSocket();
@@ -265,13 +273,13 @@ export default function RiderOrders({ riderId }: RiderOrdersProps) {
             {/* 1. Header Section - Gradient with Notification Bell */}
             <div className="bg-gradient-to-r from-orange-500 to-red-500 p-6 shadow-lg z-20 flex-shrink-0">
                 <div className="flex items-center justify-between">
-                    <h1 className="text-xl font-black text-white tracking-tight">Available Orders</h1>
+                    <h1 className="text-xl font-bold text-white tracking-tight">Available Orders</h1>
                     <div className="relative">
                         <div className="w-10 h-10 bg-white/20 backdrop-blur-md rounded-xl flex items-center justify-center text-white cursor-pointer hover:bg-white/30 transition-all">
                             <FaBell size={20} />
                         </div>
                         {availableOrdersCount > 0 && (
-                            <span className="absolute -top-1 -right-1 w-5 h-5 bg-red-600 border-2 border-white text-white text-[10px] font-black rounded-full flex items-center justify-center shadow-sm">
+                            <span className="absolute -top-1 -right-1 w-5 h-5 bg-red-600 border-2 border-white text-white text-[10px] font-bold rounded-full flex items-center justify-center shadow-sm">
                                 {availableOrdersCount}
                             </span>
                         )}
@@ -287,7 +295,7 @@ export default function RiderOrders({ riderId }: RiderOrdersProps) {
                         <div>
                             <p className="text-gray-400 font-bold text-[11px] uppercase tracking-wider mb-1">Potential Earnings</p>
                             <div className="flex items-baseline gap-1">
-                                <span className="text-2xl font-black text-green-600">PKR {potentialEarnings}</span>
+                                <span className="text-2xl font-bold text-green-600">PKR {potentialEarnings}</span>
                             </div>
                         </div>
                         <div className="w-12 h-12 bg-green-50 rounded-2xl flex items-center justify-center text-green-600">
@@ -301,7 +309,7 @@ export default function RiderOrders({ riderId }: RiderOrdersProps) {
                     <div className="flex gap-3 overflow-x-auto pb-2 no-scrollbar">
                         <button 
                             onClick={() => { setFilter('active'); setAvailableFilter('all'); }}
-                            className={`flex items-center gap-2 px-5 py-2.5 rounded-full text-xs font-black whitespace-nowrap transition-all ${filter === 'active' && availableFilter === 'all' ? 'bg-orange-500 text-white shadow-lg shadow-orange-500/30' : 'bg-white text-gray-400 border border-gray-100'}`}
+                            className={`flex items-center gap-2 px-5 py-2.5 rounded-full text-xs font-bold whitespace-nowrap transition-all ${filter === 'active' && availableFilter === 'all' ? 'bg-gradient-to-r from-orange-500 to-red-500 text-white shadow-lg shadow-orange-500/30' : 'bg-white text-gray-400 border border-gray-100'}`}
                         >
                             All Orders
                             <span className={`px-1.5 py-0.5 rounded-md text-[10px] ${filter === 'active' && availableFilter === 'all' ? 'bg-white/20' : 'bg-gray-100'}`}>
@@ -310,7 +318,7 @@ export default function RiderOrders({ riderId }: RiderOrdersProps) {
                         </button>
                         <button 
                             onClick={() => { setFilter('active'); setAvailableFilter('nearby'); }}
-                            className={`flex items-center gap-2 px-5 py-2.5 rounded-full text-xs font-black whitespace-nowrap transition-all ${filter === 'active' && availableFilter === 'nearby' ? 'bg-orange-500 text-white shadow-lg shadow-orange-500/30' : 'bg-white text-gray-400 border border-gray-100'}`}
+                            className={`flex items-center gap-2 px-5 py-2.5 rounded-full text-xs font-bold whitespace-nowrap transition-all ${filter === 'active' && availableFilter === 'nearby' ? 'bg-gradient-to-r from-orange-500 to-red-500 text-white shadow-lg shadow-orange-500/30' : 'bg-white text-gray-400 border border-gray-100'}`}
                         >
                             Nearby
                             <span className={`px-1.5 py-0.5 rounded-md text-[10px] ${filter === 'active' && availableFilter === 'nearby' ? 'bg-white/20' : 'bg-gray-100'}`}>
@@ -319,7 +327,7 @@ export default function RiderOrders({ riderId }: RiderOrdersProps) {
                         </button>
                         <button 
                             onClick={() => { setFilter('active'); setAvailableFilter('high_pay'); }}
-                            className={`flex items-center gap-2 px-5 py-2.5 rounded-full text-xs font-black whitespace-nowrap transition-all ${filter === 'active' && availableFilter === 'high_pay' ? 'bg-orange-500 text-white shadow-lg shadow-orange-500/30' : 'bg-white text-gray-400 border border-gray-100'}`}
+                            className={`flex items-center gap-2 px-5 py-2.5 rounded-full text-xs font-bold whitespace-nowrap transition-all ${filter === 'active' && availableFilter === 'high_pay' ? 'bg-gradient-to-r from-orange-500 to-red-500 text-white shadow-lg shadow-orange-500/30' : 'bg-white text-gray-400 border border-gray-100'}`}
                         >
                             High Pay
                             <span className={`px-1.5 py-0.5 rounded-md text-[10px] ${filter === 'active' && availableFilter === 'high_pay' ? 'bg-white/20' : 'bg-gray-100'}`}>
@@ -328,14 +336,14 @@ export default function RiderOrders({ riderId }: RiderOrdersProps) {
                         </button>
                         <button 
                             onClick={() => setFilter('completed')}
-                            className={`flex items-center gap-2 px-5 py-2.5 rounded-full text-xs font-black whitespace-nowrap transition-all ${filter === 'completed' ? 'bg-orange-500 text-white shadow-lg shadow-orange-500/30' : 'bg-white text-gray-400 border border-gray-100'}`}
+                            className={`flex items-center gap-2 px-5 py-2.5 rounded-full text-xs font-bold whitespace-nowrap transition-all ${filter === 'completed' ? 'bg-gradient-to-r from-orange-500 to-red-500 text-white shadow-lg shadow-orange-500/30' : 'bg-white text-gray-400 border border-gray-100'}`}
                         >
                             History
                         </button>
                     </div>
                     {/* Horizontal Scroll Indicator Line */}
                     <div className="h-0.5 bg-gray-100 w-full mt-1 relative overflow-hidden rounded-full">
-                        <div className="absolute left-0 top-0 h-full w-1/3 bg-orange-500/30 rounded-full" />
+                        <div className="absolute left-0 top-0 h-full w-1/3 bg-gradient-to-r from-orange-500 to-red-500 opacity-30 rounded-full" />
                     </div>
                 </div>
 
@@ -368,7 +376,7 @@ export default function RiderOrders({ riderId }: RiderOrdersProps) {
                                             <div className="absolute top-4 left-4 right-4 flex justify-between items-center pointer-events-none">
                                                 <div className="bg-white/90 backdrop-blur-md px-3 py-1.5 rounded-full shadow-sm flex items-center gap-2">
                                                     <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
-                                                    <span className="text-[10px] font-black uppercase tracking-wider text-gray-800">Live Location</span>
+                                                    <span className="text-[10px] font-bold uppercase tracking-wider text-gray-800">Live Location</span>
                                                 </div>
                                             </div>
                                         </div>
@@ -382,13 +390,13 @@ export default function RiderOrders({ riderId }: RiderOrdersProps) {
                                                     </div>
                                                 </div>
                                                 
-                                                <h2 className="text-2xl font-black text-center text-[#FF4D00] mb-1">Order Accepted!</h2>
+                                                <h2 className="text-2xl font-bold text-center text-[#FF4D00] mb-1">Order Accepted!</h2>
                                                 <p className="text-gray-400 text-center text-xs font-bold mb-8">You've successfully accepted this delivery</p>
 
                                                 <div className="space-y-6">
                                                     <div className="flex items-center justify-between pb-4 border-b border-gray-50">
                                                         <span className="text-gray-400 font-bold text-xs uppercase tracking-wider">Order Summary</span>
-                                                        <span className="text-gray-900 font-black text-sm">Order ID <span className="text-gray-400 ml-1">#{activeDelivery.orderNumber || activeDelivery._id.slice(-6).toUpperCase()}</span></span>
+                                                        <span className="text-gray-900 font-bold text-sm">Order ID <span className="text-gray-400 ml-1">#{activeDelivery.orderNumber || activeDelivery._id.slice(-6).toUpperCase()}</span></span>
                                                     </div>
 
                                                     <div className="space-y-4">
@@ -397,8 +405,8 @@ export default function RiderOrders({ riderId }: RiderOrdersProps) {
                                                                 <FaMapMarkerAlt size={16} />
                                                             </div>
                                                             <div>
-                                                                <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Pickup from</p>
-                                                            <p className="font-black text-gray-900 text-sm">{activeDelivery.restaurant?.name}</p>
+                                                                <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Pickup from</p>
+                                                            <p className="font-bold text-gray-900 text-sm">{activeDelivery.restaurant?.name}</p>
                                                             <p className="text-[11px] font-bold text-gray-500 mt-0.5">{activeDelivery.distanceKm || '1.2'} km away</p>
                                                         </div>
                                                     </div>
@@ -408,8 +416,8 @@ export default function RiderOrders({ riderId }: RiderOrdersProps) {
                                                             <FaMapMarkerAlt size={16} />
                                                         </div>
                                                         <div>
-                                                            <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Deliver to</p>
-                                                            <p className="font-black text-gray-900 text-sm line-clamp-1">{activeDelivery.user?.address || 'Customer Location'}</p>
+                                                            <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Deliver to</p>
+                                                            <p className="font-bold text-gray-900 text-sm line-clamp-1">{activeDelivery.user?.address || 'Customer Location'}</p>
                                                             <p className="text-[11px] font-bold text-gray-500 mt-0.5">{(activeDelivery.distanceKm * 1.5).toFixed(1) || '3.5'} km from restaurant</p>
                                                         </div>
                                                     </div>
@@ -420,20 +428,20 @@ export default function RiderOrders({ riderId }: RiderOrdersProps) {
                                                         <div className="flex items-center gap-2 text-gray-400 font-bold text-xs">
                                                             <span>$</span> You'll earn
                                                         </div>
-                                                        <span className="text-[#FF4D00] font-black text-lg">PKR {activeDelivery.netRiderEarning || 180}</span>
+                                                        <span className="text-[#FF4D00] font-bold text-lg">PKR {activeDelivery.netRiderEarning || 180}</span>
                                                     </div>
                                                     <div className="flex justify-between items-center">
                                                         <div className="flex items-center gap-2 text-gray-400 font-bold text-xs">
                                                             <FaClock /> Estimated time
                                                         </div>
-                                                        <span className="text-gray-900 font-black text-sm">{activeDelivery.estimatedTime || '25-30'} mins</span>
+                                                        <span className="text-gray-900 font-bold text-sm">{activeDelivery.estimatedTime || '25-30'} mins</span>
                                                     </div>
                                                 </div>
                                                 </div>
 
                                                 <button 
                                                     onClick={() => handleUpdateStatus(activeDelivery._id, 'OnTheWay', '🚀 Delivery started!')}
-                                                    className="w-full mt-8 bg-gradient-to-r from-orange-500 to-pink-600 hover:from-orange-600 hover:to-pink-700 text-white py-4 rounded-2xl font-black text-sm shadow-lg shadow-orange-200 transition-all active:scale-[0.98] flex items-center justify-center gap-2"
+                                                    className="w-full mt-8 bg-gradient-to-r from-orange-500 to-pink-600 hover:from-orange-600 hover:to-pink-700 text-white py-4 rounded-2xl font-bold text-sm shadow-lg shadow-orange-200 transition-all active:scale-[0.98] flex items-center justify-center gap-2"
                                                 >
                                                     <FaMapMarkerAlt size={14} />
                                                     START DELIVERY
@@ -446,7 +454,7 @@ export default function RiderOrders({ riderId }: RiderOrdersProps) {
                                     <div className="p-6">
                                         <div className="flex justify-between items-start mb-6">
                                             <div>
-                                                <h2 className="text-lg font-black tracking-tight text-gray-900">
+                                                <h2 className="text-lg font-bold tracking-tight text-gray-900">
                                                     {activeDelivery.status === 'OnTheWay' || activeDelivery.status === 'Arrived' ? 'Pickup' : 'Delivery'} In Progress
                                                 </h2>
                                                 <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-widest">
@@ -454,7 +462,7 @@ export default function RiderOrders({ riderId }: RiderOrdersProps) {
                                                 </p>
                                             </div>
                                             <div className="text-right">
-                                                <p className="text-xl font-black text-orange-500">25-35 <span className="text-xs font-bold">MINS</span></p>
+                                                <p className="text-xl font-bold text-orange-500">25-35 <span className="text-xs font-bold">MINS</span></p>
                                             </div>
                                         </div>
 
@@ -462,7 +470,7 @@ export default function RiderOrders({ riderId }: RiderOrdersProps) {
                                         <div className="relative flex justify-between items-center mb-10 px-2">
                                             <div className="absolute left-6 right-6 h-1 bg-gray-100 top-[14px] z-0" />
                                             <div 
-                                                className="absolute left-6 h-1 bg-orange-500 top-[14px] z-0 transition-all duration-1000" 
+                                                className="absolute left-6 h-1 bg-gradient-to-r from-orange-500 to-red-500 top-[14px] z-0 transition-all duration-1000" 
                                                 style={{ 
                                                     width: activeDelivery.status === 'Delivered' ? '100%' : 
                                                            activeDelivery.status === 'Picked Up' || activeDelivery.status === 'ArrivedAtCustomer' ? '66.6%' : 
@@ -483,7 +491,7 @@ export default function RiderOrders({ riderId }: RiderOrdersProps) {
                                                 
                                                 return (
                                                     <div key={step.label} className="relative z-10 flex flex-col items-center">
-                                                        <div className={`w-7 h-7 rounded-full flex items-center justify-center border-4 border-white shadow-sm transition-colors duration-500 ${isCompleted ? 'bg-orange-500 text-white' : 'bg-gray-100 text-gray-400'}`}>
+                                                        <div className={`w-7 h-7 rounded-full flex items-center justify-center border-4 border-white shadow-sm transition-colors duration-500 ${isCompleted ? 'bg-gradient-to-r from-orange-500 to-red-500 text-white' : 'bg-gray-100 text-gray-400'}`}>
                                                             {isCompleted ? <FaCheckCircle size={10} /> : <div className="w-1.5 h-1.5 rounded-full bg-current" />}
                                                         </div>
                                                         <span className={`absolute -bottom-6 whitespace-nowrap text-[8px] font-bold tracking-tight ${isCompleted ? 'text-orange-500' : 'text-gray-300'}`}>
@@ -504,7 +512,7 @@ export default function RiderOrders({ riderId }: RiderOrdersProps) {
                                             {activeDelivery.status === 'OnTheWay' && (
                                                 <button 
                                                     onClick={() => handleUpdateStatus(activeDelivery._id, 'Arrived', '📍 Arrived at restaurant!')}
-                                                    className="w-full bg-gray-900 hover:bg-black text-white py-4 rounded-2xl font-black shadow-lg transition-all active:scale-95"
+                                                    className="w-full bg-gray-900 hover:bg-black text-white py-4 rounded-2xl font-bold shadow-lg transition-all active:scale-95"
                                                 >
                                                     ARRIVED AT RESTAURANT
                                                 </button>
@@ -512,7 +520,7 @@ export default function RiderOrders({ riderId }: RiderOrdersProps) {
                                             {activeDelivery.status === 'Arrived' && (
                                                 <button 
                                                     onClick={() => handlePickupOrder(activeDelivery._id)}
-                                                    className="w-full bg-[#FF4D00] hover:bg-[#FF3300] text-white py-4 rounded-2xl font-black shadow-lg transition-all active:scale-95"
+                                                    className="w-full bg-[#FF4D00] hover:bg-[#FF3300] text-white py-4 rounded-2xl font-bold shadow-lg transition-all active:scale-95"
                                                 >
                                                     ORDER PICKED UP
                                                 </button>
@@ -520,7 +528,7 @@ export default function RiderOrders({ riderId }: RiderOrdersProps) {
                                             {activeDelivery.status === 'Picked Up' && (
                                                 <button 
                                                     onClick={() => handleUpdateStatus(activeDelivery._id, 'ArrivedAtCustomer', '📍 Arrived at customer location!')}
-                                                    className="w-full bg-gray-900 hover:bg-black text-white py-4 rounded-2xl font-black shadow-lg transition-all active:scale-95"
+                                                    className="w-full bg-gray-900 hover:bg-black text-white py-4 rounded-2xl font-bold shadow-lg transition-all active:scale-95"
                                                 >
                                                     ARRIVED AT CUSTOMER
                                                 </button>
@@ -528,7 +536,7 @@ export default function RiderOrders({ riderId }: RiderOrdersProps) {
                                             {activeDelivery.status === 'ArrivedAtCustomer' && (
                                                 <button 
                                                     onClick={() => handleDeliverOrder(activeDelivery._id)}
-                                                    className="w-full bg-[#00D97E] hover:bg-[#00BD6E] text-white py-4 rounded-2xl font-black shadow-lg transition-all active:scale-95"
+                                                    className="w-full bg-[#00D97E] hover:bg-[#00BD6E] text-white py-4 rounded-2xl font-bold shadow-lg transition-all active:scale-95"
                                                 >
                                                     MARK AS DELIVERED
                                                 </button>
@@ -620,7 +628,7 @@ export default function RiderOrders({ riderId }: RiderOrdersProps) {
                                 </div>
                                 <div className="pt-4 border-t border-dashed border-gray-200 flex justify-between items-center">
                                     <span className="font-bold text-gray-900 text-lg">You Earned</span>
-                                    <span className="font-black text-green-600 text-2xl">Rs. {completionData.netEarning}</span>
+                                    <span className="font-bold text-green-600 text-2xl">Rs. {completionData.netEarning}</span>
                                 </div>
                             </div>
 
@@ -651,7 +659,7 @@ export default function RiderOrders({ riderId }: RiderOrdersProps) {
                     <div className="bg-white w-full max-w-lg rounded-t-[2.5rem] sm:rounded-[2.5rem] overflow-hidden shadow-2xl animate-in slide-in-from-bottom duration-300 max-h-[90vh] flex flex-col">
                         <div className="p-6 border-b border-gray-100 flex justify-between items-center bg-white sticky top-0 z-10">
                             <div>
-                                <h3 className="text-xl font-black text-gray-900">Order Details</h3>
+                                <h3 className="text-xl font-bold text-gray-900">Order Details</h3>
                                 <p className="text-xs font-bold text-gray-400 uppercase tracking-widest">#{selectedOrder.orderNumber}</p>
                             </div>
                             <button 
@@ -665,17 +673,17 @@ export default function RiderOrders({ riderId }: RiderOrdersProps) {
                         <div className="p-6 overflow-y-auto space-y-8">
                             {/* Items List */}
                             <div>
-                                <h4 className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-4">Items Summary</h4>
+                                <h4 className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-4">Items Summary</h4>
                                 <div className="space-y-4">
                                     {(selectedOrder.items || selectedOrder.orderItems || []).map((item: any, idx: number) => (
                                         <div key={idx} className="flex justify-between items-center bg-gray-50 p-4 rounded-2xl">
                                             <div className="flex items-center gap-3">
-                                                <div className="w-8 h-8 bg-white rounded-xl flex items-center justify-center font-black text-orange-500 shadow-sm border border-orange-50">
+                                                <div className="w-8 h-8 bg-white rounded-xl flex items-center justify-center font-bold text-orange-500 shadow-sm border border-orange-50">
                                                     {item.quantity}x
                                                 </div>
                                                 <span className="font-bold text-gray-900">{item.name || (item.dish && item.dish.name)}</span>
                                             </div>
-                                            <span className="font-black text-gray-900">Rs. {item.price || (item.dish && item.dish.price)}</span>
+                                            <span className="font-bold text-gray-900">Rs. {item.price || (item.dish && item.dish.price)}</span>
                                         </div>
                                     ))}
                                 </div>
@@ -684,20 +692,20 @@ export default function RiderOrders({ riderId }: RiderOrdersProps) {
                             {/* Customer & Address */}
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                                 <div className="bg-orange-50/50 p-5 rounded-3xl border border-orange-100/50">
-                                    <h4 className="text-[10px] font-black text-orange-400 uppercase tracking-widest mb-2">Customer</h4>
-                                    <p className="font-black text-gray-900 text-lg mb-1">{selectedOrder.customer?.name || 'Guest User'}</p>
+                                    <h4 className="text-[10px] font-bold text-orange-400 uppercase tracking-widest mb-2">Customer</h4>
+                                    <p className="font-bold text-gray-900 text-lg mb-1">{selectedOrder.customer?.name || 'Guest User'}</p>
                                     <p className="text-xs font-bold text-orange-600/70">{selectedOrder.customer?.phone || 'No phone provided'}</p>
                                 </div>
                                 <div className="bg-blue-50/50 p-5 rounded-3xl border border-blue-100/50">
-                                    <h4 className="text-[10px] font-black text-blue-400 uppercase tracking-widest mb-2">Payment</h4>
-                                    <p className="font-black text-gray-900 text-lg mb-1">{selectedOrder.paymentMethod || 'COD'}</p>
+                                    <h4 className="text-[10px] font-bold text-blue-400 uppercase tracking-widest mb-2">Payment</h4>
+                                    <p className="font-bold text-gray-900 text-lg mb-1">{selectedOrder.paymentMethod || 'COD'}</p>
                                     <p className="text-xs font-bold text-blue-600/70">Total: Rs. {selectedOrder.totalAmount || selectedOrder.totalPrice}</p>
                                 </div>
                             </div>
 
                             {/* Delivery Address */}
                             <div className="bg-gray-50 p-5 rounded-3xl border border-gray-100">
-                                <h4 className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Delivery Address</h4>
+                                <h4 className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-2">Delivery Address</h4>
                                 <p className="font-bold text-gray-900 leading-relaxed">{selectedOrder.deliveryAddress || 'No address provided'}</p>
                             </div>
                         </div>
@@ -705,7 +713,7 @@ export default function RiderOrders({ riderId }: RiderOrdersProps) {
                         <div className="p-6 bg-white border-t border-gray-100">
                             <button
                                 onClick={() => setShowDetailsModal(false)}
-                                className="w-full bg-gray-900 hover:bg-black text-white py-4 rounded-2xl font-black transition shadow-lg shadow-gray-200"
+                                className="w-full bg-gray-900 hover:bg-black text-white py-4 rounded-2xl font-bold transition shadow-lg shadow-gray-200"
                             >
                                 CLOSE DETAILS
                             </button>
@@ -745,13 +753,34 @@ function OrderCard({
 
     useEffect(() => {
         const updateTime = () => {
+            if (!order.createdAt) {
+                setTimeAgo('Recently');
+                return;
+            }
             const created = new Date(order.createdAt).getTime();
+            if (isNaN(created)) {
+                setTimeAgo('Recently');
+                return;
+            }
             const now = new Date().getTime();
             const diffInMins = Math.floor((now - created) / 60000);
             
-            if (diffInMins < 1) setTimeAgo('Just now');
-            else if (diffInMins < 60) setTimeAgo(`${diffInMins} mins ago`);
-            else setTimeAgo(`${Math.floor(diffInMins / 60)}h ${diffInMins % 60}m ago`);
+            if (isNaN(diffInMins)) {
+                setTimeAgo('Recently');
+                return;
+            }
+            
+            if (diffInMins < 0) {
+                setTimeAgo('Just now');
+            } else if (diffInMins < 1) {
+                setTimeAgo('Just now');
+            } else if (diffInMins < 60) {
+                setTimeAgo(`${diffInMins} mins ago`);
+            } else {
+                const hours = Math.floor(diffInMins / 60);
+                const mins = diffInMins % 60;
+                setTimeAgo(`${hours}h ${mins}m ago`);
+            }
             
             // Mark as urgent if older than 5 minutes and still available
             setIsUrgent(isAvailable && diffInMins >= 5);
@@ -769,15 +798,15 @@ function OrderCard({
                     <div className="flex flex-col gap-1.5">
                         {/* 5. Urgency Badge */}
                         {isUrgent && (
-                            <div className="flex items-center gap-1.5 bg-red-50 text-red-600 text-[10px] font-black uppercase px-2 py-1 rounded-lg w-fit animate-pulse">
+                            <div className="flex items-center gap-1.5 bg-red-50 text-red-600 text-[10px] font-bold uppercase px-2 py-1 rounded-lg w-fit animate-pulse">
                                 <div className="w-1.5 h-1.5 bg-red-600 rounded-full" />
                                 Urgent
                             </div>
                         )}
                         {/* Restaurant Name & Earnings */}
                         <div className="flex items-center gap-2">
-                            <h3 className="text-base font-black text-gray-900">{order.restaurant?.name || 'Restaurant'}</h3>
-                            <span className="text-green-600 font-black text-sm">+PKR {order.netRiderEarning || 250}</span>
+                            <h3 className="text-base font-bold text-gray-900">{order.restaurant?.name || 'Restaurant'}</h3>
+                            <span className="text-green-600 font-bold text-sm">+PKR {order.netRiderEarning || 250}</span>
                         </div>
                         {/* Order Age */}
                         <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">
@@ -808,7 +837,7 @@ function OrderCard({
                         </div>
                         <div className="flex-1">
                             <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest leading-none mb-1">Pickup</p>
-                            <p className="text-[12px] font-black text-gray-900 line-clamp-1">{order.restaurant?.address || 'Restaurant Address'}</p>
+                            <p className="text-[12px] font-bold text-gray-900 line-clamp-1">{order.restaurant?.address || 'Restaurant Address'}</p>
                         </div>
                     </div>
 
@@ -818,7 +847,7 @@ function OrderCard({
                         </div>
                         <div className="flex-1">
                             <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest leading-none mb-1">Delivery</p>
-                            <p className="text-[12px] font-black text-gray-900 line-clamp-1">{order.deliveryAddress || 'Delivery Address'}</p>
+                            <p className="text-[12px] font-bold text-gray-900 line-clamp-1">{order.deliveryAddress || 'Delivery Address'}</p>
                         </div>
                     </div>
                 </div>
@@ -840,7 +869,7 @@ function OrderCard({
                     {/* Action Button */}
                     <button 
                         onClick={() => onViewDetails(order)}
-                        className="text-orange-500 font-black text-xs uppercase tracking-wider hover:underline"
+                        className="text-orange-500 font-bold text-xs uppercase tracking-wider hover:underline"
                     >
                         View Details
                     </button>
@@ -849,11 +878,11 @@ function OrderCard({
                 {/* Real-time Accept Button for available orders */}
                 {isAvailable && (
                     <button 
-                        onClick={() => onAccept(order._id)}
-                        className="w-full mt-4 bg-orange-500 hover:bg-orange-600 text-white py-3 rounded-xl font-black text-xs uppercase tracking-widest shadow-lg shadow-orange-500/20 transition-all active:scale-95"
-                    >
-                        Accept Order
-                    </button>
+                            onClick={() => handleAcceptOrder(order._id)}
+                            className="w-full mt-4 bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600 text-white py-3 rounded-xl font-bold text-xs uppercase tracking-widest shadow-lg shadow-orange-500/20 transition-all active:scale-95"
+                        >
+                            Accept Order
+                        </button>
                 )}
             </div>
         </div>

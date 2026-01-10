@@ -343,7 +343,7 @@ export default function RestaurantProfile({ restaurant: initialRestaurant, onBac
                             />
                             <div className={`absolute -bottom-1 -right-1 w-6 h-6 rounded-full border-4 border-white ${
                                 restaurantData.storeStatus === 'open' ? 'bg-green-500' : 
-                                restaurantData.storeStatus === 'busy' ? 'bg-orange-500' : 'bg-gray-400'
+                                restaurantData.storeStatus === 'busy' ? 'bg-gradient-to-r from-orange-500 to-red-500' : 'bg-gray-400'
                             }`} />
                         </div>
                         <div className="flex-1 pb-1">
@@ -517,7 +517,7 @@ export default function RestaurantProfile({ restaurant: initialRestaurant, onBac
                                                     </div>
                                                     <div className="flex-1 min-w-0">
                                                         <div className="flex items-baseline gap-2 mb-1">
-                                                            <span className="text-2xl font-black text-[#FF4D8D] leading-none">
+                                                            <span className="text-2xl font-bold text-[#FF4D8D] leading-none">
                                                                 {voucher.discount}%
                                                             </span>
                                                             <span className="text-sm font-bold text-[#FF4D8D] uppercase">OFF</span>

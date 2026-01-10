@@ -347,7 +347,7 @@ const VideoCard = ({
                                 placeholder="Add a comment..."
                                 className="flex-1 bg-gray-800 rounded-full px-4 py-3 text-white outline-none focus:ring-2 focus:ring-orange-500"
                             />
-                            <button type="submit" className="p-3 bg-orange-500 rounded-full text-white hover:bg-orange-600 transition shadow-lg">
+                            <button type="submit" className="p-3 bg-gradient-to-r from-orange-500 to-red-500 rounded-full text-white hover:from-orange-600 hover:to-red-600 transition shadow-lg">
                                 <FaPaperPlane />
                             </button>
                         </form>

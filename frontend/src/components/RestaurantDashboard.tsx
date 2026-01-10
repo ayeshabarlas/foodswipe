@@ -482,7 +482,7 @@ export default function RestaurantDashboard() {
 
                 {/* Banner for Pending Status */}
                 {isPending && (
-                    <div className="bg-orange-500 text-white px-6 py-2.5 text-xs font-medium flex items-center justify-between z-20 shadow-md shrink-0">
+                    <div className="bg-gradient-orange-red text-white px-6 py-2.5 text-[10px] font-bold uppercase tracking-wider flex items-center justify-between z-20 shadow-md shrink-0">
                         <div className="flex items-center gap-2">
                             <div className="bg-white/20 p-1 rounded-full animate-pulse">
                                 <FaClock size={12} />

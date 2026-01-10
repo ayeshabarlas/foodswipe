@@ -55,7 +55,7 @@ export default function OrderNotificationModal({ order, onAccept, onReject, onCl
 
                     <div className="inline-flex items-center gap-2 bg-[#FF4D00]/10 text-[#FF4D00] px-3 py-1.5 rounded-full mb-6 border border-[#FF4D00]/20">
                         <div className="w-1.5 h-1.5 bg-[#FF4D00] rounded-full animate-pulse" />
-                        <span className="text-[9px] font-black uppercase tracking-[1.5px]">New Order Request</span>
+                        <span className="text-[9px] font-bold uppercase tracking-[1.5px]">New Order Request</span>
                     </div>
 
                     <div className="relative w-28 h-28 mx-auto mb-6">
@@ -82,13 +82,13 @@ export default function OrderNotificationModal({ order, onAccept, onReject, onCl
                             />
                         </svg>
                         <div className="absolute inset-0 flex flex-col items-center justify-center">
-                            <span className="text-3xl font-black text-white leading-none">{timeLeft}</span>
-                            <span className="text-[8px] font-black text-white/30 uppercase tracking-[2px] mt-1">Sec</span>
+                            <span className="text-3xl font-bold text-white leading-none">{timeLeft}</span>
+                            <span className="text-[8px] font-bold text-white/30 uppercase tracking-[2px] mt-1">Sec</span>
                         </div>
                     </div>
 
-                    <p className="text-white/40 text-[10px] font-black uppercase tracking-[2px] mb-1">Potential Earning</p>
-                    <h2 className="text-white text-4xl font-black tracking-tight">PKR {order.earnings || 180}</h2>
+                    <p className="text-white/40 text-[10px] font-bold uppercase tracking-[2px] mb-1">Potential Earning</p>
+                    <h2 className="text-white text-4xl font-bold tracking-tight">PKR {order.earnings || 180}</h2>
                 </div>
 
                 {/* Details Card */}
@@ -103,8 +103,8 @@ export default function OrderNotificationModal({ order, onAccept, onReject, onCl
                                     <FaMapMarkerAlt size={10} />
                                 </div>
                                 <div className="flex-1">
-                                    <p className="text-[#FF4D00] text-[8px] font-black uppercase tracking-[1.5px] mb-0.5">Pickup Location</p>
-                                    <p className="text-white font-black text-[13px] leading-tight">{order.restaurant.name}</p>
+                                    <p className="text-[#FF4D00] text-[8px] font-bold uppercase tracking-[1.5px] mb-0.5">Pickup Location</p>
+                                    <p className="text-white font-bold text-[13px] leading-tight">{order.restaurant.name}</p>
                                     <p className="text-white/40 text-[10px] mt-0.5 line-clamp-1">{order.restaurant.address}</p>
                                 </div>
                             </div>
@@ -114,8 +114,8 @@ export default function OrderNotificationModal({ order, onAccept, onReject, onCl
                                     <FaMapMarkerAlt size={10} />
                                 </div>
                                 <div className="flex-1">
-                                    <p className="text-[#00D97E] text-[8px] font-black uppercase tracking-[1.5px] mb-0.5">Dropoff Location</p>
-                                    <p className="text-white font-black text-[13px] leading-tight">Customer Address</p>
+                                    <p className="text-[#00D97E] text-[8px] font-bold uppercase tracking-[1.5px] mb-0.5">Dropoff Location</p>
+                                    <p className="text-white font-bold text-[13px] leading-tight">Customer Address</p>
                                     <p className="text-white/40 text-[10px] mt-0.5 line-clamp-1">{order.deliveryAddress}</p>
                                 </div>
                             </div>
@@ -124,17 +124,17 @@ export default function OrderNotificationModal({ order, onAccept, onReject, onCl
                         {/* Stats Grid */}
                         <div className="grid grid-cols-2 gap-3 pt-4 border-t border-white/5">
                             <div className="bg-white/5 rounded-2xl p-3.5">
-                                <p className="text-white/30 text-[8px] font-black uppercase tracking-[1.5px] mb-1">Distance</p>
+                                <p className="text-white/30 text-[8px] font-bold uppercase tracking-[1.5px] mb-1">Distance</p>
                                 <div className="flex items-center gap-2">
                                     <FaRoute className="text-[#FF4D00]" size={12} />
-                                    <p className="text-white font-black text-sm">{order.distance || '3.5'} <span className="text-[10px] text-white/20">KM</span></p>
+                                    <p className="text-white font-bold text-sm">{order.distance || '3.5'} <span className="text-[10px] text-white/20">KM</span></p>
                                 </div>
                             </div>
                             <div className="bg-white/5 rounded-2xl p-3.5">
-                                <p className="text-white/30 text-[8px] font-black uppercase tracking-[1.5px] mb-1">Time</p>
+                                <p className="text-white/30 text-[8px] font-bold uppercase tracking-[1.5px] mb-1">Time</p>
                                 <div className="flex items-center gap-2">
                                     <FaClock className="text-[#00D97E]" size={12} />
-                                    <p className="text-white font-black text-sm">{order.estimatedTime || '15-20'} <span className="text-[10px] text-white/20">MIN</span></p>
+                                    <p className="text-white font-bold text-sm">{order.estimatedTime || '15-20'} <span className="text-[10px] text-white/20">MIN</span></p>
                                 </div>
                             </div>
                         </div>
@@ -144,13 +144,13 @@ export default function OrderNotificationModal({ order, onAccept, onReject, onCl
                     <div className="flex gap-3 mt-6">
                         <button
                             onClick={onReject}
-                            className="flex-1 bg-white/5 hover:bg-white/10 text-white/40 py-4 rounded-2xl font-black uppercase tracking-widest text-[10px] transition-all active:scale-95 border border-white/5"
+                            className="flex-1 bg-white/5 hover:bg-white/10 text-white/40 py-4 rounded-2xl font-bold uppercase tracking-widest text-[10px] transition-all active:scale-95 border border-white/5"
                         >
                             Reject
                         </button>
                         <button
                             onClick={onAccept}
-                            className="flex-[2] bg-[#FF4D00] hover:bg-[#FF3300] text-white py-4 rounded-2xl font-black uppercase tracking-widest text-[10px] shadow-xl shadow-[#FF4D00]/20 transition-all active:scale-95"
+                            className="flex-[2] bg-[#FF4D00] hover:bg-[#FF3300] text-white py-4 rounded-2xl font-bold uppercase tracking-widest text-[10px] shadow-xl shadow-[#FF4D00]/20 transition-all active:scale-95"
                         >
                             Accept Order
                         </button>

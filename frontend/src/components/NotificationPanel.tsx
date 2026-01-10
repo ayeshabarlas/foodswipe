@@ -92,7 +92,11 @@ export default function NotificationPanel({ onClose, riderId, onReadUpdate }: No
     };
 
     const getTimeAgo = (date: string) => {
-        const seconds = Math.floor((new Date().getTime() - new Date(date).getTime()) / 1000);
+        if (!date) return 'Recently';
+        const created = new Date(date).getTime();
+        if (isNaN(created)) return 'Recently';
+        
+        const seconds = Math.floor((new Date().getTime() - created) / 1000);
         if (seconds < 60) return 'just now';
         const minutes = Math.floor(seconds / 60);
         if (minutes < 60) return `${minutes} mins ago`;
@@ -130,7 +134,7 @@ export default function NotificationPanel({ onClose, riderId, onReadUpdate }: No
                 >
                     <FaTimes />
                 </button>
-                <h2 className="text-2xl font-black mb-1">Notifications</h2>
+                <h2 className="text-2xl font-bold mb-1">Notifications</h2>
                 <p className="text-white/80 text-sm font-bold">
                     {notifications.length === 0 ? 'All caught up!' : `${notifications.filter(n => !n.read).length} new updates`}
                 </p>
@@ -163,7 +167,7 @@ export default function NotificationPanel({ onClose, riderId, onReadUpdate }: No
                                 </div>
                                 <div className="flex-1">
                                     <div className="flex justify-between items-start mb-1">
-                                        <h4 className="font-black text-gray-900 text-sm">{notification.title}</h4>
+                                        <h4 className="font-bold text-gray-900 text-sm">{notification.title}</h4>
                                         {!notification.read && <div className="w-2 h-2 bg-[#FF4D00] rounded-full"></div>}
                                     </div>
                                     <p className="text-gray-500 text-xs font-medium leading-relaxed mb-2">{notification.message}</p>
@@ -183,7 +187,7 @@ export default function NotificationPanel({ onClose, riderId, onReadUpdate }: No
                 <div className="p-4 border-t border-gray-50">
                     <button 
                         onClick={markAllAsRead}
-                        className="w-full py-3 text-[#FF4D00] font-black text-xs uppercase tracking-widest hover:bg-orange-50 rounded-xl transition-colors"
+                        className="w-full py-3 text-[#FF4D00] font-bold text-xs uppercase tracking-widest hover:bg-orange-50 rounded-xl transition-colors"
                     >
                         Mark all as read
                     </button>

@@ -30,7 +30,12 @@ export const initSocket = (userId: string, role: string, restaurantId?: string, 
 };
 
 export const subscribeToChannel = (channelName: string) => {
-    if (!pusher || activeChannels.has(channelName)) return null;
+    if (!pusher) return null;
+    
+    // If already subscribed, return the existing channel
+    if (activeChannels.has(channelName)) {
+        return pusher.channel(channelName);
+    }
     
     const channel = pusher.subscribe(channelName);
     activeChannels.add(channelName);

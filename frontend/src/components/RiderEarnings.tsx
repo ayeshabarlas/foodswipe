@@ -150,7 +150,7 @@ export default function RiderEarnings({ riderId }: RiderEarningsProps) {
             <div className="px-6 -mt-10 grid grid-cols-3 gap-3 mb-8 relative z-20">
                 <SmallStat icon={<FaDollarSign />} label="Base Pay" value={earnings.basePay} color="bg-blue-500" />
                 <SmallStat icon={<FaStar />} label="Bonuses" value={earnings.bonuses} color="bg-purple-500" />
-                <SmallStat icon={<FaWallet />} label="Tips" value={earnings.tips} color="bg-orange-500" />
+                <SmallStat icon={<FaWallet />} label="Tips" value={earnings.tips} color="bg-gradient-to-r from-orange-500 to-red-500" />
             </div>
 
             {/* Payout Card */}
@@ -291,7 +291,7 @@ export default function RiderEarnings({ riderId }: RiderEarningsProps) {
                             <button
                                 onClick={handleSaveBankDetails}
                                 disabled={savingBank}
-                                className="flex-1 py-4 rounded-2xl font-bold text-white bg-orange-500 shadow-lg shadow-orange-100 hover:scale-[1.02] transition-all active:scale-[0.98] text-xs uppercase tracking-widest"
+                                className="flex-1 py-4 rounded-2xl font-bold text-white bg-gradient-to-r from-orange-500 to-red-500 shadow-lg shadow-orange-100 hover:scale-[1.02] transition-all active:scale-[0.98] text-xs uppercase tracking-widest"
                             >
                                 {savingBank ? 'Saving...' : 'Save'}
                             </button>

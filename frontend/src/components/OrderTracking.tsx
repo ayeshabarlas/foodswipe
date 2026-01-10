@@ -8,6 +8,7 @@ import { API_BASE_URL } from '../utils/config';
 import dynamic from 'next/dynamic';
 import OrderChat from './OrderChat';
 import { motion, AnimatePresence } from 'framer-motion';
+import toast from 'react-hot-toast';
 
 // Dynamically import MapComponent to avoid SSR and module instantiation issues
 const MapComponent = dynamic(() => import('./MapComponent'), {
@@ -62,7 +63,8 @@ export default function OrderTracking({ order: initialOrder, userRole = 'user', 
             userRole === 'restaurant' ? userInfo.restaurantId : undefined
         );
 
-        const userChannel = subscribeToChannel(`user-${userInfo._id}`);
+        const channelName = userRole === 'restaurant' ? `restaurant-${userInfo.restaurantId}` : `user-${userInfo._id}`;
+        const userChannel = subscribeToChannel(channelName);
         
         if (userChannel) {
             userChannel.bind('riderLocationUpdate', (data: any) => {
@@ -76,10 +78,17 @@ export default function OrderTracking({ order: initialOrder, userRole = 'user', 
                     setOrder(updatedOrder);
                 }
             });
+
+            // Add listener for rider arrived
+            userChannel.bind('riderArrived', (data: any) => {
+                if (data.orderId === order._id) {
+                    toast.success('📍 Your rider has arrived!');
+                }
+            });
         }
 
         return () => {
-            unsubscribeFromChannel(`user-${userInfo._id}`);
+            unsubscribeFromChannel(channelName);
         };
     }, [order?._id, userRole, isOpen]);
 
@@ -97,9 +106,10 @@ export default function OrderTracking({ order: initialOrder, userRole = 'user', 
     if (!order) return null;
 
     const steps = [
-        { label: 'Order Confirmed', status: ['Accepted', 'Confirmed', 'Preparing', 'Ready', 'OnTheWay', 'Delivered'], icon: <FaCheck />, time: '2:30 PM' },
-        { label: 'Preparing Food', status: ['Preparing', 'Ready', 'OnTheWay', 'Delivered'], icon: <FaBox />, time: '2:45 PM' },
-        { label: 'Rider Picked Up', status: ['Ready', 'OnTheWay', 'Delivered'], icon: <FaMotorcycle />, time: '3:05 PM' },
+        { label: 'Order Confirmed', status: ['Accepted', 'Confirmed', 'Preparing', 'Ready', 'OnTheWay', 'Arrived', 'Picked Up', 'ArrivedAtCustomer', 'Delivered'], icon: <FaCheck />, time: '2:30 PM' },
+        { label: 'Preparing Food', status: ['Preparing', 'Ready', 'OnTheWay', 'Arrived', 'Picked Up', 'ArrivedAtCustomer', 'Delivered'], icon: <FaBox />, time: '2:45 PM' },
+        { label: 'Rider Picked Up', status: ['Picked Up', 'ArrivedAtCustomer', 'Delivered'], icon: <FaMotorcycle />, time: '3:05 PM' },
+        { label: 'Arrived at Customer', status: ['ArrivedAtCustomer', 'Delivered'], icon: <FaMapMarkerAlt />, time: '3:15 PM' },
         { label: 'Order Delivered', status: ['Delivered'], icon: <FaCheck />, time: '3:20 PM' }
     ];
 
@@ -136,14 +146,14 @@ export default function OrderTracking({ order: initialOrder, userRole = 'user', 
                     >
                         <FaTimes />
                     </button>
-                    <h2 className="text-xl font-black mb-1">Order Tracking</h2>
+                    <h2 className="text-xl font-bold mb-1">Order Tracking</h2>
                     <p className="text-sm font-bold opacity-90">
                         Order #{order.orderNumber || order._id.slice(-6).toUpperCase()} • {order.restaurant?.name || 'Restaurant'}
                     </p>
                 </div>
 
                 {/* Map Area */}
-                <div className="h-[300px] relative bg-gray-200">
+                <div className="h-[300px] relative bg-gray-200 z-0">
                     <MapComponent
                         restaurantLoc={restaurantLoc}
                         customerLoc={customerLoc}
@@ -153,7 +163,7 @@ export default function OrderTracking({ order: initialOrder, userRole = 'user', 
                     
                     {/* Live Tracking Map Overlay Text */}
                     <div className="absolute top-4 left-1/2 -translate-x-1/2 pointer-events-none flex flex-col items-center z-10">
-                        <span className="bg-white/90 backdrop-blur-md px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest text-gray-900 shadow-lg border border-gray-100">
+                        <span className="bg-white/90 backdrop-blur-md px-4 py-1.5 rounded-full text-[10px] font-bold uppercase tracking-widest text-gray-900 shadow-lg border border-gray-100">
                             Live tracking map
                         </span>
                     </div>
@@ -165,11 +175,11 @@ export default function OrderTracking({ order: initialOrder, userRole = 'user', 
                         <div className="flex flex-col gap-3">
                             <div className="flex items-center justify-between">
                                 <div className="flex items-center gap-3">
-                                    <div className="w-10 h-10 bg-orange-500 rounded-full flex items-center justify-center text-white shadow-lg shadow-orange-500/20">
+                                    <div className="w-10 h-10 bg-gradient-to-br from-orange-500 to-red-500 rounded-full flex items-center justify-center text-white shadow-lg shadow-orange-500/20">
                                         <FaMotorcycle size={18} />
                                     </div>
                                     <div>
-                                        <h4 className="font-black text-gray-900 text-sm">{order.rider.fullName || 'Rider'} is nearby</h4>
+                                        <h4 className="font-bold text-gray-900 text-sm">{order.rider.fullName || 'Rider'} is nearby</h4>
                                         <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Your delivery partner</p>
                                     </div>
                                 </div>
@@ -185,13 +195,13 @@ export default function OrderTracking({ order: initialOrder, userRole = 'user', 
                             <div className="flex gap-2">
                                 <button 
                                     onClick={() => setIsChatOpen(true)}
-                                    className="flex-1 bg-orange-500 text-white py-3 rounded-xl font-black text-sm shadow-lg shadow-orange-500/20 hover:bg-orange-600 transition-all"
+                                    className="flex-1 bg-gradient-to-r from-orange-500 to-red-500 text-white py-3 rounded-xl font-bold text-sm shadow-lg shadow-orange-500/20 hover:from-orange-600 hover:to-red-600 transition-all"
                                 >
                                     Chat with Rider
                                 </button>
                                 <button 
                                     onClick={() => setIsChatOpen(true)}
-                                    className="flex-1 bg-white text-orange-500 border-2 border-orange-500 py-3 rounded-xl font-black text-sm hover:bg-orange-50 transition-all"
+                                    className="flex-1 bg-white text-orange-500 border-2 border-orange-500 py-3 rounded-xl font-bold text-sm hover:bg-orange-50 transition-all"
                                 >
                                     Chat with Shop
                                 </button>
@@ -200,12 +210,12 @@ export default function OrderTracking({ order: initialOrder, userRole = 'user', 
                     ) : (
                         <div className="flex items-center justify-between gap-4">
                             <div className="flex-1">
-                                <h4 className="font-black text-gray-900 text-sm">Need to ask something?</h4>
+                                <h4 className="font-bold text-gray-900 text-sm">Need to ask something?</h4>
                                 <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Chat with the restaurant</p>
                             </div>
                             <button 
                                 onClick={() => setIsChatOpen(true)}
-                                className="bg-orange-500 text-white px-6 py-3 rounded-xl font-black text-sm shadow-lg shadow-orange-500/20 hover:bg-orange-600 transition-all flex items-center gap-2"
+                                className="bg-gradient-to-r from-orange-500 to-red-500 text-white px-6 py-3 rounded-xl font-bold text-sm shadow-lg shadow-orange-500/20 hover:opacity-90 transition-all flex items-center gap-2"
                             >
                                 <FaCommentDots size={16} />
                                 Chat Now
@@ -216,7 +226,7 @@ export default function OrderTracking({ order: initialOrder, userRole = 'user', 
 
                 {/* Status Timeline - Screenshot Style */}
                 <div className="bg-white p-8 overflow-y-auto max-h-[300px] border-t border-gray-100">
-                    <h3 className="text-sm font-black text-gray-400 uppercase tracking-widest mb-8">Order Status</h3>
+                    <h3 className="text-sm font-bold text-gray-400 uppercase tracking-widest mb-8">Order Status</h3>
                     <div className="space-y-0">
                         {steps.map((step, idx) => {
                             const isCompleted = idx <= currentStepIndex;
@@ -238,7 +248,7 @@ export default function OrderTracking({ order: initialOrder, userRole = 'user', 
                                     </div>
                                     <div className="flex-1 pt-2">
                                         <div className="flex justify-between items-center">
-                                            <h4 className={`font-black text-lg transition-colors ${
+                                            <h4 className={`font-bold text-lg transition-colors ${
                                                 isCompleted ? 'text-gray-900' : 'text-gray-300'
                                             }`}>
                                                 {step.label}

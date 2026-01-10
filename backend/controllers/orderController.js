@@ -8,6 +8,7 @@ const RiderWallet = require('../models/RiderWallet');
 const Transaction = require('../models/Transaction');
 const { calculateRiderEarning, calculateDeliveryFee } = require('../utils/paymentUtils');
 const { triggerEvent } = require('../socket');
+const { createNotification } = require('./notificationController');
 
 // @desc    Create new order
 // @route   POST /api/orders
@@ -218,10 +219,14 @@ const updateOrderStatus = async (req, res) => {
 
         // Emit Pusher events for real-time updates
         // Notify specific user about their order update
-        triggerEvent(`user-${order.user._id}`, 'orderStatusUpdate', updatedOrder);
+        if (order.user) {
+            triggerEvent(`user-${order.user.toString()}`, 'orderStatusUpdate', updatedOrder);
+        }
 
         // Notify restaurant about order update
-        triggerEvent(`restaurant-${order.restaurant._id}`, 'orderStatusUpdate', updatedOrder);
+        if (order.restaurant) {
+            triggerEvent(`restaurant-${order.restaurant.toString()}`, 'orderStatusUpdate', updatedOrder);
+        }
 
         // Always notify admin about any order status update
         triggerEvent('admin', 'order_updated', updatedOrder);
@@ -247,7 +252,15 @@ const updateOrderStatus = async (req, res) => {
 
         // Also notify specifically assigned rider if any
         if (order.rider) {
-            triggerEvent(`rider-${order.rider._id}`, 'orderStatusUpdate', updatedOrder);
+            triggerEvent(`rider-${order.rider.toString()}`, 'orderStatusUpdate', updatedOrder);
+        }
+
+        // Add special event for ArrivedAtCustomer status
+        if (status === 'ArrivedAtCustomer' && order.user) {
+            triggerEvent(`user-${order.user.toString()}`, 'riderArrived', {
+                orderId: order._id,
+                message: 'Your rider has arrived at your location!'
+            });
         }
 
         res.json(updatedOrder);
@@ -550,7 +563,7 @@ const updateOrderLocation = async (req, res) => {
         }
 
         // Update location in DB
-        order.deliveryLocation = location;
+        order.riderLocation = location;
         await order.save();
 
         // Trigger Pusher event for real-time tracking

@@ -249,7 +249,7 @@ export default function CreateRestaurant({ onRestaurantCreated }: CreateRestaura
                 </button>
 
                 <div className="flex items-center gap-4 mb-8 bg-white p-5 rounded-2xl shadow-sm">
-                    <div className={`p-3 rounded-xl ${businessType === 'home-chef' ? 'bg-orange-500' : 'bg-orange-600'} text-white`}>
+                    <div className={`p-3 rounded-xl ${businessType === 'home-chef' ? 'bg-gradient-to-br from-orange-500 to-red-500' : 'bg-orange-600'} text-white`}>
                         {businessType === 'home-chef' ? <FaUtensils size={22} /> : <FaStore size={22} />}
                     </div>
                     <div>
@@ -406,10 +406,10 @@ export default function CreateRestaurant({ onRestaurantCreated }: CreateRestaura
                     {/* Restaurant License (Restaurant Owner Only) */}
                     {businessType === 'restaurant' && (
                         <div className="bg-white rounded-2xl shadow-sm overflow-hidden border border-orange-200">
-                            <div className="bg-orange-500 text-white px-6 py-3.5 flex items-center gap-2">
+                            <div className="bg-gradient-orange-red text-white px-6 py-3.5 flex items-center gap-2">
                                 <FaExclamationTriangle size={16} />
-                                <h3 className="font-semibold">Restaurant License</h3>
-                                <span className="ml-auto text-xs bg-white text-orange-600 px-2.5 py-1 rounded-full font-medium">Mandatory for restaurant verification</span>
+                                <h3 className="font-bold">Restaurant License</h3>
+                                <span className="ml-auto text-xs bg-white text-orange-600 px-2.5 py-1 rounded-full font-bold">Mandatory</span>
                             </div>
 
                             <div className="p-6">
@@ -614,7 +614,7 @@ export default function CreateRestaurant({ onRestaurantCreated }: CreateRestaura
                     <button
                         type="submit"
                         disabled={loading}
-                        className="w-full bg-gradient-to-r from-orange-500 to-red-600 hover:from-orange-600 hover:to-red-700 text-white font-semibold py-4 rounded-2xl shadow-md transition disabled:opacity-50 disabled:cursor-not-allowed"
+                        className="w-full py-4 bg-gradient-to-r from-orange-500 to-red-500 text-white font-bold rounded-xl shadow-lg shadow-orange-500/20 hover:from-orange-600 hover:to-red-600 transition-all disabled:opacity-50"
                     >
                         {loading ? 'Submitting...' : 'Submit Profile for Review'}
                     </button>

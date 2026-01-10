@@ -104,7 +104,7 @@ export default function LoginPage() {
         <div className="min-h-screen bg-gray-50 flex flex-col justify-center items-center p-4">
             <div className="w-full max-w-md bg-white rounded-3xl shadow-xl overflow-hidden">
                 {/* Header Image/Logo Placeholder */}
-                <div className="bg-orange-500 h-32 flex items-center justify-center">
+                <div className="bg-gradient-orange-red h-32 flex items-center justify-center">
                     <h1 className="text-4xl font-bold text-white tracking-tight">FoodSwipe</h1>
                 </div>
 
@@ -135,7 +135,7 @@ export default function LoginPage() {
 
                             <button
                                 onClick={() => setMode('login')}
-                                className="w-full bg-orange-500 text-white font-bold py-3 px-4 rounded-xl flex items-center justify-center gap-3 hover:bg-orange-600 transition shadow-lg shadow-orange-500/30"
+                                className="w-full bg-gradient-orange-red text-white font-bold py-3 px-4 rounded-xl flex items-center justify-center gap-3 hover:opacity-90 transition shadow-lg shadow-orange-500/30"
                             >
                                 <FaEnvelope /> Continue with Email
                             </button>
@@ -204,7 +204,7 @@ export default function LoginPage() {
                             <button
                                 type="submit"
                                 disabled={loading}
-                                className="w-full bg-orange-500 text-white font-bold py-3.5 px-4 rounded-xl hover:bg-orange-600 transition shadow-lg shadow-orange-500/30 mt-4"
+                                className="w-full bg-gradient-to-r from-orange-500 to-red-500 text-white font-bold py-3.5 px-4 rounded-xl hover:from-orange-600 hover:to-red-600 transition shadow-lg shadow-orange-500/30 mt-4"
                             >
                                 {loading ? 'Processing...' : (emailMode === 'login' ? 'Login' : 'Create Account')}
                             </button>

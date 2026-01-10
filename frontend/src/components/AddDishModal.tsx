@@ -60,6 +60,10 @@ export default function AddDishModal({ isOpen, onClose, onSubmit, editingDish }:
                 imageUrl: editingDish.imageUrl || '',
                 videoUrl: editingDish.videoUrl || '',
             });
+            setVariants(editingDish.variants || []);
+            setAddOns(editingDish.addOns || []);
+            setDrinks(editingDish.drinks || []);
+            setCombos(editingDish.combos || []);
         } else {
             // Reset form for new dish
             setFormData({
@@ -71,13 +75,17 @@ export default function AddDishModal({ isOpen, onClose, onSubmit, editingDish }:
                 imageUrl: '',
                 videoUrl: '',
             });
+            setVariants([]);
+            setAddOns([]);
+            setDrinks([]);
+            setCombos([]);
         }
     }, [editingDish]);
 
-    const [variants, setVariants] = useState<Variant[]>(editingDish?.variants || []);
-    const [addOns, setAddOns] = useState<AddOn[]>(editingDish?.addOns || []);
-    const [drinks, setDrinks] = useState<Drink[]>(editingDish?.drinks || []);
-    const [combos, setCombos] = useState<Combo[]>(editingDish?.combos || []);
+    const [variants, setVariants] = useState<Variant[]>([]);
+    const [addOns, setAddOns] = useState<AddOn[]>([]);
+    const [drinks, setDrinks] = useState<Drink[]>([]);
+    const [combos, setCombos] = useState<Combo[]>([]);
     const [uploading, setUploading] = useState(false);
     const [uploadProgress, setUploadProgress] = useState(0);
 
@@ -150,6 +158,17 @@ export default function AddDishModal({ isOpen, onClose, onSubmit, editingDish }:
     const addCombo = () => setCombos([...combos, { title: '', items: '', price: 0 }]);
     const removeCombo = (index: number) => setCombos(combos.filter((_, i) => i !== index));
 
+    const stripBaseUrl = (url: string) => {
+        if (!url) return '';
+        if (url.startsWith('http')) {
+            const uploadsIndex = url.indexOf('/uploads/');
+            if (uploadsIndex !== -1) {
+                return url.substring(uploadsIndex);
+            }
+        }
+        return url;
+    };
+
     const handleSubmitForm = (e: React.FormEvent) => {
         e.preventDefault();
 
@@ -160,6 +179,8 @@ export default function AddDishModal({ isOpen, onClose, onSubmit, editingDish }:
 
         onSubmit({
             ...formData,
+            imageUrl: stripBaseUrl(formData.imageUrl),
+            videoUrl: stripBaseUrl(formData.videoUrl),
             variants,
             addOns,
             drinks,

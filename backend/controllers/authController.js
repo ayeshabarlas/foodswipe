@@ -55,48 +55,66 @@ const loginUser = async (req, res) => {
     try {
         console.log(`Login attempt: identifier=${identifier}, role=${role}`);
         
-        // Strict Role-Based Login: identifier + role must match in User collection
-        // Admins are now in their own Admin collection and will use /api/admin/login
-        const query = {
+        // 1. Try to find the user by email or phone. 
+        // We search for the requested role first to be precise.
+        let user = await User.findOne({
             $or: [
                 { email: { $regex: new RegExp(`^${identifier}$`, 'i') } },
                 { phone: identifier },
                 { phoneNumber: identifier }
             ],
-            role: role // Mandatory role match
-        };
+            role: role || 'customer'
+        });
 
-        // If no role provided, default to 'customer' but strictly enforce it
-        if (!role) {
-            query.role = 'customer';
-        }
-
-        console.log('Login attempt query:', JSON.stringify(query));
-        const user = await User.findOne(query);
-
+        // 1b. If not found with specific role, search for ANY user with this identifier
         if (!user) {
-            console.log(`Login failed: No user found for ${identifier} with role ${role}`);
-            return res.status(401).json({ 
-                message: "Account not registered. Please login." 
+            user = await User.findOne({
+                $or: [
+                    { email: { $regex: new RegExp(`^${identifier}$`, 'i') } },
+                    { phone: identifier },
+                    { phoneNumber: identifier }
+                ]
             });
         }
 
-        console.log('User found for login:', { id: user._id, email: user.email, role: user.role });
+        if (!user) {
+            console.log(`Login failed: No user found for ${identifier}`);
+            return res.status(401).json({ 
+                message: "Account not registered. Please sign up." 
+            });
+        }
 
-        // If a password is stored, verify it; otherwise allow login (e.g., OTP‑only accounts)
+        // 2. Check if the password matches (if password exists)
         if (user.password && user.password.length > 0) {
             const isMatch = await user.matchPassword(password);
             if (!isMatch) {
-                return res.status(400).json({ message: 'Invalid credentials' });
+                return res.status(400).json({ message: 'Invalid password' });
             }
         }
+
+        // 3. Role validation (optional check but we return the actual user role)
+        if (role && user.role !== role) {
+            console.log(`Role mismatch: User ${identifier} is ${user.role}, but tried logging in as ${role}`);
+            // We can either block or allow. Let's allow but inform the frontend.
+        }
+
+        console.log('User logged in successfully:', { id: user._id, email: user.email, role: user.role });
 
         // Check user status
         if (user.status === 'suspended') {
             return res.status(403).json({ message: 'Your account has been suspended. Please contact support.' });
         }
 
-        return res.json({ _id: user._id, name: user.name, email: user.email, phone: user.phone, phoneVerified: user.phoneVerified, phoneNumber: user.phoneNumber, role: user.role, token: generateToken(user._id) });
+        return res.json({ 
+            _id: user._id, 
+            name: user.name, 
+            email: user.email, 
+            phone: user.phone, 
+            phoneVerified: user.phoneVerified, 
+            phoneNumber: user.phoneNumber, 
+            role: user.role, // Return the ACTUAL role from DB
+            token: generateToken(user._id) 
+        });
     } catch (err) {
         return res.status(500).json({ message: err.message });
     }

@@ -417,7 +417,10 @@ const getDeliveryHistory = async (req, res) => {
 };
 
 const getTimeAgo = (date) => {
-    const seconds = Math.floor((new Date() - new Date(date)) / 1000);
+    if (!date) return 'just now';
+    const d = new Date(date);
+    if (isNaN(d.getTime())) return 'just now';
+    const seconds = Math.floor((new Date() - d) / 1000);
 
     if (seconds < 60) return 'just now';
     if (seconds < 3600) return `${Math.floor(seconds / 60)} mins ago`;
@@ -570,7 +573,7 @@ const markPickedUp = async (req, res) => {
         }
 
         order.pickedUpAt = new Date();
-        // Don't change status to OnTheWay here as it's already OnTheWay when handed to rider
+        order.status = 'Picked Up';
         // But we can emit a specific event for pickup
         await order.save();
 
