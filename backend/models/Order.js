@@ -133,6 +133,9 @@ const orderSchema = mongoose.Schema(
             ref: 'Rider',
             default: null,
         },
+        riderAcceptedAt: {
+            type: Date,
+        },
         distanceKm: {
             type: Number,
             default: 0,

@@ -11,19 +11,26 @@ if (!admin.apps.length) {
                 // Try to parse if it's a stringified JSON
                 serviceAccount = typeof serviceAccountVar === 'string' ? JSON.parse(serviceAccountVar) : serviceAccountVar;
                 
-                const bucketName = process.env.FIREBASE_STORAGE_BUCKET || 
-                                  (serviceAccount.project_id ? `${serviceAccount.project_id}.firebasestorage.app` : null) ||
-                                  (serviceAccount.project_id ? `${serviceAccount.project_id}.appspot.com` : null);
+                // Improved bucket name derivation
+                let bucketName = process.env.FIREBASE_STORAGE_BUCKET;
+                
+                if (!bucketName && serviceAccount.project_id) {
+                    // Try to determine if it's a newer or older project
+                    // Most projects still use .appspot.com, newer ones use .firebasestorage.app
+                    // We'll default to .appspot.com if not specified, as it's more common for existing projects
+                    bucketName = `${serviceAccount.project_id}.appspot.com`;
+                    console.log(`ℹ️ Derived bucket name: ${bucketName}`);
+                }
                 
                 admin.initializeApp({
                     credential: admin.credential.cert(serviceAccount),
                     storageBucket: bucketName
                 });
-                console.log(`✅ Firebase Admin SDK initialized successfully with bucket: ${bucketName}`);
+                console.log(`✅ Firebase Admin SDK initialized successfully with bucket: ${bucketName || 'default'}`);
             } catch (parseErr) {
                 console.error('❌ Firebase Service Account Parse Error:', parseErr.message);
                 console.warn('⚠️ Firebase initialized without credentials (limited functionality)');
-                const fallbackBucket = process.env.FIREBASE_STORAGE_BUCKET || 'foodswipe-be395.firebasestorage.app';
+                const fallbackBucket = process.env.FIREBASE_STORAGE_BUCKET || 'foodswipe-be395.appspot.com';
                 admin.initializeApp({
                     storageBucket: fallbackBucket
                 });
@@ -31,7 +38,7 @@ if (!admin.apps.length) {
             }
         } else {
             console.warn('⚠️ FIREBASE_SERVICE_ACCOUNT_JSON is missing. Using default initialization.');
-            const fallbackBucket = process.env.FIREBASE_STORAGE_BUCKET || 'foodswipe-be395.firebasestorage.app';
+            const fallbackBucket = process.env.FIREBASE_STORAGE_BUCKET || 'foodswipe-be395.appspot.com';
             admin.initializeApp({
                 storageBucket: fallbackBucket
             });

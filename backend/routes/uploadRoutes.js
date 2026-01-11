@@ -39,13 +39,14 @@ router.post('/', upload.single('file'), async (req, res) => {
             console.error('❌ Firebase Upload Stream Error:', err);
             // More descriptive error for common Firebase issues
             let errorMsg = 'Upload failed';
-            if (err.code === 403) errorMsg = 'Permission denied (Firebase)';
-            if (err.code === 404) errorMsg = 'Storage bucket not found';
+            if (err.code === 403) errorMsg = 'Permission denied (Firebase). Check if service account has Storage Admin role.';
+            if (err.code === 404) errorMsg = `Storage bucket not found (${bucket.name}). Check FIREBASE_STORAGE_BUCKET env var.`;
             
             res.status(500).json({ 
                 message: errorMsg, 
                 error: err.message,
-                details: err.code || 'No code'
+                details: err.code || 'No code',
+                bucket: bucket.name
             });
         });
 

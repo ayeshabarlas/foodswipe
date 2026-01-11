@@ -9,6 +9,7 @@ import toast, { Toaster } from 'react-hot-toast';
 import { useGeolocation } from '../utils/useGeolocation';
 import dynamic from 'next/dynamic';
 import OrderChat from './OrderChat';
+import ModernLoader from './ModernLoader';
 
 // Dynamically import map to avoid SSR issues
 const OrderTracking = dynamic(() => import('./OrderTracking'), { ssr: false });
@@ -29,6 +30,7 @@ export default function RiderOrders({ riderId, setShowNotifications, unreadCount
     const [selectedOrder, setSelectedOrder] = useState<any>(null);
     const [showDetailsModal, setShowDetailsModal] = useState(false);
     const [unreadCount, setUnreadCount] = useState(dashboardUnreadCount || 0);
+    const [loading, setLoading] = useState(true);
     const userInfo = JSON.parse(localStorage.getItem('userInfo') || '{}');
 
     // Update local unread count when prop changes
@@ -84,6 +86,7 @@ export default function RiderOrders({ riderId, setShowNotifications, unreadCount
 
     const fetchOrders = async () => {
         try {
+            setLoading(true);
             const token = JSON.parse(localStorage.getItem("userInfo") || "{}").token;
             const res = await axios.get(`${API_BASE_URL}/api/riders/${riderId}/orders`, {
                 headers: { Authorization: `Bearer ${token}` }
@@ -110,6 +113,8 @@ export default function RiderOrders({ riderId, setShowNotifications, unreadCount
             fetchNotificationsCount();
         } catch (error) {
             console.error('Error fetching data:', error);
+        } finally {
+            setLoading(false);
         }
     };
 
@@ -277,6 +282,8 @@ export default function RiderOrders({ riderId, setShowNotifications, unreadCount
         setShowDetailsModal(true);
     };
 
+    if (loading) return <ModernLoader />;
+
     return (
         <div className="flex flex-col min-h-screen bg-[#F8F9FA] text-[13px] pb-32">
             <Toaster />
@@ -290,7 +297,7 @@ export default function RiderOrders({ riderId, setShowNotifications, unreadCount
                             <FaBell size={18} />
                         </div>
                         {availableOrdersCount > 0 && (
-                            <span className="absolute -top-1 -right-1 w-4 h-4 bg-red-600 border-2 border-white text-white text-[9px] font-bold rounded-full flex items-center justify-center shadow-sm">
+                            <span className="absolute -top-1 -right-1 w-4 h-4 bg-red-600 border-2 border-white text-white text-[9px] font-semibold rounded-full flex items-center justify-center shadow-sm">
                                 {availableOrdersCount}
                             </span>
                         )}
@@ -306,7 +313,7 @@ export default function RiderOrders({ riderId, setShowNotifications, unreadCount
                         <div>
                             <p className="text-gray-400 font-medium text-[11px] uppercase tracking-wider mb-1">Potential Earnings</p>
                             <div className="flex items-baseline gap-1">
-                                <span className="text-xl font-bold text-green-600">Rs. {potentialEarnings}</span>
+                                <span className="text-xl font-semibold text-green-600">Rs. {potentialEarnings}</span>
                             </div>
                         </div>
                         <div className="w-12 h-12 bg-green-50 rounded-2xl flex items-center justify-center text-green-600">
@@ -320,7 +327,7 @@ export default function RiderOrders({ riderId, setShowNotifications, unreadCount
                     <div className="flex gap-3 overflow-x-auto pb-2 no-scrollbar">
                         <button 
                             onClick={() => { setFilter('active'); setAvailableFilter('all'); }}
-                            className={`flex items-center gap-2 px-5 py-2.5 rounded-full text-xs font-bold whitespace-nowrap transition-all ${filter === 'active' && availableFilter === 'all' ? 'bg-gradient-to-r from-orange-500 to-red-500 text-white shadow-lg shadow-orange-500/30' : 'bg-white text-gray-400 border border-gray-100'}`}
+                            className={`flex items-center gap-2 px-5 py-2.5 rounded-full text-xs font-semibold whitespace-nowrap transition-all ${filter === 'active' && availableFilter === 'all' ? 'bg-gradient-to-r from-orange-500 to-red-500 text-white shadow-lg shadow-orange-500/30' : 'bg-white text-gray-400 border border-gray-100'}`}
                         >
                             All Orders
                             <span className={`px-1.5 py-0.5 rounded-md text-[10px] ${filter === 'active' && availableFilter === 'all' ? 'bg-white/20' : 'bg-gray-100'}`}>
@@ -329,7 +336,7 @@ export default function RiderOrders({ riderId, setShowNotifications, unreadCount
                         </button>
                         <button 
                             onClick={() => { setFilter('active'); setAvailableFilter('nearby'); }}
-                            className={`flex items-center gap-2 px-5 py-2.5 rounded-full text-xs font-bold whitespace-nowrap transition-all ${filter === 'active' && availableFilter === 'nearby' ? 'bg-gradient-to-r from-orange-500 to-red-500 text-white shadow-lg shadow-orange-500/30' : 'bg-white text-gray-400 border border-gray-100'}`}
+                            className={`flex items-center gap-2 px-5 py-2.5 rounded-full text-xs font-semibold whitespace-nowrap transition-all ${filter === 'active' && availableFilter === 'nearby' ? 'bg-gradient-to-r from-orange-500 to-red-500 text-white shadow-lg shadow-orange-500/30' : 'bg-white text-gray-400 border border-gray-100'}`}
                         >
                             Nearby
                             <span className={`px-1.5 py-0.5 rounded-md text-[10px] ${filter === 'active' && availableFilter === 'nearby' ? 'bg-white/20' : 'bg-gray-100'}`}>
@@ -338,7 +345,7 @@ export default function RiderOrders({ riderId, setShowNotifications, unreadCount
                         </button>
                         <button 
                             onClick={() => { setFilter('active'); setAvailableFilter('high_pay'); }}
-                            className={`flex items-center gap-2 px-5 py-2.5 rounded-full text-xs font-bold whitespace-nowrap transition-all ${filter === 'active' && availableFilter === 'high_pay' ? 'bg-gradient-to-r from-orange-500 to-red-500 text-white shadow-lg shadow-orange-500/30' : 'bg-white text-gray-400 border border-gray-100'}`}
+                            className={`flex items-center gap-2 px-5 py-2.5 rounded-full text-xs font-semibold whitespace-nowrap transition-all ${filter === 'active' && availableFilter === 'high_pay' ? 'bg-gradient-to-r from-orange-500 to-red-500 text-white shadow-lg shadow-orange-500/30' : 'bg-white text-gray-400 border border-gray-100'}`}
                         >
                             High Pay
                             <span className={`px-1.5 py-0.5 rounded-md text-[10px] ${filter === 'active' && availableFilter === 'high_pay' ? 'bg-white/20' : 'bg-gray-100'}`}>
@@ -347,7 +354,7 @@ export default function RiderOrders({ riderId, setShowNotifications, unreadCount
                         </button>
                         <button 
                             onClick={() => setFilter('completed')}
-                            className={`flex items-center gap-2 px-5 py-2.5 rounded-full text-xs font-bold whitespace-nowrap transition-all ${filter === 'completed' ? 'bg-gradient-to-r from-orange-500 to-red-500 text-white shadow-lg shadow-orange-500/30' : 'bg-white text-gray-400 border border-gray-100'}`}
+                            className={`flex items-center gap-2 px-5 py-2.5 rounded-full text-xs font-semibold whitespace-nowrap transition-all ${filter === 'completed' ? 'bg-gradient-to-r from-orange-500 to-red-500 text-white shadow-lg shadow-orange-500/30' : 'bg-white text-gray-400 border border-gray-100'}`}
                         >
                             History
                         </button>
@@ -366,7 +373,7 @@ export default function RiderOrders({ riderId, setShowNotifications, unreadCount
                             <div className="bg-gradient-to-r from-orange-500 to-red-500 p-4 text-white flex justify-between items-center">
                                 <div className="flex items-center gap-2">
                                     <FaBox />
-                                    <span className="font-bold uppercase tracking-wider text-[10px]">
+                                    <span className="font-semibold uppercase tracking-wider text-[10px]">
                                         {activeDelivery.status === 'Confirmed' ? 'Order Accepted' : 
                                          activeDelivery.status === 'OnTheWay' ? 'Heading to Restaurant' :
                                          activeDelivery.status === 'Arrived' ? 'At Restaurant' :
@@ -374,7 +381,7 @@ export default function RiderOrders({ riderId, setShowNotifications, unreadCount
                                          activeDelivery.status === 'ArrivedAtCustomer' ? 'At Customer Location' : 'Order Tracking'}
                                     </span>
                                 </div>
-                                <span className="text-[10px] font-bold">#{activeDelivery.orderNumber || activeDelivery._id.slice(-7).toUpperCase()}</span>
+                                <span className="text-[10px] font-semibold">#{activeDelivery.orderNumber || activeDelivery._id.slice(-7).toUpperCase()}</span>
                             </div>
 
                             <div className="p-0">
@@ -387,7 +394,7 @@ export default function RiderOrders({ riderId, setShowNotifications, unreadCount
                                             <div className="absolute top-4 left-4 right-4 flex justify-between items-center pointer-events-none">
                                                 <div className="bg-white/90 backdrop-blur-md px-3 py-1.5 rounded-full shadow-sm flex items-center gap-2">
                                                     <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
-                                                    <span className="text-[10px] font-bold uppercase tracking-wider text-gray-800">Live Location</span>
+                                                    <span className="text-[10px] font-medium uppercase tracking-wider text-gray-800">Live Location</span>
                                                 </div>
                                             </div>
                                         </div>
@@ -401,13 +408,13 @@ export default function RiderOrders({ riderId, setShowNotifications, unreadCount
                                                     </div>
                                                 </div>
                                                 
-                                                <h2 className="text-2xl font-bold text-center text-[#FF4D00] mb-1">Order Accepted!</h2>
-                                                <p className="text-gray-400 text-center text-xs font-bold mb-8">You've successfully accepted this delivery</p>
+                                                <h2 className="text-2xl font-semibold text-center text-[#FF4D00] mb-1">Order Accepted!</h2>
+                                                <p className="text-gray-400 text-center text-xs font-semibold mb-8">You've successfully accepted this delivery</p>
 
                                                 <div className="space-y-6">
                                                     <div className="flex items-center justify-between pb-4 border-b border-gray-50">
-                                                        <span className="text-gray-400 font-bold text-xs uppercase tracking-wider">Order Summary</span>
-                                                        <span className="text-gray-900 font-bold text-sm">Order ID <span className="text-gray-400 ml-1">#{activeDelivery.orderNumber || activeDelivery._id.slice(-6).toUpperCase()}</span></span>
+                                                        <span className="text-gray-400 font-medium text-xs uppercase tracking-wider">Order Summary</span>
+                                                        <span className="text-gray-900 font-semibold text-sm">Order ID <span className="text-gray-400 ml-1">#{activeDelivery.orderNumber || activeDelivery._id.slice(-6).toUpperCase()}</span></span>
                                                     </div>
 
                                                     <div className="space-y-4">
@@ -436,23 +443,23 @@ export default function RiderOrders({ riderId, setShowNotifications, unreadCount
 
                                                 <div className="pt-4 border-t border-gray-50 space-y-3">
                                                     <div className="flex justify-between items-center">
-                                                        <div className="flex items-center gap-2 text-gray-400 font-bold text-xs">
+                                                        <div className="flex items-center gap-2 text-gray-400 font-semibold text-xs">
                                                             <span>Rs.</span> You'll earn
                                                         </div>
-                                                        <span className="text-[#FF4D00] font-bold text-lg">Rs. {activeDelivery.netRiderEarning || 180}</span>
+                                                        <span className="text-[#FF4D00] font-semibold text-lg">Rs. {activeDelivery.netRiderEarning || 180}</span>
                                                     </div>
                                                     <div className="flex justify-between items-center">
-                                                        <div className="flex items-center gap-2 text-gray-400 font-bold text-xs">
+                                                        <div className="flex items-center gap-2 text-gray-400 font-semibold text-xs">
                                                             <FaClock /> Estimated time
                                                         </div>
-                                                        <span className="text-gray-900 font-bold text-sm">{activeDelivery.estimatedTime || '25-30'} mins</span>
+                                                        <span className="text-gray-900 font-semibold text-sm">{activeDelivery.estimatedTime || '25-30'} mins</span>
                                                     </div>
                                                 </div>
                                                 </div>
 
                                                 <button 
                                                     onClick={() => handleUpdateStatus(activeDelivery._id, 'OnTheWay', '🚀 Delivery started!')}
-                                                    className="w-full mt-8 bg-gradient-to-r from-orange-500 to-pink-600 hover:from-orange-600 hover:to-pink-700 text-white py-4 rounded-2xl font-bold text-sm shadow-lg shadow-orange-200 transition-all active:scale-[0.98] flex items-center justify-center gap-2"
+                                                    className="w-full mt-8 bg-gradient-to-r from-orange-500 to-pink-600 hover:from-orange-600 hover:to-pink-700 text-white py-4 rounded-2xl font-semibold text-sm shadow-lg shadow-orange-200 transition-all active:scale-[0.98] flex items-center justify-center gap-2"
                                                 >
                                                     <FaMapMarkerAlt size={14} />
                                                     START DELIVERY
@@ -505,7 +512,7 @@ export default function RiderOrders({ riderId, setShowNotifications, unreadCount
                                                         <div className={`w-7 h-7 rounded-full flex items-center justify-center border-4 border-white shadow-sm transition-colors duration-500 ${isCompleted ? 'bg-gradient-to-r from-orange-500 to-red-500 text-white' : 'bg-gray-100 text-gray-400'}`}>
                                                             {isCompleted ? <FaCheckCircle size={10} /> : <div className="w-1.5 h-1.5 rounded-full bg-current" />}
                                                         </div>
-                                                        <span className={`absolute -bottom-6 whitespace-nowrap text-[8px] font-medium tracking-tight ${isCompleted ? 'text-orange-500' : 'text-gray-300'}`}>
+                                                        <span className={`absolute -bottom-6 whitespace-nowrap text-[8px] font-normal tracking-tight ${isCompleted ? 'text-orange-500' : 'text-gray-300'}`}>
                                                             {step.label}
                                                         </span>
                                                     </div>
@@ -523,7 +530,7 @@ export default function RiderOrders({ riderId, setShowNotifications, unreadCount
                                             {activeDelivery.status === 'OnTheWay' && (
                                                 <button 
                                                     onClick={() => handleUpdateStatus(activeDelivery._id, 'Arrived', '📍 Arrived at restaurant!')}
-                                                    className="w-full bg-gradient-to-r from-gray-800 to-gray-900 hover:from-black hover:to-black text-white py-4 rounded-2xl font-bold shadow-lg transition-all active:scale-95"
+                                                    className="w-full bg-gradient-to-r from-gray-800 to-gray-900 hover:from-black hover:to-black text-white py-4 rounded-2xl font-semibold shadow-lg transition-all active:scale-95"
                                                 >
                                                     ARRIVED AT RESTAURANT
                                                 </button>
@@ -531,7 +538,7 @@ export default function RiderOrders({ riderId, setShowNotifications, unreadCount
                                             {activeDelivery.status === 'Arrived' && (
                                                 <button 
                                                     onClick={() => handlePickupOrder(activeDelivery._id)}
-                                                    className="w-full bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600 text-white py-4 rounded-2xl font-bold shadow-lg transition-all active:scale-95"
+                                                    className="w-full bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600 text-white py-4 rounded-2xl font-semibold shadow-lg transition-all active:scale-95"
                                                 >
                                                     ORDER PICKED UP
                                                 </button>
@@ -539,7 +546,7 @@ export default function RiderOrders({ riderId, setShowNotifications, unreadCount
                                             {activeDelivery.status === 'Picked Up' && (
                                                 <button 
                                                     onClick={() => handleUpdateStatus(activeDelivery._id, 'ArrivedAtCustomer', '📍 Arrived at customer location!')}
-                                                    className="w-full bg-gradient-to-r from-gray-800 to-gray-900 hover:from-black hover:to-black text-white py-4 rounded-2xl font-bold shadow-lg transition-all active:scale-95"
+                                                    className="w-full bg-gradient-to-r from-gray-800 to-gray-900 hover:from-black hover:to-black text-white py-4 rounded-2xl font-semibold shadow-lg transition-all active:scale-95"
                                                 >
                                                     ARRIVED AT CUSTOMER
                                                 </button>
@@ -547,7 +554,7 @@ export default function RiderOrders({ riderId, setShowNotifications, unreadCount
                                             {activeDelivery.status === 'ArrivedAtCustomer' && (
                                                 <button 
                                                     onClick={() => handleDeliverOrder(activeDelivery._id)}
-                                                    className="w-full bg-gradient-to-r from-green-400 to-emerald-600 hover:from-green-500 hover:to-emerald-700 text-white py-4 rounded-2xl font-bold shadow-lg transition-all active:scale-95"
+                                                    className="w-full bg-gradient-to-r from-green-400 to-emerald-600 hover:from-green-500 hover:to-emerald-700 text-white py-4 rounded-2xl font-semibold shadow-lg transition-all active:scale-95"
                                                 >
                                                     MARK AS DELIVERED
                                                 </button>
@@ -556,13 +563,13 @@ export default function RiderOrders({ riderId, setShowNotifications, unreadCount
                                             <div className="flex gap-3">
                                                 <button 
                                                     onClick={() => handleChat(activeDelivery)}
-                                                    className="flex-1 bg-white border border-gray-100 py-3.5 rounded-2xl font-bold flex items-center justify-center gap-2 text-gray-700 hover:bg-gray-50 transition-all"
+                                                    className="flex-1 bg-white border border-gray-100 py-3.5 rounded-2xl font-semibold flex items-center justify-center gap-2 text-gray-700 hover:bg-gray-50 transition-all"
                                                 >
                                                     <FaCommentDots className="text-orange-500" /> CHAT
                                                 </button>
                                                 <a 
                                                     href={`tel:${activeDelivery.status === 'OnTheWay' || activeDelivery.status === 'Arrived' ? activeDelivery.restaurant?.contact : activeDelivery.user?.phone}`}
-                                                    className="flex-1 bg-white border border-gray-100 py-3.5 rounded-2xl font-bold flex items-center justify-center gap-2 text-gray-700 hover:bg-gray-50 transition-all"
+                                                    className="flex-1 bg-white border border-gray-100 py-3.5 rounded-2xl font-semibold flex items-center justify-center gap-2 text-gray-700 hover:bg-gray-50 transition-all"
                                                 >
                                                     <FaPhone className="text-green-500" /> CALL
                                                 </a>
@@ -579,7 +586,7 @@ export default function RiderOrders({ riderId, setShowNotifications, unreadCount
                             <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mb-4">
                                 <FaBox size={24} />
                             </div>
-                            <p className="font-bold">No orders found</p>
+                            <p className="font-semibold">No orders found</p>
                         </div>
                     ) : (
                         filteredOrders.map((order) => (
@@ -619,7 +626,7 @@ export default function RiderOrders({ riderId, setShowNotifications, unreadCount
                             <div className="w-16 h-16 bg-white/20 rounded-full flex items-center justify-center mx-auto mb-4">
                                 <FaCheckCircle size={32} />
                             </div>
-                            <h3 className="text-2xl font-bold">Order Completed! 🎉</h3>
+                            <h3 className="text-2xl font-semibold">Order Completed! 🎉</h3>
                             <p className="opacity-90 text-sm mt-1">Excellent job on this delivery</p>
                         </div>
                         
@@ -627,19 +634,19 @@ export default function RiderOrders({ riderId, setShowNotifications, unreadCount
                             <div className="space-y-4 mb-6">
                                 <div className="flex justify-between items-center text-gray-600">
                                     <span className="font-medium">Distance</span>
-                                    <span className="font-bold text-gray-900">{completionData.distanceKm} km</span>
+                                    <span className="font-semibold text-gray-900">{completionData.distanceKm} km</span>
                                 </div>
                                 <div className="flex justify-between items-center text-gray-600">
                                     <span className="font-medium">Gross Earning</span>
-                                    <span className="font-bold text-gray-900">Rs. {completionData.grossEarning}</span>
+                                    <span className="font-semibold text-gray-900">Rs. {completionData.grossEarning}</span>
                                 </div>
                                 <div className="flex justify-between items-center text-gray-600">
                                     <span className="font-medium">Platform Fee</span>
-                                    <span className="font-bold text-red-500">-Rs. {completionData.platformFee}</span>
+                                    <span className="font-semibold text-red-500">-Rs. {completionData.platformFee}</span>
                                 </div>
                                 <div className="pt-4 border-t border-dashed border-gray-200 flex justify-between items-center">
-                                    <span className="font-bold text-gray-900 text-lg">You Earned</span>
-                                    <span className="font-bold text-green-600 text-2xl">Rs. {completionData.netEarning}</span>
+                                    <span className="font-semibold text-gray-900 text-lg">You Earned</span>
+                                    <span className="font-semibold text-green-600 text-2xl">Rs. {completionData.netEarning}</span>
                                 </div>
                             </div>
 
@@ -650,12 +657,12 @@ export default function RiderOrders({ riderId, setShowNotifications, unreadCount
                                     </div>
                                     <span className="text-gray-600 font-medium">Wallet Balance</span>
                                 </div>
-                                <span className="font-bold text-gray-900">Rs. {riderWallet.toLocaleString()}</span>
+                                <span className="font-semibold text-gray-900">Rs. {riderWallet.toLocaleString()}</span>
                             </div>
 
                             <button
                                 onClick={() => setCompletionData(null)}
-                                className="w-full bg-gray-900 hover:bg-black text-white py-4 rounded-2xl font-bold transition shadow-lg shadow-gray-200"
+                                className="w-full bg-gray-900 hover:bg-black text-white py-4 rounded-2xl font-semibold transition shadow-lg shadow-gray-200"
                             >
                                 Close Summary
                             </button>
@@ -670,8 +677,8 @@ export default function RiderOrders({ riderId, setShowNotifications, unreadCount
                     <div className="bg-white w-full max-w-lg rounded-t-[2.5rem] sm:rounded-[2.5rem] overflow-hidden shadow-2xl animate-in slide-in-from-bottom duration-300 max-h-[90vh] flex flex-col">
                         <div className="p-6 border-b border-gray-100 flex justify-between items-center bg-white sticky top-0 z-10">
                             <div>
-                                <h3 className="text-xl font-bold text-gray-900">Order Details</h3>
-                                <p className="text-xs font-bold text-gray-400 uppercase tracking-widest">#{selectedOrder.orderNumber}</p>
+                                <h3 className="text-xl font-semibold text-gray-900">Order Details</h3>
+                                <p className="text-xs font-semibold text-gray-400 uppercase tracking-widest">#{selectedOrder.orderNumber}</p>
                             </div>
                             <button 
                                 onClick={() => setShowDetailsModal(false)}
@@ -684,17 +691,17 @@ export default function RiderOrders({ riderId, setShowNotifications, unreadCount
                         <div className="p-6 overflow-y-auto space-y-8">
                             {/* Items List */}
                             <div>
-                                <h4 className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-4">Items Summary</h4>
+                                <h4 className="text-[10px] font-medium text-gray-400 uppercase tracking-widest mb-4">Items Summary</h4>
                                 <div className="space-y-4">
                                     {(selectedOrder.items || selectedOrder.orderItems || []).map((item: any, idx: number) => (
                                         <div key={idx} className="flex justify-between items-center bg-gray-50 p-4 rounded-2xl">
                                             <div className="flex items-center gap-3">
-                                                <div className="w-8 h-8 bg-white rounded-xl flex items-center justify-center font-bold text-orange-500 shadow-sm border border-orange-50">
+                                                <div className="w-8 h-8 bg-white rounded-xl flex items-center justify-center font-semibold text-orange-500 shadow-sm border border-orange-50">
                                                     {item.quantity}x
                                                 </div>
-                                                <span className="font-bold text-gray-900">{item.name || (item.dish && item.dish.name)}</span>
+                                                <span className="font-semibold text-gray-900">{item.name || (item.dish && item.dish.name)}</span>
                                             </div>
-                                            <span className="font-bold text-gray-900">Rs. {item.price || (item.dish && item.dish.price)}</span>
+                                            <span className="font-semibold text-gray-900">Rs. {item.price || (item.dish && item.dish.price)}</span>
                                         </div>
                                     ))}
                                 </div>
@@ -703,28 +710,28 @@ export default function RiderOrders({ riderId, setShowNotifications, unreadCount
                             {/* Customer & Address */}
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                                 <div className="bg-orange-50/50 p-5 rounded-3xl border border-orange-100/50">
-                                    <h4 className="text-[10px] font-bold text-orange-400 uppercase tracking-widest mb-2">Customer</h4>
-                                    <p className="font-bold text-gray-900 text-lg mb-1">{selectedOrder.customer?.name || 'Guest User'}</p>
-                                    <p className="text-xs font-bold text-orange-600/70">{selectedOrder.customer?.phone || 'No phone provided'}</p>
+                                    <h4 className="text-[10px] font-medium text-orange-400 uppercase tracking-widest mb-2">Customer</h4>
+                                    <p className="font-semibold text-gray-900 text-lg mb-1">{selectedOrder.customer?.name || 'Guest User'}</p>
+                                    <p className="text-xs font-semibold text-orange-600/70">{selectedOrder.customer?.phone || 'No phone provided'}</p>
                                 </div>
                                 <div className="bg-blue-50/50 p-5 rounded-3xl border border-blue-100/50">
-                                    <h4 className="text-[10px] font-bold text-blue-400 uppercase tracking-widest mb-2">Payment</h4>
-                                    <p className="font-bold text-gray-900 text-lg mb-1">{selectedOrder.paymentMethod || 'COD'}</p>
-                                    <p className="text-xs font-bold text-blue-600/70">Total: Rs. {selectedOrder.totalAmount || selectedOrder.totalPrice}</p>
+                                    <h4 className="text-[10px] font-medium text-blue-400 uppercase tracking-widest mb-2">Payment</h4>
+                                    <p className="font-semibold text-gray-900 text-lg mb-1">{selectedOrder.paymentMethod || 'COD'}</p>
+                                    <p className="text-xs font-semibold text-blue-600/70">Total: Rs. {selectedOrder.totalAmount || selectedOrder.totalPrice}</p>
                                 </div>
                             </div>
 
                             {/* Delivery Address */}
                             <div className="bg-gray-50 p-5 rounded-3xl border border-gray-100">
-                                <h4 className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-2">Delivery Address</h4>
-                                <p className="font-bold text-gray-900 leading-relaxed">{selectedOrder.deliveryAddress || 'No address provided'}</p>
+                                <h4 className="text-[10px] font-medium text-gray-400 uppercase tracking-widest mb-2">Delivery Address</h4>
+                                <p className="font-semibold text-gray-900 leading-relaxed">{selectedOrder.deliveryAddress || 'No address provided'}</p>
                             </div>
                         </div>
 
                         <div className="p-6 bg-white border-t border-gray-100">
                             <button
                                 onClick={() => setShowDetailsModal(false)}
-                                className="w-full bg-gray-900 hover:bg-black text-white py-4 rounded-2xl font-bold transition shadow-lg shadow-gray-200"
+                                className="w-full bg-gray-900 hover:bg-black text-white py-4 rounded-2xl font-semibold transition shadow-lg shadow-gray-200"
                             >
                                 CLOSE DETAILS
                             </button>
@@ -809,15 +816,15 @@ function OrderCard({
                     <div className="flex flex-col gap-1.5">
                         {/* 5. Urgency Badge */}
                         {isUrgent && (
-                            <div className="flex items-center gap-1.5 bg-red-50 text-red-600 text-[10px] font-bold uppercase px-2 py-1 rounded-lg w-fit animate-pulse">
+                            <div className="flex items-center gap-1.5 bg-red-50 text-red-600 text-[10px] font-medium uppercase px-2 py-1 rounded-lg w-fit animate-pulse">
                                 <div className="w-1.5 h-1.5 bg-red-600 rounded-full" />
                                 Urgent
                             </div>
                         )}
                         {/* Restaurant Name & Earnings */}
                         <div className="flex items-center gap-2">
-                            <h3 className="text-base font-bold text-gray-900">{order.restaurant?.name || 'Restaurant'}</h3>
-                            <span className="text-green-600 font-bold text-sm">+Rs. {order.netRiderEarning || 250}</span>
+                            <h3 className="text-base font-medium text-gray-900">{order.restaurant?.name || 'Restaurant'}</h3>
+                            <span className="text-green-600 font-medium text-sm">+Rs. {order.netRiderEarning || 250}</span>
                         </div>
                         {/* Order Age */}
                         <span className="text-[10px] font-medium text-gray-400 uppercase tracking-wider">
@@ -848,7 +855,7 @@ function OrderCard({
                         </div>
                         <div className="flex-1">
                             <p className="text-[10px] font-medium text-gray-400 uppercase tracking-widest leading-none mb-1">Pickup</p>
-                            <p className="text-[12px] font-bold text-gray-900 line-clamp-1">{order.restaurant?.address || 'Restaurant Address'}</p>
+                            <p className="text-[12px] font-medium text-gray-900 line-clamp-1">{order.restaurant?.address || 'Restaurant Address'}</p>
                         </div>
                     </div>
 
@@ -858,7 +865,7 @@ function OrderCard({
                         </div>
                         <div className="flex-1">
                             <p className="text-[10px] font-medium text-gray-400 uppercase tracking-widest leading-none mb-1">Delivery</p>
-                            <p className="text-[12px] font-bold text-gray-900 line-clamp-1">{order.deliveryAddress || 'Delivery Address'}</p>
+                            <p className="text-[12px] font-medium text-gray-900 line-clamp-1">{order.deliveryAddress || 'Delivery Address'}</p>
                         </div>
                     </div>
                 </div>
@@ -890,7 +897,7 @@ function OrderCard({
                 {isAvailable && (
                     <button 
                             onClick={() => handleAcceptOrder(order._id)}
-                            className="w-full mt-4 bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600 text-white py-3 rounded-xl font-bold text-xs uppercase tracking-widest shadow-lg shadow-orange-500/20 transition-all active:scale-95"
+                            className="w-full mt-4 bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600 text-white py-3 rounded-xl font-semibold text-xs uppercase tracking-widest shadow-lg shadow-orange-500/20 transition-all active:scale-95"
                         >
                             Accept Order
                         </button>

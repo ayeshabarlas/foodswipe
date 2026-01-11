@@ -325,10 +325,10 @@ const RiderDashboard = ({ riderId: initialRiderId }: { riderId?: string }) => {
     if (error) {
         return (
             <div className="min-h-screen bg-white flex flex-col items-center justify-center p-4 text-center">
-                <p className="text-red-500 font-bold mb-4">{error}</p>
+                <p className="text-red-500 font-semibold mb-4">{error}</p>
                 <button 
                     onClick={fetchRiderData}
-                    className="px-8 py-3 bg-gradient-to-r from-orange-500 to-red-500 text-white rounded-2xl font-bold shadow-lg shadow-orange-200"
+                    className="px-8 py-3 bg-gradient-to-r from-orange-500 to-red-500 text-white rounded-2xl font-semibold shadow-lg shadow-orange-200"
                 >
                     Retry
                 </button>
@@ -347,7 +347,7 @@ const RiderDashboard = ({ riderId: initialRiderId }: { riderId?: string }) => {
                     <div className="flex items-center gap-3">
                         <div className="w-12 h-12 bg-white/20 backdrop-blur-md rounded-2xl flex items-center justify-center border border-white/20 overflow-hidden">
                             {riderData?.fullName ? (
-                                <span className="text-white font-bold text-xl">{riderData.fullName[0]}</span>
+                                <span className="text-white font-semibold text-xl">{riderData.fullName[0]}</span>
                             ) : (
                                 <FaUser className="text-white text-xl" />
                             )}
@@ -491,7 +491,7 @@ const RiderDashboard = ({ riderId: initialRiderId }: { riderId?: string }) => {
                                     handleUpdateStatus(activeOrder._id, 'Delivered', activeOrder.distance || activeOrder.distanceKm);
                                 }
                             }}
-                            className="w-full py-5 bg-gradient-to-r from-orange-500 to-red-500 text-white font-bold rounded-3xl shadow-lg shadow-orange-200 hover:from-orange-600 hover:to-red-600 transition-all active:scale-95 flex items-center justify-center gap-3"
+                            className="w-full py-5 bg-gradient-to-r from-orange-500 to-red-500 text-white font-semibold rounded-3xl shadow-lg shadow-orange-200 hover:from-orange-600 hover:to-red-600 transition-all active:scale-95 flex items-center justify-center gap-3"
                         >
                             <span className="text-[11px] uppercase tracking-widest">
                                 {activeOrder.status === 'Ready' || activeOrder.status === 'Confirmed' || activeOrder.status === 'Accepted' || activeOrder.status === 'Preparing' ? 'Arrived at Restaurant' :
@@ -572,19 +572,19 @@ function ActionItem({ icon, label, sublabel, onClick }: any) {
             <div className="flex flex-col gap-6 animate-in fade-in slide-in-from-bottom-4 duration-500 font-light pb-20">
                 <div className="flex justify-between items-end mb-4 px-2">
                     <div>
-                        <h2 className="text-3xl font-bold text-gray-900 tracking-tight">Orders</h2>
+                        <h2 className="text-3xl font-semibold text-gray-900 tracking-tight">Orders</h2>
                         <p className="text-gray-400 text-xs font-light uppercase tracking-widest mt-1">Manage deliveries</p>
                     </div>
                     <div className="flex bg-gray-100/50 p-1.5 rounded-2xl border border-gray-100">
                         <button 
                             onClick={() => setOrderFilter('available')}
-                            className={`px-5 py-2 rounded-xl text-[10px] font-bold uppercase tracking-wider transition-all ${orderFilter === 'available' ? 'bg-white text-orange-500 shadow-sm' : 'text-gray-400'}`}
+                            className={`px-5 py-2 rounded-xl text-[10px] font-semibold uppercase tracking-wider transition-all ${orderFilter === 'available' ? 'bg-white text-orange-500 shadow-sm' : 'text-gray-400'}`}
                         >
                             Available ({availableOrders.length})
                         </button>
                         <button 
                             onClick={() => setOrderFilter('active')}
-                            className={`px-5 py-2 rounded-xl text-[10px] font-bold uppercase tracking-wider transition-all ${orderFilter === 'active' ? 'bg-white text-orange-500 shadow-sm' : 'text-gray-400'}`}
+                            className={`px-5 py-2 rounded-xl text-[10px] font-semibold uppercase tracking-wider transition-all ${orderFilter === 'active' ? 'bg-white text-orange-500 shadow-sm' : 'text-gray-400'}`}
                         >
                             Active ({activeOrders.length})
                         </button>
@@ -600,13 +600,13 @@ function ActionItem({ icon, label, sublabel, onClick }: any) {
                                         <FaShoppingBag size={22} />
                                     </div>
                                     <div>
-                                        <p className="text-gray-900 font-bold text-lg tracking-tight">{order.restaurant?.name || 'Restaurant'}</p>
+                                        <p className="text-gray-900 font-semibold text-lg tracking-tight">{order.restaurant?.name || 'Restaurant'}</p>
                                         <p className="text-gray-400 text-[10px] font-light uppercase tracking-widest mt-1">
                                             #{order._id.slice(-6)} • {order.createdAt ? new Date(order.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'Just now'}
                                         </p>
                                     </div>
                                 </div>
-                                <div className="px-4 py-1.5 bg-green-50 text-green-600 rounded-full text-[10px] font-bold uppercase tracking-widest">
+                                <div className="px-4 py-1.5 bg-green-50 text-green-600 rounded-full text-[10px] font-semibold uppercase tracking-widest">
                                     {order.status}
                                 </div>
                             </div>
@@ -617,7 +617,7 @@ function ActionItem({ icon, label, sublabel, onClick }: any) {
                                         <FaLocationArrow size={12} />
                                     </div>
                                     <div>
-                                        <p className="text-gray-400 text-[10px] font-bold uppercase tracking-widest mb-1">Pickup</p>
+                                        <p className="text-gray-400 text-[10px] font-semibold uppercase tracking-widest mb-1">Pickup</p>
                                         <p className="text-gray-900 text-sm font-medium leading-relaxed">{order.restaurant?.address}</p>
                                     </div>
                                 </div>
@@ -626,7 +626,7 @@ function ActionItem({ icon, label, sublabel, onClick }: any) {
                                         <FaMapMarkerAlt size={12} />
                                     </div>
                                     <div>
-                                        <p className="text-gray-400 text-[10px] font-bold uppercase tracking-widest mb-1">Delivery</p>
+                                        <p className="text-gray-400 text-[10px] font-semibold uppercase tracking-widest mb-1">Delivery</p>
                                         <p className="text-gray-900 text-sm font-medium leading-relaxed">{order.shippingAddress?.address}</p>
                                     </div>
                                 </div>
@@ -635,7 +635,7 @@ function ActionItem({ icon, label, sublabel, onClick }: any) {
                             <div className="flex gap-3 pt-2">
                                 <button 
                                     onClick={() => {}} 
-                                    className="flex-1 bg-gray-50 text-gray-500 py-4 rounded-2xl text-[10px] font-bold uppercase tracking-widest hover:bg-gray-100 transition-all"
+                                    className="flex-1 bg-gray-50 text-gray-500 py-4 rounded-2xl text-[10px] font-semibold uppercase tracking-widest hover:bg-gray-100 transition-all"
                                 >
                                     Details
                                 </button>
@@ -645,7 +645,7 @@ function ActionItem({ icon, label, sublabel, onClick }: any) {
                                             setSelectedOrderForTracking(order);
                                             setShowTrackingModal(true);
                                         }} 
-                                        className="flex-1 bg-blue-50 text-blue-500 py-4 rounded-2xl text-[10px] font-bold uppercase tracking-widest hover:bg-blue-100 transition-all"
+                                        className="flex-1 bg-blue-50 text-blue-500 py-4 rounded-2xl text-[10px] font-semibold uppercase tracking-widest hover:bg-blue-100 transition-all"
                                     >
                                         Track
                                     </button>
@@ -653,14 +653,14 @@ function ActionItem({ icon, label, sublabel, onClick }: any) {
                                 {order.rider ? (
                                     <button 
                                         onClick={() => handleUpdateStatus(order._id, order.status === 'Picked Up' ? 'Delivered' : 'Picked Up', order.distance || order.distanceKm)}
-                                        className="flex-[2] bg-gradient-to-r from-orange-500 to-red-500 text-white py-4 rounded-2xl text-[10px] font-bold uppercase tracking-widest shadow-lg shadow-orange-100 hover:scale-[1.02] active:scale-[0.98] transition-all"
+                                        className="flex-[2] bg-gradient-to-r from-orange-500 to-red-500 text-white py-4 rounded-2xl text-[10px] font-semibold uppercase tracking-widest shadow-lg shadow-orange-100 hover:scale-[1.02] active:scale-[0.98] transition-all"
                                     >
                                         {order.status === 'Picked Up' ? 'Mark Delivered' : 'Confirm Pick Up'}
                                     </button>
                                 ) : (
                                     <button 
                                         onClick={() => handleAcceptOrder(order._id)}
-                                        className="flex-[2] bg-green-500 text-white py-4 rounded-2xl text-[10px] font-bold uppercase tracking-widest shadow-lg shadow-green-100 hover:scale-[1.02] active:scale-[0.98] transition-all"
+                                        className="flex-[2] bg-green-500 text-white py-4 rounded-2xl text-[10px] font-semibold uppercase tracking-widest shadow-lg shadow-green-100 hover:scale-[1.02] active:scale-[0.98] transition-all"
                                     >
                                         Accept Order
                                     </button>
@@ -668,11 +668,11 @@ function ActionItem({ icon, label, sublabel, onClick }: any) {
                             </div>
                         </div>
                     )) : (
-                        <div className="bg-white p-12 rounded-[40px] border border-dashed border-gray-200 text-center">
-                            <div className="w-20 h-20 bg-gray-50 rounded-full flex items-center justify-center mx-auto mb-6">
-                                <FaBox className="text-gray-200" size={32} />
+                        <div className="bg-white p-12 rounded-[40px] shadow-[0_10px_40px_rgba(0,0,0,0.02)] border border-gray-50 flex flex-col items-center text-center">
+                            <div className="w-20 h-20 bg-gray-50 rounded-3xl flex items-center justify-center text-gray-200 mb-6">
+                                <FaShoppingBag size={32} />
                             </div>
-                            <h3 className="text-gray-900 font-bold text-lg mb-2">No {orderFilter} orders</h3>
+                            <h3 className="text-gray-900 font-semibold text-lg mb-2">No {orderFilter} orders</h3>
                             <p className="text-gray-400 text-xs font-light px-8">Stay online to receive new delivery requests in your area</p>
                         </div>
                     )}
@@ -707,52 +707,55 @@ function ActionItem({ icon, label, sublabel, onClick }: any) {
                         >
                             <div className="flex justify-between items-start mb-6">
                                 <div>
-                                    <h2 className="text-2xl font-bold text-gray-900">New Order!</h2>
-                                    <p className="text-orange-500 font-medium">#{newOrderPopup._id.slice(-6)}</p>
+                                    <h2 className="text-2xl font-semibold text-gray-900">New Order!</h2>
+                                    <div className="flex items-center gap-2 mt-1">
+                                        <div className="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse" />
+                                        <span className="text-[10px] font-bold text-green-600 uppercase tracking-wider">Live</span>
+                                    </div>
                                 </div>
                                 <div className="w-12 h-12 bg-orange-50 rounded-2xl flex items-center justify-center text-orange-500">
                                     <FaBell className="animate-bounce" />
                                 </div>
                             </div>
 
-                            <div className="space-y-4 mb-8">
-                                <div className="flex items-center gap-3">
-                                    <div className="w-8 h-8 rounded-full bg-gray-50 flex items-center justify-center text-gray-400">
-                                        <FaShoppingBag size={14} />
+                            <div className="space-y-6">
+                                <div className="bg-gray-50/50 p-6 rounded-3xl border border-gray-100/50 flex items-center justify-between">
+                                    <div className="flex items-center gap-4">
+                                        <div className="w-12 h-12 bg-white rounded-2xl flex items-center justify-center text-orange-500 shadow-sm">
+                                            <FaWallet size={20} />
+                                        </div>
+                                        <div>
+                                            <p className="text-gray-400 text-[10px] font-light uppercase tracking-widest mb-0.5">Estimated Pay</p>
+                                            <p className="font-semibold text-gray-900">Rs. {newOrderPopup.riderEarning || 180}</p>
+                                        </div>
                                     </div>
-                                    <p className="text-gray-600 text-sm">{newOrderPopup.restaurant?.name}</p>
-                                </div>
-                                <div className="flex items-center gap-3">
-                                    <div className="w-8 h-8 rounded-full bg-gray-50 flex items-center justify-center text-gray-400">
-                                        <FaMapMarkerAlt size={14} />
-                                    </div>
-                                    <p className="text-gray-600 text-sm">{newOrderPopup.shippingAddress?.address}</p>
-                                </div>
-                                <div className="grid grid-cols-2 gap-4 mt-6">
-                                    <div className="bg-gray-50 p-3 rounded-2xl text-center">
-                                        <p className="text-[10px] text-gray-400 uppercase">Earnings</p>
-                                        <p className="font-bold text-gray-900">Rs. {newOrderPopup.riderEarning || 180}</p>
-                                    </div>
-                                    <div className="bg-gray-50 p-3 rounded-2xl text-center">
-                                        <p className="text-[10px] text-gray-400 uppercase">Time Left</p>
-                                        <p className="font-bold text-orange-500">{timer}s</p>
+                                    <div className="flex flex-col items-end">
+                                        <p className="text-gray-400 text-[10px] font-light uppercase tracking-widest mb-0.5">Expires in</p>
+                                        <p className="font-semibold text-orange-500">{timer}s</p>
                                     </div>
                                 </div>
-                            </div>
 
-                            <div className="flex gap-3">
-                                <button 
-                                    onClick={() => setNewOrderPopup(null)}
-                                    className="flex-1 py-4 rounded-2xl bg-gray-100 text-gray-500 font-bold text-xs uppercase tracking-widest hover:bg-gray-200 transition-all"
-                                >
-                                    Decline
-                                </button>
-                                <button 
-                                    onClick={() => handleAcceptOrder(newOrderPopup._id)}
-                                    className="flex-[2] py-4 rounded-2xl bg-gradient-to-r from-orange-500 to-red-500 text-white font-bold text-xs uppercase tracking-widest hover:from-orange-600 hover:to-red-600 shadow-lg shadow-orange-100 transition-all active:scale-95"
-                                >
-                                    Accept
-                                </button>
+                                <div className="flex gap-4">
+                                    <button 
+                                        onClick={() => {
+                                            setNewOrderPopup(null);
+                                            setTimer(30);
+                                        }}
+                                        className="flex-1 py-4 rounded-2xl bg-gray-100 text-gray-500 font-semibold text-xs uppercase tracking-widest hover:bg-gray-200 transition-all"
+                                    >
+                                        Decline
+                                    </button>
+                                    <button 
+                                        onClick={() => {
+                                            handleAcceptOrder(newOrderPopup._id);
+                                            setNewOrderPopup(null);
+                                            setTimer(30);
+                                        }}
+                                        className="flex-[2] py-4 rounded-2xl bg-gradient-to-r from-orange-500 to-red-500 text-white font-semibold text-xs uppercase tracking-widest hover:from-orange-600 hover:to-red-600 shadow-lg shadow-orange-100 transition-all active:scale-95"
+                                    >
+                                        Accept Order
+                                    </button>
+                                </div>
                             </div>
                         </motion.div>
                     </div>

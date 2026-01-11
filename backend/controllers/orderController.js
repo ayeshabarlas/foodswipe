@@ -275,14 +275,26 @@ const updateOrderStatus = async (req, res) => {
  */
 const processOrderCompletion = async (order, distanceKm = 5, req = null) => {
     try {
-        if (!order.rider) return; // No rider assigned
+        console.log(`[Finance] Processing completion for Order: ${order._id}`);
+        
+        if (!order.rider) {
+            console.error(`[Finance] Order ${order._id} completion attempted without rider assigned. Status: ${order.status}`);
+            throw new Error('No rider assigned to this order. Please accept the order first.');
+        }
 
         // Fetch Restaurant to check commission rate and business type
         const restaurant = await Restaurant.findById(order.restaurant);
-        if (!restaurant) throw new Error('Restaurant not found for finance split');
+        if (!restaurant) {
+            console.error(`[Finance] Restaurant ${order.restaurant} not found for order ${order._id}`);
+            throw new Error('Restaurant not found for finance split');
+        }
+        
+        console.log(`[Finance] Restaurant: ${restaurant.name}, Business Type: ${restaurant.businessType}, Commission: ${restaurant.commissionRate}%`);
 
         // Use restaurant's specific commissionRate, fallback to business type defaults
-        const commissionPercent = restaurant.commissionRate || (restaurant.businessType === 'home-chef' ? 10 : 15);
+        const commissionPercent = (restaurant.commissionRate !== undefined && restaurant.commissionRate !== null) 
+            ? restaurant.commissionRate 
+            : (restaurant.businessType === 'home-chef' ? 10 : 15);
         
         // 2. Calculate split payments
         const subtotal = order.subtotal || order.totalPrice || 0;
@@ -293,13 +305,18 @@ const processOrderCompletion = async (order, distanceKm = 5, req = null) => {
         const riderPayCalc = calculateRiderEarning(distanceKm);
         const riderEarning = riderPayCalc.netEarning;
 
+        console.log(`[Finance] Split: Subtotal=${subtotal}, Commission=${commissionAmount}, RestEarning=${restaurantEarning}, RiderEarning=${riderEarning}`);
+        
         // 3. Update order with detailed finance breakdown
         order.orderAmount = subtotal;
         order.commissionPercent = commissionPercent;
         order.commissionAmount = commissionAmount;
         order.restaurantEarning = restaurantEarning;
         order.riderEarning = riderEarning;
-        order.adminEarning = commissionAmount; // Admin's profit is the commission
+        order.grossRiderEarning = riderPayCalc.grossEarning;
+        order.platformFee = 0;
+        order.netRiderEarning = riderEarning;
+        order.adminEarning = commissionAmount; 
         order.platformRevenue = commissionAmount;
         order.distanceKm = distanceKm;
         
@@ -311,25 +328,46 @@ const processOrderCompletion = async (order, distanceKm = 5, req = null) => {
         // 4. Update Rider Wallet & Stats
         let rider = await Rider.findById(order.rider).populate('user');
         if (!rider) {
+            // Try fallback finding by user ID just in case
+            console.warn(`[Finance] Rider profile not found by ID ${order.rider}, trying fallback search...`);
             rider = await Rider.findOne({ user: order.rider }).populate('user');
         }
 
         if (rider) {
+            console.log(`[Finance] Updating Rider Wallet: ${rider.fullName} (${rider._id})`);
+            // Ensure earnings and stats objects exist
+            if (!rider.earnings) {
+                rider.earnings = { today: 0, thisWeek: 0, thisMonth: 0, total: 0 };
+            }
+            if (!rider.stats) {
+                rider.stats = { totalDeliveries: 0, completedDeliveries: 0, cancelledDeliveries: 0 };
+            }
+
             rider.walletBalance = (rider.walletBalance || 0) + riderEarning;
-            rider.earnings.total += riderEarning;
-            rider.earnings.today += riderEarning;
+            rider.earnings.total = (rider.earnings.total || 0) + riderEarning;
+            rider.earnings.today = (rider.earnings.today || 0) + riderEarning;
             rider.stats.completedDeliveries = (rider.stats.completedDeliveries || 0) + 1;
+            rider.stats.totalDeliveries = (rider.stats.totalDeliveries || 0) + 1;
+            
+            // Mark current order as null since it's completed
+            rider.currentOrder = null;
+            
             await rider.save();
 
             // Update RiderWallet model
             let riderWallet = await RiderWallet.findOne({ rider: rider._id });
             if (!riderWallet) {
-                riderWallet = await RiderWallet.create({ rider: rider._id });
+                riderWallet = await RiderWallet.create({ 
+                    rider: rider._id,
+                    totalEarnings: 0,
+                    availableWithdraw: 0,
+                    cashCollected: 0
+                });
             }
-            riderWallet.totalEarnings += riderEarning;
-            riderWallet.availableWithdraw += riderEarning;
+            riderWallet.totalEarnings = (riderWallet.totalEarnings || 0) + riderEarning;
+            riderWallet.availableWithdraw = (riderWallet.availableWithdraw || 0) + riderEarning;
             if (order.paymentMethod === 'COD') {
-                riderWallet.cashCollected += order.totalPrice;
+                riderWallet.cashCollected = (riderWallet.cashCollected || 0) + (order.totalPrice || 0);
             }
             await riderWallet.save();
 
@@ -346,27 +384,37 @@ const processOrderCompletion = async (order, distanceKm = 5, req = null) => {
                 metadata: { distanceKm, basePay: 60, kmRate: 20 }
             });
 
-            const riderUserId = rider.user._id || rider.user;
-            const notification = await createNotification(
-                riderUserId,
-                'Payment Received',
-                `Rs. ${riderEarning.toLocaleString()} added to wallet`,
-                'payment',
-                { orderId: order._id, amount: riderEarning }
-            );
-            triggerEvent(`user-${riderUserId}`, 'notification', notification);
-            triggerEvent(`rider-${rider._id}`, 'notification', notification);
+            const riderUserId = rider.user?._id || rider.user;
+            if (riderUserId) {
+                const notification = await createNotification(
+                    riderUserId,
+                    'Payment Received',
+                    `Rs. ${riderEarning.toLocaleString()} added to wallet`,
+                    'payment',
+                    { orderId: order._id, amount: riderEarning }
+                );
+                triggerEvent(`user-${riderUserId}`, 'notification', notification);
+                triggerEvent(`rider-${rider._id}`, 'notification', notification);
+            }
+        } else {
+            console.error(`[Finance] CRITICAL: Rider profile not found for ID: ${order.rider}`);
+            throw new Error('Rider profile not found. Payment cannot be processed.');
         }
 
         // 5. Update Restaurant Wallet & Stats
         let restaurantWallet = await RestaurantWallet.findOne({ restaurant: order.restaurant });
         if (!restaurantWallet) {
-            restaurantWallet = await RestaurantWallet.create({ restaurant: order.restaurant });
+            restaurantWallet = await RestaurantWallet.create({ 
+                restaurant: order.restaurant,
+                availableBalance: 0,
+                totalEarnings: 0,
+                totalCommissionCollected: 0
+            });
         }
 
-        restaurantWallet.availableBalance += restaurantEarning;
-        restaurantWallet.totalEarnings += restaurantEarning;
-        restaurantWallet.totalCommissionCollected += commissionAmount;
+        restaurantWallet.availableBalance = (restaurantWallet.availableBalance || 0) + restaurantEarning;
+        restaurantWallet.totalEarnings = (restaurantWallet.totalEarnings || 0) + restaurantEarning;
+        restaurantWallet.totalCommissionCollected = (restaurantWallet.totalCommissionCollected || 0) + commissionAmount;
         await restaurantWallet.save();
 
         // Transaction for Restaurant
@@ -391,13 +439,8 @@ const processOrderCompletion = async (order, distanceKm = 5, req = null) => {
             type: 'commission',
             amount: commissionAmount,
             balanceAfter: 0,
-            description: `Commission from #${order.orderNumber} (${restaurant.name})`
+            description: `Commission from #${order.orderNumber || order._id.toString().slice(-6)} (${restaurant.name})`
         });
-
-        await order.save();
-
-        // Notify Restaurant
-        triggerEvent(`restaurant-${order.restaurant}`, 'orderStatusUpdate', order);
 
     } catch (error) {
         console.error('CRITICAL: Process order completion error:', error);
@@ -490,7 +533,6 @@ const cancelOrder = async (req, res) => {
 // @access  Private (Rider/Admin)
 const completeOrder = async (req, res) => {
     try {
-        const { distanceKm } = req.body;
         const order = await Order.findById(req.params.id);
 
         if (!order) {
@@ -501,32 +543,54 @@ const completeOrder = async (req, res) => {
             return res.status(400).json({ message: 'Order already delivered' });
         }
 
-        order.status = 'Delivered';
-        await processOrderCompletion(order, distanceKm || 5);
-        await order.save();
-
-        const updatedOrder = await Order.findById(order._id)
-            .populate('user', 'name email phone')
-            .populate('restaurant', 'name address contact location')
-            .populate({
-                path: 'rider',
-                populate: { path: 'user', select: 'name phone' }
-            });
-
-        // Emit Pusher events
-        triggerEvent(`user-${order.user}`, 'orderStatusUpdate', updatedOrder);
-        triggerEvent(`restaurant-${order.restaurant}`, 'orderStatusUpdate', updatedOrder);
-        triggerEvent('admin', 'order_updated', updatedOrder);
-        
-        // Notify rider specifically
-        if (order.rider) {
-            triggerEvent(`rider-${order.rider}`, 'orderStatusUpdate', updatedOrder);
+        // Security check: Ensure the user is the assigned rider or an admin
+        if (req.user.role === 'rider') {
+            const rider = await Rider.findOne({ user: req.user._id });
+            if (!rider || (order.rider && order.rider.toString() !== rider._id.toString())) {
+                console.error(`[Order] Unauthorized completion attempt. Rider: ${rider?._id}, Order Rider: ${order.rider}`);
+                return res.status(403).json({ message: 'You are not authorized to complete this order. Only the assigned rider can mark it as delivered.' });
+            }
+            
+            // If order.rider is somehow missing but the rider is authorized, fix it here
+            if (!order.rider && rider) {
+                console.warn(`[Order] Auto-assigning missing rider ${rider._id} to order ${order._id} during completion`);
+                order.rider = rider._id;
+                order.riderAcceptedAt = order.riderAcceptedAt || new Date();
+            }
         }
 
-        res.json(updatedOrder);
+        const { distanceKm } = req.body;
+        console.log(`[Order] Completing order ${order._id}, distance: ${distanceKm}km`);
+
+        // Process completion (finance splits, wallets, stats)
+        // Use a default distance of 5km if none provided
+        const finalDistance = distanceKm || order.distanceKm || 5;
+        await processOrderCompletion(order, finalDistance);
+
+        // Update status and save
+        order.status = 'Delivered';
+        order.deliveredAt = new Date();
+        await order.save();
+
+        // Notify user
+        const notification = await createNotification(
+            order.user,
+            'Order Delivered',
+            `Your order #${order.orderNumber || order._id.toString().slice(-6)} has been delivered. Enjoy your meal!`,
+            'order',
+            { orderId: order._id }
+        );
+        
+        triggerEvent(`user-${order.user}`, 'notification', notification);
+        triggerEvent(`order-${order._id}`, 'statusUpdate', { status: 'Delivered' });
+
+        res.json({ message: 'Order marked as delivered', order });
     } catch (error) {
         console.error('Complete order error:', error);
-        res.status(500).json({ message: 'Server error', error: error.message });
+        res.status(error.message.includes('not found') || error.message.includes('No rider assigned') ? 400 : 500).json({ 
+            message: error.message || 'Server error',
+            error: error.message 
+        });
     }
 };
 
