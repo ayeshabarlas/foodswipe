@@ -4,6 +4,20 @@ const Dish = require('../models/Dish');
 const { protect, requireRestaurant } = require('../middleware/authMiddleware');
 const { checkRestaurantApproval } = require('../middleware/approvalMiddleware');
 
+/**
+ * Normalizes image/video paths to store only the relative path
+ * (e.g., from "http://localhost:5000/uploads/file.jpg" to "/uploads/file.jpg")
+ */
+const normalizePath = (path) => {
+    if (!path) return '';
+    // If it's a full URL, extract the path part starting from /uploads/
+    if (path.includes('/uploads/')) {
+        const index = path.indexOf('/uploads/');
+        return path.substring(index);
+    }
+    return path;
+};
+
 // @desc    Get all dishes for a restaurant
 // @route   GET /api/dishes/restaurant/:restaurantId
 // @access  Public
@@ -67,8 +81,8 @@ router.post('/', protect, requireRestaurant, checkRestaurantApproval, async (req
             name,
             description: description || '',
             price,
-            videoUrl: videoUrl || '',
-            imageUrl,
+            videoUrl: normalizePath(videoUrl),
+            imageUrl: normalizePath(imageUrl),
             category,
             restaurant,
             ingredients: ingredients || [],
@@ -107,8 +121,8 @@ router.put('/:id', protect, requireRestaurant, checkRestaurantApproval, async (r
         dish.name = name || dish.name;
         dish.description = description || dish.description;
         dish.price = price || dish.price;
-        dish.videoUrl = videoUrl || dish.videoUrl;
-        dish.imageUrl = imageUrl || dish.imageUrl;
+        if (videoUrl !== undefined) dish.videoUrl = normalizePath(videoUrl);
+        if (imageUrl !== undefined) dish.imageUrl = normalizePath(imageUrl);
         dish.category = category || dish.category;
         if (addOns !== undefined) dish.addOns = addOns;
         if (drinks !== undefined) dish.drinks = drinks;

@@ -1,9 +1,11 @@
 console.log('🚀 Backend Server Starting...');
 
-require('dotenv').config();
+const path = require('path');
+// Load environment variables from backend/.env regardless of where the process started
+require('dotenv').config({ path: path.join(__dirname, '.env') });
+
 const express = require('express');
 const cors = require('cors');
-const path = require('path');
 const { initSocket } = require('./socket');
 const { connectDB, getDbStatus } = require('./config/db');
 
@@ -14,7 +16,26 @@ app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// 🚀 2. REQUEST LOGGING
+// 🚀 2. DB CONNECTION CHECK MIDDLEWARE
+app.use((req, res, next) => {
+    // Skip health check and root to allow them to report status
+    if (req.url === '/health' || req.url === '/') {
+        return next();
+    }
+
+    const dbStatus = getDbStatus();
+    if (!dbStatus.isConnected) {
+        console.warn(`⚠️ Request blocked: Database not connected (${req.method} ${req.url})`);
+        return res.status(503).json({
+            message: 'Database connection is currently unavailable. Please try again in a few seconds.',
+            error: 'DB_NOT_CONNECTED',
+            details: dbStatus.lastError
+        });
+    }
+    next();
+});
+
+// 🚀 3. REQUEST LOGGING
 app.use((req, res, next) => {
     console.log(`📡 [${new Date().toISOString()}] ${req.method} ${req.url}`);
     next();
@@ -93,19 +114,37 @@ app.use((err, req, res, next) => {
     });
 });
 
-// 🚀 7. INITIALIZE (Non-blocking)
+// 🚀 7. INITIALIZE
 const startServer = async () => {
     try {
         console.log('🔌 Initializing Pusher...');
         initSocket();
         
-        console.log('🔌 Connecting to MongoDB (Non-blocking)...');
-        connectDB().then(success => {
-            if (success) console.log('✅ DB Connected');
-            else console.error('❌ DB Connection Failed - Check MONGO_URI');
-        }).catch(err => {
-            console.error('🔥 DB Connection Promise Error:', err.message);
-        });
+        console.log('🔌 Connecting to MongoDB...');
+        const success = await connectDB();
+        
+        if (success) {
+            console.log('✅ DB Connected Successfully');
+            
+            // Start server for non-Vercel environments (Local, Render, etc.)
+            if (!process.env.VERCEL) {
+                const PORT = process.env.PORT || 8080;
+                app.listen(PORT, '0.0.0.0', () => {
+                    console.log(`🚀 SERVER RUNNING ON PORT ${PORT}`);
+                    console.log(`📡 Health Check: http://localhost:${PORT}/health`);
+                });
+            }
+        } else {
+            console.error('❌ CRITICAL: DB Connection Failed.');
+            
+            // Still start for health reporting
+            if (!process.env.VERCEL) {
+                const PORT = process.env.PORT || 8080;
+                app.listen(PORT, '0.0.0.0', () => {
+                    console.log(`🚀 SERVER RUNNING ON PORT ${PORT} (LIMITED MODE - NO DB)`);
+                });
+            }
+        }
     } catch (err) {
         console.error('🔥 Initialization Error:', err);
     }
@@ -113,13 +152,5 @@ const startServer = async () => {
 
 console.log('🚀 Calling startServer()...');
 startServer();
-
-// Local server for development
-if (process.env.NODE_ENV !== 'production' && !process.env.VERCEL) {
-    const PORT = process.env.PORT || 8080;
-    app.listen(PORT, () => {
-        console.log(`🚀 LOCAL SERVER ON PORT ${PORT}`);
-    });
-}
 
 module.exports = app;

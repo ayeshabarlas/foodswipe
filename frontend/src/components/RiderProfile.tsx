@@ -20,15 +20,25 @@ export default function RiderProfile({ riderId }: RiderProfileProps) {
 
     const fetchRiderData = async () => {
         try {
-            const token = JSON.parse(localStorage.getItem("userInfo") || "{}").token;
+            const userStr = localStorage.getItem("userInfo");
+            if (!userStr) {
+                setError('User not logged in');
+                return;
+            }
+            const token = JSON.parse(userStr).token;
+            if (!token) {
+                setError('Session expired');
+                return;
+            }
             const res = await axios.get(`${API_BASE_URL}/api/riders/my-profile`, {
                 headers: { Authorization: `Bearer ${token}` }
             });
+            console.log('Profile data fetched:', res.data);
             setRiderData(res.data);
             setError(null);
-        } catch (error) {
+        } catch (error: any) {
             console.error('Error fetching rider data:', error);
-            setError('Failed to load profile');
+            setError(error.response?.data?.message || 'Failed to load profile');
         }
     };
 

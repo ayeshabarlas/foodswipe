@@ -6,12 +6,30 @@ const { createNotification } = require('./notificationController');
 
 const { triggerEvent } = require('../socket');
 
+/**
+ * Normalizes image/video paths to store only the relative path
+ * (e.g., from "http://localhost:5000/uploads/file.jpg" to "/uploads/file.jpg")
+ */
+const normalizePath = (path) => {
+    if (!path) return '';
+    // Handle array of paths
+    if (Array.isArray(path)) {
+        return path.map(p => normalizePath(p));
+    }
+    // If it's a full URL, extract the path part starting from /uploads/
+    if (typeof path === 'string' && path.includes('/uploads/')) {
+        const index = path.indexOf('/uploads/');
+        return path.substring(index);
+    }
+    return path;
+};
+
 // @desc    Register a new rider
 // @route   POST /api/riders/register
 // @access  Private (Rider role)
 const registerRider = async (req, res) => {
     try {
-        const { fullName, cnicNumber, dateOfBirth, vehicleType } = req.body;
+        const { fullName, cnicNumber, dateOfBirth, vehicleType, documents } = req.body;
 
         // Check if rider already exists for this user
         const existingRider = await Rider.findOne({ user: req.user._id });
@@ -20,14 +38,26 @@ const registerRider = async (req, res) => {
         }
 
         // Create new rider
-        const rider = await Rider.create({
+        const riderData = {
             user: req.user._id,
             fullName,
             cnicNumber,
             dateOfBirth,
             vehicleType,
             verificationStatus: 'new',
-        });
+        };
+
+        if (documents) {
+            riderData.documents = {
+                cnicFront: normalizePath(documents.cnicFront),
+                cnicBack: normalizePath(documents.cnicBack),
+                drivingLicense: normalizePath(documents.drivingLicense),
+                vehicleRegistration: normalizePath(documents.vehicleRegistration),
+                profileSelfie: normalizePath(documents.profileSelfie),
+            };
+        }
+
+        const rider = await Rider.create(riderData);
 
         // Notify admins about new registration
         triggerEvent('admin', 'rider_registered', rider);
@@ -123,7 +153,7 @@ const updateDocuments = async (req, res) => {
         // Update documents
         Object.keys(req.body).forEach(key => {
             if (rider.documents[key] !== undefined) {
-                rider.documents[key] = req.body[key];
+                rider.documents[key] = normalizePath(req.body[key]);
             }
         });
 

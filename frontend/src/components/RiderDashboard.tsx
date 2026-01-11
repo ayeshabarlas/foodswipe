@@ -12,11 +12,11 @@ import axios from 'axios';
 import toast from 'react-hot-toast';
 import { API_BASE_URL } from '../utils/config';
 import { initSocket, getSocket, subscribeToChannel, unsubscribeFromChannel } from '../utils/socket';
-import RiderOrders from './RiderOrders';
-import RiderEarnings from './RiderEarnings';
-import RiderProfile from './RiderProfile';
 import dynamic from 'next/dynamic';
 
+const RiderOrders = dynamic(() => import('./RiderOrders'), { ssr: false });
+const RiderEarnings = dynamic(() => import('./RiderEarnings'), { ssr: false });
+const RiderProfile = dynamic(() => import('./RiderProfile'), { ssr: false });
 const OrderTracking = dynamic(() => import('./OrderTracking'), { ssr: false });
 
 const RiderDashboard = ({ riderId: initialRiderId }: { riderId?: string }) => {
@@ -39,22 +39,29 @@ const RiderDashboard = ({ riderId: initialRiderId }: { riderId?: string }) => {
             const userStr = localStorage.getItem('userInfo');
             if (!userStr) return;
             const userInfo = JSON.parse(userStr);
-            const token = userInfo.token;
+                const token = userInfo.token;
+                const userName = userInfo.name;
+                
+                const config = { headers: { Authorization: `Bearer ${token}` } };
             
-            const config = { headers: { Authorization: `Bearer ${token}` } };
-            
-            // Fetch profile and orders in parallel
-            const [profileRes, ordersRes] = await Promise.all([
-                axios.get(`${API_BASE_URL}/api/riders/my-profile`, config),
-                axios.get(`${API_BASE_URL}/api/riders/${userInfo._id}/orders`, config).catch(() => ({ data: [] }))
-            ]);
+            // Fetch profile first to get the correct rider ID
+            const profileRes = await axios.get(`${API_BASE_URL}/api/riders/my-profile`, config);
+            const rider = profileRes.data;
+            console.log('Rider profile loaded:', rider);
+            setRiderData(rider);
+            setIsOnline(rider.isOnline || false);
 
-            setRiderData(profileRes.data);
+            // Now fetch orders using the rider's actual ID
+            const ordersRes = await axios.get(`${API_BASE_URL}/api/riders/${rider._id}/orders`, config).catch((err) => {
+                console.error('Error fetching orders:', err);
+                return { data: [] };
+            });
+            console.log('Rider orders loaded:', ordersRes.data);
             setOrders(ordersRes.data || []);
-            setIsOnline(profileRes.data.isOnline || false);
             
-            // Find if there's an active order being delivered
+            // Find if there's an active order being delivered (must be assigned to this rider)
             const currentActive = (ordersRes.data || []).find((o: any) => 
+                (o.rider === rider._id || o.rider?._id === rider._id) &&
                 ['Accepted', 'Preparing', 'Ready', 'Picked Up', 'OnTheWay', 'Arrived', 'ArrivedAtCustomer'].includes(o.status)
             );
             if (currentActive) {
@@ -63,6 +70,8 @@ const RiderDashboard = ({ riderId: initialRiderId }: { riderId?: string }) => {
                 if (['Accepted', 'Preparing', 'Ready', 'Arrived'].includes(currentActive.status)) setActiveStep(1);
                 else if (currentActive.status === 'Picked Up') setActiveStep(2);
                 else if (['OnTheWay', 'ArrivedAtCustomer'].includes(currentActive.status)) setActiveStep(3);
+            } else {
+                setActiveOrder(null);
             }
 
             setLoading(false);
@@ -305,10 +314,23 @@ const RiderDashboard = ({ riderId: initialRiderId }: { riderId?: string }) => {
                 <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full -mr-20 -mt-20 blur-3xl" />
                 <div className="absolute bottom-0 left-0 w-40 h-40 bg-black/10 rounded-full -ml-10 -mb-10 blur-2xl" />
                 
-                <div className="flex justify-between items-center mb-6">
-                    <div>
-                        <h1 className="text-xl font-medium tracking-tight">Rider Dashboard</h1>
-                        <p className="text-[10px] opacity-80 font-medium uppercase tracking-widest mt-0.5">Ready for your next delivery?</p>
+                <div className="flex justify-between items-center mb-6 relative z-10">
+                    <div className="flex items-center gap-3">
+                        <div className="w-12 h-12 bg-white/20 backdrop-blur-md rounded-2xl flex items-center justify-center border border-white/20 overflow-hidden">
+                            {riderData?.fullName ? (
+                                <span className="text-white font-bold text-xl">{riderData.fullName[0]}</span>
+                            ) : (
+                                <FaUser className="text-white text-xl" />
+                            )}
+                        </div>
+                        <div>
+                            <h1 className="text-xl font-medium text-white tracking-tight">
+                                {riderData?.fullName || JSON.parse(localStorage.getItem('userInfo') || '{}').name || 'Rider Dashboard'}
+                            </h1>
+                            <p className="text-[10px] text-white/80 font-medium uppercase tracking-widest mt-0.5">
+                                {isOnline ? 'Online • Accepting Orders' : 'Offline • Go online to start'}
+                            </p>
+                        </div>
                     </div>
                     <div className="relative">
                         <div className="w-10 h-10 bg-white/20 backdrop-blur-md rounded-2xl flex items-center justify-center border border-white/20">
@@ -422,24 +444,27 @@ const RiderDashboard = ({ riderId: initialRiderId }: { riderId?: string }) => {
                             onClick={() => {
                                 console.log('Updating status from:', activeOrder.status);
                                 if (activeOrder.status === 'Ready' || activeOrder.status === 'Confirmed' || activeOrder.status === 'Accepted' || activeOrder.status === 'Preparing') {
-                                    handleUpdateStatus(activeOrder._id, 'Arrived', activeOrder.distance);
+                                    handleUpdateStatus(activeOrder._id, 'Arrived', activeOrder.distance || activeOrder.distanceKm);
                                 } else if (activeOrder.status === 'Arrived') {
-                                    handleUpdateStatus(activeOrder._id, 'Picked Up', activeOrder.distance);
+                                    handleUpdateStatus(activeOrder._id, 'Picked Up', activeOrder.distance || activeOrder.distanceKm);
                                 } else if (activeOrder.status === 'Picked Up') {
-                                    handleUpdateStatus(activeOrder._id, 'OnTheWay', activeOrder.distance);
+                                    handleUpdateStatus(activeOrder._id, 'OnTheWay', activeOrder.distance || activeOrder.distanceKm);
                                 } else if (activeOrder.status === 'OnTheWay') {
-                                    handleUpdateStatus(activeOrder._id, 'ArrivedAtCustomer', activeOrder.distance);
+                                    handleUpdateStatus(activeOrder._id, 'ArrivedAtCustomer', activeOrder.distance || activeOrder.distanceKm);
                                 } else if (activeOrder.status === 'ArrivedAtCustomer') {
-                                    handleUpdateStatus(activeOrder._id, 'Delivered', activeOrder.distance);
+                                    handleUpdateStatus(activeOrder._id, 'Delivered', activeOrder.distance || activeOrder.distanceKm);
                                 }
                             }}
-                            className="w-full bg-gradient-to-r from-orange-500 to-red-500 text-white py-4 rounded-2xl text-[10px] font-medium uppercase tracking-widest shadow-lg shadow-orange-100 hover:scale-[1.02] active:scale-[0.98] transition-all"
+                            className="w-full py-5 bg-gradient-to-r from-orange-500 to-red-500 text-white font-bold rounded-3xl shadow-lg shadow-orange-200 hover:from-orange-600 hover:to-red-600 transition-all active:scale-95 flex items-center justify-center gap-3"
                         >
-                            { (activeOrder.status === 'Ready' || activeOrder.status === 'Confirmed' || activeOrder.status === 'Accepted' || activeOrder.status === 'Preparing') ? 'Arrived at Restaurant' : 
-                              activeOrder.status === 'Arrived' ? 'Pick Up Order' :
-                              activeOrder.status === 'Picked Up' ? 'Start Delivery' :
-                              activeOrder.status === 'OnTheWay' ? 'Arrived at Customer' :
-                              activeOrder.status === 'ArrivedAtCustomer' ? 'Order Completed' : 'Update Status'}
+                            <span className="text-[11px] uppercase tracking-widest">
+                                {activeOrder.status === 'Ready' || activeOrder.status === 'Confirmed' || activeOrder.status === 'Accepted' || activeOrder.status === 'Preparing' ? 'Arrived at Restaurant' :
+                                 activeOrder.status === 'Arrived' ? 'Pick Up Order' :
+                                 activeOrder.status === 'Picked Up' ? 'Start Delivery' :
+                                 activeOrder.status === 'OnTheWay' ? 'Arrived at Customer' :
+                                 'Complete Delivery'}
+                            </span>
+                            <FaArrowRight />
                         </button>
                     </div>
                 </div>

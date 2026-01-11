@@ -65,8 +65,9 @@ export default function RiderOrders({ riderId }: RiderOrdersProps) {
             });
             if (res.data) {
                 setOrders(res.data);
-                // Check for active delivery (any status that isn't Delivered or Cancelled)
+                // Check for active delivery (any status that isn't Delivered or Cancelled, and assigned to ME)
                 const active = res.data.find((o: any) => 
+                    (o.rider === riderId || o.rider?._id === riderId) &&
                     ['Confirmed', 'OnTheWay', 'Arrived', 'Picked Up', 'ArrivedAtCustomer'].includes(o.status)
                 );
                 setActiveDelivery(active);
@@ -87,55 +88,32 @@ export default function RiderOrders({ riderId }: RiderOrdersProps) {
     useEffect(() => {
         fetchOrders();
 
-        const userInfo = JSON.parse(localStorage.getItem("userInfo") || "{}");
-        initSocket(userInfo._id, 'rider', undefined, riderId);
-
         // Subscribe to channels and bind events
-        const ridersChannel = subscribeToChannel('riders');
-        const personalChannel = subscribeToChannel(`rider-${riderId}`);
-
-        if (ridersChannel) {
-            ridersChannel.bind('newOrderAvailable', (orderData: any) => {
+        // We use the socket initialized in RiderDashboard
+        const socket = getSocket();
+        
+        if (socket) {
+            const handleNewOrder = (orderData: any) => {
                 console.log('New order available for riders:', orderData);
-
-                // Play notification sound
-                try {
-                    const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
-                    const oscillator = audioContext.createOscillator();
-                    const gainNode = audioContext.createGain();
-
-                    oscillator.connect(gainNode);
-                    gainNode.connect(audioContext.destination);
-
-                    oscillator.frequency.value = 800;
-                    oscillator.type = 'sine';
-
-                    gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
-                    gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.5);
-
-                    oscillator.start(audioContext.currentTime);
-                    oscillator.stop(audioContext.currentTime + 0.5);
-                } catch (err) {
-                    console.log('Audio notification failed:', err);
-                }
-
                 toast.success('🆕 New order available!', {
                     duration: 5000,
                     position: 'top-center',
                 });
                 fetchOrders();
-            });
-        }
+            };
 
-        if (personalChannel) {
-            personalChannel.bind('orderStatusUpdate', () => {
+            const handleStatusUpdate = () => {
                 fetchOrders();
-            });
-        }
+            };
 
-        return () => {
-            disconnectSocket();
-        };
+            socket.on('newOrderAvailable', handleNewOrder);
+            socket.on('orderStatusUpdate', handleStatusUpdate);
+
+            return () => {
+                socket.off('newOrderAvailable', handleNewOrder);
+                socket.off('orderStatusUpdate', handleStatusUpdate);
+            };
+        }
     }, [riderId]);
 
     // Calculate potential earnings from available orders
@@ -267,7 +245,7 @@ export default function RiderOrders({ riderId }: RiderOrdersProps) {
     };
 
     return (
-        <div className="flex flex-col h-screen bg-gray-50 text-[13px] overflow-hidden relative">
+        <div className="flex flex-col min-h-screen bg-[#F8F9FA] text-[13px] pb-32">
             <Toaster />
             
             {/* 1. Header Section - Gradient with Notification Bell */}

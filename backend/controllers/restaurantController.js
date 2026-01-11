@@ -1,12 +1,24 @@
 const Restaurant = require('../models/Restaurant');
 const Video = require('../models/Video');
+const User = require('../models/User');
 
 /**
- * @desc    Create a new restaurant
- * @route   POST /api/restaurants/create
- * @access  Private (restaurant owners only)
+ * Normalizes image/video paths to store only the relative path
+ * (e.g., from "http://localhost:5000/uploads/file.jpg" to "/uploads/file.jpg")
  */
-const User = require('../models/User');
+const normalizePath = (path) => {
+    if (!path) return '';
+    // Handle array of paths
+    if (Array.isArray(path)) {
+        return path.map(p => normalizePath(p));
+    }
+    // If it's a full URL, extract the path part starting from /uploads/
+    if (typeof path === 'string' && path.includes('/uploads/')) {
+        const index = path.indexOf('/uploads/');
+        return path.substring(index);
+    }
+    return path;
+};
 
 /**
  * @desc    Create a new restaurant
@@ -18,7 +30,6 @@ const createRestaurant = async (req, res) => {
         const {
             name, address, contact, description, logo, location,
             cuisineTypes, priceRange, socialMedia, openingHours, coverImage,
-            // New fields for verification and specialized business types
             ownerCNIC, bankDetails, documents, businessType,
             kitchenPhotos, sampleDishPhotos, taxNumber,
             storefrontPhoto, menuPhotos
@@ -37,24 +48,23 @@ const createRestaurant = async (req, res) => {
             address,
             contact,
             description,
-            logo,
+            logo: normalizePath(logo),
             location,
             cuisineTypes,
             priceRange,
             socialMedia,
             openingHours,
-            coverImage,
-            // Add new fields
+            coverImage: normalizePath(coverImage),
             ownerCNIC,
             bankDetails,
-            documents,
+            documents: normalizePath(documents),
             businessType,
-            kitchenPhotos,
-            sampleDishPhotos,
+            kitchenPhotos: normalizePath(kitchenPhotos),
+            sampleDishPhotos: normalizePath(sampleDishPhotos),
             taxNumber,
-            storefrontPhoto,
-            menuPhotos,
-            verificationStatus: 'pending' // Set to pending immediately upon creation
+            storefrontPhoto: normalizePath(storefrontPhoto),
+            menuPhotos: normalizePath(menuPhotos),
+            verificationStatus: 'pending'
         });
 
         // Update user role to restaurant (preserve admin role)
@@ -174,7 +184,11 @@ const updateRestaurant = async (req, res) => {
 
         allowedUpdates.forEach(field => {
             if (req.body[field] !== undefined) {
-                restaurant[field] = req.body[field];
+                if (field === 'logo' || field === 'coverImage') {
+                    restaurant[field] = normalizePath(req.body[field]);
+                } else {
+                    restaurant[field] = req.body[field];
+                }
             }
         });
 
@@ -359,7 +373,7 @@ const updateStoreSettings = async (req, res) => {
         if (req.body.preferences) restaurant.preferences = req.body.preferences;
         if (logo) {
             console.log(`Updating logo for restaurant ${restaurant._id} to: ${logo}`);
-            restaurant.logo = logo;
+            restaurant.logo = normalizePath(logo);
         }
 
         const updatedRestaurant = await restaurant.save();

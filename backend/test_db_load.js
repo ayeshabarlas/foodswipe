@@ -1,6 +1,7 @@
+const path = require('path');
 const dotenv = require('dotenv');
-dotenv.config();
-const connectDB = require('./config/db');
+dotenv.config({ path: path.join(__dirname, '.env') });
+const { connectDB } = require('./config/db');
 
 console.log("Testing DB connection...");
 try {
