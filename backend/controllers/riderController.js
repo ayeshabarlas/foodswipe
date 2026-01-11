@@ -59,6 +59,12 @@ const registerRider = async (req, res) => {
 
         const rider = await Rider.create(riderData);
 
+        // Update user role to rider (if not already rider/admin)
+        const User = require('../models/User');
+        if (req.user.role !== 'rider' && req.user.role !== 'admin') {
+            await User.findByIdAndUpdate(req.user._id, { role: 'rider' });
+        }
+
         // Notify admins about new registration
         triggerEvent('admin', 'rider_registered', rider);
 
@@ -357,11 +363,11 @@ const getEarnings = async (req, res) => {
         const weekEarnings = rider.earnings?.thisWeek || 0;
 
         res.json({
-            total: weekEarnings,
+            total: totalEarnings,
             basePay: totalEarnings, 
             bonuses: 0,
             tips: totalTips,
-            deliveries: rider.totalOrders || 0,
+            deliveries: rider.stats?.completedDeliveries || 0,
             pendingPayout: rider.walletBalance || 0,
             nextPayoutDate: getNextPayoutDate(),
             today: todayEarnings,

@@ -39,7 +39,7 @@ const restaurantWalletSchema = mongoose.Schema(
         },
         commissionRate: {
             type: Number,
-            default: 10, // 10% default commission
+            default: 15, // 15% default commission (matched with Restaurant model)
             min: 0,
             max: 100,
         },

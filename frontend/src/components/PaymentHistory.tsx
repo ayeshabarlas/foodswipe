@@ -20,25 +20,34 @@ interface Payout {
     proofUrl?: string;
 }
 
-export default function PaymentHistory() {
+interface Restaurant {
+    _id: string;
+    name: string;
+    commissionRate: number;
+}
+
+export default function PaymentHistory({ restaurant: initialRestaurant }: { restaurant?: any }) {
     const [currentPayout, setCurrentPayout] = useState<Payout | null>(null);
     const [history, setHistory] = useState<Payout[]>([]);
     const [loading, setLoading] = useState(true);
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [socket, setSocket] = useState<any>(null);
+    const [restaurant, setRestaurant] = useState<Restaurant | null>(initialRestaurant || null);
 
     const fetchPaymentData = async () => {
         try {
             const token = JSON.parse(localStorage.getItem('userInfo') || '{}').token;
             const headers = { Authorization: `Bearer ${token}` };
 
-            const [currentRes, historyRes] = await Promise.all([
+            const [currentRes, historyRes, restaurantRes] = await Promise.all([
                 axios.get(`${API_BASE_URL}/api/payouts/current`, { headers }),
-                axios.get(`${API_BASE_URL}/api/payouts/history`, { headers })
+                axios.get(`${API_BASE_URL}/api/payouts/history`, { headers }),
+                !initialRestaurant ? axios.get(`${API_BASE_URL}/api/restaurants/my-restaurant`, { headers }) : Promise.resolve({ data: initialRestaurant })
             ]);
 
             setCurrentPayout(currentRes.data);
             setHistory(historyRes.data);
+            if (restaurantRes.data) setRestaurant(restaurantRes.data);
         } catch (error) {
             console.error('Error fetching payment data:', error);
         } finally {
@@ -53,17 +62,8 @@ export default function PaymentHistory() {
         const newSocket = io(SOCKET_URL);
         setSocket(newSocket);
 
-        const userInfo = JSON.parse(localStorage.getItem('userInfo') || '{}');
-        if (userInfo.restaurantId || userInfo._id) {
-            // Assuming we can get restaurant ID from userInfo or fetch it. 
-            // For now, let's fetch my-restaurant to get ID if not in local storage
-            axios.get(`${API_BASE_URL}/api/restaurants/my-restaurant`, {
-                headers: { Authorization: `Bearer ${userInfo.token}` }
-            }).then(res => {
-                if (res.data) {
-                    newSocket.emit('join_restaurant', res.data._id);
-                }
-            });
+        if (restaurant?._id) {
+            newSocket.emit('join_restaurant', restaurant._id);
         }
 
         newSocket.on('payment_status_updated', (data: any) => {
@@ -132,7 +132,7 @@ export default function PaymentHistory() {
                                 <p className="text-xl font-bold text-gray-900">Rs. {currentPayout?.totalSales.toFixed(2) || '0.00'}</p>
                             </div>
                             <div>
-                                <p className="text-xs text-gray-500 uppercase font-semibold">Commission (10%)</p>
+                                <p className="text-xs text-gray-500 uppercase font-semibold">Commission ({restaurant?.commissionRate || 15}%)</p>
                                 <p className="text-xl font-bold text-red-500">-Rs. {currentPayout?.totalCommission.toFixed(2) || '0.00'}</p>
                             </div>
                             <div>

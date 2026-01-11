@@ -1,6 +1,7 @@
 const Restaurant = require('../models/Restaurant');
 const Video = require('../models/Video');
 const User = require('../models/User');
+const Order = require('../models/Order');
 
 /**
  * Normalizes image/video paths to store only the relative path
@@ -275,6 +276,16 @@ const getRestaurantAnalytics = async (req, res) => {
             .limit(10)
             .select('title views likes shares orderClicks');
 
+        // Financial Analytics
+        const completedOrders = await Order.find({ 
+            restaurant: restaurant._id, 
+            status: { $in: ['Delivered', 'Completed'] } 
+        });
+
+        const grossSales = completedOrders.reduce((sum, order) => sum + (order.totalPrice || 0), 0);
+        const adminCommission = completedOrders.reduce((sum, order) => sum + (order.commissionAmount || 0), 0);
+        const netEarnings = completedOrders.reduce((sum, order) => sum + (order.restaurantEarning || 0), 0);
+
         // Calculate total analytics
         const totalVideoViews = videos.reduce((sum, video) => sum + video.views, 0);
         const totalVideoLikes = videos.reduce((sum, video) => sum + video.likes.length, 0);
@@ -284,6 +295,7 @@ const getRestaurantAnalytics = async (req, res) => {
         restaurant.analytics.totalViews = totalVideoViews;
         restaurant.analytics.totalLikes = totalVideoLikes;
         restaurant.analytics.totalShares = totalVideoShares;
+        restaurant.analytics.totalOrders = completedOrders.length;
         await restaurant.save();
 
         res.json({
@@ -294,8 +306,14 @@ const getRestaurantAnalytics = async (req, res) => {
                 profileVisits: restaurant.analytics.profileVisits,
                 orderClicks: restaurant.analytics.orderClicks,
                 addToCartClicks: restaurant.analytics.addToCartClicks,
-                totalOrders: restaurant.analytics.totalOrders,
+                totalOrders: completedOrders.length,
                 totalReviews: restaurant.reviewCount || 0,
+            },
+            financials: {
+                grossSales,
+                adminCommission,
+                netEarnings,
+                currency: 'Rs'
             },
             viewsHistory: restaurant.analytics.viewsHistory.slice(-30), // Last 30 days
             topVideos: videos,

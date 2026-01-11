@@ -67,12 +67,10 @@ const orderSchema = mongoose.Schema(
             ref: 'Voucher',
             default: null,
         },
-        // Commission & Payment Split (10% commission system)
-        commissionRate: {
+        // Finance Split Logic (Foodpanda style)
+        commissionPercent: {
             type: Number,
-            default: 10, // 10% commission
-            min: 0,
-            max: 100,
+            default: 15, // 15% for restaurants, 10% for home-chefs
         },
         commissionAmount: {
             type: Number,
@@ -86,9 +84,17 @@ const orderSchema = mongoose.Schema(
             type: Number,
             default: 0,
         },
+        adminEarning: {
+            type: Number,
+            default: 0, // This is the commissionAmount
+        },
         platformRevenue: {
             type: Number,
             default: 0,
+        },
+        orderAmount: {
+            type: Number,
+            default: 0, // Base order amount (subtotal)
         },
         gatewayFee: {
             type: Number,

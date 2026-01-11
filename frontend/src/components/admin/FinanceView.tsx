@@ -51,11 +51,12 @@ export default function FinanceView() {
             const platformCommission = data.totalCommission || 0;
             const riderEarnings = data.totalRiderEarnings || 0;
             const restaurantEarnings = data.totalRestaurantEarnings || 0;
+            const pendingPayouts = data.totalPendingPayouts || 0;
 
             setStats({
                 totalRevenue,
                 platformCommission,
-                pendingPayouts: Math.round(restaurantEarnings * 0.1), // Simplified pending
+                pendingPayouts,
                 gatewayFees: Math.round(totalRevenue * 0.02),
                 restaurantEarnings,
                 riderEarnings,
@@ -68,7 +69,7 @@ export default function FinanceView() {
                 const formattedChartData = data.revenueStats.map((item: any) => ({
                     name: new Date(item.date).toLocaleDateString('en-US', { weekday: 'short' }),
                     revenue: item.revenue,
-                    commission: Math.round(item.revenue * 0.1)
+                    commission: item.commission || 0
                 }));
                 setChartData(formattedChartData as any);
             }
@@ -93,7 +94,7 @@ export default function FinanceView() {
             <div className="flex justify-between items-center mb-6">
                 <div>
                     <h2 className="text-lg font-bold text-gray-800">Finance Overview</h2>
-                    <p className="text-[10px] text-gray-500 uppercase tracking-wider font-bold">Complete financial management with 10% commission tracking</p>
+                <p className="text-[10px] text-gray-500 uppercase tracking-wider font-bold">Complete financial management with auto-split commission tracking</p>
                 </div>
                 <div className="flex gap-2">
                     <button className="flex items-center gap-2 px-3 py-1.5 border border-gray-200 rounded-lg bg-white text-gray-600 hover:bg-gray-50 text-xs">
@@ -129,11 +130,10 @@ export default function FinanceView() {
                             <div className="bg-white/20 p-1.5 rounded-lg">
                                 <span className="text-base font-bold">↗</span>
                             </div>
-                            <span className="text-[10px] font-bold bg-white/20 px-1.5 py-0.5 rounded uppercase">10% Rate</span>
                         </div>
                         <p className="text-green-100 text-[10px] font-bold uppercase tracking-wider mb-0.5">Platform Commission</p>
                         <h3 className="text-xl font-bold">Rs. {stats.platformCommission.toLocaleString()}</h3>
-                        <p className="text-green-200 text-[9px] font-medium uppercase tracking-tighter">This month (10%)</p>
+                        <p className="text-green-200 text-[9px] font-medium uppercase tracking-tighter">This month</p>
                     </div>
                 </div>
 
@@ -169,7 +169,7 @@ export default function FinanceView() {
             {/* Sub Stats Row */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
                 <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-100">
-                    <p className="text-gray-500 text-[10px] font-bold uppercase tracking-wider mb-1">Restaurant Earnings (90%)</p>
+                    <p className="text-gray-500 text-[10px] font-bold uppercase tracking-wider mb-1">Restaurant Earnings</p>
                     <h3 className="text-xl font-bold text-gray-800">Rs. {stats.restaurantEarnings.toLocaleString()}</h3>
                 </div>
                 <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-100">

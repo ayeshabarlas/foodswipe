@@ -100,6 +100,10 @@ const restaurantSchema = mongoose.Schema(
             type: String,
             default: '',
         },
+        commissionRate: {
+            type: Number,
+            default: 15, // 15% for restaurants, 10% for home-chefs (handled in logic)
+        },
         storefrontPhoto: {
             type: String,
             default: '',

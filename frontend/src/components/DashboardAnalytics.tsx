@@ -17,6 +17,12 @@ interface AnalyticsData {
         totalOrders: number;
         totalReviews: number;
     };
+    financials?: {
+        grossSales: number;
+        adminCommission: number;
+        netEarnings: number;
+        currency: string;
+    };
     viewsHistory: { date: string; views: number }[];
     topVideos: {
         _id: string;
@@ -96,6 +102,30 @@ export default function DashboardAnalytics({ restaurantId }: { restaurantId: str
                 <h2 className="text-2xl font-bold text-gray-900">Analytics Overview</h2>
                 <p className="text-gray-500 text-sm">Real-time performance metrics</p>
             </div>
+
+            {/* Financial Stats Grid */}
+            {data.financials && (
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <StatCard
+                        title="Gross Sales"
+                        value={`Rs. ${data.financials.grossSales.toLocaleString()}`}
+                        icon={FaShoppingBag}
+                        color="bg-blue-500"
+                    />
+                    <StatCard
+                        title="Admin Commission"
+                        value={`- Rs. ${data.financials.adminCommission.toLocaleString()}`}
+                        icon={FaArrowDown}
+                        color="bg-red-500"
+                    />
+                    <StatCard
+                        title="Net Earnings"
+                        value={`Rs. ${data.financials.netEarnings.toLocaleString()}`}
+                        icon={FaChartLine}
+                        color="bg-green-500"
+                    />
+                </div>
+            )}
 
             {/* Stats Grid */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">

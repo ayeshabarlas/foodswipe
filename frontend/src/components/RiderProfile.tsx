@@ -20,24 +20,45 @@ export default function RiderProfile({ riderId }: RiderProfileProps) {
 
     const fetchRiderData = async () => {
         try {
+            console.log('Fetching rider profile data...');
             const userStr = localStorage.getItem("userInfo");
             if (!userStr) {
+                console.error('No userInfo in localStorage');
                 setError('User not logged in');
                 return;
             }
             const token = JSON.parse(userStr).token;
             if (!token) {
+                console.error('No token in userInfo');
                 setError('Session expired');
                 return;
             }
+            
+            // Try fetching by session first
             const res = await axios.get(`${API_BASE_URL}/api/riders/my-profile`, {
                 headers: { Authorization: `Bearer ${token}` }
             });
-            console.log('Profile data fetched:', res.data);
+            
+            console.log('Profile data fetched successfully:', res.data);
             setRiderData(res.data);
             setError(null);
         } catch (error: any) {
             console.error('Error fetching rider data:', error);
+            // If my-profile fails, try fetching by riderId prop if available
+            if (riderId) {
+                try {
+                    console.log('Attempting to fetch by riderId prop:', riderId);
+                    const token = JSON.parse(localStorage.getItem("userInfo") || "{}").token;
+                    const res = await axios.get(`${API_BASE_URL}/api/riders/${riderId}`, {
+                        headers: { Authorization: `Bearer ${token}` }
+                    });
+                    setRiderData(res.data);
+                    setError(null);
+                    return;
+                } catch (innerError) {
+                    console.error('Fallback fetch by ID also failed:', innerError);
+                }
+            }
             setError(error.response?.data?.message || 'Failed to load profile');
         }
     };

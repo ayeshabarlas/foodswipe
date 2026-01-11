@@ -358,15 +358,15 @@ const RiderDashboard = ({ riderId: initialRiderId }: { riderId?: string }) => {
             <div className="grid grid-cols-2 gap-4 -mt-20 relative z-20 px-2">
                 <DashboardStat 
                     icon={<FaWallet size={18} />} 
-                    label="Today's Earnings" 
-                    value={`Rs. ${riderData?.earnings?.today || 180}`} 
+                    label="Wallet Balance" 
+                    value={`Rs. ${riderData?.walletBalance || 0}`} 
                     color="text-green-500" 
                     bgColor="bg-green-50" 
                 />
                 <DashboardStat 
                     icon={<FaBox size={18} />} 
-                    label="Deliveries" 
-                    value={riderData?.totalOrders || 0} 
+                    label="Today's Earnings" 
+                    value={`Rs. ${riderData?.earnings?.today || 0}`} 
                     color="text-blue-500" 
                     bgColor="bg-blue-50" 
                 />
@@ -433,7 +433,7 @@ const RiderDashboard = ({ riderId: initialRiderId }: { riderId?: string }) => {
                                     <p className="text-gray-400 text-[10px] line-clamp-1">{activeStep === 1 ? activeOrder.restaurant?.address : activeOrder.shippingAddress?.address}</p>
                                 </div>
                                 <div className="text-right">
-                                    <p className="text-orange-500 font-medium">Rs. 180</p>
+                                    <p className="text-orange-500 font-medium">Rs. {activeOrder.riderEarning || 120}</p>
                                     <p className="text-gray-400 text-[10px] uppercase">Earning</p>
                                 </div>
                             </div>
@@ -689,7 +689,7 @@ function ActionItem({ icon, label, sublabel, onClick }: any) {
                                 <div className="grid grid-cols-2 gap-4 mt-6">
                                     <div className="bg-gray-50 p-3 rounded-2xl text-center">
                                         <p className="text-[10px] text-gray-400 uppercase">Earnings</p>
-                                        <p className="font-bold text-gray-900">Rs. 180</p>
+                                        <p className="font-bold text-gray-900">Rs. {newOrderPopup.riderEarning || 180}</p>
                                     </div>
                                     <div className="bg-gray-50 p-3 rounded-2xl text-center">
                                         <p className="text-[10px] text-gray-400 uppercase">Time Left</p>

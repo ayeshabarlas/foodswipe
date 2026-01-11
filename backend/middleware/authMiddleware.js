@@ -79,10 +79,25 @@ const requireRestaurant = async (req, res, next) => {
 };
 
 // Rider only middleware
+const Rider = require('../models/Rider');
+
 const requireRider = async (req, res, next) => {
-    if (req.user && req.user.role === 'rider') {
+    if (req.user && (req.user.role === 'rider' || req.user.role === 'admin')) {
         next();
     } else {
+        // Auto-fix: Check if they actually have a rider profile
+        try {
+            const rider = await Rider.findOne({ user: req.user._id });
+            if (rider) {
+                console.log(`Auto-fixing role for user ${req.user._id} to rider`);
+                req.user.role = 'rider';
+                await User.findByIdAndUpdate(req.user._id, { role: 'rider' });
+                return next();
+            }
+        } catch (error) {
+            console.error('Auto-fix rider role error:', error);
+        }
+
         res.status(403).json({ message: 'Access denied. Riders only.' });
     }
 };

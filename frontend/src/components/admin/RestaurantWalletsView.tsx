@@ -139,7 +139,7 @@ export default function RestaurantWalletsView() {
                                     Total Earnings
                                 </th>
                                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                    Commission (10%)
+                                    Commission
                                 </th>
                                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                     Last Payout
@@ -175,7 +175,10 @@ export default function RestaurantWalletsView() {
                                             <span className="text-gray-900">{formatCurrency(wallet.totalEarnings)}</span>
                                         </td>
                                         <td className="px-6 py-4">
-                                            <span className="text-orange-600">{formatCurrency(wallet.totalCommissionCollected)}</span>
+                                            <div className="flex flex-col">
+                                                <span className="text-red-600 font-semibold">{formatCurrency(wallet.totalCommissionCollected)}</span>
+                                                <span className="text-[10px] text-gray-400">{wallet.commissionRate}% commission rate</span>
+                                            </div>
                                         </td>
                                         <td className="px-6 py-4">
                                             <span className="text-gray-600 text-sm">{formatDate(wallet.lastPayoutDate)}</span>

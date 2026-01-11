@@ -1,8 +1,10 @@
 const Restaurant = require('../models/Restaurant');
-const User = require('../models/User');
-const Order = require('../models/Order');
 const Rider = require('../models/Rider');
-const Dish = require('../models/Dish');
+const Order = require('../models/Order');
+const User = require('../models/User');
+const RestaurantWallet = require('../models/RestaurantWallet');
+const RiderWallet = require('../models/RiderWallet');
+const Video = require('../models/Video');
 const Settings = require('../models/Settings');
 
 // @desc    Get all pending restaurants
@@ -143,6 +145,15 @@ const getDashboardStats = async (req, res) => {
         ]);
         const todayRevenue = todayRevenueResult[0]?.total || 0;
 
+        // Calculate Pending Payouts
+        const resWalletStats = await RestaurantWallet.aggregate([
+            { $group: { _id: null, totalPending: { $sum: '$pendingPayout' } } }
+        ]);
+        const riderWalletStats = await RiderWallet.aggregate([
+            { $group: { _id: null, totalPending: { $sum: '$pendingPayout' } } }
+        ]);
+        const totalPendingPayouts = (resWalletStats[0]?.totalPending || 0) + (riderWalletStats[0]?.totalPending || 0);
+
         // Revenue Graph Data (Last 7 days)
         const sevenDaysAgo = new Date();
         sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 6);
@@ -158,7 +169,8 @@ const getDashboardStats = async (req, res) => {
             {
                 $group: {
                     _id: { $dateToString: { format: "%Y-%m-%d", date: "$createdAt" } },
-                    revenue: { $sum: "$totalAmount" }
+                    revenue: { $sum: "$totalPrice" },
+                    commission: { $sum: "$commissionAmount" }
                 }
             },
             { $sort: { _id: 1 } }
@@ -173,7 +185,8 @@ const getDashboardStats = async (req, res) => {
             const found = revenueStatsRaw.find(r => r._id === dateStr);
             revenueStats.push({
                 date: dateStr,
-                revenue: found ? found.revenue : 0
+                revenue: found ? found.revenue : 0,
+                commission: found ? found.commission : 0
             });
         }
 
@@ -276,6 +289,7 @@ const getDashboardStats = async (req, res) => {
             totalRevenue,
             todayRevenue,
             totalCommission,
+            totalPendingPayouts,
             totalRiderEarnings,
             totalRestaurantEarnings,
             revenueStats,
@@ -423,8 +437,10 @@ const getRestaurantSales = async (req, res) => {
             {
                 $group: {
                     _id: '$restaurant',
-                    totalSales: { $sum: '$totalAmount' },
-                    orderCount: { $sum: 1 }
+                    totalSales: { $sum: '$totalPrice' },
+                    orderCount: { $sum: 1 },
+                    commission: { $sum: { $ifNull: ['$commissionAmount', { $multiply: ['$totalPrice', 0.15] }] } },
+                    netPayable: { $sum: { $ifNull: ['$restaurantEarning', { $multiply: ['$totalPrice', 0.85] }] } }
                 }
             },
             {
@@ -441,8 +457,8 @@ const getRestaurantSales = async (req, res) => {
                     restaurantName: '$restaurantInfo.name',
                     totalSales: 1,
                     orderCount: 1,
-                    commission: { $multiply: ['$totalSales', 0.10] },
-                    netPayable: { $multiply: ['$totalSales', 0.90] }
+                    commission: 1,
+                    netPayable: 1
                 }
             }
         ]);

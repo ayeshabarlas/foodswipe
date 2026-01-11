@@ -20,6 +20,8 @@ interface Restaurant {
     rating: number;
     totalOrders: number;
     revenue: number;
+    commissionRate: number;
+    businessType: string;
     documents?: {
         logo?: string;
         cnicFront?: string;
@@ -312,7 +314,7 @@ export default function RestaurantsView() {
                                 <th className="px-6 py-3 text-left text-[10px] font-bold text-gray-500 uppercase tracking-wider">Rating</th>
                                 <th className="px-6 py-3 text-left text-[10px] font-bold text-gray-500 uppercase tracking-wider">Orders</th>
                                 <th className="px-6 py-3 text-left text-[10px] font-bold text-gray-500 uppercase tracking-wider">Revenue</th>
-                                <th className="px-6 py-3 text-left text-[10px] font-bold text-gray-500 uppercase tracking-wider">Comm (10%)</th>
+                                <th className="px-6 py-3 text-left text-[10px] font-bold text-gray-500 uppercase tracking-wider">Comm Rate</th>
                                 <th className="px-6 py-3 text-left text-[10px] font-bold text-gray-500 uppercase tracking-wider">Payout</th>
                                 <th className="px-6 py-3 text-right text-[10px] font-bold text-gray-500 uppercase tracking-wider">Actions</th>
                             </tr>
@@ -368,11 +370,19 @@ export default function RestaurantsView() {
                                     </td>
                                     <td className="px-6 py-3 text-[11px] text-gray-600">{restaurant.totalOrders || 0}</td>
                                     <td className="px-6 py-3 text-[11px] text-gray-600">Rs. {(restaurant.revenue || 0).toLocaleString()}</td>
-                                    <td className="px-6 py-3 text-[11px] font-semibold text-green-600">
-                                        Rs. {(Math.round((restaurant.revenue || 0) * 0.1)).toLocaleString()}
+                                    <td className="px-6 py-3">
+                                        <span className={`px-2 py-0.5 rounded-full text-[9px] font-bold ${restaurant.businessType === 'home-chef' ? 'bg-purple-100 text-purple-700' : 'bg-blue-100 text-blue-700'}`}>
+                                            {restaurant.businessType === 'home-chef' ? 'Home Chef' : 'Restaurant'}
+                                        </span>
                                     </td>
-                                    <td className="px-6 py-3 text-[11px] font-bold text-orange-600">
-                                        Rs. {(Math.round((restaurant.revenue || 0) * 0.9)).toLocaleString()}
+                                    <td className="px-6 py-3 text-[11px] font-semibold text-red-600">
+                                        <div className="flex flex-col">
+                                            <span>Rs. {(Math.round((restaurant.revenue || 0) * (restaurant.commissionRate / 100))).toLocaleString()}</span>
+                                            <span className="text-[8px] text-gray-400 font-normal">{restaurant.commissionRate}% rate</span>
+                                        </div>
+                                    </td>
+                                    <td className="px-6 py-3 text-[11px] font-bold text-green-600">
+                                        Rs. {(Math.round((restaurant.revenue || 0) * (1 - restaurant.commissionRate / 100))).toLocaleString()}
                                     </td>
                                     <td className="px-6 py-3 text-right">
                                         {restaurant.verificationStatus === 'pending' ? (

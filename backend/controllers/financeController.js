@@ -13,7 +13,7 @@ const User = require('../models/User');
  * @param {Number} rate - Commission rate (default 10%)
  * @returns {Number} Commission amount
  */
-const calculateCommission = (subtotal, rate = 10) => {
+const calculateCommission = (subtotal, rate = 15) => {
     return (subtotal * rate) / 100;
 };
 
@@ -26,7 +26,15 @@ const splitPayment = async (order) => {
     const subtotal = order.subtotal || 0;
     const deliveryFee = order.deliveryFee || 0;
     const discount = order.discount || 0;
-    const commissionRate = order.commissionRate || 10;
+    
+    // Get commission rate from order or fetch from restaurant
+    let commissionRate = order.commissionPercent || order.commissionRate;
+    
+    if (!commissionRate) {
+        const restaurant = await Restaurant.findById(order.restaurant);
+        commissionRate = restaurant ? (restaurant.commissionRate || (restaurant.businessType === 'home-chef' ? 10 : 15)) : 15;
+    }
+
     const gatewayFee = order.paymentMethod !== 'COD' ? subtotal * 0.025 : 0; // 2.5% gateway fee for online payments
 
     const commissionAmount = calculateCommission(subtotal, commissionRate);

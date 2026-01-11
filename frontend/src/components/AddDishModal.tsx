@@ -164,15 +164,19 @@ export default function AddDishModal({ isOpen, onClose, onSubmit, editingDish }:
         // Normalize slashes
         let cleanPath = url.replace(/\\/g, '/');
         
-        // If it's a full URL, extract the part after '/uploads/'
+        // If it's a Firebase/GCS URL or already a full URL that isn't our API, keep it
         if (cleanPath.startsWith('http')) {
+            // Only strip if it's our own API's uploads folder
             const uploadsIndex = cleanPath.indexOf('/uploads/');
-            if (uploadsIndex !== -1) {
+            if (uploadsIndex !== -1 && (cleanPath.includes(API_BASE_URL) || !cleanPath.includes('storage.googleapis.com'))) {
                 cleanPath = cleanPath.substring(uploadsIndex + 9); // Skip '/uploads/'
+            } else {
+                // Keep full URL (e.g. Firebase)
+                return cleanPath;
             }
         }
         
-        // Remove any leading slashes or 'uploads/' prefix
+        // Remove any leading slashes or 'uploads/' prefix for local paths
         let oldPath;
         do {
             oldPath = cleanPath;

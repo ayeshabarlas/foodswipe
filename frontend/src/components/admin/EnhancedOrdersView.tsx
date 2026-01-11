@@ -15,6 +15,11 @@ interface Order {
     items: any[];
     totalAmount: number;
     status: string;
+    commissionPercent?: number;
+    commissionAmount?: number;
+    restaurantEarning?: number;
+    riderEarning?: number;
+    adminEarning?: number;
 }
 
 export default function EnhancedOrdersView() {
@@ -61,7 +66,7 @@ export default function EnhancedOrdersView() {
     const stats = {
         totalOrders: orders?.length || 0,
         totalRevenue: Array.isArray(orders) ? orders.reduce((acc, curr) => acc + (curr.totalAmount || 0), 0) : 0,
-        commission: Array.isArray(orders) ? orders.reduce((acc, curr) => acc + Math.round((curr.totalAmount || 0) * 0.1), 0) : 0,
+        commission: Array.isArray(orders) ? orders.reduce((acc, curr) => acc + (curr.adminEarning || curr.commissionAmount || Math.round((curr.totalAmount || 0) * 0.1)), 0) : 0,
         avgOrderValue: (Array.isArray(orders) && orders.length > 0) ? Math.round(orders.reduce((acc, curr) => acc + (curr.totalAmount || 0), 0) / orders.length) : 0
     };
 
@@ -151,9 +156,11 @@ export default function EnhancedOrdersView() {
                         <thead>
                             <tr className="bg-gray-50/50 border-b border-gray-100">
                                 <th className="px-4 py-3 text-[10px] font-bold text-gray-400 uppercase tracking-wider">Order Info</th>
-                                <th className="px-4 py-3 text-[10px] font-bold text-gray-400 uppercase tracking-wider">Customer</th>
-                                <th className="px-4 py-3 text-[10px] font-bold text-gray-400 uppercase tracking-wider">Restaurant</th>
+                                <th className="px-4 py-3 text-[10px] font-bold text-gray-400 uppercase tracking-wider">Customer / Restaurant</th>
                                 <th className="px-4 py-3 text-[10px] font-bold text-gray-400 uppercase tracking-wider">Amount</th>
+                                <th className="px-4 py-3 text-[10px] font-bold text-gray-400 uppercase tracking-wider text-center">Commission</th>
+                                <th className="px-4 py-3 text-[10px] font-bold text-gray-400 uppercase tracking-wider text-center">Payouts</th>
+                                <th className="px-4 py-3 text-[10px] font-bold text-gray-400 uppercase tracking-wider text-center">Profit</th>
                                 <th className="px-4 py-3 text-[10px] font-bold text-gray-400 uppercase tracking-wider">Status</th>
                                 <th className="px-4 py-3 text-[10px] font-bold text-gray-400 uppercase tracking-wider text-right">Actions</th>
                             </tr>
@@ -184,21 +191,41 @@ export default function EnhancedOrdersView() {
                                             </div>
                                         </td>
                                         <td className="px-4 py-3">
-                                            <p className="text-xs font-bold text-gray-800">{order.user?.name || 'Guest'}</p>
-                                            <p className="text-[10px] text-gray-400">Customer</p>
+                                            <div className="space-y-0.5">
+                                                <p className="text-xs font-bold text-gray-800">{order.user?.name || 'Guest'}</p>
+                                                <p className="text-[10px] text-orange-500 font-medium">@{order.restaurant?.name || 'Restaurant'}</p>
+                                            </div>
                                         </td>
                                         <td className="px-4 py-3">
-                                            <p className="text-xs font-bold text-gray-800">{order.restaurant?.name || 'Restaurant'}</p>
-                                            <p className="text-[10px] text-gray-400">Partner</p>
+                                            <p className="text-xs font-bold text-gray-800">Rs. {(order.totalAmount || 0).toLocaleString()}</p>
+                                            <p className="text-[9px] text-gray-400 font-medium">Gross Sales</p>
                                         </td>
-                                        <td className="px-4 py-3">
-                                            <p className="text-xs font-bold text-gray-800">Rs. {order.totalAmount?.toLocaleString()}</p>
-                                            <p className="text-[10px] text-green-500 font-bold uppercase tracking-wider">Paid</p>
+                                        <td className="px-4 py-3 text-center">
+                                            <div className="inline-block">
+                                                <p className="text-xs font-bold text-red-500">Rs. {(order.commissionAmount || 0).toLocaleString()}</p>
+                                                <p className="text-[9px] text-gray-400 font-medium">{order.commissionPercent || 0}% Fee</p>
+                                            </div>
+                                        </td>
+                                        <td className="px-4 py-3 text-center">
+                                            <div className="space-y-1">
+                                                <div className="flex items-center justify-center gap-1.5">
+                                                    <span className="text-[9px] text-gray-400 uppercase font-bold tracking-tighter">Rest:</span>
+                                                    <span className="text-[10px] font-bold text-green-600">Rs. {(order.restaurantEarning || 0).toLocaleString()}</span>
+                                                </div>
+                                                <div className="flex items-center justify-center gap-1.5">
+                                                    <span className="text-[9px] text-gray-400 uppercase font-bold tracking-tighter">Rider:</span>
+                                                    <span className="text-[10px] font-bold text-blue-600">Rs. {(order.riderEarning || 0).toLocaleString()}</span>
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td className="px-4 py-3 text-center">
+                                            <p className="text-xs font-bold text-gray-900">Rs. {(order.adminEarning || 0).toLocaleString()}</p>
+                                            <p className="text-[9px] text-gray-400 font-medium uppercase tracking-tighter">Net Profit</p>
                                         </td>
                                         <td className="px-4 py-3">
                                             <span className={`px-2 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-widest
-                                                ${order.status === 'delivered' ? 'bg-green-50 text-green-600' :
-                                                    order.status === 'cancelled' ? 'bg-red-50 text-red-600' :
+                                                ${order.status.toLowerCase() === 'delivered' ? 'bg-green-50 text-green-600' :
+                                                    order.status.toLowerCase() === 'cancelled' ? 'bg-red-50 text-red-600' :
                                                         'bg-blue-50 text-blue-600'}`}>
                                                 {order.status}
                                             </span>

@@ -4,7 +4,7 @@ const riderWalletSchema = mongoose.Schema(
     {
         rider: {
             type: mongoose.Schema.Types.ObjectId,
-            ref: 'User',
+            ref: 'Rider',
             required: true,
             unique: true,
         },

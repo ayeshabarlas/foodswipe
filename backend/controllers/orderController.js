@@ -277,32 +277,38 @@ const processOrderCompletion = async (order, distanceKm = 5, req = null) => {
     try {
         if (!order.rider) return; // No rider assigned
 
-        // 1. Calculate split payments
-        const subtotal = order.subtotal || 0;
-        const deliveryFee = order.deliveryFee || 0;
-        const discount = order.discount || 0;
-        const commissionRate = order.commissionRate || 10;
-        const gatewayFee = order.paymentMethod !== 'COD' ? subtotal * 0.025 : 0; // 2.5% gateway fee for online payments
+        // Fetch Restaurant to check commission rate and business type
+        const restaurant = await Restaurant.findById(order.restaurant);
+        if (!restaurant) throw new Error('Restaurant not found for finance split');
 
-        const commissionAmount = (subtotal * commissionRate) / 100;
+        // Use restaurant's specific commissionRate, fallback to business type defaults
+        const commissionPercent = restaurant.commissionRate || (restaurant.businessType === 'home-chef' ? 10 : 15);
+        
+        // 2. Calculate split payments
+        const subtotal = order.subtotal || order.totalPrice || 0;
+        const commissionAmount = (subtotal * commissionPercent) / 100;
         const restaurantEarning = subtotal - commissionAmount;
-        const riderEarning = calculateRiderEarning(distanceKm).netEarning; // Use existing rider earning logic
-        const platformRevenue = commissionAmount - gatewayFee;
+        
+        // Rider Pay: Rs 60 Base + Rs 20/km
+        const riderPayCalc = calculateRiderEarning(distanceKm);
+        const riderEarning = riderPayCalc.netEarning;
 
-        // 2. Update order with payment details
-        order.distanceKm = distanceKm;
+        // 3. Update order with detailed finance breakdown
+        order.orderAmount = subtotal;
+        order.commissionPercent = commissionPercent;
         order.commissionAmount = commissionAmount;
         order.restaurantEarning = restaurantEarning;
         order.riderEarning = riderEarning;
-        order.platformRevenue = platformRevenue;
-        order.gatewayFee = gatewayFee;
-        order.isPaid = true; // Mark as paid upon delivery (COD or Online)
+        order.adminEarning = commissionAmount; // Admin's profit is the commission
+        order.platformRevenue = commissionAmount;
+        order.distanceKm = distanceKm;
+        
+        order.isPaid = true; 
         order.paidAt = new Date();
         order.completedAt = new Date();
         order.deliveredAt = new Date();
 
-        // 3. Update Rider Wallet & Stats
-        // Try to find rider by ID or by user ID to be safe
+        // 4. Update Rider Wallet & Stats
         let rider = await Rider.findById(order.rider).populate('user');
         if (!rider) {
             rider = await Rider.findOne({ user: order.rider }).populate('user');
@@ -310,33 +316,24 @@ const processOrderCompletion = async (order, distanceKm = 5, req = null) => {
 
         if (rider) {
             rider.walletBalance = (rider.walletBalance || 0) + riderEarning;
-            
-            // Update earnings stats
             rider.earnings.total += riderEarning;
             rider.earnings.today += riderEarning;
-            rider.earnings.thisWeek += riderEarning;
-            rider.earnings.thisMonth += riderEarning;
-            
-            // Increment total orders
             rider.stats.completedDeliveries = (rider.stats.completedDeliveries || 0) + 1;
-            rider.stats.totalDeliveries = (rider.stats.totalDeliveries || 0) + 1;
-
             await rider.save();
 
-            // Also update RiderWallet model if it exists
+            // Update RiderWallet model
             let riderWallet = await RiderWallet.findOne({ rider: rider._id });
-            if (riderWallet) {
-                riderWallet.deliveryEarnings += riderEarning;
-                riderWallet.totalEarnings += riderEarning;
-                riderWallet.availableWithdraw += riderEarning;
-                if (order.paymentMethod === 'COD') {
-                    riderWallet.cashCollected += order.totalPrice;
-                    riderWallet.cashToDeposit += order.totalPrice;
-                }
-                await riderWallet.save();
+            if (!riderWallet) {
+                riderWallet = await RiderWallet.create({ rider: rider._id });
             }
+            riderWallet.totalEarnings += riderEarning;
+            riderWallet.availableWithdraw += riderEarning;
+            if (order.paymentMethod === 'COD') {
+                riderWallet.cashCollected += order.totalPrice;
+            }
+            await riderWallet.save();
 
-            // Create Transaction for Rider
+            // Transaction for Rider
             await Transaction.create({
                 entityType: 'rider',
                 entityId: rider._id,
@@ -345,28 +342,23 @@ const processOrderCompletion = async (order, distanceKm = 5, req = null) => {
                 type: 'earning',
                 amount: riderEarning,
                 balanceAfter: rider.walletBalance,
-                description: `Earning for order #${order.orderNumber || order._id.toString().slice(-6)}`,
-                metadata: { distanceKm, deliveryFee }
+                description: `Earning for order #${order.orderNumber || order._id.toString().slice(-6)} (Base 60 + ${distanceKm}km x 20)`,
+                metadata: { distanceKm, basePay: 60, kmRate: 20 }
             });
 
-            // Create Notification for Rider
             const riderUserId = rider.user._id || rider.user;
             const notification = await createNotification(
                 riderUserId,
                 'Payment Received',
-                `Rs. ${riderEarning.toLocaleString()} deposited to your account`,
+                `Rs. ${riderEarning.toLocaleString()} added to wallet`,
                 'payment',
                 { orderId: order._id, amount: riderEarning }
             );
-
-            // Emit Real-time Notification for Rider
-            // Notify both as user and as rider to be safe
             triggerEvent(`user-${riderUserId}`, 'notification', notification);
             triggerEvent(`rider-${rider._id}`, 'notification', notification);
-            triggerEvent(`rider-${rider._id}`, 'orderStatusUpdate', order);
         }
 
-        // 4. Update Restaurant Wallet & Stats
+        // 5. Update Restaurant Wallet & Stats
         let restaurantWallet = await RestaurantWallet.findOne({ restaurant: order.restaurant });
         if (!restaurantWallet) {
             restaurantWallet = await RestaurantWallet.create({ restaurant: order.restaurant });
@@ -375,10 +367,9 @@ const processOrderCompletion = async (order, distanceKm = 5, req = null) => {
         restaurantWallet.availableBalance += restaurantEarning;
         restaurantWallet.totalEarnings += restaurantEarning;
         restaurantWallet.totalCommissionCollected += commissionAmount;
-        restaurantWallet.pendingPayout += restaurantEarning;
         await restaurantWallet.save();
 
-        // Create Transaction for Restaurant
+        // Transaction for Restaurant
         await Transaction.create({
             entityType: 'restaurant',
             entityId: order.restaurant,
@@ -387,28 +378,29 @@ const processOrderCompletion = async (order, distanceKm = 5, req = null) => {
             type: 'earning',
             amount: restaurantEarning,
             balanceAfter: restaurantWallet.availableBalance,
-            description: `Earning for order #${order.orderNumber || order._id.toString().slice(-6)}`,
-            metadata: { subtotal, commissionAmount }
+            description: `Order #${order.orderNumber}: Rs ${subtotal} - ${commissionPercent}% Commission`,
+            metadata: { subtotal, commissionAmount, commissionPercent }
         });
 
-        // 5. Create Transaction for Platform (Commission)
-        // Fix: Use 'platform' entityType and a valid placeholder ID if needed, 
-        // or just use the restaurant ID as the entityId since it's the source
+        // 6. Transaction for Platform (Admin Profit)
         await Transaction.create({
             entityType: 'platform',
-            entityId: order.restaurant, // Source of commission
+            entityId: order.restaurant,
             entityModel: 'Restaurant',
             order: order._id,
             type: 'commission',
             amount: commissionAmount,
             balanceAfter: 0,
-            description: `Commission from order #${order.orderNumber || order._id.toString().slice(-6)}`
+            description: `Commission from #${order.orderNumber} (${restaurant.name})`
         });
 
         await order.save();
 
+        // Notify Restaurant
+        triggerEvent(`restaurant-${order.restaurant}`, 'orderStatusUpdate', order);
+
     } catch (error) {
-        console.error('Process order completion error:', error);
+        console.error('CRITICAL: Process order completion error:', error);
         throw error;
     }
 };
