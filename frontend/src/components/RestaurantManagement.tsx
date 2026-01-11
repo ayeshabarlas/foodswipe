@@ -268,7 +268,7 @@ export default function RestaurantManagement() {
                             >
                                 <div className="relative h-48">
                                     <img
-                                        src={dish.imageUrl}
+                                        src={getImageUrl(dish.imageUrl)}
                                         alt={dish.name}
                                         className="w-full h-full object-cover"
                                     />

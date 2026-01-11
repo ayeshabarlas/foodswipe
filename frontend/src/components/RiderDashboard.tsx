@@ -55,15 +55,14 @@ const RiderDashboard = ({ riderId: initialRiderId }: { riderId?: string }) => {
             
             // Find if there's an active order being delivered
             const currentActive = (ordersRes.data || []).find((o: any) => 
-                ['Accepted', 'Preparing', 'Ready', 'Picked Up', 'OnTheWay'].includes(o.status)
+                ['Accepted', 'Preparing', 'Ready', 'Picked Up', 'OnTheWay', 'Arrived', 'ArrivedAtCustomer'].includes(o.status)
             );
             if (currentActive) {
                 setActiveOrder(currentActive);
                 // Determine step based on status
-                if (currentActive.status === 'Accepted' || currentActive.status === 'Preparing') setActiveStep(1);
-                else if (currentActive.status === 'Ready') setActiveStep(1);
+                if (['Accepted', 'Preparing', 'Ready', 'Arrived'].includes(currentActive.status)) setActiveStep(1);
                 else if (currentActive.status === 'Picked Up') setActiveStep(2);
-                else if (currentActive.status === 'OnTheWay') setActiveStep(3);
+                else if (['OnTheWay', 'ArrivedAtCustomer'].includes(currentActive.status)) setActiveStep(3);
             }
 
             setLoading(false);
@@ -102,31 +101,55 @@ const RiderDashboard = ({ riderId: initialRiderId }: { riderId?: string }) => {
 
         const pusher = initSocket(riderData.user._id, 'rider', undefined, riderData._id);
         
-        // Subscribe to relevant channels
-        const riderChannel = subscribeToChannel(`rider-${riderData._id}`);
-        const ridersChannel = subscribeToChannel('riders');
+        // initSocket already subscribes to 'rider-${riderData._id}' and 'riders'
+        // We just need to get the socket wrapper to bind events
+        const socket = getSocket();
 
-        if (riderChannel) {
-            riderChannel.bind('orderStatusUpdate', (updatedOrder: any) => {
-                console.log('Order status update received:', updatedOrder);
-                setOrders(prev => prev.map(o => o._id === updatedOrder._id ? updatedOrder : o));
-                if (activeOrder?._id === updatedOrder._id) {
-                    setActiveOrder(updatedOrder);
-                }
-            });
-        }
+        socket.on('orderStatusUpdate', (updatedOrder: any) => {
+            console.log('Order status update received:', updatedOrder);
+            setOrders(prev => prev.map(o => o._id === updatedOrder._id ? updatedOrder : o));
+            
+            // We'll update the active order in a separate check to avoid stale closures
+        });
 
-        if (ridersChannel) {
-            ridersChannel.bind('newOrderAvailable', (order: any) => {
-                console.log('New order available for rider:', order);
-                if (isOnline) {
-                    setNewOrderPopup(order);
-                    setTimer(60);
-                    playNotificationSound();
-                }
-            });
-        }
+        socket.on('newOrderAvailable', (order: any) => {
+            console.log('New order available for rider:', order);
+            // Check online status from a ref or state that doesn't trigger re-effect
+            setNewOrderPopup(order);
+            setTimer(60);
+            playNotificationSound();
+        });
 
+        return () => {
+            // Only unsubscribe if the component is actually being destroyed
+            // or if the rider ID changes
+            unsubscribeFromChannel(`rider-${riderData._id}`);
+            unsubscribeFromChannel('riders');
+        };
+    }, [riderData?.user?._id, riderData?._id]);
+
+    // Separate effect for active order updates from socket
+    useEffect(() => {
+        if (!activeOrder) return;
+        
+        const socket = getSocket();
+        const handleStatusUpdate = (updatedOrder: any) => {
+            if (activeOrder?._id === updatedOrder._id) {
+                setActiveOrder(updatedOrder);
+                if (['Accepted', 'Preparing', 'Ready', 'Arrived'].includes(updatedOrder.status)) setActiveStep(1);
+                else if (updatedOrder.status === 'Picked Up') setActiveStep(2);
+                else if (['OnTheWay', 'ArrivedAtCustomer'].includes(updatedOrder.status)) setActiveStep(3);
+            }
+        };
+
+        socket.on('orderStatusUpdate', handleStatusUpdate);
+        return () => {
+            socket.off('orderStatusUpdate', handleStatusUpdate);
+        };
+    }, [activeOrder?._id]);
+
+    // Geolocation effect
+    useEffect(() => {
         let watchId: number;
 
         if (isOnline && activeOrder) {
@@ -134,9 +157,7 @@ const RiderDashboard = ({ riderId: initialRiderId }: { riderId?: string }) => {
                 watchId = navigator.geolocation.watchPosition(
                     async (position) => {
                         const { latitude, longitude } = position.coords;
-                        console.log('Sending rider location via API:', latitude, longitude);
                         try {
-                            // Using API instead of socket.emit for reliability on serverless
                             await axios.post(`${API_BASE_URL}/api/orders/${activeOrder._id}/location`, {
                                 location: { lat: latitude, lng: longitude }
                             });
@@ -152,10 +173,8 @@ const RiderDashboard = ({ riderId: initialRiderId }: { riderId?: string }) => {
 
         return () => {
             if (watchId) navigator.geolocation.clearWatch(watchId);
-            unsubscribeFromChannel(`rider-${riderData._id}`);
-            unsubscribeFromChannel('riders');
         };
-    }, [isOnline, activeOrder, riderData]);
+    }, [isOnline, activeOrder?._id]);
 
     const handleUpdateStatus = async (orderId: string, status: string, distanceKm?: number) => {
         try {
@@ -181,10 +200,10 @@ const RiderDashboard = ({ riderId: initialRiderId }: { riderId?: string }) => {
             // Update local state
             setOrders(prev => prev.map(o => o._id === orderId ? data : o));
             
-            if (['Accepted', 'Preparing', 'Ready', 'Picked Up', 'OnTheWay'].includes(status)) {
+            if (['Accepted', 'Preparing', 'Ready', 'Picked Up', 'OnTheWay', 'Arrived', 'ArrivedAtCustomer'].includes(status)) {
                 setActiveOrder(data);
                 if (status === 'Picked Up') setActiveStep(2);
-                else if (status === 'OnTheWay') setActiveStep(3);
+                else if (['OnTheWay', 'ArrivedAtCustomer'].includes(status)) setActiveStep(3);
                 else setActiveStep(1);
             } else if (status === 'Delivered') {
                 setActiveOrder(null);
@@ -281,26 +300,28 @@ const RiderDashboard = ({ riderId: initialRiderId }: { riderId?: string }) => {
 
     const renderHome = () => (
         <div className="flex flex-col gap-6 animate-in fade-in slide-in-from-bottom-4 duration-500 font-light">
-            {/* SS-style Gradient Header */}
-            <div className="bg-gradient-to-br from-orange-500 to-rose-500 px-6 pt-12 pb-32 -mx-4 -mt-4 rounded-b-[40px] relative overflow-hidden">
+            {/* Header Section */}
+            <div className="bg-gradient-to-br from-orange-400 via-orange-500 to-red-500 pt-10 pb-24 px-6 rounded-b-[40px] shadow-2xl relative overflow-hidden">
                 <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full -mr-20 -mt-20 blur-3xl" />
-                <div className="absolute bottom-0 left-0 w-48 h-48 bg-black/10 rounded-full -ml-10 -mb-10 blur-2xl" />
+                <div className="absolute bottom-0 left-0 w-40 h-40 bg-black/10 rounded-full -ml-10 -mb-10 blur-2xl" />
                 
-                <div className="relative z-10 flex justify-between items-center mb-8">
+                <div className="flex justify-between items-center mb-6">
                     <div>
-                        <p className="text-white/80 text-[10px] font-light mb-1">Welcome back,</p>
-                        <h1 className="text-white text-2xl font-medium tracking-tight">{riderData?.fullName || riderData?.user?.name || 'Rider'}</h1>
+                        <h1 className="text-xl font-medium tracking-tight">Rider Dashboard</h1>
+                        <p className="text-[10px] opacity-80 font-medium uppercase tracking-widest mt-0.5">Ready for your next delivery?</p>
                     </div>
-                    <div className="w-12 h-12 bg-white rounded-full flex items-center justify-center text-orange-500 font-medium text-lg shadow-xl border-4 border-white/20">
-                        {(riderData?.fullName || riderData?.user?.name || 'R')[0]}
+                    <div className="relative">
+                        <div className="w-10 h-10 bg-white/20 backdrop-blur-md rounded-2xl flex items-center justify-center border border-white/20">
+                            <FaBell className="text-white text-lg" />
+                            <span className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 rounded-full border-2 border-orange-500 text-[8px] font-medium flex items-center justify-center">3</span>
+                        </div>
                     </div>
                 </div>
 
-                {/* SS-style Status Toggle */}
-                <div className="relative z-10 bg-white/10 backdrop-blur-md rounded-[32px] p-6 flex items-center justify-between border border-white/20">
+                <div className="relative z-10 bg-white/10 backdrop-blur-md rounded-[28px] p-5 flex items-center justify-between border border-white/20">
                     <div>
-                        <p className="text-white text-base font-light tracking-tight">You are {isOnline ? 'Online' : 'Offline'}</p>
-                        <p className="text-white/70 text-[10px] font-extralight">{isOnline ? 'Looking for new orders' : 'Go online to start earning'}</p>
+                        <p className="text-white text-sm font-light tracking-tight">You are {isOnline ? 'Online' : 'Offline'}</p>
+                        <p className="text-white/70 text-[9px] font-extralight">{isOnline ? 'Looking for new orders' : 'Go online to start earning'}</p>
                     </div>
                     <button 
                         onClick={handleToggleOnline}
@@ -316,7 +337,7 @@ const RiderDashboard = ({ riderId: initialRiderId }: { riderId?: string }) => {
                 <DashboardStat 
                     icon={<FaWallet size={18} />} 
                     label="Today's Earnings" 
-                    value={`PKR ${riderData?.earnings?.today || 180}`} 
+                    value={`Rs. ${riderData?.earnings?.today || 180}`} 
                     color="text-green-500" 
                     bgColor="bg-green-50" 
                 />
@@ -337,7 +358,7 @@ const RiderDashboard = ({ riderId: initialRiderId }: { riderId?: string }) => {
                 <DashboardStat 
                     icon={<FaClock size={18} />} 
                     label="This Week" 
-                    value={`PKR ${riderData?.earnings?.thisWeek || 0}`} 
+                    value={`Rs. ${riderData?.earnings?.thisWeek || 0}`} 
                     color="text-purple-500" 
                     bgColor="bg-purple-50" 
                 />
@@ -348,8 +369,8 @@ const RiderDashboard = ({ riderId: initialRiderId }: { riderId?: string }) => {
                 <div className="mt-4 px-2">
                     <div className="bg-white rounded-[40px] p-6 shadow-xl shadow-orange-500/5 border border-orange-500/10">
                         <div className="flex justify-between items-center mb-6">
-                            <h3 className="text-gray-900 font-bold text-lg">Active Delivery</h3>
-                            <div className="px-3 py-1 bg-gradient-to-r from-orange-500 to-red-500 text-white rounded-full text-[10px] font-bold uppercase tracking-widest">
+                            <h3 className="text-gray-900 font-medium text-base">Active Delivery</h3>
+                            <div className="px-3 py-1 bg-gradient-to-r from-orange-500 to-red-500 text-white rounded-full text-[9px] font-medium uppercase tracking-widest">
                                 Step {activeStep}/3
                             </div>
                         </div>
@@ -373,7 +394,7 @@ const RiderDashboard = ({ riderId: initialRiderId }: { riderId?: string }) => {
                                             <FaMapMarkerAlt size={16} />
                                         )}
                                     </div>
-                                    <p className={`absolute -bottom-6 left-1/2 -translate-x-1/2 whitespace-nowrap text-[8px] font-bold uppercase tracking-widest ${
+                                    <p className={`absolute -bottom-6 left-1/2 -translate-x-1/2 whitespace-nowrap text-[8px] font-medium uppercase tracking-widest ${
                                         activeStep >= step ? 'text-orange-500' : 'text-gray-300'
                                     }`}>
                                         {step === 1 ? 'Restaurant' : step === 2 ? 'Picked Up' : 'Customer'}
@@ -386,11 +407,11 @@ const RiderDashboard = ({ riderId: initialRiderId }: { riderId?: string }) => {
                         <div className="bg-gray-50 rounded-3xl p-4 mb-6">
                             <div className="flex justify-between items-center mb-4">
                                 <div>
-                                    <p className="text-gray-900 font-bold">{activeOrder.restaurant?.name}</p>
+                                    <p className="text-gray-900 font-medium">{activeOrder.restaurant?.name}</p>
                                     <p className="text-gray-400 text-[10px] line-clamp-1">{activeStep === 1 ? activeOrder.restaurant?.address : activeOrder.shippingAddress?.address}</p>
                                 </div>
                                 <div className="text-right">
-                                    <p className="text-orange-500 font-bold">PKR 180</p>
+                                    <p className="text-orange-500 font-medium">Rs. 180</p>
                                     <p className="text-gray-400 text-[10px] uppercase">Earning</p>
                                 </div>
                             </div>
@@ -399,15 +420,26 @@ const RiderDashboard = ({ riderId: initialRiderId }: { riderId?: string }) => {
                         {/* Action Button */}
                         <button 
                             onClick={() => {
-                                if (activeStep === 1) handleUpdateStatus(activeOrder._id, 'Picked Up', activeOrder.distance);
-                                else if (activeStep === 2) handleUpdateStatus(activeOrder._id, 'OnTheWay', activeOrder.distance);
-                                else if (activeStep === 3) handleUpdateStatus(activeOrder._id, 'Delivered', activeOrder.distance);
+                                console.log('Updating status from:', activeOrder.status);
+                                if (activeOrder.status === 'Ready' || activeOrder.status === 'Confirmed' || activeOrder.status === 'Accepted' || activeOrder.status === 'Preparing') {
+                                    handleUpdateStatus(activeOrder._id, 'Arrived', activeOrder.distance);
+                                } else if (activeOrder.status === 'Arrived') {
+                                    handleUpdateStatus(activeOrder._id, 'Picked Up', activeOrder.distance);
+                                } else if (activeOrder.status === 'Picked Up') {
+                                    handleUpdateStatus(activeOrder._id, 'OnTheWay', activeOrder.distance);
+                                } else if (activeOrder.status === 'OnTheWay') {
+                                    handleUpdateStatus(activeOrder._id, 'ArrivedAtCustomer', activeOrder.distance);
+                                } else if (activeOrder.status === 'ArrivedAtCustomer') {
+                                    handleUpdateStatus(activeOrder._id, 'Delivered', activeOrder.distance);
+                                }
                             }}
-                            className="w-full bg-gradient-to-r from-orange-500 to-red-500 text-white py-4 rounded-2xl text-[10px] font-bold uppercase tracking-widest shadow-lg shadow-orange-100 hover:scale-[1.02] active:scale-[0.98] transition-all"
+                            className="w-full bg-gradient-to-r from-orange-500 to-red-500 text-white py-4 rounded-2xl text-[10px] font-medium uppercase tracking-widest shadow-lg shadow-orange-100 hover:scale-[1.02] active:scale-[0.98] transition-all"
                         >
-                            {activeStep === 1 ? 'Arrived at Restaurant' : 
-                             activeStep === 2 ? 'Order Picked Up' : 
-                             'Order Completed'}
+                            { (activeOrder.status === 'Ready' || activeOrder.status === 'Confirmed' || activeOrder.status === 'Accepted' || activeOrder.status === 'Preparing') ? 'Arrived at Restaurant' : 
+                              activeOrder.status === 'Arrived' ? 'Pick Up Order' :
+                              activeOrder.status === 'Picked Up' ? 'Start Delivery' :
+                              activeOrder.status === 'OnTheWay' ? 'Arrived at Customer' :
+                              activeOrder.status === 'ArrivedAtCustomer' ? 'Order Completed' : 'Update Status'}
                         </button>
                     </div>
                 </div>
@@ -632,7 +664,7 @@ function ActionItem({ icon, label, sublabel, onClick }: any) {
                                 <div className="grid grid-cols-2 gap-4 mt-6">
                                     <div className="bg-gray-50 p-3 rounded-2xl text-center">
                                         <p className="text-[10px] text-gray-400 uppercase">Earnings</p>
-                                        <p className="font-bold text-gray-900">PKR 180</p>
+                                        <p className="font-bold text-gray-900">Rs. 180</p>
                                     </div>
                                     <div className="bg-gray-50 p-3 rounded-2xl text-center">
                                         <p className="text-[10px] text-gray-400 uppercase">Time Left</p>
@@ -650,9 +682,9 @@ function ActionItem({ icon, label, sublabel, onClick }: any) {
                                 </button>
                                 <button 
                                     onClick={() => handleAcceptOrder(newOrderPopup._id)}
-                                    className="flex-[2] py-4 rounded-2xl bg-gradient-to-r from-orange-500 to-red-500 text-white font-bold text-xs uppercase tracking-widest shadow-lg shadow-orange-200 hover:scale-[1.02] active:scale-[0.98] transition-all"
+                                    className="flex-[2] py-4 rounded-2xl bg-gradient-to-r from-orange-500 to-red-500 text-white font-bold text-xs uppercase tracking-widest hover:from-orange-600 hover:to-red-600 shadow-lg shadow-orange-100 transition-all active:scale-95"
                                 >
-                                    Accept Order
+                                    Accept
                                 </button>
                             </div>
                         </motion.div>

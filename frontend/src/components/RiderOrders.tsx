@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { API_BASE_URL } from '../utils/config';
-import { FaBox, FaCheckCircle, FaClock, FaTimes, FaMapMarkerAlt, FaPhone, FaCommentDots, FaBell, FaDollarSign, FaMotorcycle, FaRoute } from 'react-icons/fa';
+import { FaBox, FaCheckCircle, FaClock, FaTimes, FaMapMarkerAlt, FaPhone, FaCommentDots, FaBell, FaWallet, FaMotorcycle, FaRoute } from 'react-icons/fa';
 import { initSocket, disconnectSocket, getSocket, subscribeToChannel } from '../utils/socket';
 import toast, { Toaster } from 'react-hot-toast';
 import { useGeolocation } from '../utils/useGeolocation';
@@ -271,15 +271,15 @@ export default function RiderOrders({ riderId }: RiderOrdersProps) {
             <Toaster />
             
             {/* 1. Header Section - Gradient with Notification Bell */}
-            <div className="bg-gradient-to-r from-orange-500 to-red-500 p-6 shadow-lg z-20 flex-shrink-0">
+            <div className="bg-gradient-to-r from-orange-400 via-orange-500 to-red-500 p-6 shadow-lg z-20 flex-shrink-0">
                 <div className="flex items-center justify-between">
-                    <h1 className="text-xl font-bold text-white tracking-tight">Available Orders</h1>
+                    <h1 className="text-lg font-semibold text-white tracking-tight">Available Orders</h1>
                     <div className="relative">
-                        <div className="w-10 h-10 bg-white/20 backdrop-blur-md rounded-xl flex items-center justify-center text-white cursor-pointer hover:bg-white/30 transition-all">
-                            <FaBell size={20} />
+                        <div className="w-9 h-9 bg-white/20 backdrop-blur-md rounded-xl flex items-center justify-center text-white cursor-pointer hover:bg-white/30 transition-all">
+                            <FaBell size={18} />
                         </div>
                         {availableOrdersCount > 0 && (
-                            <span className="absolute -top-1 -right-1 w-5 h-5 bg-red-600 border-2 border-white text-white text-[10px] font-bold rounded-full flex items-center justify-center shadow-sm">
+                            <span className="absolute -top-1 -right-1 w-4 h-4 bg-red-600 border-2 border-white text-white text-[9px] font-bold rounded-full flex items-center justify-center shadow-sm">
                                 {availableOrdersCount}
                             </span>
                         )}
@@ -290,16 +290,16 @@ export default function RiderOrders({ riderId }: RiderOrdersProps) {
             {/* Scrollable Content Area */}
             <div className="flex-1 overflow-y-auto pb-20">
                 {/* 2. Earnings Section */}
-                <div className="px-6 py-6">
+                <div className="px-6 py-5">
                     <div className="bg-white rounded-[24px] p-5 shadow-sm border border-gray-100 flex items-center justify-between">
                         <div>
-                            <p className="text-gray-400 font-bold text-[11px] uppercase tracking-wider mb-1">Potential Earnings</p>
+                            <p className="text-gray-400 font-medium text-[11px] uppercase tracking-wider mb-1">Potential Earnings</p>
                             <div className="flex items-baseline gap-1">
-                                <span className="text-2xl font-bold text-green-600">PKR {potentialEarnings}</span>
+                                <span className="text-xl font-bold text-green-600">Rs. {potentialEarnings}</span>
                             </div>
                         </div>
                         <div className="w-12 h-12 bg-green-50 rounded-2xl flex items-center justify-center text-green-600">
-                            <FaDollarSign size={24} />
+                            <FaWallet size={24} />
                         </div>
                     </div>
                 </div>
@@ -405,9 +405,9 @@ export default function RiderOrders({ riderId }: RiderOrdersProps) {
                                                                 <FaMapMarkerAlt size={16} />
                                                             </div>
                                                             <div>
-                                                                <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Pickup from</p>
-                                                            <p className="font-bold text-gray-900 text-sm">{activeDelivery.restaurant?.name}</p>
-                                                            <p className="text-[11px] font-bold text-gray-500 mt-0.5">{activeDelivery.distanceKm || '1.2'} km away</p>
+                                                            <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-widest">Pickup from</p>
+                                                            <p className="font-semibold text-gray-900 text-sm">{activeDelivery.restaurant?.name}</p>
+                                                            <p className="text-[11px] font-semibold text-gray-500 mt-0.5">{activeDelivery.distanceKm || '1.2'} km away</p>
                                                         </div>
                                                     </div>
 
@@ -416,9 +416,9 @@ export default function RiderOrders({ riderId }: RiderOrdersProps) {
                                                             <FaMapMarkerAlt size={16} />
                                                         </div>
                                                         <div>
-                                                            <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Deliver to</p>
-                                                            <p className="font-bold text-gray-900 text-sm line-clamp-1">{activeDelivery.user?.address || 'Customer Location'}</p>
-                                                            <p className="text-[11px] font-bold text-gray-500 mt-0.5">{(activeDelivery.distanceKm * 1.5).toFixed(1) || '3.5'} km from restaurant</p>
+                                                            <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-widest">Deliver to</p>
+                                                            <p className="font-semibold text-gray-900 text-sm line-clamp-1">{activeDelivery.user?.address || 'Customer Location'}</p>
+                                                            <p className="text-[11px] font-semibold text-gray-500 mt-0.5">{(activeDelivery.distanceKm * 1.5).toFixed(1) || '3.5'} km from restaurant</p>
                                                         </div>
                                                     </div>
                                                 </div>
@@ -426,9 +426,9 @@ export default function RiderOrders({ riderId }: RiderOrdersProps) {
                                                 <div className="pt-4 border-t border-gray-50 space-y-3">
                                                     <div className="flex justify-between items-center">
                                                         <div className="flex items-center gap-2 text-gray-400 font-bold text-xs">
-                                                            <span>$</span> You'll earn
+                                                            <span>Rs.</span> You'll earn
                                                         </div>
-                                                        <span className="text-[#FF4D00] font-bold text-lg">PKR {activeDelivery.netRiderEarning || 180}</span>
+                                                        <span className="text-[#FF4D00] font-bold text-lg">Rs. {activeDelivery.netRiderEarning || 180}</span>
                                                     </div>
                                                     <div className="flex justify-between items-center">
                                                         <div className="flex items-center gap-2 text-gray-400 font-bold text-xs">
@@ -454,15 +454,15 @@ export default function RiderOrders({ riderId }: RiderOrdersProps) {
                                     <div className="p-6">
                                         <div className="flex justify-between items-start mb-6">
                                             <div>
-                                                <h2 className="text-lg font-bold tracking-tight text-gray-900">
+                                                <h2 className="text-lg font-semibold tracking-tight text-gray-900">
                                                     {activeDelivery.status === 'OnTheWay' || activeDelivery.status === 'Arrived' ? 'Pickup' : 'Delivery'} In Progress
                                                 </h2>
-                                                <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-widest">
+                                                <p className="text-[10px] font-medium text-gray-400 uppercase tracking-widest">
                                                     {activeDelivery.status === 'OnTheWay' || activeDelivery.status === 'Arrived' ? 'Restaurant' : 'Customer'}: {activeDelivery.status === 'OnTheWay' || activeDelivery.status === 'Arrived' ? activeDelivery.restaurant?.name : activeDelivery.user?.name}
                                                 </p>
                                             </div>
                                             <div className="text-right">
-                                                <p className="text-xl font-bold text-orange-500">25-35 <span className="text-xs font-bold">MINS</span></p>
+                                                <p className="text-xl font-semibold text-orange-500">25-35 <span className="text-xs font-semibold">MINS</span></p>
                                             </div>
                                         </div>
 
@@ -512,7 +512,7 @@ export default function RiderOrders({ riderId }: RiderOrdersProps) {
                                             {activeDelivery.status === 'OnTheWay' && (
                                                 <button 
                                                     onClick={() => handleUpdateStatus(activeDelivery._id, 'Arrived', '📍 Arrived at restaurant!')}
-                                                    className="w-full bg-gray-900 hover:bg-black text-white py-4 rounded-2xl font-bold shadow-lg transition-all active:scale-95"
+                                                    className="w-full bg-gradient-to-r from-gray-800 to-gray-900 hover:from-black hover:to-black text-white py-4 rounded-2xl font-bold shadow-lg transition-all active:scale-95"
                                                 >
                                                     ARRIVED AT RESTAURANT
                                                 </button>
@@ -520,7 +520,7 @@ export default function RiderOrders({ riderId }: RiderOrdersProps) {
                                             {activeDelivery.status === 'Arrived' && (
                                                 <button 
                                                     onClick={() => handlePickupOrder(activeDelivery._id)}
-                                                    className="w-full bg-[#FF4D00] hover:bg-[#FF3300] text-white py-4 rounded-2xl font-bold shadow-lg transition-all active:scale-95"
+                                                    className="w-full bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600 text-white py-4 rounded-2xl font-bold shadow-lg transition-all active:scale-95"
                                                 >
                                                     ORDER PICKED UP
                                                 </button>
@@ -528,7 +528,7 @@ export default function RiderOrders({ riderId }: RiderOrdersProps) {
                                             {activeDelivery.status === 'Picked Up' && (
                                                 <button 
                                                     onClick={() => handleUpdateStatus(activeDelivery._id, 'ArrivedAtCustomer', '📍 Arrived at customer location!')}
-                                                    className="w-full bg-gray-900 hover:bg-black text-white py-4 rounded-2xl font-bold shadow-lg transition-all active:scale-95"
+                                                    className="w-full bg-gradient-to-r from-gray-800 to-gray-900 hover:from-black hover:to-black text-white py-4 rounded-2xl font-bold shadow-lg transition-all active:scale-95"
                                                 >
                                                     ARRIVED AT CUSTOMER
                                                 </button>
@@ -536,7 +536,7 @@ export default function RiderOrders({ riderId }: RiderOrdersProps) {
                                             {activeDelivery.status === 'ArrivedAtCustomer' && (
                                                 <button 
                                                     onClick={() => handleDeliverOrder(activeDelivery._id)}
-                                                    className="w-full bg-[#00D97E] hover:bg-[#00BD6E] text-white py-4 rounded-2xl font-bold shadow-lg transition-all active:scale-95"
+                                                    className="w-full bg-gradient-to-r from-green-400 to-emerald-600 hover:from-green-500 hover:to-emerald-700 text-white py-4 rounded-2xl font-bold shadow-lg transition-all active:scale-95"
                                                 >
                                                     MARK AS DELIVERED
                                                 </button>
@@ -806,7 +806,7 @@ function OrderCard({
                         {/* Restaurant Name & Earnings */}
                         <div className="flex items-center gap-2">
                             <h3 className="text-base font-bold text-gray-900">{order.restaurant?.name || 'Restaurant'}</h3>
-                            <span className="text-green-600 font-bold text-sm">+PKR {order.netRiderEarning || 250}</span>
+                            <span className="text-green-600 font-bold text-sm">+Rs. {order.netRiderEarning || 250}</span>
                         </div>
                         {/* Order Age */}
                         <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">

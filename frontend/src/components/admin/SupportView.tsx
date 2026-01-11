@@ -3,7 +3,7 @@ import { useState, useEffect } from 'react';
 import axios from 'axios';
 import { io } from 'socket.io-client';
 import { API_BASE_URL, SOCKET_URL } from '../../utils/config';
-import { FaHeadset, FaSearch, FaFilter, FaClock, FaCheck, FaDollarSign, FaExclamationCircle } from 'react-icons/fa';
+import { FaHeadset, FaSearch, FaFilter, FaClock, FaCheck, FaExclamationCircle } from 'react-icons/fa';
 
 export default function SupportView() {
     const [tickets, setTickets] = useState<any[]>([]);
@@ -83,7 +83,7 @@ export default function SupportView() {
                         <p className="text-gray-500 text-sm mb-1">Refund Requests</p>
                         <h3 className="text-2xl font-bold text-red-600">{stats.refunds}</h3>
                     </div>
-                    <div className="bg-red-100 p-3 rounded-lg text-red-600"><FaDollarSign /></div>
+                    <div className="bg-red-100 p-3 rounded-lg text-red-600 font-bold">Rs</div>
                 </div>
                 <div className="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm flex justify-between items-center">
                     <div>
@@ -126,7 +126,7 @@ export default function SupportView() {
                         <div className="flex justify-between items-start mb-4">
                             <div className="flex items-center gap-3">
                                 <div className="bg-gray-100 p-3 rounded-xl">
-                                    {ticket.priority === 'HIGH' ? <FaDollarSign className="text-red-500 text-xl" /> : <FaExclamationCircle className="text-orange-500 text-xl" />}
+                                    {ticket.priority === 'HIGH' ? <FaExclamationCircle className="text-red-500 text-xl" /> : <FaExclamationCircle className="text-orange-500 text-xl" />}
                                 </div>
                                 <div>
                                     <div className="flex items-center gap-2 mb-1">

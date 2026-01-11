@@ -79,7 +79,7 @@ export default function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
                                             <div className="flex-1">
                                                 <h3 className="font-bold text-gray-900 text-base">{item.name}</h3>
                                                 <p className="text-gray-500 text-sm">{item.restaurantName}</p>
-                                                <p className="text-orange-500 font-bold text-base mt-1">${item.price.toFixed(2)}</p>
+                                                <p className="text-orange-500 font-bold text-base mt-1">Rs. {item.price.toFixed(2)}</p>
                                             </div>
 
                                             {/* Quantity Controls */}
@@ -127,15 +127,15 @@ export default function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
                                 <div className="space-y-3 mb-4">
                                     <div className="flex justify-between items-center text-gray-700">
                                         <span className="text-sm">Subtotal</span>
-                                        <span className="text-sm font-medium">${subtotal.toFixed(2)}</span>
+                                        <span className="text-sm font-medium">Rs. {subtotal.toFixed(2)}</span>
                                     </div>
                                     <div className="flex justify-between items-center text-gray-700">
                                         <span className="text-sm">Delivery Fee</span>
-                                        <span className="text-sm font-medium">${deliveryFee.toFixed(2)}</span>
+                                        <span className="text-sm font-medium">Rs. {deliveryFee.toFixed(2)}</span>
                                     </div>
                                     <div className="flex justify-between items-center pt-3 border-t border-gray-200">
                                         <span className="font-bold text-gray-900">Total</span>
-                                        <span className="font-bold text-orange-500 text-lg">${total.toFixed(2)}</span>
+                                        <span className="font-bold text-orange-500 text-lg">Rs. {total.toFixed(2)}</span>
                                     </div>
                                 </div>
 

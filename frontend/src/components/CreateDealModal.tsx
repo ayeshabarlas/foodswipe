@@ -144,14 +144,14 @@ export default function CreateDealModal({ isOpen, onClose, onSuccess }: CreateDe
                                         className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-purple-500 focus:ring-2 focus:ring-purple-200 outline-none transition"
                                     >
                                         <option value="percentage">%</option>
-                                        <option value="fixed">$</option>
+                                        <option value="fixed">Rs</option>
                                     </select>
                                 </div>
                             </div>
 
                             <div>
                                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                                    Minimum Order Amount ($)
+                                    Minimum Order Amount (Rs)
                                 </label>
                                 <input
                                     type="number"

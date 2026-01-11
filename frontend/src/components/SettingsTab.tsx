@@ -18,7 +18,7 @@ export default function SettingsTab({ restaurant, onUpdate }: SettingsTabProps) 
         contact: '',
         description: '',
         cuisineTypes: [] as string[],
-        priceRange: '$$',
+        priceRange: 'RsRs',
         deliveryTime: '',
         openingHours: {
             monday: { open: '09:00', close: '22:00', isClosed: false },
@@ -53,7 +53,7 @@ export default function SettingsTab({ restaurant, onUpdate }: SettingsTabProps) 
                 contact: restaurant.contact || '',
                 description: restaurant.description || '',
                 cuisineTypes: restaurant.cuisineTypes || [],
-                priceRange: restaurant.priceRange || '$$',
+                priceRange: restaurant.priceRange || 'RsRs',
                 deliveryTime: restaurant.deliveryTime || '',
                 openingHours: {
                     monday: restaurant.openingHours?.monday || { ...defaultHours },
@@ -270,10 +270,10 @@ export default function SettingsTab({ restaurant, onUpdate }: SettingsTabProps) 
                                     onChange={e => setFormData({ ...formData, priceRange: e.target.value })}
                                     className="w-full bg-gray-50 text-gray-900 rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-primary border border-gray-200 transition-all"
                                 >
-                                    <option value="$">$ (Budget)</option>
-                                    <option value="$$">$$ (Moderate)</option>
-                                    <option value="$$$">$$$ (Expensive)</option>
-                                    <option value="$$$$">$$$$ (Luxury)</option>
+                                    <option value="Rs">Rs (Budget)</option>
+                                    <option value="RsRs">RsRs (Moderate)</option>
+                                    <option value="RsRsRs">RsRsRs (Expensive)</option>
+                                    <option value="RsRsRsRs">RsRsRsRs (Luxury)</option>
                                 </select>
                             </div>
                         </div>

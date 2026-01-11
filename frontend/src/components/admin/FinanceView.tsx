@@ -112,7 +112,7 @@ export default function FinanceView() {
                     <div className="relative z-10">
                         <div className="flex justify-between items-start mb-3">
                             <div className="bg-white/20 p-1.5 rounded-lg">
-                                <span className="text-base font-bold">$</span>
+                                <span className="text-base font-bold">Rs.</span>
                             </div>
                             <span className="text-[10px] font-bold bg-white/20 px-1.5 py-0.5 rounded uppercase">+12.5%</span>
                         </div>

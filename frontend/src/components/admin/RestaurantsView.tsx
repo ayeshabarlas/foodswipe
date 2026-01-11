@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { FaCheckCircle, FaTimesCircle, FaMapMarkerAlt, FaFileImage, FaEye, FaSearch, FaFilter, FaStar, FaStore, FaClock, FaDollarSign, FaExternalLinkAlt } from 'react-icons/fa';
+import { FaCheckCircle, FaTimesCircle, FaMapMarkerAlt, FaFileImage, FaEye, FaSearch, FaFilter, FaStar, FaStore, FaClock, FaExternalLinkAlt } from 'react-icons/fa';
 import axios from 'axios';
 import { API_BASE_URL } from '../../utils/config';
 import { getSocket } from '../../utils/socket';
@@ -266,7 +266,7 @@ export default function RestaurantsView() {
                         <h3 className="text-xl font-bold text-gray-800">Rs. {stats.commission.toLocaleString()}</h3>
                     </div>
                     <div className="bg-purple-50 p-2.5 rounded-lg text-purple-500">
-                        <FaDollarSign className="text-lg" />
+                        <span className="text-lg font-bold">Rs</span>
                     </div>
                 </div>
             </div>

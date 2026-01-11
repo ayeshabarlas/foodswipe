@@ -7,30 +7,25 @@ import { API_BASE_URL } from './config';
 export const getImageUrl = (path: string | undefined | null) => {
     if (!path || typeof path !== 'string' || path.trim() === '') return '';
     
-    // 1. If it's already a full URL, return it (but handle potential backslashes)
-    if (path.startsWith('http')) {
-        return path.replace(/\\/g, '/');
-    }
-    
-    // 2. Normalize path (remove leading slashes, handle backslashes)
+    // Normalize slashes
     let cleanPath = path.replace(/\\/g, '/');
     
-    // If it contains "uploads/", extract everything from "uploads/" onwards
-    const uploadsIndex = cleanPath.indexOf('uploads/');
-    if (uploadsIndex !== -1) {
-        cleanPath = cleanPath.substring(uploadsIndex);
-    } else {
-        cleanPath = cleanPath.replace(/^\/+/, '');
+    // If it's already a full URL, return it
+    if (cleanPath.startsWith('http')) {
+        return cleanPath;
     }
+    
+    // Remove any leading slashes or 'uploads/' prefix
+    // We do this repeatedly to handle cases like '/uploads/uploads/file.jpg'
+    let oldPath;
+    do {
+        oldPath = cleanPath;
+        cleanPath = cleanPath.replace(/^(\.\/|\.\.\/|\/|uploads\/)+/, '');
+    } while (cleanPath !== oldPath);
     
     const baseUrl = API_BASE_URL.endsWith('/') ? API_BASE_URL.slice(0, -1) : API_BASE_URL;
-
-    // 3. If it's a relative path starting with uploads/, just prepend base URL
-    if (cleanPath.startsWith('uploads/')) {
-        return `${baseUrl}/${cleanPath}`;
-    }
     
-    // 4. Otherwise, assume it's relative to uploads/
+    // Always return with /uploads/ prefix
     return `${baseUrl}/uploads/${cleanPath}`;
 };
 

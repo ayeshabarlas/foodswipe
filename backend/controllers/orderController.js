@@ -354,7 +354,7 @@ const processOrderCompletion = async (order, distanceKm = 5, req = null) => {
             const notification = await createNotification(
                 riderUserId,
                 'Payment Received',
-                `PKR ${riderEarning.toLocaleString()} deposited to your account`,
+                `Rs. ${riderEarning.toLocaleString()} deposited to your account`,
                 'payment',
                 { orderId: order._id, amount: riderEarning }
             );

@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { FaShoppingBag, FaUtensils, FaStore, FaChartLine, FaDollarSign, FaStar, FaBullhorn, FaHeadset, FaConciergeBell, FaBell, FaClock, FaBox, FaCheck, FaPaperPlane, FaSignOutAlt, FaBars, FaTimes, FaBan } from 'react-icons/fa';
+import { FaShoppingBag, FaUtensils, FaStore, FaChartLine, FaWallet, FaStar, FaBullhorn, FaHeadset, FaConciergeBell, FaBell, FaClock, FaBox, FaCheck, FaPaperPlane, FaSignOutAlt, FaBars, FaTimes, FaBan } from 'react-icons/fa';
 import { motion, AnimatePresence } from 'framer-motion';
 import axios from 'axios';
 import CreateRestaurant from './CreateRestaurant';
@@ -238,7 +238,7 @@ export default function RestaurantDashboard() {
         { id: 'menu', label: 'Menu Items', icon: FaUtensils },
         { id: 'store', label: 'Store Profile', icon: FaStore },
         { id: 'analytics', label: 'Performance', icon: FaChartLine },
-        { id: 'payments', label: 'Earnings', icon: FaDollarSign },
+        { id: 'payments', label: 'Earnings', icon: FaWallet },
         { id: 'reviews', label: 'Customer Reviews', icon: FaStar },
         { id: 'promotions', label: 'Promotions', icon: FaBullhorn },
         { id: 'support', label: 'Help Center', icon: FaHeadset },
@@ -453,12 +453,12 @@ export default function RestaurantDashboard() {
                         {/* User Profile */}
                         <div className="flex items-center gap-3 pl-3 border-l border-gray-100">
                             <div className="text-right hidden sm:block">
-                                <p className="text-xs font-bold text-gray-900 leading-none">{restaurant.owner?.name}</p>
+                                <p className="text-xs font-bold text-gray-900 leading-none">{restaurant?.owner?.name}</p>
                                 <p className="text-[10px] text-gray-500 mt-1 uppercase tracking-tighter">Restaurant Owner</p>
                             </div>
                             <div className="w-9 h-9 rounded-full bg-gradient-to-tr from-orange-500 to-orange-400 p-[2px] shadow-md">
                                 <div className="w-full h-full rounded-full bg-white flex items-center justify-center text-orange-500 font-bold text-xs uppercase">
-                                    {restaurant.owner?.name?.charAt(0)}
+                                    {restaurant?.owner?.name?.charAt(0)}
                                 </div>
                             </div>
                         </div>

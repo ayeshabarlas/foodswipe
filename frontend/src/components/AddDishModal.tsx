@@ -160,13 +160,26 @@ export default function AddDishModal({ isOpen, onClose, onSubmit, editingDish }:
 
     const stripBaseUrl = (url: string) => {
         if (!url) return '';
-        if (url.startsWith('http')) {
-            const uploadsIndex = url.indexOf('/uploads/');
+        
+        // Normalize slashes
+        let cleanPath = url.replace(/\\/g, '/');
+        
+        // If it's a full URL, extract the part after '/uploads/'
+        if (cleanPath.startsWith('http')) {
+            const uploadsIndex = cleanPath.indexOf('/uploads/');
             if (uploadsIndex !== -1) {
-                return url.substring(uploadsIndex);
+                cleanPath = cleanPath.substring(uploadsIndex + 9); // Skip '/uploads/'
             }
         }
-        return url;
+        
+        // Remove any leading slashes or 'uploads/' prefix
+        let oldPath;
+        do {
+            oldPath = cleanPath;
+            cleanPath = cleanPath.replace(/^(\.\/|\.\.\/|\/|uploads\/)+/, '');
+        } while (cleanPath !== oldPath);
+        
+        return cleanPath;
     };
 
     const handleSubmitForm = (e: React.FormEvent) => {

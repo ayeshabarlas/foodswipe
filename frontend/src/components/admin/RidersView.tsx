@@ -3,7 +3,7 @@ import { useState, useEffect } from 'react';
 import axios from 'axios';
 import { io } from 'socket.io-client';
 import { API_BASE_URL, SOCKET_URL } from '../../utils/config';
-import { FaUser, FaMotorcycle, FaSearch, FaFilter, FaMapMarkerAlt, FaStar, FaEye, FaPlus, FaCheckCircle, FaBan, FaTrash, FaDollarSign } from 'react-icons/fa';
+import { FaUser, FaMotorcycle, FaSearch, FaFilter, FaMapMarkerAlt, FaStar, FaEye, FaPlus, FaCheckCircle, FaBan, FaTrash } from 'react-icons/fa';
 import { motion, AnimatePresence } from 'framer-motion';
 
 interface Rider {
@@ -285,7 +285,7 @@ export default function RidersView() {
                     <div className="flex justify-between items-start mb-5">
                         <div className="flex gap-2.5">
                             <div className="w-8 h-8 bg-white/10 rounded-lg flex items-center justify-center border border-white/10">
-                                <FaDollarSign className="text-sm text-green-400" />
+                                <span className="text-[10px] font-bold text-green-400">Rs</span>
                             </div>
                             <div>
                                 <h3 className="text-xs font-bold">Rider Wallet</h3>
@@ -374,7 +374,7 @@ export default function RidersView() {
                         <h3 className="text-xl font-bold text-gray-800">Rs. {stats.cashCollected.toLocaleString()}</h3>
                     </div>
                     <div className="bg-orange-50 p-2.5 rounded-lg text-orange-500">
-                        <FaDollarSign className="text-lg" />
+                        <span className="text-xs font-bold text-orange-500">Rs</span>
                     </div>
                 </div>
             </div>

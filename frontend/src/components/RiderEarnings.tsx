@@ -3,7 +3,7 @@
 import React, { useState } from 'react';
 import axios from 'axios';
 import { API_BASE_URL } from '../utils/config';
-import { FaDollarSign, FaStar, FaDownload, FaWallet, FaHistory, FaArrowRight, FaUniversity } from 'react-icons/fa';
+import { FaWallet, FaStar, FaDownload, FaHistory, FaArrowRight, FaUniversity, FaMoneyBillWave } from 'react-icons/fa';
 
 interface RiderEarningsProps {
     riderId: string;
@@ -141,14 +141,14 @@ export default function RiderEarnings({ riderId }: RiderEarningsProps) {
 
                 <div className="text-center relative z-10">
                     <p className="text-white/60 text-[10px] mb-2 uppercase tracking-[0.2em] font-bold">Total This {period}</p>
-                    <h2 className="text-5xl font-bold mb-2 tracking-tighter">PKR {earnings.total.toLocaleString()}</h2>
+                    <h2 className="text-5xl font-bold mb-2 tracking-tighter">Rs {earnings.total.toLocaleString()}</h2>
                     <p className="text-white/80 text-xs font-light tracking-wide">{earnings.deliveries} deliveries completed</p>
                 </div>
             </div>
 
             {/* Stats Grid */}
             <div className="px-6 -mt-10 grid grid-cols-3 gap-3 mb-8 relative z-20">
-                <SmallStat icon={<FaDollarSign />} label="Base Pay" value={earnings.basePay} color="bg-blue-500" />
+                <SmallStat icon={<FaMoneyBillWave />} label="Base Pay" value={earnings.basePay} color="bg-blue-500" />
                 <SmallStat icon={<FaStar />} label="Bonuses" value={earnings.bonuses} color="bg-purple-500" />
                 <SmallStat icon={<FaWallet />} label="Tips" value={earnings.tips} color="bg-gradient-to-r from-orange-500 to-red-500" />
             </div>
@@ -163,7 +163,7 @@ export default function RiderEarnings({ riderId }: RiderEarningsProps) {
                         <div className="flex justify-between items-start mb-4">
                             <div>
                                 <p className="text-white/70 text-sm font-light mb-1">Pending Payout</p>
-                                <h3 className="text-3xl font-bold">PKR {earnings.pendingPayout.toLocaleString()}</h3>
+                                <h3 className="text-3xl font-bold">Rs {earnings.pendingPayout.toLocaleString()}</h3>
                             </div>
                             <div className="w-12 h-12 bg-white/20 backdrop-blur-md rounded-2xl flex items-center justify-center">
                                 <FaWallet size={24} />
@@ -221,14 +221,14 @@ export default function RiderEarnings({ riderId }: RiderEarningsProps) {
                         <div key={index} className="bg-white p-4 rounded-[24px] shadow-[0_4px_20px_rgb(0,0,0,0.03)] border border-gray-50 flex items-center justify-between group">
                             <div className="flex items-center gap-4">
                                 <div className="w-12 h-12 bg-blue-50 rounded-2xl flex items-center justify-center text-blue-500 group-hover:scale-110 transition-transform">
-                                    <FaDollarSign size={18} />
+                                    <FaMoneyBillWave size={18} />
                                 </div>
                                 <div>
                                     <p className="text-gray-900 font-bold text-sm tracking-tight">#{tx.id?.slice(-5) || '12345'}</p>
                                     <p className="text-gray-400 text-[10px] font-medium uppercase tracking-wider mt-0.5">{tx.time || 'Today, 2:30 PM'}</p>
                                 </div>
                             </div>
-                            <p className="text-green-600 font-bold text-sm">+PKR {tx.amount.toLocaleString()}</p>
+                            <p className="text-green-600 font-bold text-sm">+Rs {tx.amount.toLocaleString()}</p>
                         </div>
                     )) : (
                         <div className="bg-white p-10 rounded-[32px] border border-dashed border-gray-200 text-center">
@@ -310,7 +310,7 @@ function SmallStat({ icon, label, value, color }: { icon: any; label: string; va
                 <div className="text-sm">{icon}</div>
             </div>
             <p className="text-gray-400 text-[9px] font-bold uppercase tracking-widest mb-1">{label}</p>
-            <p className="font-bold text-xs text-gray-900 tracking-tight">{value.toLocaleString()}</p>
+            <p className="font-bold text-xs text-gray-900 tracking-tight">Rs {value.toLocaleString()}</p>
         </div>
     );
 }

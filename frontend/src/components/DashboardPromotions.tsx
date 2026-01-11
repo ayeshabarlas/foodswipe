@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { FaChartLine, FaUsers, FaDollarSign, FaPercent, FaPlus, FaTrash, FaTicketAlt, FaTags, FaToggleOn, FaToggleOff } from 'react-icons/fa';
+import { FaChartLine, FaUsers, FaPercent, FaPlus, FaTrash, FaTicketAlt, FaTags, FaToggleOn, FaToggleOff } from 'react-icons/fa';
 import axios from 'axios';
 import { API_BASE_URL } from '../utils/config';
 import CreateVoucherModal from './CreateVoucherModal';
@@ -152,7 +152,7 @@ export default function DashboardPromotions() {
                 <StatCard
                     title="Total Deals"
                     value={deals.length}
-                    icon={FaDollarSign}
+                    icon={FaPercent}
                     color="bg-gradient-to-br from-green-500 to-emerald-500"
                 />
             </div>

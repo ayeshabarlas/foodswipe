@@ -225,56 +225,59 @@ export default function OrderTracking({ order: initialOrder, userRole = 'user', 
                 </div>
 
                 {/* Status Timeline - Screenshot Style */}
-                <div className="bg-white p-8 overflow-y-auto max-h-[300px] border-t border-gray-100">
-                    <h3 className="text-sm font-bold text-gray-400 uppercase tracking-widest mb-8">Order Status</h3>
-                    <div className="space-y-0">
-                        {steps.map((step, idx) => {
-                            const isCompleted = idx <= currentStepIndex;
-                            const isLast = idx === steps.length - 1;
-                            
-                            return (
-                                <div key={idx} className="flex gap-4 group">
-                                    <div className="flex flex-col items-center">
-                                        <div className={`w-10 h-10 rounded-full flex items-center justify-center transition-all duration-500 ${
-                                            isCompleted ? 'bg-green-500 text-white shadow-lg shadow-green-500/20' : 'bg-gray-100 text-gray-400'
+                <div className="bg-white p-8 overflow-y-auto flex-1 border-t border-gray-100">
+                    <h3 className="text-sm font-medium text-gray-400 uppercase tracking-widest mb-8">Order Status</h3>
+                    <div className="relative">
+                        {/* Vertical line connecting steps */}
+                        <div className="absolute left-[15px] top-[15px] bottom-[15px] w-0.5 bg-gray-100" />
+                        
+                        <div className="space-y-10 relative">
+                            {steps.map((step, index) => {
+                                const isCompleted = index <= currentStepIndex;
+                                const isCurrent = index === currentStepIndex + 1;
+                                
+                                return (
+                                    <div key={index} className={`flex gap-6 items-start ${isCompleted ? 'opacity-100' : 'opacity-40'}`}>
+                                        <div className={`w-8 h-8 rounded-full flex items-center justify-center relative z-10 transition-all duration-500 ${
+                                            isCompleted 
+                                            ? 'bg-gradient-to-r from-orange-500 to-red-500 text-white shadow-lg shadow-orange-200 scale-110' 
+                                            : 'bg-white border-2 border-gray-100 text-gray-300'
                                         }`}>
-                                            {step.icon}
+                                            {isCompleted ? <FaCheck size={12} /> : step.icon}
                                         </div>
-                                        {!isLast && (
-                                            <div className={`w-0.5 h-16 transition-all duration-1000 ${
-                                                isCompleted ? 'bg-green-500' : 'bg-gray-100'
-                                            }`} />
-                                        )}
-                                    </div>
-                                    <div className="flex-1 pt-2">
-                                        <div className="flex justify-between items-center">
-                                            <h4 className={`font-bold text-lg transition-colors ${
-                                                isCompleted ? 'text-gray-900' : 'text-gray-300'
-                                            }`}>
-                                                {step.label}
-                                            </h4>
-                                            <span className="text-xs font-bold text-gray-400">
-                                                {step.time}
-                                            </span>
+                                        <div className="flex-1 pt-1">
+                                            <div className="flex justify-between items-center">
+                                                <h4 className={`font-semibold text-sm ${isCompleted ? 'text-gray-900' : 'text-gray-400'}`}>
+                                                    {step.label}
+                                                </h4>
+                                                <span className="text-[10px] font-medium text-gray-400">{step.time}</span>
+                                            </div>
+                                            <p className="text-[10px] font-medium text-gray-400 mt-1 uppercase tracking-wider">
+                                                {isCompleted ? 'Completed' : isCurrent ? 'In Progress' : 'Pending'}
+                                            </p>
                                         </div>
                                     </div>
-                                </div>
-                            );
-                        })}
+                                );
+                            })}
+                        </div>
                     </div>
                 </div>
-
-                {/* Chat Modal */}
-                <OrderChat 
-                    orderId={order._id}
-                    isOpen={isChatOpen}
-                    onClose={() => setIsChatOpen(false)}
-                    userRole={userRole === 'user' ? 'customer' : 'restaurant'}
-                    userName={userInfo.name || 'User'}
-                    userId={userInfo._id}
-                    orderStatus={order.status}
-                />
             </motion.div>
+
+            {/* Chat Modal - Moved outside of the main motion.div to avoid stacking context issues */}
+            {isChatOpen && (
+                <div className="fixed inset-0 z-[99999]">
+                    <OrderChat 
+                        orderId={order._id}
+                        isOpen={isChatOpen}
+                        onClose={() => setIsChatOpen(false)}
+                        userRole={userRole === 'user' ? 'customer' : 'restaurant'}
+                        userName={userInfo.name || 'User'}
+                        userId={userInfo._id}
+                        orderStatus={order.status}
+                    />
+                </div>
+            )}
         </AnimatePresence>
     );
 }
