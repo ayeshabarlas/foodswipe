@@ -7,9 +7,14 @@ const getApiUrl = () => {
   // Priority 2: Environment variable
   let url = process.env.NEXT_PUBLIC_API_URL;
   
-  // Priority 3: Production fallback (Hardcoded Render/Vercel URL)
+  // Override if pointing to old Vercel backend
+  if (url && url.includes('vercel.app')) {
+    url = 'https://foodswipe-6178.onrender.com';
+  }
+  
+  // Priority 3: Production fallback (Hardcoded Render URL)
   if (!url && process.env.NODE_ENV === 'production') {
-    url = 'https://foodswipe-6178.onrender.com'; // Updated from user screenshot
+    url = 'https://foodswipe-6178.onrender.com';
   }
 
   // Priority 4: Localhost fallback
@@ -38,7 +43,12 @@ const getSocketUrl = () => {
   // Priority 1: Environment variable
   let url = process.env.NEXT_PUBLIC_SOCKET_URL;
   
-  // Priority 2: Production fallback (Hardcoded Render/Vercel URL)
+  // Override if pointing to old Vercel backend
+  if (url && url.includes('vercel.app')) {
+    url = 'https://foodswipe-6178.onrender.com';
+  }
+  
+  // Priority 2: Production fallback (Hardcoded Render URL)
   if (!url && process.env.NODE_ENV === 'production') {
     url = 'https://foodswipe-6178.onrender.com';
   }
