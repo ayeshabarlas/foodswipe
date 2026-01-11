@@ -27,6 +27,8 @@ import { API_BASE_URL } from '../utils/config';
 import { FaClock } from 'react-icons/fa';
 import toast, { Toaster } from 'react-hot-toast';
 
+import ModernLoader from './ModernLoader';
+
 interface Stats {
     totalUsers: number;
     totalRestaurants: number;
@@ -226,8 +228,8 @@ export default function AdminDashboard() {
 
     if (!mounted || loading) {
         return (
-            <div className="min-h-screen bg-gray-100 flex items-center justify-center">
-                <div className="w-16 h-16 border-4 border-orange-500 border-t-transparent rounded-full animate-spin"></div>
+            <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+                <ModernLoader size="lg" text="Initializing Admin Panel..." />
             </div>
         );
     }

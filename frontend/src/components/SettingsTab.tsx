@@ -5,6 +5,7 @@ import { FaSave, FaPlus, FaTrash, FaClock, FaMapMarkerAlt, FaInfoCircle, FaUnive
 import axios from 'axios';
 import { API_BASE_URL } from '../utils/config';
 import { getImageUrl } from '../utils/imageUtils';
+import ModernLoader from './ModernLoader';
 
 interface SettingsTabProps {
     restaurant: any;
@@ -109,9 +110,10 @@ export default function SettingsTab({ restaurant, onUpdate }: SettingsTabProps) 
             setFormData(prev => ({ ...prev, logo: fullUrl }));
             onUpdate(); // Refresh parent to sync sidebar/other tabs
             alert('Logo uploaded and synced successfully!');
-        } catch (error) {
+        } catch (error: any) {
             console.error('Logo upload error:', error);
-            alert('Failed to upload logo');
+            const msg = error.response?.data?.message || error.message || 'Failed to upload logo';
+            alert(`Upload Error: ${msg}`);
         } finally {
             setUploadingLogo(false);
         }
@@ -230,7 +232,12 @@ export default function SettingsTab({ restaurant, onUpdate }: SettingsTabProps) 
                                     cursor-pointer bg-gray-50 rounded-xl border border-gray-100"
                             />
                             <p className="text-xs text-gray-400 mt-2">Recommended: 500x500px. Max: 5MB.</p>
-                            {uploadingLogo && <p className="text-sm text-primary mt-2 animate-pulse font-medium">Uploading...</p>}
+                            {uploadingLogo && (
+                                <div className="flex items-center gap-2 text-primary mt-2">
+                                    <ModernLoader size="sm" />
+                                    <span className="text-sm font-medium">Uploading...</span>
+                                </div>
+                            )}
                         </div>
                     </div>
                 </div>

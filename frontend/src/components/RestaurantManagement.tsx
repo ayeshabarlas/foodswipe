@@ -17,6 +17,8 @@ import axios from 'axios';
 import { useRouter } from 'next/navigation';
 import { API_BASE_URL } from '../utils/config';
 
+import ModernLoader from './ModernLoader';
+
 interface Dish {
     _id: string;
     name: string;
@@ -176,8 +178,8 @@ export default function RestaurantManagement() {
 
     if (loading) {
         return (
-            <div className="min-h-screen bg-gray-900 flex items-center justify-center">
-                <div className="w-16 h-16 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
+            <div className="min-h-screen bg-white flex items-center justify-center">
+                <ModernLoader size="lg" text="Loading Management..." />
             </div>
         );
     }

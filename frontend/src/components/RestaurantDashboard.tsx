@@ -18,6 +18,7 @@ import DashboardSupport from './DashboardSupport';
 import { getImageUrl, getImageFallback } from '../utils/imageUtils';
 import { API_BASE_URL } from '../utils/config';
 import { initSocket, disconnectSocket } from '../utils/socket';
+import ModernLoader from './ModernLoader';
 
 export default function RestaurantDashboard() {
     const [restaurant, setRestaurant] = useState<any>(null);
@@ -221,10 +222,7 @@ export default function RestaurantDashboard() {
     if (loading) {
         return (
             <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-                <div className="flex flex-col items-center gap-4">
-                    <div className="w-12 h-12 border-4 border-orange-500 border-t-transparent rounded-full animate-spin"></div>
-                    <p className="text-gray-500 font-medium">Loading your restaurant...</p>
-                </div>
+                <ModernLoader size="lg" text="Loading your restaurant..." />
             </div>
         );
     }

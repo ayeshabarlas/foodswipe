@@ -6,6 +6,7 @@ import { FaPlus, FaTrash, FaTimes, FaSave } from 'react-icons/fa';
 import axios from 'axios';
 import { API_BASE_URL } from '@/utils/config';
 import { getImageUrl } from '@/utils/imageUtils';
+import ModernLoader from './ModernLoader';
 
 interface Variant {
     name: string;
@@ -689,9 +690,9 @@ export default function AddDishModal({ isOpen, onClose, onSubmit, editingDish }:
                             </div>
 
                             {uploading && (
-                                <div className="flex items-center gap-2 text-orange-500 font-medium text-sm">
-                                    <div className="animate-spin rounded-full h-4 w-4 border-2 border-orange-500 border-t-transparent"></div>
-                                    Uploading media...
+                                <div className="flex items-center gap-3 text-orange-500 font-medium text-sm">
+                                    <ModernLoader size="sm" />
+                                    <span>Uploading media... {uploadProgress > 0 && `(${uploadProgress}%)`}</span>
                                 </div>
                             )}
                         </div>

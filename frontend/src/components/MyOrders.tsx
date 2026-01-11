@@ -6,6 +6,7 @@ import { FaTimes, FaClock, FaBiking, FaReceipt, FaSync } from 'react-icons/fa';
 import axios from 'axios';
 import { API_BASE_URL } from '@/utils/config';
 import { useSwipeBack } from '../hooks/useSwipeBack';
+import ModernLoader from './ModernLoader';
 
 interface MyOrdersProps {
     isOpen: boolean;
@@ -168,8 +169,7 @@ const MyOrders = forwardRef<MyOrdersRef, MyOrdersProps>(({ isOpen, onClose, onTr
                         {/* Loading State */}
                         {loading && (
                             <div className="flex flex-col items-center justify-center h-64">
-                                <div className="w-12 h-12 border-4 border-orange-500 border-t-transparent rounded-full animate-spin mb-4"></div>
-                                <p className="text-gray-500">Loading orders...</p>
+                                <ModernLoader size="lg" text="Loading your orders..." />
                             </div>
                         )}
 

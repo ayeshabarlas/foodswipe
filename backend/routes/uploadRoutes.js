@@ -36,29 +36,49 @@ router.post('/', upload.single('file'), async (req, res) => {
         });
 
         blobStream.on('error', (err) => {
-            console.error('Firebase Upload Error:', err);
-            res.status(500).json({ message: 'Upload failed', error: err.message });
+            console.error('❌ Firebase Upload Stream Error:', err);
+            // More descriptive error for common Firebase issues
+            let errorMsg = 'Upload failed';
+            if (err.code === 403) errorMsg = 'Permission denied (Firebase)';
+            if (err.code === 404) errorMsg = 'Storage bucket not found';
+            
+            res.status(500).json({ 
+                message: errorMsg, 
+                error: err.message,
+                details: err.code || 'No code'
+            });
         });
 
         blobStream.on('finish', async () => {
-            // Make the file public (optional, but easier for access)
             try {
-                await blob.makePublic();
-                const publicUrl = `https://storage.googleapis.com/${bucket.name}/${blob.name}`;
-                
-                console.log('✅ File uploaded to Firebase:', publicUrl);
-                res.status(200).json({ 
-                    imageUrl: publicUrl,
-                    fileName: fileName 
-                });
-            } catch (makePublicErr) {
-                console.error('Error making file public:', makePublicErr);
-                // Fallback: Signed URL if public access fails
-                const [url] = await blob.getSignedUrl({
+                // Try to make public, but don't fail if it doesn't work
+                try {
+                    await blob.makePublic();
+                } catch (pErr) {
+                    console.warn('⚠️ Could not make file public (using signed URL instead):', pErr.message);
+                }
+
+                // Always provide a signed URL as fallback/primary if public fails
+                const [signedUrl] = await blob.getSignedUrl({
                     action: 'read',
                     expires: '03-09-2491'
                 });
-                res.status(200).json({ imageUrl: url });
+
+                const publicUrl = `https://storage.googleapis.com/${bucket.name}/${blob.name}`;
+                
+                // Return BOTH imageUrl and videoUrl for frontend compatibility
+                const responseData = {
+                    imageUrl: signedUrl || publicUrl,
+                    videoUrl: signedUrl || publicUrl,
+                    fileName: fileName,
+                    success: true
+                };
+
+                console.log('✅ File uploaded to Firebase:', fileName);
+                res.status(200).json(responseData);
+            } catch (finishErr) {
+                console.error('❌ Finish Event Error:', finishErr);
+                res.status(500).json({ message: 'Error finalizing upload', error: finishErr.message });
             }
         });
 

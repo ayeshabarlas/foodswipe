@@ -6,6 +6,7 @@ import axios from 'axios';
 import { useCart } from '../context/CartContext';
 import { useRouter } from 'next/navigation';
 import { useSwipeBack } from '../hooks/useSwipeBack';
+import ModernLoader from './ModernLoader';
 import PhoneAuthModal from './PhoneAuthModal';
 import { API_BASE_URL } from '../utils/config';
 
@@ -594,7 +595,7 @@ export default function CheckoutModal({ isOpen, onClose, cart, total, subtotal, 
                                                 <div className="absolute top-full left-0 right-0 mt-1 bg-white rounded-xl shadow-xl border border-gray-100 max-h-60 overflow-y-auto z-[100]">
                                                     {loadingAddress ? (
                                                         <div className="p-4 text-center text-gray-500 text-sm flex items-center justify-center gap-2">
-                                                            <div className="w-4 h-4 border-2 border-orange-500 border-t-transparent rounded-full animate-spin"></div>
+                                                            <ModernLoader size="sm" />
                                                             Searching...
                                                         </div>
                                                     ) : suggestions.length > 0 ? (

@@ -15,9 +15,11 @@ const OrderTracking = dynamic(() => import('./OrderTracking'), { ssr: false });
 
 interface RiderOrdersProps {
     riderId: string;
+    setShowNotifications?: (show: boolean) => void;
+    unreadCount?: number;
 }
 
-export default function RiderOrders({ riderId }: RiderOrdersProps) {
+export default function RiderOrders({ riderId, setShowNotifications, unreadCount: dashboardUnreadCount }: RiderOrdersProps) {
     const [orders, setOrders] = useState<any[]>([]);
     const [filter, setFilter] = useState<'active' | 'completed' | 'all'>('active');
     const [availableFilter, setAvailableFilter] = useState<'all' | 'nearby' | 'high_pay'>('all');
@@ -26,7 +28,15 @@ export default function RiderOrders({ riderId }: RiderOrdersProps) {
     const [activeChat, setActiveChat] = useState<any>(null);
     const [selectedOrder, setSelectedOrder] = useState<any>(null);
     const [showDetailsModal, setShowDetailsModal] = useState(false);
+    const [unreadCount, setUnreadCount] = useState(dashboardUnreadCount || 0);
     const userInfo = JSON.parse(localStorage.getItem('userInfo') || '{}');
+
+    // Update local unread count when prop changes
+    useEffect(() => {
+        if (dashboardUnreadCount !== undefined) {
+            setUnreadCount(dashboardUnreadCount);
+        }
+    }, [dashboardUnreadCount]);
 
     // Track location if there's an active delivery
     const { location } = useGeolocation(!!activeDelivery);
@@ -37,12 +47,13 @@ export default function RiderOrders({ riderId }: RiderOrdersProps) {
             const updateLocation = async () => {
                 try {
                     const token = JSON.parse(localStorage.getItem("userInfo") || "{}").token;
-                    await axios.put(
-                        `${API_BASE_URL}/api/riders/${riderId}/location`,
+                    await axios.post(
+                        `${API_BASE_URL}/api/orders/${activeDelivery._id}/location`,
                         {
-                            lat: location.lat,
-                            lng: location.lng,
-                            orderId: activeDelivery._id
+                            location: {
+                                lat: location.lat,
+                                lng: location.lng
+                            }
                         },
                         { headers: { Authorization: `Bearer ${token}` } }
                     );
@@ -57,6 +68,20 @@ export default function RiderOrders({ riderId }: RiderOrdersProps) {
     const [completionData, setCompletionData] = useState<any>(null);
     const [riderWallet, setRiderWallet] = useState(0);
 
+    const fetchNotificationsCount = async () => {
+        try {
+            const userStr = localStorage.getItem('userInfo');
+            if (!userStr) return;
+            const userInfo = JSON.parse(userStr);
+            const config = { headers: { Authorization: `Bearer ${userInfo.token}` } };
+            const res = await axios.get(`${API_BASE_URL}/api/notifications`, config);
+            const unread = res.data.filter((n: any) => !n.read).length;
+            setUnreadCount(unread);
+        } catch (err) {
+            console.error('Error fetching notifications count:', err);
+        }
+    };
+
     const fetchOrders = async () => {
         try {
             const token = JSON.parse(localStorage.getItem("userInfo") || "{}").token;
@@ -68,7 +93,7 @@ export default function RiderOrders({ riderId }: RiderOrdersProps) {
                 // Check for active delivery (any status that isn't Delivered or Cancelled, and assigned to ME)
                 const active = res.data.find((o: any) => 
                     (o.rider === riderId || o.rider?._id === riderId) &&
-                    ['Confirmed', 'OnTheWay', 'Arrived', 'Picked Up', 'ArrivedAtCustomer'].includes(o.status)
+                    ['Accepted', 'Preparing', 'Ready', 'OnTheWay', 'Arrived', 'Picked Up', 'ArrivedAtCustomer'].includes(o.status)
                 );
                 setActiveDelivery(active);
             }
@@ -80,6 +105,9 @@ export default function RiderOrders({ riderId }: RiderOrdersProps) {
             if (riderRes.data && riderRes.data.walletBalance !== undefined) {
                 setRiderWallet(riderRes.data.walletBalance);
             }
+            
+            // Fetch notifications count
+            fetchNotificationsCount();
         } catch (error) {
             console.error('Error fetching data:', error);
         }
@@ -106,12 +134,18 @@ export default function RiderOrders({ riderId }: RiderOrdersProps) {
                 fetchOrders();
             };
 
+            const handleNotification = () => {
+                fetchNotificationsCount();
+            };
+
             socket.on('newOrderAvailable', handleNewOrder);
             socket.on('orderStatusUpdate', handleStatusUpdate);
+            socket.on('notification', handleNotification);
 
             return () => {
                 socket.off('newOrderAvailable', handleNewOrder);
                 socket.off('orderStatusUpdate', handleStatusUpdate);
+                socket.off('notification', handleNotification);
             };
         }
     }, [riderId]);
@@ -203,14 +237,12 @@ export default function RiderOrders({ riderId }: RiderOrdersProps) {
             const distanceKm = (Math.random() * 6 + 2).toFixed(1);
             const dist = parseFloat(distanceKm);
             
-            // Calculate earnings for the UI (using same logic as backend)
-            const BASE_PAY = 100;
+            // Calculate earnings for the UI (matching backend: Base 60 + 20/km)
+            const BASE_PAY = 60;
             const PER_KM_RATE = 20;
-            const PLATFORM_FEE = 15;
             const gross = BASE_PAY + (dist * PER_KM_RATE);
-            const net = gross - PLATFORM_FEE;
+            const net = gross; // Platform fee is 0 for rider now
 
-            // Updated to use the correct API_BASE_URL
             await axios.post(
                 `${API_BASE_URL}/api/orders/${orderId}/complete`,
                 { distanceKm: dist },
@@ -221,16 +253,17 @@ export default function RiderOrders({ riderId }: RiderOrdersProps) {
             setCompletionData({
                 distanceKm: dist,
                 grossEarning: gross,
-                platformFee: PLATFORM_FEE,
+                platformFee: 0,
                 netEarning: net,
                 orderId: orderId
             });
 
             toast.success('🎉 Order delivered successfully!');
             fetchOrders();
-        } catch (error) {
+        } catch (error: any) {
             console.error('Error delivering order:', error);
-            toast.error('Failed to mark as delivered');
+            const errorMsg = error.response?.data?.message || 'Failed to mark as delivered';
+            toast.error(errorMsg);
         }
     };
 
@@ -472,7 +505,7 @@ export default function RiderOrders({ riderId }: RiderOrdersProps) {
                                                         <div className={`w-7 h-7 rounded-full flex items-center justify-center border-4 border-white shadow-sm transition-colors duration-500 ${isCompleted ? 'bg-gradient-to-r from-orange-500 to-red-500 text-white' : 'bg-gray-100 text-gray-400'}`}>
                                                             {isCompleted ? <FaCheckCircle size={10} /> : <div className="w-1.5 h-1.5 rounded-full bg-current" />}
                                                         </div>
-                                                        <span className={`absolute -bottom-6 whitespace-nowrap text-[8px] font-bold tracking-tight ${isCompleted ? 'text-orange-500' : 'text-gray-300'}`}>
+                                                        <span className={`absolute -bottom-6 whitespace-nowrap text-[8px] font-medium tracking-tight ${isCompleted ? 'text-orange-500' : 'text-gray-300'}`}>
                                                             {step.label}
                                                         </span>
                                                     </div>
@@ -787,7 +820,7 @@ function OrderCard({
                             <span className="text-green-600 font-bold text-sm">+Rs. {order.netRiderEarning || 250}</span>
                         </div>
                         {/* Order Age */}
-                        <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">
+                        <span className="text-[10px] font-medium text-gray-400 uppercase tracking-wider">
                             {timeAgo}
                         </span>
                     </div>
@@ -798,7 +831,7 @@ function OrderCard({
                                 className="flex items-center gap-1.5 px-3 py-1.5 bg-orange-50 text-orange-500 rounded-xl hover:bg-orange-100 transition-all border border-orange-100/50"
                             >
                                 <FaCommentDots size={14} />
-                                <span className="text-[10px] font-bold uppercase tracking-wider">Chat</span>
+                                <span className="text-[10px] font-medium uppercase tracking-wider">Chat</span>
                             </button>
                         )}
                     </div>
@@ -814,7 +847,7 @@ function OrderCard({
                             <FaMapMarkerAlt size={12} />
                         </div>
                         <div className="flex-1">
-                            <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest leading-none mb-1">Pickup</p>
+                            <p className="text-[10px] font-medium text-gray-400 uppercase tracking-widest leading-none mb-1">Pickup</p>
                             <p className="text-[12px] font-bold text-gray-900 line-clamp-1">{order.restaurant?.address || 'Restaurant Address'}</p>
                         </div>
                     </div>
@@ -824,7 +857,7 @@ function OrderCard({
                             <FaMapMarkerAlt size={12} />
                         </div>
                         <div className="flex-1">
-                            <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest leading-none mb-1">Delivery</p>
+                            <p className="text-[10px] font-medium text-gray-400 uppercase tracking-widest leading-none mb-1">Delivery</p>
                             <p className="text-[12px] font-bold text-gray-900 line-clamp-1">{order.deliveryAddress || 'Delivery Address'}</p>
                         </div>
                     </div>
@@ -835,19 +868,19 @@ function OrderCard({
                     <div className="flex items-center gap-3 text-gray-400">
                         <div className="flex items-center gap-1.5">
                             <FaRoute size={12} />
-                            <span className="text-[11px] font-bold">{order.distanceKm || '3.2'} km</span>
+                            <span className="text-[11px] font-medium">{order.distanceKm || '3.2'} km</span>
                         </div>
                         <div className="h-1 w-1 bg-gray-200 rounded-full" />
                         <div className="flex items-center gap-1.5">
                             <FaClock size={12} />
-                            <span className="text-[11px] font-bold">{order.estimatedTime || '15'} min</span>
+                            <span className="text-[11px] font-medium">{order.estimatedTime || '15'} min</span>
                         </div>
                     </div>
                     
                     {/* Action Button */}
                     <button 
                         onClick={() => onViewDetails(order)}
-                        className="text-orange-500 font-bold text-xs uppercase tracking-wider hover:underline"
+                        className="text-orange-500 font-medium text-xs uppercase tracking-wider hover:underline"
                     >
                         View Details
                     </button>

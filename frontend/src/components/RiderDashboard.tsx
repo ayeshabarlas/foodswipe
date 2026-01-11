@@ -13,11 +13,13 @@ import toast from 'react-hot-toast';
 import { API_BASE_URL } from '../utils/config';
 import { initSocket, getSocket, subscribeToChannel, unsubscribeFromChannel } from '../utils/socket';
 import dynamic from 'next/dynamic';
+import ModernLoader from './ModernLoader';
 
 const RiderOrders = dynamic(() => import('./RiderOrders'), { ssr: false });
 const RiderEarnings = dynamic(() => import('./RiderEarnings'), { ssr: false });
 const RiderProfile = dynamic(() => import('./RiderProfile'), { ssr: false });
 const OrderTracking = dynamic(() => import('./OrderTracking'), { ssr: false });
+const NotificationPanel = dynamic(() => import('./NotificationPanel'), { ssr: false });
 
 const RiderDashboard = ({ riderId: initialRiderId }: { riderId?: string }) => {
     const [activeTab, setActiveTab] = useState('home');
@@ -33,6 +35,22 @@ const RiderDashboard = ({ riderId: initialRiderId }: { riderId?: string }) => {
     const [error, setError] = useState<string | null>(null);
     const [showTrackingModal, setShowTrackingModal] = useState(false);
     const [selectedOrderForTracking, setSelectedOrderForTracking] = useState<any>(null);
+    const [showNotifications, setShowNotifications] = useState(false);
+    const [unreadCount, setUnreadCount] = useState(0);
+
+    const fetchNotificationsCount = async () => {
+        try {
+            const userStr = localStorage.getItem('userInfo');
+            if (!userStr) return;
+            const userInfo = JSON.parse(userStr);
+            const config = { headers: { Authorization: `Bearer ${userInfo.token}` } };
+            const res = await axios.get(`${API_BASE_URL}/api/notifications`, config);
+            const unread = res.data.filter((n: any) => !n.read).length;
+            setUnreadCount(unread);
+        } catch (err) {
+            console.error('Error fetching notifications count:', err);
+        }
+    };
 
     const fetchRiderData = async () => {
         try {
@@ -50,6 +68,9 @@ const RiderDashboard = ({ riderId: initialRiderId }: { riderId?: string }) => {
             console.log('Rider profile loaded:', rider);
             setRiderData(rider);
             setIsOnline(rider.isOnline || false);
+
+            // Fetch notifications count
+            fetchNotificationsCount();
 
             // Now fetch orders using the rider's actual ID
             const ordersRes = await axios.get(`${API_BASE_URL}/api/riders/${rider._id}/orders`, config).catch((err) => {
@@ -127,6 +148,14 @@ const RiderDashboard = ({ riderId: initialRiderId }: { riderId?: string }) => {
             setNewOrderPopup(order);
             setTimer(60);
             playNotificationSound();
+        });
+
+        socket.on('notification', (notification: any) => {
+            console.log('New notification received:', notification);
+            setUnreadCount(prev => prev + 1);
+            if (!showNotifications) {
+                toast.success(notification.title || 'New notification');
+            }
         });
 
         return () => {
@@ -288,7 +317,7 @@ const RiderDashboard = ({ riderId: initialRiderId }: { riderId?: string }) => {
     if (loading) {
         return (
             <div className="min-h-screen bg-white flex flex-col items-center justify-center p-4">
-                <div className="w-12 h-12 border-4 border-orange-500 border-t-transparent rounded-full animate-spin"></div>
+                <ModernLoader size="lg" text="Loading Rider Portal..." />
             </div>
         );
     }
@@ -333,10 +362,17 @@ const RiderDashboard = ({ riderId: initialRiderId }: { riderId?: string }) => {
                         </div>
                     </div>
                     <div className="relative">
-                        <div className="w-10 h-10 bg-white/20 backdrop-blur-md rounded-2xl flex items-center justify-center border border-white/20">
+                        <button 
+                            onClick={() => setShowNotifications(true)}
+                            className="w-10 h-10 bg-white/20 backdrop-blur-md rounded-2xl flex items-center justify-center border border-white/20 active:scale-90 transition-transform"
+                        >
                             <FaBell className="text-white text-lg" />
-                            <span className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 rounded-full border-2 border-orange-500 text-[8px] font-medium flex items-center justify-center">3</span>
-                        </div>
+                            {unreadCount > 0 && (
+                                <span className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 rounded-full border-2 border-orange-500 text-[8px] font-medium flex items-center justify-center">
+                                    {unreadCount}
+                                </span>
+                            )}
+                        </button>
                     </div>
                 </div>
 
@@ -649,9 +685,15 @@ function ActionItem({ icon, label, sublabel, onClick }: any) {
         <div className="min-h-screen bg-[#F8F9FA] pb-32 font-light overflow-x-hidden">
             <div className="max-w-md mx-auto px-4 pt-4">
                 {activeTab === 'home' && renderHome()}
-                {activeTab === 'orders' && <RiderOrders riderId={riderData?._id} />}
-                {activeTab === 'earnings' && <RiderEarnings riderId={riderData?._id} />}
-                {activeTab === 'profile' && <RiderProfile riderId={riderData?._id} />}
+            {activeTab === 'orders' && (
+                <RiderOrders 
+                    riderId={riderData?._id} 
+                    setShowNotifications={setShowNotifications} 
+                    unreadCount={unreadCount}
+                />
+            )}
+            {activeTab === 'earnings' && <RiderEarnings riderId={riderData?._id} />}
+            {activeTab === 'profile' && <RiderProfile riderId={riderData?._id} />}
             </div>
 
             <AnimatePresence>
@@ -758,6 +800,16 @@ function ActionItem({ icon, label, sublabel, onClick }: any) {
                     userRole="rider"
                 />
             )}
+
+            <AnimatePresence>
+                {showNotifications && (
+                    <NotificationPanel 
+                        riderId={riderData?._id}
+                        onClose={() => setShowNotifications(false)}
+                        onReadUpdate={fetchNotificationsCount}
+                    />
+                )}
+            </AnimatePresence>
         </div>
     );
 }

@@ -4,6 +4,7 @@ import React, { useState } from 'react';
 import axios from 'axios';
 import { FaStore, FaUtensils, FaArrowLeft, FaCloudUploadAlt, FaTrash, FaPlus, FaCheckCircle, FaExclamationTriangle } from 'react-icons/fa';
 import { API_BASE_URL } from '../utils/config';
+import ModernLoader from './ModernLoader';
 
 interface CreateRestaurantProps {
     onRestaurantCreated: () => void;
@@ -661,7 +662,7 @@ function UploadBox({
                 <label className="cursor-pointer block">
                     <div className="w-14 h-14 bg-blue-50 text-blue-500 rounded-full flex items-center justify-center mx-auto mb-3">
                         {uploading ? (
-                            <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-500"></div>
+                            <ModernLoader size="sm" />
                         ) : (
                             <FaCloudUploadAlt size={22} />
                         )}
@@ -710,7 +711,7 @@ function PhotoGrid({
             {photos.length < maxPhotos && (
                 <label className="aspect-square border-2 border-dashed border-gray-200 rounded-xl flex flex-col items-center justify-center cursor-pointer hover:border-gray-300 hover:bg-gray-50 transition">
                     {uploading ? (
-                        <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-500"></div>
+                        <ModernLoader size="sm" />
                     ) : (
                         <>
                             <FaPlus className="text-gray-400 mb-1" size={14} />
