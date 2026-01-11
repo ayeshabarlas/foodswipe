@@ -1,4 +1,5 @@
 const Voucher = require('../models/Voucher');
+const { triggerEvent } = require('../socket');
 
 // @desc    Get all vouchers
 // @route   GET /api/vouchers
@@ -90,14 +91,11 @@ const createRestaurantVoucher = async (req, res) => {
         });
 
         // Emit socket event for real-time notification
-        const io = req.app.get('io');
-        if (io) {
-            io.emit('new_voucher', {
-                restaurant: restaurant._id,
-                restaurantName: restaurant.name,
-                voucher: voucher,
-            });
-        }
+        triggerEvent('public', 'new_voucher', {
+            restaurant: restaurant._id,
+            restaurantName: restaurant.name,
+            voucher: voucher,
+        });
 
         res.status(201).json(voucher);
     } catch (error) {

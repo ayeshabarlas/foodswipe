@@ -2,6 +2,7 @@ const Payout = require('../models/Payout');
 const Order = require('../models/Order');
 const Restaurant = require('../models/Restaurant');
 const Dish = require('../models/Dish');
+const { triggerEvent } = require('../socket');
 
 // Helper to get restaurant product IDs
 const getRestaurantProductIds = async (restaurantId) => {
@@ -184,7 +185,7 @@ const uploadPaymentProof = async (req, res) => {
         // req.app.get('io').to('admin_room').emit('new_payment_proof', payout);
 
         // Emit back to restaurant to confirm update
-        req.app.get('io').to(`restaurant_${payout.restaurant}`).emit('payment_status_updated', {
+        triggerEvent(`restaurant_${payout.restaurant}`, 'payment_status_updated', {
             payoutId: payout._id,
             status: 'paid'
         });

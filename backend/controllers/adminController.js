@@ -6,6 +6,7 @@ const RestaurantWallet = require('../models/RestaurantWallet');
 const RiderWallet = require('../models/RiderWallet');
 const Video = require('../models/Video');
 const Settings = require('../models/Settings');
+const { triggerEvent } = require('../socket');
 
 // @desc    Get all pending restaurants
 // @route   GET /api/admin/restaurants/pending
@@ -40,9 +41,7 @@ const approveRestaurant = async (req, res) => {
         await restaurant.save();
 
         // Notify admins about status update
-        if (req.app.get('io')) {
-            req.app.get('io').to('admin').emit('restaurant_updated', restaurant);
-        }
+        triggerEvent('admin', 'restaurant_updated', restaurant);
 
         res.json({ message: 'Restaurant approved successfully', restaurant });
     } catch (error) {
@@ -70,9 +69,7 @@ const rejectRestaurant = async (req, res) => {
         await restaurant.save();
 
         // Notify admins about status update
-        if (req.app.get('io')) {
-            req.app.get('io').to('admin').emit('restaurant_updated', restaurant);
-        }
+        triggerEvent('admin', 'restaurant_updated', restaurant);
 
         res.json({ message: 'Restaurant rejected', restaurant });
     } catch (error) {
@@ -598,11 +595,8 @@ const suspendUser = async (req, res) => {
         await user.save();
 
         // Notify admins to refresh UI
-        const io = req.app.get('io');
-        if (io) {
-            io.to('admin').emit('restaurant_updated');
-            io.to('admin').emit('stats_updated');
-        }
+        triggerEvent('admin', 'restaurant_updated');
+        triggerEvent('admin', 'stats_updated');
 
         res.json({ message: 'User suspended successfully', user });
     } catch (error) {
@@ -621,11 +615,8 @@ const unsuspendUser = async (req, res) => {
         await user.save();
 
         // Notify admins to refresh UI
-        const io = req.app.get('io');
-        if (io) {
-            io.to('admin').emit('restaurant_updated');
-            io.to('admin').emit('stats_updated');
-        }
+        triggerEvent('admin', 'restaurant_updated');
+        triggerEvent('admin', 'stats_updated');
 
         res.json({ message: 'User unsuspended successfully', user });
     } catch (error) {
@@ -655,11 +646,8 @@ const deleteUser = async (req, res) => {
         await User.findByIdAndDelete(req.params.id);
 
         // Notify admins to refresh UI
-        const io = req.app.get('io');
-        if (io) {
-            io.to('admin').emit('restaurant_updated');
-            io.to('admin').emit('stats_updated');
-        }
+        triggerEvent('admin', 'restaurant_updated');
+        triggerEvent('admin', 'stats_updated');
 
         res.json({ message: 'User deleted successfully' });
     } catch (error) {
@@ -682,9 +670,7 @@ const deleteRestaurant = async (req, res) => {
         await Restaurant.findByIdAndDelete(req.params.id);
 
         // Notify admins
-        if (req.app.get('io')) {
-            req.app.get('io').to('admin').emit('restaurant_updated');
-        }
+        triggerEvent('admin', 'restaurant_updated');
 
         res.json({ message: 'Restaurant and its dishes deleted successfully' });
     } catch (error) {
@@ -703,9 +689,7 @@ const deleteRider = async (req, res) => {
         await Rider.findByIdAndDelete(req.params.id);
 
         // Notify admins
-        if (req.app.get('io')) {
-            req.app.get('io').to('admin').emit('rider_updated');
-        }
+        triggerEvent('admin', 'rider_updated');
 
         res.json({ message: 'Rider deleted successfully' });
     } catch (error) {
@@ -721,15 +705,12 @@ const cleanupMockData = async (req, res) => {
         await seedData();
         
         // Notify all admins to refresh their dashboards
-        const io = req.app.get('io');
-        if (io) {
-            io.to('admin').emit('restaurant_updated');
-            io.to('admin').emit('stats_updated');
-            io.to('admin').emit('notification', {
-                type: 'success',
-                message: 'System cleanup completed successfully'
-            });
-        }
+        triggerEvent('admin', 'restaurant_updated');
+        triggerEvent('admin', 'stats_updated');
+        triggerEvent('admin', 'notification', {
+            type: 'success',
+            message: 'System cleanup completed successfully'
+        });
         
         res.json({ message: 'Mock data cleanup triggered successfully. All dashboards will refresh.' });
     } catch (error) {

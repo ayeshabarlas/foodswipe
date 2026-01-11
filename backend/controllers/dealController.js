@@ -1,5 +1,6 @@
 const Deal = require('../models/Deal');
 const Restaurant = require('../models/Restaurant');
+const { triggerEvent } = require('../socket');
 
 /**
  * @desc    Create deal
@@ -41,14 +42,11 @@ const createDeal = async (req, res) => {
         });
 
         // Emit socket event for real-time notification
-        const io = req.app.get('io');
-        if (io) {
-            io.emit('new_deal', {
-                restaurant: restaurant._id,
-                restaurantName: restaurant.name,
-                deal: deal,
-            });
-        }
+        triggerEvent('public', 'new_deal', {
+            restaurant: restaurant._id,
+            restaurantName: restaurant.name,
+            deal: deal,
+        });
 
         res.status(201).json(deal);
     } catch (error) {

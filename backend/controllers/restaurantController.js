@@ -2,6 +2,7 @@ const Restaurant = require('../models/Restaurant');
 const Video = require('../models/Video');
 const User = require('../models/User');
 const Order = require('../models/Order');
+const { triggerEvent } = require('../socket');
 
 /**
  * Normalizes image/video paths to store only the relative path
@@ -74,9 +75,7 @@ const createRestaurant = async (req, res) => {
         }
 
         // Notify admins about new registration
-        if (req.app.get('io')) {
-            req.app.get('io').to('admin').emit('restaurant_registered', restaurant);
-        }
+        triggerEvent('admin', 'restaurant_registered', restaurant);
 
         res.status(201).json(restaurant);
     } catch (error) {
