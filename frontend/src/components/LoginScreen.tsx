@@ -183,7 +183,8 @@ export default function LoginScreen({ onLogin }: LoginScreenProps) {
                                 onClick={async () => {
                                     try {
                                         const res = await axios.get(`${API_BASE_URL}/health`);
-                                        alert(`Backend is reachable! Status: ${res.data}`);
+                                        const status = typeof res.data === 'object' ? JSON.stringify(res.data, null, 2) : res.data;
+                                        alert(`Backend is reachable! Status: ${status}`);
                                     } catch (e: any) {
                                         alert(`Backend unreachable: ${e.message}. URL: ${API_BASE_URL}`);
                                     }
