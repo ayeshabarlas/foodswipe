@@ -3,11 +3,11 @@ console.log('🚀 Backend Server Starting...');
 // Load environment variables
 require('dotenv').config();
 if (process.env.NODE_ENV !== 'production') {
-    const path = require('path');
     require('dotenv').config({ path: path.join(__dirname, '.env') });
 }
 
 const express = require('express');
+const path = require('path');
 const cors = require('cors');
 const { initSocket } = require('./socket');
 const { connectDB, getDbStatus } = require('./config/db');
