@@ -359,8 +359,11 @@ const processOrderCompletion = async (order, distanceKm = 5, req = null) => {
                 { orderId: order._id, amount: riderEarning }
             );
 
-            // Emit Real-time Notification
+            // Emit Real-time Notification for Rider
+            // Notify both as user and as rider to be safe
             triggerEvent(`user-${riderUserId}`, 'notification', notification);
+            triggerEvent(`rider-${rider._id}`, 'notification', notification);
+            triggerEvent(`rider-${rider._id}`, 'orderStatusUpdate', order);
         }
 
         // 4. Update Restaurant Wallet & Stats
@@ -388,14 +391,17 @@ const processOrderCompletion = async (order, distanceKm = 5, req = null) => {
             metadata: { subtotal, commissionAmount }
         });
 
-        // 5. Create Transaction for Admin/Platform (Commission)
+        // 5. Create Transaction for Platform (Commission)
+        // Fix: Use 'platform' entityType and a valid placeholder ID if needed, 
+        // or just use the restaurant ID as the entityId since it's the source
         await Transaction.create({
-            entityType: 'admin',
-            entityId: null, // Platform doesn't have a specific ID in this context
+            entityType: 'platform',
+            entityId: order.restaurant, // Source of commission
+            entityModel: 'Restaurant',
             order: order._id,
             type: 'commission',
             amount: commissionAmount,
-            balanceAfter: 0, // Platform balance not tracked in a single wallet here
+            balanceAfter: 0,
             description: `Commission from order #${order.orderNumber || order._id.toString().slice(-6)}`
         });
 
@@ -519,6 +525,11 @@ const completeOrder = async (req, res) => {
         triggerEvent(`user-${order.user}`, 'orderStatusUpdate', updatedOrder);
         triggerEvent(`restaurant-${order.restaurant}`, 'orderStatusUpdate', updatedOrder);
         triggerEvent('admin', 'order_updated', updatedOrder);
+        
+        // Notify rider specifically
+        if (order.rider) {
+            triggerEvent(`rider-${order.rider}`, 'orderStatusUpdate', updatedOrder);
+        }
 
         res.json(updatedOrder);
     } catch (error) {
