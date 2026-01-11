@@ -9,7 +9,7 @@ const getApiUrl = () => {
   
   // Priority 3: Production fallback (Hardcoded Render/Vercel URL)
   if (!url && process.env.NODE_ENV === 'production') {
-    url = 'https://foodswipe-backend.onrender.com'; // Default Render URL
+    url = 'https://foodswipe-6178.onrender.com'; // Updated from user screenshot
   }
 
   // Priority 4: Localhost fallback
@@ -40,7 +40,7 @@ const getSocketUrl = () => {
   
   // Priority 2: Production fallback (Hardcoded Render/Vercel URL)
   if (!url && process.env.NODE_ENV === 'production') {
-    url = 'https://foodswipe-backend.onrender.com';
+    url = 'https://foodswipe-6178.onrender.com';
   }
 
   // Priority 3: Localhost fallback
