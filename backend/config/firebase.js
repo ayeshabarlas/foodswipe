@@ -16,21 +16,31 @@ if (!admin.apps.length) {
                 
                 if (!bucketName && serviceAccount.project_id) {
                     // Try to determine if it's a newer or older project
-                    // Most projects still use .appspot.com, newer ones use .firebasestorage.app
-                    // We'll default to .appspot.com if not specified, as it's more common for existing projects
-                    bucketName = `${serviceAccount.project_id}.appspot.com`;
-                    console.log(`ℹ️ Derived bucket name: ${bucketName}`);
+                    // Newer ones use .firebasestorage.app, older ones use .appspot.com
+                    // We'll log the project_id to help troubleshooting
+                    console.log(`ℹ️ Project ID from service account: ${serviceAccount.project_id}`);
+                    
+                    // Since the user reported 404 with .appspot.com, let's try .firebasestorage.app
+                    // or just leave it undefined and let Firebase Admin try to find it
+                    bucketName = `${serviceAccount.project_id}.firebasestorage.app`;
+                    console.log(`ℹ️ Trying bucket name: ${bucketName}`);
                 }
                 
-                admin.initializeApp({
-                    credential: admin.credential.cert(serviceAccount),
-                    storageBucket: bucketName
-                });
-                console.log(`✅ Firebase Admin SDK initialized successfully with bucket: ${bucketName || 'default'}`);
+                const options = {
+                    credential: admin.credential.cert(serviceAccount)
+                };
+                
+                if (bucketName) {
+                    options.storageBucket = bucketName;
+                }
+                
+                admin.initializeApp(options);
+                console.log(`✅ Firebase Admin SDK initialized successfully`);
             } catch (parseErr) {
                 console.error('❌ Firebase Service Account Parse Error:', parseErr.message);
                 console.warn('⚠️ Firebase initialized without credentials (limited functionality)');
-                const fallbackBucket = process.env.FIREBASE_STORAGE_BUCKET || 'foodswipe-be395.appspot.com';
+                // Fallback
+                const fallbackBucket = process.env.FIREBASE_STORAGE_BUCKET || 'foodswipe-be395.firebasestorage.app';
                 admin.initializeApp({
                     storageBucket: fallbackBucket
                 });
@@ -38,7 +48,7 @@ if (!admin.apps.length) {
             }
         } else {
             console.warn('⚠️ FIREBASE_SERVICE_ACCOUNT_JSON is missing. Using default initialization.');
-            const fallbackBucket = process.env.FIREBASE_STORAGE_BUCKET || 'foodswipe-be395.appspot.com';
+            const fallbackBucket = process.env.FIREBASE_STORAGE_BUCKET || 'foodswipe-be395.firebasestorage.app';
             admin.initializeApp({
                 storageBucket: fallbackBucket
             });

@@ -275,10 +275,10 @@ const updateOrderStatus = async (req, res) => {
  */
 const processOrderCompletion = async (order, distanceKm = 5, req = null) => {
     try {
-        console.log(`[Finance] Processing completion for Order: ${order._id}`);
+        console.log(`[Finance] Processing completion for Order: ${order._id}, Status: ${order.status}`);
         
         if (!order.rider) {
-            console.error(`[Finance] Order ${order._id} completion attempted without rider assigned. Status: ${order.status}`);
+            console.error(`[Finance] Order ${order._id} completion attempted without rider assigned.`);
             throw new Error('No rider assigned to this order. Please accept the order first.');
         }
 
@@ -326,11 +326,14 @@ const processOrderCompletion = async (order, distanceKm = 5, req = null) => {
         order.deliveredAt = new Date();
 
         // 4. Update Rider Wallet & Stats
-        let rider = await Rider.findById(order.rider).populate('user');
+        // Use the string version of rider ID for the query
+        const riderIdStr = order.rider.toString();
+        let rider = await Rider.findById(riderIdStr).populate('user');
+        
         if (!rider) {
-            // Try fallback finding by user ID just in case
-            console.warn(`[Finance] Rider profile not found by ID ${order.rider}, trying fallback search...`);
-            rider = await Rider.findOne({ user: order.rider }).populate('user');
+            // Try fallback finding by user ID just in case the order.rider stored the User ID instead of Rider ID
+            console.warn(`[Finance] Rider profile not found by ID ${riderIdStr}, trying fallback search by User ID...`);
+            rider = await Rider.findOne({ user: riderIdStr }).populate('user');
         }
 
         if (rider) {
@@ -357,6 +360,7 @@ const processOrderCompletion = async (order, distanceKm = 5, req = null) => {
             // Update RiderWallet model
             let riderWallet = await RiderWallet.findOne({ rider: rider._id });
             if (!riderWallet) {
+                console.log(`[Finance] Creating new RiderWallet for rider: ${rider._id}`);
                 riderWallet = await RiderWallet.create({ 
                     rider: rider._id,
                     totalEarnings: 0,
@@ -397,7 +401,7 @@ const processOrderCompletion = async (order, distanceKm = 5, req = null) => {
                 triggerEvent(`rider-${rider._id}`, 'notification', notification);
             }
         } else {
-            console.error(`[Finance] CRITICAL: Rider profile not found for ID: ${order.rider}`);
+            console.error(`[Finance] CRITICAL: Rider profile not found for order.rider value: ${riderIdStr}`);
             throw new Error('Rider profile not found. Payment cannot be processed.');
         }
 

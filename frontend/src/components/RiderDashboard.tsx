@@ -710,7 +710,7 @@ function ActionItem({ icon, label, sublabel, onClick }: any) {
                                     <h2 className="text-2xl font-semibold text-gray-900">New Order!</h2>
                                     <div className="flex items-center gap-2 mt-1">
                                         <div className="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse" />
-                                        <span className="text-[10px] font-bold text-green-600 uppercase tracking-wider">Live</span>
+                                        <span className="text-[10px] font-semibold text-green-600 uppercase tracking-wider">Live</span>
                                     </div>
                                 </div>
                                 <div className="w-12 h-12 bg-orange-50 rounded-2xl flex items-center justify-center text-orange-500">
@@ -830,7 +830,7 @@ function NavButton({ active, onClick, icon, label }: any) {
             <div className={`${active ? 'scale-110' : 'scale-100'} transition-transform`}>
                 {icon}
             </div>
-            <span className={`text-[10px] font-bold uppercase tracking-widest ${active ? 'block' : 'hidden sm:block'}`}>
+            <span className={`text-[10px] font-semibold uppercase tracking-widest ${active ? 'block' : 'hidden sm:block'}`}>
                 {label}
             </span>
         </button>
