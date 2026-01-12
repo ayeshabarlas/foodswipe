@@ -99,7 +99,7 @@ export default function RiderProfile({ riderId }: RiderProfileProps) {
                 <p className="text-red-500 mb-4">{error}</p>
                 <button
                     onClick={() => window.location.reload()}
-                    className="px-6 py-2 bg-gradient-to-r from-orange-500 to-red-500 text-white rounded-xl font-bold shadow-md hover:from-orange-600 hover:to-red-600 transition-all"
+                    className="px-6 py-2 bg-gradient-to-r from-orange-500 to-red-500 text-white rounded-xl font-semibold shadow-md hover:from-orange-600 hover:to-red-600 transition-all"
                 >
                     Retry
                 </button>
@@ -131,7 +131,7 @@ export default function RiderProfile({ riderId }: RiderProfileProps) {
                         >
                             <FaBell className="text-lg" />
                             {unreadCount > 0 && (
-                                <span className="absolute -top-1 -right-1 w-5 h-5 bg-white text-orange-600 text-[10px] font-bold rounded-full flex items-center justify-center border-2 border-orange-500">
+                                <span className="absolute -top-1 -right-1 w-5 h-5 bg-white text-orange-600 text-[10px] font-semibold rounded-full flex items-center justify-center border-2 border-orange-500">
                                     {unreadCount}
                                 </span>
                             )}
@@ -147,7 +147,7 @@ export default function RiderProfile({ riderId }: RiderProfileProps) {
 
                 <div className="flex items-center gap-5 relative z-10">
                     <div className="relative">
-                        <div className="w-24 h-24 bg-white rounded-[32px] flex items-center justify-center text-orange-500 font-bold text-3xl overflow-hidden shadow-2xl border-4 border-white/20">
+                        <div className="w-24 h-24 bg-white rounded-[32px] flex items-center justify-center text-orange-500 font-semibold text-3xl overflow-hidden shadow-2xl border-4 border-white/20">
                             {riderData.fullName?.[0] || 'R'}
                         </div>
                         <button className="absolute -bottom-1 -right-1 w-8 h-8 bg-white rounded-xl flex items-center justify-center text-orange-500 text-xs shadow-lg border border-orange-100">
@@ -155,9 +155,9 @@ export default function RiderProfile({ riderId }: RiderProfileProps) {
                         </button>
                     </div>
                     <div className="flex-1">
-                        <h2 className="text-3xl font-bold text-white leading-tight">{riderData.fullName || 'Rider'}</h2>
+                        <h2 className="text-3xl font-semibold text-white leading-tight">{riderData.fullName || 'Rider'}</h2>
                         <div className="flex items-center gap-2 mt-2">
-                            <span className="px-3 py-1 bg-white/10 backdrop-blur-md rounded-lg text-[10px] font-bold text-white border border-white/20 uppercase tracking-widest">
+                            <span className="px-3 py-1 bg-white/10 backdrop-blur-md rounded-lg text-[10px] font-semibold text-white border border-white/20 uppercase tracking-widest">
                                 {riderData.vehicleType || 'Bike'}
                             </span>
                             <span className="flex items-center gap-1 text-white/80 text-xs font-light">
@@ -285,8 +285,8 @@ function MetricItem({ icon, label, value, color }: { icon: React.ReactNode; labe
             <div className={`w-14 h-14 ${color} rounded-[20px] flex items-center justify-center mb-3 shadow-sm`}>
                 <div className="text-xl">{icon}</div>
             </div>
-            <p className="text-[10px] text-gray-400 font-bold uppercase tracking-[0.1em] mb-1">{label}</p>
-            <p className="text-xl font-bold text-gray-900 tracking-tight">{value}</p>
+            <p className="text-[10px] text-gray-400 font-semibold uppercase tracking-[0.1em] mb-1">{label}</p>
+            <p className="text-xl font-semibold text-gray-900 tracking-tight">{value}</p>
         </div>
     );
 }
@@ -298,7 +298,7 @@ function InfoItem({ icon, label, value }: { icon: React.ReactNode; label: string
                 {icon}
             </div>
             <div>
-                <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest mb-1">{label}</p>
+                <p className="text-[10px] text-gray-400 font-semibold uppercase tracking-widest mb-1">{label}</p>
                 <p className="text-base font-medium text-gray-900 tracking-tight">{value}</p>
             </div>
         </div>
@@ -316,7 +316,7 @@ function DocumentItem({ icon, title, status, verified, onClick }: { icon: React.
                     {icon}
                 </div>
                 <div className="text-left">
-                    <p className="text-sm font-bold text-gray-900 tracking-tight">{title}</p>
+                    <p className="text-sm font-semibold text-gray-900 tracking-tight">{title}</p>
                     <p className={`text-[10px] font-medium uppercase tracking-wider mt-0.5 ${verified ? 'text-green-600' : 'text-orange-500'}`}>
                         {status}
                     </p>
@@ -346,7 +346,7 @@ function UploadModal({ title, onClose, onUpload }: { title: string; onClose: () 
             <div className="bg-white rounded-t-[40px] sm:rounded-[40px] w-full max-w-sm p-8 shadow-2xl animate-slide-up">
                 <div className="w-12 h-1 bg-gray-100 rounded-full mx-auto mb-8 sm:hidden"></div>
                 <div className="flex justify-between items-center mb-8">
-                    <h3 className="text-2xl font-bold text-gray-900 tracking-tight">Upload {title}</h3>
+                    <h3 className="text-2xl font-semibold text-gray-900 tracking-tight">Upload {title}</h3>
                     <button onClick={onClose} className="w-10 h-10 bg-gray-50 rounded-full flex items-center justify-center text-gray-400 hover:text-gray-600 transition-all">
                         <FaTimes />
                     </button>
@@ -357,14 +357,14 @@ function UploadModal({ title, onClose, onUpload }: { title: string; onClose: () 
                         <div className="w-16 h-16 bg-gray-50 rounded-[24px] flex items-center justify-center text-gray-300 group-hover:text-[#008C44] group-hover:bg-green-50 transition-all mb-4">
                             <FaCamera size={24} />
                         </div>
-                        <p className="text-sm font-bold text-gray-900 mb-1">Take a photo</p>
+                        <p className="text-sm font-semibold text-gray-900 mb-1">Take a photo</p>
                         <p className="text-[10px] text-gray-400 font-medium uppercase tracking-wider">or browse gallery</p>
                     </div>
 
                     <button
                         onClick={handleSimulatedUpload}
                         disabled={uploading}
-                        className={`w-full py-5 bg-gradient-to-r from-orange-500 to-red-500 text-white font-bold rounded-[24px] shadow-lg shadow-orange-100 hover:from-orange-600 hover:to-red-600 transition-all active:scale-[0.98] flex items-center justify-center gap-2 ${uploading ? 'opacity-70' : ''}`}
+                        className={`w-full py-5 bg-gradient-to-r from-orange-500 to-red-500 text-white font-semibold rounded-[24px] shadow-lg shadow-orange-100 hover:from-orange-600 hover:to-red-600 transition-all active:scale-[0.98] flex items-center justify-center gap-2 ${uploading ? 'opacity-70' : ''}`}
                     >
                         {uploading ? (
                             <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
@@ -403,7 +403,7 @@ function SettingsModal({ riderData, riderId, onClose, onUpdate }: { riderData: a
             <div className="bg-white w-full rounded-t-[40px] p-8 pb-10 shadow-2xl transform transition-transform animate-slide-up">
                 <div className="w-12 h-1 bg-gray-200 rounded-full mx-auto mb-8"></div>
                 <div className="flex justify-between items-center mb-8">
-                    <h3 className="text-2xl font-bold text-gray-900 tracking-tight">Settings</h3>
+                    <h3 className="text-2xl font-semibold text-gray-900 tracking-tight">Settings</h3>
                     <button onClick={onClose} className="w-10 h-10 bg-gray-50 rounded-full flex items-center justify-center text-gray-400 hover:text-gray-600 transition-colors">
                         <FaTimes />
                     </button>

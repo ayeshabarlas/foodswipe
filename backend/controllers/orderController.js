@@ -560,6 +560,7 @@ const completeOrder = async (req, res) => {
                 console.warn(`[Order] Auto-assigning missing rider ${rider._id} to order ${order._id} during completion`);
                 order.rider = rider._id;
                 order.riderAcceptedAt = order.riderAcceptedAt || new Date();
+                await order.save(); // Persist rider assignment before processing completion
             }
         }
 

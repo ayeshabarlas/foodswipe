@@ -132,7 +132,7 @@ export default function RiderEarnings({ riderId }: RiderEarningsProps) {
                         <button 
                             key={p}
                             onClick={() => setPeriod(p as any)}
-                            className={`flex-1 py-2.5 rounded-xl text-xs transition-all uppercase tracking-widest font-bold ${period === p ? 'bg-white text-orange-500 shadow-lg' : 'text-white/70'}`}
+                            className={`flex-1 py-2.5 rounded-xl text-xs transition-all uppercase tracking-widest font-semibold ${period === p ? 'bg-white text-orange-500 shadow-lg' : 'text-white/70'}`}
                         >
                             {p}
                         </button>
@@ -140,8 +140,8 @@ export default function RiderEarnings({ riderId }: RiderEarningsProps) {
                 </div>
 
                 <div className="text-center relative z-10">
-                    <p className="text-white/60 text-[10px] mb-2 uppercase tracking-[0.2em] font-bold">Total This {period}</p>
-                    <h2 className="text-5xl font-bold mb-2 tracking-tighter">Rs {earnings.total.toLocaleString()}</h2>
+                    <p className="text-white/60 text-[10px] mb-2 uppercase tracking-[0.2em] font-semibold">Total This {period}</p>
+                    <h2 className="text-5xl font-semibold mb-2 tracking-tighter">Rs {earnings.total.toLocaleString()}</h2>
                     <p className="text-white/80 text-xs font-light tracking-wide">{earnings.deliveries} deliveries completed</p>
                 </div>
             </div>
@@ -163,7 +163,7 @@ export default function RiderEarnings({ riderId }: RiderEarningsProps) {
                         <div className="flex justify-between items-start mb-4">
                             <div>
                                 <p className="text-white/70 text-sm font-light mb-1">Pending Payout</p>
-                                <h3 className="text-3xl font-bold">Rs {earnings.pendingPayout.toLocaleString()}</h3>
+                                <h3 className="text-3xl font-semibold">Rs {earnings.pendingPayout.toLocaleString()}</h3>
                             </div>
                             <div className="w-12 h-12 bg-white/20 backdrop-blur-md rounded-2xl flex items-center justify-center">
                                 <FaWallet size={24} />
@@ -173,7 +173,7 @@ export default function RiderEarnings({ riderId }: RiderEarningsProps) {
                             <p className="text-white/80 text-xs">Next payout: <span className="font-medium">{earnings.nextPayoutDate}</span></p>
                             <button
                                 onClick={handleCashout}
-                                className="bg-white/20 backdrop-blur-md text-white px-6 py-2.5 rounded-2xl text-[10px] font-bold uppercase tracking-widest hover:bg-white/30 transition border border-white/30"
+                                className="bg-white/20 backdrop-blur-md text-white px-6 py-2.5 rounded-2xl text-[10px] font-semibold uppercase tracking-widest hover:bg-white/30 transition border border-white/30"
                             >
                                 Cash Out
                             </button>
@@ -184,14 +184,14 @@ export default function RiderEarnings({ riderId }: RiderEarningsProps) {
 
             {/* Bank Account Section */}
             <div className="px-6 mb-8">
-                <p className="text-gray-400 text-[10px] font-bold uppercase tracking-widest mb-4 px-1">Bank Account</p>
+                <p className="text-gray-400 text-[10px] font-semibold uppercase tracking-widest mb-4 px-1">Bank Account</p>
                 <div className="bg-white rounded-[24px] p-5 shadow-[0_4px_20px_rgb(0,0,0,0.03)] border border-gray-50 flex items-center justify-between">
                     <div className="flex items-center gap-4">
                         <div className="w-12 h-12 bg-gray-50 rounded-2xl flex items-center justify-center text-gray-400">
                             <FaUniversity size={20} />
                         </div>
                         <div className="flex-1">
-                            <p className="text-gray-900 font-bold text-sm tracking-tight">
+                            <p className="text-gray-900 font-semibold text-sm tracking-tight">
                                 {bankDetails.bankName || 'Add Bank Account'}
                             </p>
                             <p className="text-gray-400 text-[10px] font-medium uppercase tracking-wider mt-0.5">
