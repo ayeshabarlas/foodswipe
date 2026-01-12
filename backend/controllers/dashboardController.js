@@ -31,7 +31,7 @@ const getDashboardStats = async (req, res) => {
                 $match: {
                     restaurant: restaurant._id,
                     createdAt: { $gte: today },
-                    status: { $in: ['Delivered', 'Completed'] } // Assuming 'Delivered' or 'Completed' means paid/revenue realized
+                    status: { $in: ['Pending', 'Preparing', 'Ready', 'Out for Delivery', 'Delivered', 'Completed'] }
                 }
             },
             {

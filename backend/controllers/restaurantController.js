@@ -278,7 +278,7 @@ const getRestaurantAnalytics = async (req, res) => {
         // Financial Analytics
         const completedOrders = await Order.find({ 
             restaurant: restaurant._id, 
-            status: { $in: ['Delivered', 'Completed'] } 
+            status: { $in: ['Pending', 'Preparing', 'Ready', 'Out for Delivery', 'Delivered', 'Completed'] } 
         });
 
         const grossSales = completedOrders.reduce((sum, order) => sum + (order.totalPrice || 0), 0);

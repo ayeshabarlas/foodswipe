@@ -32,7 +32,7 @@ const calculateTotals = async (restaurantId, start, end) => {
     
     const orders = await Order.find({
         restaurant: restaurantId,
-        status: { $in: ['Delivered', 'Completed'] },
+        status: { $in: ['Pending', 'Preparing', 'Ready', 'Out for Delivery', 'Delivered', 'Completed'] },
         createdAt: { $gte: start, $lte: end }
     });
 

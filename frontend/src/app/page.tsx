@@ -118,13 +118,9 @@ export default function Home() {
     localStorage.setItem("hasRestaurant", "true");
   };
 
-  // Show splash screen first
-  if (showSplash) {
-    return <SplashScreen onComplete={() => setShowSplash(false)} />;
-  }
-
-  if (loading) {
-    return <div className="h-screen w-full bg-black flex items-center justify-center text-white">Loading...</div>;
+  // Show splash screen until both timer is done AND loading is finished
+  if (showSplash || loading) {
+    return <SplashScreen onComplete={() => setShowSplash(false)} isLoading={loading} />;
   }
 
   if (!isLoggedIn) {
@@ -193,9 +189,9 @@ export default function Home() {
   if (userRole === "restaurant") {
     if (checkingRestaurant) {
       return (
-        <div className="h-screen w-full bg-black flex flex-col items-center justify-center text-white">
-          <div className="w-12 h-12 border-4 border-orange-500 border-t-transparent rounded-full animate-spin mb-4"></div>
-          <p className="animate-pulse">Loading restaurant dashboard...</p>
+        <div className="h-screen w-full bg-gradient-to-br from-orange-500/10 via-black to-pink-500/10 flex flex-col items-center justify-center text-white">
+          <div className="w-12 h-12 border-4 border-orange-500 border-t-transparent rounded-full animate-spin mb-4 shadow-[0_0_15px_rgba(249,115,22,0.5)]"></div>
+          <p className="animate-pulse text-orange-500 font-medium tracking-wide">Loading restaurant dashboard...</p>
         </div>
       );
     }

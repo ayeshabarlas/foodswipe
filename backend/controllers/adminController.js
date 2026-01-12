@@ -430,7 +430,7 @@ const getAllRiders = async (req, res) => {
 const getRestaurantSales = async (req, res) => {
     try {
         const sales = await Order.aggregate([
-            { $match: { status: { $in: ['Delivered', 'Completed'] } } },
+            { $match: { status: { $in: ['Pending', 'Preparing', 'Ready', 'Out for Delivery', 'Delivered', 'Completed'] } } },
             {
                 $group: {
                     _id: '$restaurant',

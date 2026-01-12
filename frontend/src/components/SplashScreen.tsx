@@ -6,19 +6,26 @@ import { FaUtensils } from 'react-icons/fa';
 
 interface SplashScreenProps {
     onComplete: () => void;
+    isLoading?: boolean;
 }
 
-export default function SplashScreen({ onComplete }: SplashScreenProps) {
+export default function SplashScreen({ onComplete, isLoading = false }: SplashScreenProps) {
     const [isVisible, setIsVisible] = useState(true);
 
     useEffect(() => {
+        // If still loading, don't start the exit timer
+        if (isLoading) {
+            setIsVisible(true);
+            return;
+        }
+
         const timer = setTimeout(() => {
             setIsVisible(false);
             setTimeout(onComplete, 500); // Wait for exit animation
-        }, 2500);
+        }, 2000); // Reduced slightly for better feel
 
         return () => clearTimeout(timer);
-    }, [onComplete]);
+    }, [onComplete, isLoading]);
 
     return (
         <AnimatePresence>

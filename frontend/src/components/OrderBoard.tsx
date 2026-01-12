@@ -279,18 +279,25 @@ export default function OrderBoard({ restaurant, onUpdate }: OrderBoardProps) {
                         <span className="text-gray-900 text-base font-medium">Rs. {order.totalPrice.toFixed(0)}</span>
                     </div>
                     
-                    {order.commissionAmount !== undefined && (
-                        <>
-                            <div className="flex justify-between items-center text-red-500">
-                                <span className="text-[11px] font-light">Admin Commission ({order.commissionPercent}%)</span>
-                                <span className="text-[11px] font-medium">- Rs. {order.commissionAmount.toFixed(0)}</span>
-                            </div>
-                            <div className="flex justify-between items-center text-green-600 pt-1 border-t border-dashed border-gray-100">
-                                <span className="text-[11px] font-bold">Your Earnings</span>
-                                <span className="text-sm font-bold">Rs. {order.restaurantEarning?.toFixed(0)}</span>
-                            </div>
-                        </>
-                    )}
+                    {(() => {
+                        const subtotal = order.subtotal || order.orderAmount || (order.totalPrice - (order.deliveryFee || 0));
+                        const commRate = order.commissionPercent || 15;
+                        const commAmount = order.commissionAmount || (subtotal * commRate / 100);
+                        const restEarning = order.restaurantEarning || (subtotal - commAmount);
+
+                        return (
+                            <>
+                                <div className="flex justify-between items-center text-red-500">
+                                    <span className="text-[11px] font-light">Admin Commission ({commRate}%)</span>
+                                    <span className="text-[11px] font-medium">- Rs. {commAmount.toFixed(0)}</span>
+                                </div>
+                                <div className="flex justify-between items-center text-green-600 pt-1 border-t border-dashed border-gray-100">
+                                    <span className="text-[11px] font-bold">Your Earnings</span>
+                                    <span className="text-sm font-bold">Rs. {restEarning.toFixed(0)}</span>
+                                </div>
+                            </>
+                        );
+                    })()}
                 </div>
 
                 <div className="flex items-start gap-2 mb-6 px-1 text-gray-400">

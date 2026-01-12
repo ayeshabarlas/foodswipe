@@ -55,9 +55,8 @@ const loginUser = async (req, res) => {
     try {
         console.log(`Login attempt: identifier=${identifier}, role=${role}`);
         
-        // 1. Try to find the user by email or phone. 
-        // We search for the requested role first to be precise.
-        let user = await User.findOne({
+        // 1. Find the user by email or phone AND strict role match.
+        const user = await User.findOne({
             $or: [
                 { email: { $regex: new RegExp(`^${identifier}$`, 'i') } },
                 { phone: identifier },
@@ -66,21 +65,26 @@ const loginUser = async (req, res) => {
             role: role || 'customer'
         });
 
-        // 1b. If not found with specific role, search for ANY user with this identifier
         if (!user) {
-            user = await User.findOne({
+            console.log(`Login failed: No user found for ${identifier} with role ${role || 'customer'}`);
+            
+            // Check if account exists with a different role for better user experience
+            const existsAnywhere = await User.findOne({
                 $or: [
                     { email: { $regex: new RegExp(`^${identifier}$`, 'i') } },
                     { phone: identifier },
                     { phoneNumber: identifier }
                 ]
             });
-        }
 
-        if (!user) {
-            console.log(`Login failed: No user found for ${identifier}`);
+            if (existsAnywhere) {
+                return res.status(401).json({ 
+                    message: `This account is registered as a ${existsAnywhere.role}. Please log in through the ${existsAnywhere.role} section.` 
+                });
+            }
+
             return res.status(401).json({ 
-                message: "Account not registered. Please sign up." 
+                message: `Account not found for this role. Please ensure you are logging into the correct section.` 
             });
         }
 
@@ -90,12 +94,6 @@ const loginUser = async (req, res) => {
             if (!isMatch) {
                 return res.status(400).json({ message: 'Invalid password' });
             }
-        }
-
-        // 3. Role validation (optional check but we return the actual user role)
-        if (role && user.role !== role) {
-            console.log(`Role mismatch: User ${identifier} is ${user.role}, but tried logging in as ${role}`);
-            // We can either block or allow. Let's allow but inform the frontend.
         }
 
         console.log('User logged in successfully:', { id: user._id, email: user.email, role: user.role });
@@ -189,6 +187,17 @@ const verifyOtp = async (req, res) => {
 
         let type = 'login';
         if (!user) {
+            // Check if account exists with a different role
+            const existsAnywhere = await User.findOne({
+                $or: [{ phone }, { phoneNumber: phone }],
+            });
+
+            if (existsAnywhere) {
+                return res.status(400).json({ 
+                    message: `This phone number is registered as a ${existsAnywhere.role}. Please log in through the ${existsAnywhere.role} section.` 
+                });
+            }
+
             if (!name || !email) {
                 console.log(`VerifyOtp failed: Signup incomplete for ${phone} role ${requestedRole}`);
                 return res.status(400).json({ message: 'Name and email required for signup' });
@@ -263,10 +272,9 @@ const verifyFirebaseToken = async (req, res) => {
         const verifiedPhone = decoded.phone_number || phone;
         const requestedRole = req.body.role || 'customer';
 
-        // Try to find user by phone if available, otherwise by email (and role if provided)
+        // Find user by phone/email AND strict role match.
         let user = null;
         if (verifiedPhone) {
-            // Check both phone and phoneNumber fields
             user = await User.findOne({
                 $or: [{ phone: verifiedPhone }, { phoneNumber: verifiedPhone }],
                 role: requestedRole
@@ -275,17 +283,24 @@ const verifyFirebaseToken = async (req, res) => {
         if (!user && email) {
             user = await User.findOne({ email, role: requestedRole });
         }
+
         let type = 'login';
         if (!user) {
-            // Prevent creating an account if email already exists with password for the same role
-            if (email) {
-                const existing = await User.findOne({ email, role: req.body.role || 'customer' });
-                if (existing && existing.password) {
-                    return res.status(400).json({
-                        message: 'This email is already registered. Please log in with your email and password instead.'
-                    });
-                }
+            // Check if this identifier exists for ANY role (optional, for better error message)
+            const existsAnywhere = await User.findOne({
+                $or: [
+                    { email: email || 'nevermatch' },
+                    { phone: verifiedPhone || 'nevermatch' },
+                    { phoneNumber: verifiedPhone || 'nevermatch' }
+                ]
+            });
+
+            if (existsAnywhere && existsAnywhere.role !== requestedRole) {
+                return res.status(400).json({
+                    message: `This account is registered as a ${existsAnywhere.role}. Please log in through the ${existsAnywhere.role} section.`
+                });
             }
+
             if (!name || !email) {
                 return res.status(400).json({ message: 'Name and email required for signup' });
             }
@@ -294,7 +309,7 @@ const verifyFirebaseToken = async (req, res) => {
                 email,
                 phone: verifiedPhone || undefined,
                 password: '',
-                role: req.body.role || 'customer'
+                role: requestedRole
             });
             type = 'signup';
         } else {

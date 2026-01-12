@@ -71,6 +71,15 @@ const createOrder = async (req, res) => {
             country: 'Pakistan' // Default for now
         };
 
+        // Calculate commission and earnings early for display in dashboard
+        const commissionPercent = (restaurantExists.commissionRate !== undefined && restaurantExists.commissionRate !== null) 
+            ? restaurantExists.commissionRate 
+            : (restaurantExists.businessType === 'home-chef' ? 10 : 15);
+        
+        const subtotalValue = subtotal || (totalAmount - (deliveryFee || 0));
+        const commissionAmount = (subtotalValue * commissionPercent) / 100;
+        const restaurantEarning = subtotalValue - commissionAmount;
+
         const order = await Order.create({
             user: req.user._id,
             restaurant,
@@ -79,10 +88,15 @@ const createOrder = async (req, res) => {
             deliveryLocation: deliveryLocation || null,
             paymentMethod: paymentMethod || 'COD',
             totalPrice: totalAmount,
-            subtotal: subtotal || (totalAmount - (deliveryFee || 0)),
+            subtotal: subtotalValue,
             deliveryFee: deliveryFee || 0,
             deliveryFeeCustomerPaid: deliveryFee || 0,
             status: 'Pending',
+            commissionPercent,
+            commissionAmount,
+            restaurantEarning,
+            adminEarning: commissionAmount,
+            orderAmount: subtotalValue
         });
 
         // Auto-decrement stock for ordered items
