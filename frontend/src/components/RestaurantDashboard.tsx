@@ -328,7 +328,7 @@ export default function RestaurantDashboard() {
                             <div className="relative group">
                                 <div className="w-10 h-10 rounded-xl overflow-hidden bg-gray-800 ring-2 ring-orange-500 shadow-lg shadow-orange-500/20">
                                     <img
-                                        src={getImageUrl(restaurant.logo)}
+                                        src={getImageUrl(displayRestaurant.logo)}
                                         alt="Logo"
                                         className="w-full h-full object-cover"
                                         onError={(e) => {
@@ -348,11 +348,11 @@ export default function RestaurantDashboard() {
                             </div>
                             <div className="flex-1 min-w-0">
                                 <div className="flex items-center gap-2">
-                                    <h2 className="text-[13px] font-bold truncate leading-tight">{restaurant.name}</h2>
+                                    <h2 className="text-[13px] font-bold truncate leading-tight">{displayRestaurant.name}</h2>
                                 </div>
                                 <p className="text-[9px] text-gray-400 truncate flex items-center gap-1.5 mt-0.5 font-bold uppercase tracking-wider">
-                                    <span className={`w-1.5 h-1.5 rounded-full ${restaurant.isVerified ? 'bg-green-500' : 'bg-yellow-500 animate-pulse'}`}></span>
-                                    {restaurant.isVerified ? 'Partner' : 'Pending'}
+                                    <span className={`w-1.5 h-1.5 rounded-full ${displayRestaurant.isVerified ? 'bg-green-500' : 'bg-yellow-500 animate-pulse'}`}></span>
+                                    {displayRestaurant.isVerified ? 'Partner' : 'Pending'}
                                 </p>
                             </div>
                         </div>
@@ -363,7 +363,7 @@ export default function RestaurantDashboard() {
                                 <div className="bg-gray-800/50 rounded-lg p-2 text-center border border-gray-700/30">
                                     <p className="text-[8px] text-gray-500 mb-0.5 font-bold uppercase tracking-wider">Rating</p>
                                     <p className="font-bold text-yellow-400 text-[10px] flex items-center justify-center gap-1">
-                                        <FaStar size={8} /> {restaurant.rating || 'N/A'}
+                                        <FaStar size={8} /> {displayRestaurant.rating || 'N/A'}
                                     </p>
                                 </div>
                                 <div className="bg-gray-800/50 rounded-lg p-2 text-center border border-gray-700/30">
@@ -429,7 +429,7 @@ export default function RestaurantDashboard() {
                         </h1>
                         <div className="h-6 w-[1px] bg-gray-200" />
                         <p className="text-gray-500 text-xs">
-                            Welcome back, {restaurant.owner?.name?.split(' ')[0] || 'Partner'}
+                            Welcome back, {displayRestaurant.owner?.name?.split(' ')[0] || 'Partner'}
                         </p>
                     </div>
 
@@ -450,12 +450,12 @@ export default function RestaurantDashboard() {
                         {/* User Profile */}
                         <div className="flex items-center gap-3 pl-3 border-l border-gray-100">
                             <div className="text-right hidden sm:block">
-                                <p className="text-xs font-bold text-gray-900 leading-none">{restaurant?.owner?.name}</p>
+                                <p className="text-xs font-bold text-gray-900 leading-none">{displayRestaurant?.owner?.name}</p>
                                 <p className="text-[10px] text-gray-500 mt-1 uppercase tracking-tighter">Restaurant Owner</p>
                             </div>
                             <div className="w-9 h-9 rounded-full bg-gradient-to-tr from-orange-500 to-orange-400 p-[2px] shadow-md">
                                 <div className="w-full h-full rounded-full bg-white flex items-center justify-center text-orange-500 font-bold text-xs uppercase">
-                                    {restaurant?.owner?.name?.charAt(0)}
+                                    {displayRestaurant?.owner?.name?.charAt(0)}
                                 </div>
                             </div>
                         </div>
