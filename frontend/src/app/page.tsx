@@ -44,6 +44,12 @@ export default function Home() {
           const existingUserInfo = JSON.parse(userInfoStr);
           if (existingUserInfo && existingUserInfo.role) {
             setUserRole(existingUserInfo.role);
+            
+            // If restaurant, set checking state early to avoid flicker
+            if (existingUserInfo.role === "restaurant" && !savedHasRestaurant) {
+              setCheckingRestaurant(true);
+            }
+            
             setIsLoggedIn(true);
             if (existingUserInfo.role === "restaurant" && savedHasRestaurant) {
               setHasRestaurant(true);
@@ -69,10 +75,11 @@ export default function Home() {
           setIsLoggedIn(true);
 
           if (updatedUserInfo.role === "restaurant") {
-            // Only show loader if we don't already know we have a restaurant
-            if (!savedHasRestaurant) {
+            // Ensure we are in checking state if we don't have a confirmed restaurant
+            if (!localStorage.getItem("hasRestaurant")) {
               setCheckingRestaurant(true);
             }
+            
             try {
               const restaurantResponse = await axios.get(`${API_BASE_URL}/api/restaurants/my-restaurant`, {
                 headers: { Authorization: `Bearer ${token}` },
@@ -80,14 +87,19 @@ export default function Home() {
               if (restaurantResponse.data) {
                 setHasRestaurant(true);
                 localStorage.setItem("hasRestaurant", "true");
+              } else {
+                setHasRestaurant(false);
+                localStorage.removeItem("hasRestaurant");
               }
             } catch (error: any) {
               if (error.response?.status === 404) {
                 setHasRestaurant(false);
                 localStorage.removeItem("hasRestaurant");
               }
+              // If it's a network error, we keep the previous hasRestaurant state
+            } finally {
+              setCheckingRestaurant(false);
             }
-            setCheckingRestaurant(false);
           }
         } catch (error: any) {
           console.error("Session verification failed:", error.message);
@@ -138,43 +150,52 @@ export default function Home() {
 
         if (!role) {
           console.error("CRITICAL ERROR: No role found in userInfo:", userInfo);
-          // More descriptive alert for debugging
-          alert(`Login Error: No user role found in response.\nUser Info: ${JSON.stringify(userInfo, null, 2)}\nPlease contact support.`);
+          alert(`Login Error: No user role found in response.\nPlease contact support.`);
           return;
         }
 
-        console.log("Setting user role to:", role);
-        setUserRole(role);
+        console.log("Login successful. Role:", role);
 
-        // Also update the state used for session checks
+        // Update localStorage first
         const existingUserInfo = userInfoStr ? JSON.parse(userInfoStr) : {};
         const updatedUserInfo = { ...existingUserInfo, ...userInfo };
         localStorage.setItem("userInfo", JSON.stringify(updatedUserInfo));
+        if (userInfo.token) {
+          localStorage.setItem("token", userInfo.token);
+        }
 
-        setIsLoggedIn(true);
-
-        // If restaurant owner, check for profile
+        // If restaurant owner, check for profile BEFORE showing dashboard
         if (role === "restaurant") {
           console.log("User is restaurant, checking for existing profile...");
           setCheckingRestaurant(true);
-          const token = localStorage.getItem("token");
+          setUserRole(role); // Set role so we know what to show after loading
+          
+          const token = userInfo.token || localStorage.getItem("token");
+          
           try {
             const restaurantResponse = await axios.get(`${API_BASE_URL}/api/restaurants/my-restaurant`, {
               headers: { Authorization: `Bearer ${token}` },
             });
+            
             if (restaurantResponse.data) {
               console.log("Restaurant profile found");
               setHasRestaurant(true);
               localStorage.setItem("hasRestaurant", "true");
-            }
-          } catch (error: any) {
-            console.log("Restaurant profile check failed:", error.message);
-            if (error.response?.status === 404) {
+            } else {
               setHasRestaurant(false);
               localStorage.removeItem("hasRestaurant");
             }
+          } catch (error: any) {
+            console.log("Restaurant profile check failed:", error.message);
+            setHasRestaurant(false);
+            localStorage.removeItem("hasRestaurant");
+          } finally {
+            setCheckingRestaurant(false);
+            setIsLoggedIn(true);
           }
-          setCheckingRestaurant(false);
+        } else {
+          setUserRole(role);
+          setIsLoggedIn(true);
         }
       } else {
         setIsLoggedIn(true);
