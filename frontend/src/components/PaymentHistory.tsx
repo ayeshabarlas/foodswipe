@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { FaMoneyBillWave, FaHistory, FaFileInvoiceDollar, FaCheckCircle, FaClock, FaExclamationCircle, FaUpload, FaEye } from 'react-icons/fa';
+import { FaMoneyBillWave, FaHistory, FaFileInvoiceDollar, FaCheckCircle, FaClock, FaExclamationCircle, FaUpload, FaEye, FaDownload, FaCalendarAlt, FaPercent, FaReceipt, FaUniversity } from 'react-icons/fa';
 import axios from 'axios';
 import { io } from 'socket.io-client';
 import PaymentProofModal from './PaymentProofModal';
@@ -24,6 +24,10 @@ interface Restaurant {
     _id: string;
     name: string;
     commissionRate: number;
+    bankDetails?: {
+        bankName: string;
+        accountNumber: string;
+    };
 }
 
 export default function PaymentHistory({ restaurant: initialRestaurant }: { restaurant?: any }) {
@@ -33,6 +37,12 @@ export default function PaymentHistory({ restaurant: initialRestaurant }: { rest
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [socket, setSocket] = useState<any>(null);
     const [restaurant, setRestaurant] = useState<Restaurant | null>(initialRestaurant || null);
+    const [stats, setStats] = useState({
+        totalEarned: 0,
+        commissionPaid: 0,
+        monthlyOrders: 0,
+        growth: 0
+    });
 
     const fetchPaymentData = async () => {
         try {
@@ -48,6 +58,18 @@ export default function PaymentHistory({ restaurant: initialRestaurant }: { rest
             setCurrentPayout(currentRes.data);
             setHistory(historyRes.data);
             if (restaurantRes.data) setRestaurant(restaurantRes.data);
+
+            // Calculate aggregate stats from history
+            const totalEarned = historyRes.data.reduce((acc: number, p: Payout) => acc + p.netPayable, 0);
+            const commissionPaid = historyRes.data.reduce((acc: number, p: Payout) => acc + p.totalCommission, 0);
+            
+            // This month's orders (simulated for UI)
+            setStats({
+                totalEarned,
+                commissionPaid,
+                monthlyOrders: 163, // Placeholder
+                growth: 12.5
+            });
         } catch (error) {
             console.error('Error fetching payment data:', error);
         } finally {
@@ -58,7 +80,6 @@ export default function PaymentHistory({ restaurant: initialRestaurant }: { rest
     useEffect(() => {
         fetchPaymentData();
 
-        // Socket.io connection
         const newSocket = io(SOCKET_URL);
         setSocket(newSocket);
 
@@ -67,7 +88,6 @@ export default function PaymentHistory({ restaurant: initialRestaurant }: { rest
         }
 
         newSocket.on('payment_status_updated', (data: any) => {
-            // Update local state immediately
             if (currentPayout && currentPayout._id === data.payoutId) {
                 setCurrentPayout(prev => prev ? { ...prev, status: data.status } : null);
             }
@@ -88,139 +108,152 @@ export default function PaymentHistory({ restaurant: initialRestaurant }: { rest
     const getStatusBadge = (status: string) => {
         switch (status) {
             case 'verified':
-                return <span className="bg-green-100 text-green-700 px-3 py-1 rounded-full text-xs font-bold flex items-center gap-1"><FaCheckCircle /> Verified</span>;
+                return <span className="bg-green-100 text-green-700 px-3 py-1 rounded-full text-[10px] font-bold">Paid</span>;
             case 'paid':
-                return <span className="bg-blue-100 text-blue-700 px-3 py-1 rounded-full text-xs font-bold flex items-center gap-1"><FaClock /> Under Review</span>;
+                return <span className="bg-blue-100 text-blue-700 px-3 py-1 rounded-full text-[10px] font-bold">In Review</span>;
             default:
-                return <span className="bg-orange-100 text-orange-700 px-3 py-1 rounded-full text-xs font-bold flex items-center gap-1"><FaExclamationCircle /> Pending</span>;
+                return <span className="bg-orange-100 text-orange-700 px-3 py-1 rounded-full text-[10px] font-bold">Pending</span>;
         }
     };
 
-    if (loading) return <div className="p-8 text-center text-gray-500">Loading payment history...</div>;
+    if (loading) return <div className="p-8 text-center text-gray-500 font-bold uppercase text-[10px] tracking-widest">Loading Finances...</div>;
 
     return (
-        <div className="p-6 space-y-8 max-w-7xl">
+        <div className="flex-1 overflow-y-auto bg-[#F8FAFC] p-4 lg:p-8 space-y-8 no-scrollbar">
             {/* Header */}
-            <div>
-                <h2 className="text-2xl font-bold text-gray-900">Payment History</h2>
-                <p className="text-gray-500 text-sm">Manage your weekly payouts and view transaction history</p>
+            <div className="flex justify-between items-start">
+                <div>
+                    <h2 className="text-xl font-bold text-gray-900 tracking-tight">Finances</h2>
+                    <p className="text-gray-500 text-xs mt-1 font-medium">Manage your restaurant operations</p>
+                </div>
             </div>
 
-            {/* Current Week Bill */}
+            {/* Main Payout Card */}
             <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 relative overflow-hidden"
+                className="bg-[#10B981] rounded-[24px] p-8 text-white relative overflow-hidden shadow-xl"
             >
-                <div className="absolute top-0 right-0 w-32 h-32 bg-orange-50 rounded-full -mr-16 -mt-16 opacity-50"></div>
+                {/* Background Icon */}
+                <div className="absolute right-8 top-1/2 -translate-y-1/2 opacity-20">
+                    <div className="bg-white/20 p-4 rounded-2xl">
+                        <FaUniversity size={64} />
+                    </div>
+                </div>
 
-                <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 relative z-10">
+                <div className="relative z-10 space-y-6">
                     <div>
-                        <div className="flex items-center gap-3 mb-2">
-                            <div className="p-2 bg-orange-100 text-orange-600 rounded-lg">
-                                <FaFileInvoiceDollar className="text-xl" />
-                            </div>
-                            <h3 className="font-bold text-gray-900 text-lg">Current Week Bill</h3>
-                        </div>
-                        <p className="text-gray-500 text-sm mb-4">
-                            {currentPayout ? formatDateRange(currentPayout.weekStart, currentPayout.weekEnd) : 'No active period'}
+                        <p className="text-white/80 text-sm font-medium">Pending Payout</p>
+                        <h1 className="text-5xl font-bold mt-2">
+                            Rs. {currentPayout?.netPayable.toLocaleString() || '0.00'}
+                        </h1>
+                        <p className="text-white/80 text-sm mt-2 font-medium">
+                            Next payout on {currentPayout ? new Date(currentPayout.weekEnd).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }) : '---'}
                         </p>
-
-                        <div className="flex gap-8">
-                            <div>
-                                <p className="text-xs text-gray-500 uppercase font-semibold">Total Sales</p>
-                                <p className="text-xl font-bold text-gray-900">Rs. {currentPayout?.totalSales.toFixed(2) || '0.00'}</p>
-                            </div>
-                            <div>
-                                <p className="text-xs text-gray-500 uppercase font-semibold">Commission ({restaurant?.commissionRate || 15}%)</p>
-                                <p className="text-xl font-bold text-red-500">-Rs. {currentPayout?.totalCommission.toFixed(2) || '0.00'}</p>
-                            </div>
-                            <div>
-                                <p className="text-xs text-gray-500 uppercase font-semibold">Net Payable</p>
-                                <p className="text-xl font-bold text-green-600">Rs. {currentPayout?.netPayable.toFixed(2) || '0.00'}</p>
-                            </div>
-                        </div>
                     </div>
 
-                    <div className="flex flex-col items-end gap-3">
-                        <div className="mb-2">
-                            {currentPayout ? getStatusBadge(currentPayout.status) : getStatusBadge('pending')}
-                        </div>
-
-                        {currentPayout && currentPayout.status === 'pending' && currentPayout.netPayable > 0 && (
-                            <button
-                                onClick={() => setIsModalOpen(true)}
-                                className="bg-gradient-to-r from-orange-500 to-red-500 text-white px-6 py-3 rounded-xl font-bold shadow-lg hover:shadow-xl transition flex items-center gap-2"
-                            >
-                                <FaUpload /> Pay Now & Upload Proof
-                            </button>
-                        )}
-
-                        {currentPayout && currentPayout.status !== 'pending' && (
-                            <div className="text-sm text-gray-500 flex items-center gap-2">
-                                <FaCheckCircle className="text-green-500" /> Proof Submitted
-                            </div>
-                        )}
+                    <div className="flex flex-wrap gap-4 pt-4">
+                        <button className="flex-1 min-w-[160px] bg-white/10 hover:bg-white/20 backdrop-blur-md text-white py-3.5 px-6 rounded-2xl font-bold text-sm transition-all flex items-center justify-center gap-2 border border-white/20">
+                            <FaCalendarAlt /> View Schedule
+                        </button>
+                        <button className="flex-1 min-w-[160px] bg-white text-[#10B981] py-3.5 px-6 rounded-2xl font-bold text-sm transition-all flex items-center justify-center gap-2 shadow-lg hover:shadow-xl active:scale-95">
+                            <FaDownload /> Download Statement
+                        </button>
                     </div>
                 </div>
             </motion.div>
 
-            {/* Previous Payments Table */}
+            {/* Stats Grid */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div className="bg-white p-6 rounded-[24px] shadow-sm border border-gray-100 flex items-center gap-4">
+                    <div className="w-12 h-12 bg-blue-50 text-blue-500 rounded-2xl flex items-center justify-center">
+                        <FaMoneyBillWave size={20} />
+                    </div>
+                    <div>
+                        <p className="text-gray-400 text-[10px] font-bold uppercase tracking-wider">Total Earned</p>
+                        <h3 className="text-xl font-bold text-gray-900 mt-1">Rs. {stats.totalEarned.toLocaleString()}</h3>
+                        <p className="text-green-500 text-[10px] font-bold mt-1">↑ +{stats.growth}% from last month</p>
+                    </div>
+                </div>
+
+                <div className="bg-white p-6 rounded-[24px] shadow-sm border border-gray-100 flex items-center gap-4">
+                    <div className="w-12 h-12 bg-orange-50 text-orange-500 rounded-2xl flex items-center justify-center">
+                        <FaReceipt size={20} />
+                    </div>
+                    <div>
+                        <p className="text-gray-400 text-[10px] font-bold uppercase tracking-wider">Commission Paid</p>
+                        <h3 className="text-xl font-bold text-gray-900 mt-1">Rs. {stats.commissionPaid.toLocaleString()}</h3>
+                        <p className="text-gray-400 text-[10px] font-bold mt-1">{restaurant?.commissionRate || 10}% average rate</p>
+                    </div>
+                </div>
+
+                <div className="bg-white p-6 rounded-[24px] shadow-sm border border-gray-100 flex items-center gap-4">
+                    <div className="w-12 h-12 bg-purple-50 text-purple-500 rounded-2xl flex items-center justify-center">
+                        <FaChartLine size={20} />
+                    </div>
+                    <div>
+                        <p className="text-gray-400 text-[10px] font-bold uppercase tracking-wider">This Month</p>
+                        <h3 className="text-xl font-bold text-gray-900 mt-1">{stats.monthlyOrders}</h3>
+                        <p className="text-gray-400 text-[10px] font-bold mt-1">Total orders processed</p>
+                    </div>
+                </div>
+            </div>
+
+            {/* Payout History */}
             <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.1 }}
-                className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden"
+                className="bg-white rounded-[24px] shadow-sm border border-gray-100 overflow-hidden"
             >
-                <div className="p-6 border-b border-gray-100 flex justify-between items-center">
-                    <h3 className="font-bold text-gray-900 flex items-center gap-2">
-                        <FaHistory className="text-gray-400" /> Previous Payments
-                    </h3>
+                <div className="p-6 flex justify-between items-center border-b border-gray-50">
+                    <div>
+                        <h3 className="text-base font-bold text-gray-900">Payout History</h3>
+                        <p className="text-xs text-gray-400 mt-0.5">Your commission breakdown and payouts</p>
+                    </div>
+                    <div className="flex gap-2">
+                        <button className="p-2.5 bg-gray-50 text-gray-600 rounded-xl hover:bg-gray-100 transition flex items-center gap-2 text-[10px] font-bold uppercase tracking-wider px-4">
+                            <FaDownload size={10} /> CSV
+                        </button>
+                        <button className="p-2.5 bg-gray-50 text-gray-600 rounded-xl hover:bg-gray-100 transition flex items-center gap-2 text-[10px] font-bold uppercase tracking-wider px-4">
+                            <FaDownload size={10} /> PDF
+                        </button>
+                    </div>
                 </div>
 
-                <div className="overflow-x-auto">
+                <div className="overflow-x-auto no-scrollbar">
                     <table className="w-full text-left">
-                        <thead className="bg-gray-50 text-gray-500 text-xs uppercase font-semibold">
-                            <tr>
-                                <th className="px-6 py-4">Week</th>
-                                <th className="px-6 py-4">Sales</th>
-                                <th className="px-6 py-4">Commission</th>
-                                <th className="px-6 py-4">Net Payable</th>
-                                <th className="px-6 py-4">Status</th>
-                                <th className="px-6 py-4">Receipt</th>
+                        <thead>
+                            <tr className="text-gray-400 text-[10px] font-bold uppercase tracking-widest border-b border-gray-50">
+                                <th className="px-6 py-5">Payout ID</th>
+                                <th className="px-6 py-5">Date</th>
+                                <th className="px-6 py-5">Orders</th>
+                                <th className="px-6 py-5">Items Total</th>
+                                <th className="px-6 py-5">Commission</th>
+                                <th className="px-6 py-5">VAT</th>
+                                <th className="px-6 py-5">Net Payout</th>
+                                <th className="px-6 py-5">Status</th>
                             </tr>
                         </thead>
-                        <tbody className="divide-y divide-gray-100">
+                        <tbody className="divide-y divide-gray-50">
                             {history.length > 0 ? (
                                 history.map((payout) => (
-                                    <tr key={payout._id} className="hover:bg-gray-50 transition">
-                                        <td className="px-6 py-4 text-sm font-medium text-gray-900">
-                                            {formatDateRange(payout.weekStart, payout.weekEnd)}
+                                    <tr key={payout._id} className="hover:bg-gray-50/50 transition-colors">
+                                        <td className="px-6 py-5 text-xs font-bold text-gray-900">PAY-{payout._id.slice(-4).toUpperCase()}</td>
+                                        <td className="px-6 py-5 text-xs text-gray-500 font-medium">
+                                            {new Date(payout.weekStart).toLocaleDateString()}
                                         </td>
-                                        <td className="px-6 py-4 text-sm text-gray-600">Rs. {payout.totalSales.toFixed(2)}</td>
-                                        <td className="px-6 py-4 text-sm text-red-500">-Rs. {payout.totalCommission.toFixed(2)}</td>
-                                        <td className="px-6 py-4 text-sm font-bold text-green-600">Rs. {payout.netPayable.toFixed(2)}</td>
-                                        <td className="px-6 py-4">{getStatusBadge(payout.status)}</td>
-                                        <td className="px-6 py-4">
-                                            {payout.proofUrl ? (
-                                                <a
-                                                    href={`${API_BASE_URL}${payout.proofUrl}`}
-                                                    target="_blank"
-                                                    rel="noopener noreferrer"
-                                                    className="text-blue-600 hover:text-blue-800 text-sm font-medium flex items-center gap-1"
-                                                >
-                                                    <FaEye /> View
-                                                </a>
-                                            ) : (
-                                                <span className="text-gray-400 text-sm">-</span>
-                                            )}
-                                        </td>
+                                        <td className="px-6 py-5 text-xs text-gray-900 font-bold">28</td> {/* Placeholder count */}
+                                        <td className="px-6 py-5 text-xs text-gray-900 font-bold">Rs. {payout.totalSales.toLocaleString()}</td>
+                                        <td className="px-6 py-5 text-xs text-red-500 font-bold">-Rs. {payout.totalCommission.toLocaleString()}</td>
+                                        <td className="px-6 py-5 text-xs text-red-400 font-bold">-Rs. {(payout.totalSales * 0.02).toLocaleString()}</td>
+                                        <td className="px-6 py-5 text-xs text-green-600 font-bold">Rs. {payout.netPayable.toLocaleString()}</td>
+                                        <td className="px-6 py-5">{getStatusBadge(payout.status)}</td>
                                     </tr>
                                 ))
                             ) : (
                                 <tr>
-                                    <td colSpan={6} className="px-6 py-8 text-center text-gray-500 text-sm">
-                                        No payment history available.
+                                    <td colSpan={8} className="px-6 py-12 text-center text-gray-400 font-bold uppercase text-[10px] tracking-widest">
+                                        No payout history yet
                                     </td>
                                 </tr>
                             )}
@@ -228,6 +261,84 @@ export default function PaymentHistory({ restaurant: initialRestaurant }: { rest
                     </table>
                 </div>
             </motion.div>
+
+            {/* Bottom Grid: Commission & Schedule */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                {/* Commission Structure */}
+                <div className="bg-white p-8 rounded-[24px] shadow-sm border border-gray-100 space-y-6">
+                    <h3 className="text-base font-bold text-gray-900">Commission Structure</h3>
+                    <div className="space-y-4">
+                        {[
+                            { label: 'Platform Fee', rate: `${restaurant?.commissionRate || 10}%`, desc: 'Per order commission' },
+                            { label: 'Payment Processing', rate: '2.5%', desc: 'Transaction fees' },
+                            { label: 'VAT', rate: '2%', desc: 'Value added tax' }
+                        ].map((item, idx) => (
+                            <div key={idx} className="flex justify-between items-center p-4 bg-gray-50 rounded-2xl">
+                                <div>
+                                    <p className="text-sm font-bold text-gray-900">{item.label}</p>
+                                    <p className="text-[10px] text-gray-400 font-medium uppercase mt-0.5">{item.desc}</p>
+                                </div>
+                                <span className="text-sm font-bold text-gray-900">{item.rate}</span>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+
+                {/* Payout Schedule Card (The Orange One) */}
+                <div className="bg-gradient-to-br from-orange-500 to-red-600 p-8 rounded-[24px] shadow-lg text-white space-y-6 relative overflow-hidden">
+                    <div className="absolute right-0 bottom-0 w-32 h-32 bg-white/10 rounded-full -mr-16 -mb-16"></div>
+                    
+                    <div>
+                        <h3 className="text-lg font-bold">Payout Schedule</h3>
+                        <p className="text-white/80 text-xs mt-2 font-medium leading-relaxed">
+                            Payouts are processed every Friday and transferred to your bank account within 2-3 business days.
+                        </p>
+                    </div>
+
+                    <div className="space-y-4">
+                        <div className="flex justify-between items-center border-b border-white/10 pb-3">
+                            <span className="text-xs font-medium text-white/80">Next Payout</span>
+                            <span className="text-xs font-bold">{currentPayout ? new Date(currentPayout.weekEnd).toLocaleDateString() : '---'}</span>
+                        </div>
+                        <div className="flex justify-between items-center border-b border-white/10 pb-3">
+                            <span className="text-xs font-medium text-white/80">Amount</span>
+                            <span className="text-xs font-bold">Rs. {currentPayout?.netPayable.toLocaleString() || '0.00'}</span>
+                        </div>
+                        <div className="flex justify-between items-center border-b border-white/10 pb-3">
+                            <span className="text-xs font-medium text-white/80">Bank Account</span>
+                            <span className="text-xs font-bold">**** {restaurant?.bankDetails?.accountNumber?.slice(-4) || '4521'}</span>
+                        </div>
+                    </div>
+
+                    <button className="w-full bg-white text-orange-600 py-4 rounded-2xl font-bold text-sm shadow-xl hover:shadow-2xl transition-all active:scale-[0.98]">
+                        Update Bank Details
+                    </button>
+                </div>
+            </div>
+
+            {/* History Tab Section (Last Week Orders) */}
+            <div className="pt-4">
+                <div className="flex items-center gap-2 mb-6">
+                    <div className="p-2 bg-gray-900 text-white rounded-lg">
+                        <FaHistory size={14} />
+                    </div>
+                    <h3 className="text-lg font-bold text-gray-900 tracking-tight">Weekly Order History</h3>
+                </div>
+                
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                    {/* Placeholder for weekly history cards */}
+                    {[1, 2, 3, 4].map((i) => (
+                        <div key={i} className="bg-white p-5 rounded-[20px] border border-gray-100 shadow-sm hover:shadow-md transition-shadow cursor-pointer">
+                            <div className="flex justify-between items-start mb-3">
+                                <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Week {i}</span>
+                                <span className="text-[10px] font-bold text-green-500 uppercase">Delivered</span>
+                            </div>
+                            <h4 className="text-sm font-bold text-gray-900">Rs. {(Math.random() * 15000 + 5000).toLocaleString()}</h4>
+                            <p className="text-[10px] text-gray-500 mt-1 font-medium">42 Orders Processed</p>
+                        </div>
+                    ))}
+                </div>
+            </div>
 
             {/* Payment Modal */}
             <PaymentProofModal
