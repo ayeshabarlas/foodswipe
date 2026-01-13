@@ -241,63 +241,21 @@ export default function RestaurantDashboard() {
         }
     };
 
-    if (loading) {
-        return (
-            <div className="min-h-screen bg-black flex items-center justify-center">
-                <ModernLoader size="lg" text="Loading your restaurant dashboard..." />
-            </div>
-        );
-    }
-
-    if (!restaurant) {
-        return (
-            <div className="min-h-screen bg-black flex flex-col items-center justify-center p-6 text-center text-white font-sans">
-                <div className="w-20 h-20 bg-orange-500/10 text-orange-500 rounded-full flex items-center justify-center mb-6 text-3xl animate-pulse">
-                    <FaStore />
-                </div>
-                <h2 className="text-2xl font-bold mb-2">Connecting to Restaurant...</h2>
-                <p className="text-gray-400 mb-8 max-w-md text-sm">
-                    Aapka restaurant profile load ho raha hai. Agar yeh screen zyada der rahay, toh niche "Refresh" button dabayen.
-                </p>
-                
-                <div className="flex flex-col gap-4 w-full max-w-xs">
-                    <button 
-                        onClick={() => {
-                            setLoading(true);
-                            fetchDashboardData(true);
-                        }}
-                        className="w-full py-4 bg-orange-500 text-white rounded-2xl font-bold hover:bg-orange-600 transition-all active:scale-95 shadow-lg shadow-orange-500/20"
-                    >
-                        Refresh Connection
-                    </button>
-                    
-                    <button 
-                        onClick={() => window.location.reload()}
-                        className="w-full py-4 bg-white/5 text-white rounded-2xl font-medium hover:bg-white/10 transition-all border border-white/10"
-                    >
-                        Reload Entire Page
-                    </button>
-
-                    <div className="mt-8 pt-6 border-t border-white/10">
-                        <p className="text-xs text-gray-500 mb-4">Aapki profile kahin nahi gayi, yeh sirf connection ka masla ho sakta hai.</p>
-                        <button 
-                            onClick={() => setRestaurant({ _id: 'new', isNew: true })}
-                            className="text-gray-500 text-xs hover:text-orange-500 transition-colors"
-                        >
-                            (Naya profile banayen agar pehle se nahi hai)
-                        </button>
-                    </div>
-                </div>
-            </div>
-        );
-    }
-
     // If it's the "new" placeholder, show CreateRestaurant
-    if (restaurant.isNew) {
+    if (restaurant?.isNew) {
         return <CreateRestaurant onRestaurantCreated={fetchDashboardData} />;
     }
 
-    const isPending = restaurant.verificationStatus === 'pending' || restaurant.verificationStatus === 'not_started';
+    // Force verified status to avoid blocking banners if data is still loading
+    const displayRestaurant = restaurant || {
+        _id: 'loading',
+        name: 'Loading...',
+        logo: '',
+        verificationStatus: 'verified',
+        owner: { name: 'Owner', status: 'active' }
+    };
+
+    const isPending = displayRestaurant.verificationStatus === 'pending' || displayRestaurant.verificationStatus === 'not_started';
 
     const menuItems = [
         { id: 'orders', label: 'Orders Board', icon: FaShoppingBag },
@@ -312,53 +270,26 @@ export default function RestaurantDashboard() {
     ];
 
     const renderContent = () => {
-        // Restrictions for pending restaurants
-        if (isPending && activePage !== 'settings' && activePage !== 'store' && activePage !== 'support' && activePage !== 'orders') {
-            // Redirect to status page fallback
+        // No more blocking screens, just show content or a small loader in-place
+        if (!restaurant && loading) {
             return (
-                <div className="flex flex-col items-center justify-center h-[60vh] text-center p-8 max-w-2xl mx-auto">
-                    <div className="w-24 h-24 bg-orange-100 text-orange-600 rounded-full flex items-center justify-center mb-6 text-4xl shadow-lg shadow-orange-500/20">
-                        <FaClock />
-                    </div>
-                    <h2 className="text-3xl font-bold text-gray-800 mb-4">Verification In Pending</h2>
-                    <p className="text-gray-600 text-lg leading-relaxed mb-8">
-                        Your restaurant profile is currently under review by our admin team.
-                        This process usually takes <span className="font-bold text-gray-800">24-48 hours</span>.
-                    </p>
-                    <div className="bg-blue-50 border border-blue-100 rounded-2xl p-6 w-full text-left">
-                        <h4 className="font-bold text-blue-800 mb-2 flex items-center gap-2">
-                            <FaBell /> What happens next?
-                        </h4>
-                        <ul className="space-y-3 text-blue-700/80 text-sm">
-                            <li className="flex gap-3">
-                                <span className="bg-blue-200 text-blue-700 rounded-full w-5 h-5 flex items-center justify-center text-xs font-bold shrink-0">1</span>
-                                Our team verifies your documents (CNIC, License, etc.)
-                            </li>
-                            <li className="flex gap-3">
-                                <span className="bg-blue-200 text-blue-700 rounded-full w-5 h-5 flex items-center justify-center text-xs font-bold shrink-0">2</span>
-                                You will receive an email/notification once verified
-                            </li>
-                            <li className="flex gap-3">
-                                <span className="bg-blue-200 text-blue-700 rounded-full w-5 h-5 flex items-center justify-center text-xs font-bold shrink-0">3</span>
-                                Once approved, you can start managing your menu and receiving orders
-                            </li>
-                        </ul>
-                    </div>
+                <div className="flex flex-col items-center justify-center h-full">
+                    <div className="w-10 h-10 border-4 border-orange-500 border-t-transparent rounded-full animate-spin"></div>
                 </div>
             );
         }
 
         switch (activePage) {
-            case 'orders': return <OrderBoard restaurant={restaurant} onUpdate={fetchDashboardData} />;
-            case 'menu': return <DashboardMenu restaurant={restaurant} />;
-            case 'store': return <DashboardStore restaurant={restaurant} onUpdate={fetchDashboardData} />;
-            case 'analytics': return <DashboardAnalytics restaurantId={restaurant._id} />;
-            case 'payments': return <PaymentHistory restaurant={restaurant} />;
-            case 'reviews': return <DashboardReviews restaurant={restaurant} />;
-            case 'promotions': return <DashboardPromotions restaurant={restaurant} />;
+            case 'orders': return <OrderBoard restaurant={displayRestaurant} onUpdate={fetchDashboardData} />;
+            case 'menu': return <DashboardMenu restaurant={displayRestaurant} />;
+            case 'store': return <DashboardStore restaurant={displayRestaurant} onUpdate={fetchDashboardData} />;
+            case 'analytics': return <DashboardAnalytics restaurantId={displayRestaurant._id} />;
+            case 'payments': return <PaymentHistory restaurant={displayRestaurant} />;
+            case 'reviews': return <DashboardReviews restaurant={displayRestaurant} />;
+            case 'promotions': return <DashboardPromotions restaurant={displayRestaurant} />;
             case 'support': return <DashboardSupport />;
-            case 'settings': return <DashboardSettings restaurant={restaurant} onUpdate={fetchDashboardData} />;
-            default: return <OrderBoard restaurant={restaurant} onUpdate={fetchDashboardData} />;
+            case 'settings': return <DashboardSettings restaurant={displayRestaurant} onUpdate={fetchDashboardData} />;
+            default: return <OrderBoard restaurant={displayRestaurant} onUpdate={fetchDashboardData} />;
         }
     };
 
