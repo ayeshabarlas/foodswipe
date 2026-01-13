@@ -73,6 +73,15 @@ const VideoCard = ({
     const [comments, setComments] = useState<any[]>([]);
     const [loadingComments, setLoadingComments] = useState(false);
 
+    const [userInfo, setUserInfo] = useState<any>(null);
+
+    useEffect(() => {
+        if (typeof window !== 'undefined') {
+            const saved = localStorage.getItem('userInfo');
+            if (saved) setUserInfo(JSON.parse(saved));
+        }
+    }, []);
+
     useEffect(() => {
         if (isActive) {
             videoRef.current?.play().catch((error) => console.log('Autoplay prevented:', error));
@@ -83,13 +92,13 @@ const VideoCard = ({
     }, [isActive]);
 
     useEffect(() => {
-        const userInfo = JSON.parse(localStorage.getItem('userInfo') || '{}');
+        if (!userInfo) return;
         const userId = userInfo._id;
         const userLiked = dish.likes?.some((like: any) => (like._id || like) === userId);
         setIsLiked(!!userLiked);
         setLikesCount(dish.likes?.length || 0);
         setSharesCount(dish.shares || 0);
-    }, [dish]);
+    }, [dish, userInfo]);
 
     const fetchComments = async () => {
         setLoadingComments(true);
@@ -112,8 +121,7 @@ const VideoCard = ({
     const handleLike = async (e: React.MouseEvent) => {
         e.stopPropagation();
         try {
-            const userInfo = JSON.parse(localStorage.getItem('userInfo') || '{}');
-            if (!userInfo.token) return alert('Please login to like');
+            if (!userInfo?.token) return alert('Please login to like');
 
             const res = await axios.post(`${API_BASE_URL}/api/videos/${dish._id}/like`, {}, {
                 headers: { Authorization: `Bearer ${userInfo.token}` }
@@ -151,8 +159,7 @@ const VideoCard = ({
         if (!commentText.trim()) return;
 
         try {
-            const userInfo = JSON.parse(localStorage.getItem('userInfo') || '{}');
-            if (!userInfo.token) return alert('Please login to comment');
+            if (!userInfo?.token) return alert('Please login to comment');
 
             const res = await axios.post(`${API_BASE_URL}/api/videos/${dish._id}/comment`, {
                 text: commentText,

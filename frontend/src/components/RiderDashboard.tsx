@@ -38,6 +38,18 @@ const RiderDashboard = ({ riderId: initialRiderId }: { riderId?: string }) => {
     const [showNotifications, setShowNotifications] = useState(false);
     const [unreadCount, setUnreadCount] = useState(0);
 
+    const userInfo = typeof window !== 'undefined' ? JSON.parse(localStorage.getItem('userInfo') || '{}') : {};
+    
+    const displayRider = riderData || {
+        _id: 'loading',
+        fullName: userInfo.name || 'Rider',
+        walletBalance: 0,
+        rating: '4.8',
+        isOnline: false,
+        verificationStatus: 'pending',
+        earnings: { thisWeek: 0 }
+    };
+
     const fetchNotificationsCount = async () => {
         try {
             const userStr = localStorage.getItem('userInfo');
@@ -65,43 +77,52 @@ const RiderDashboard = ({ riderId: initialRiderId }: { riderId?: string }) => {
             const config = { headers: { Authorization: `Bearer ${token}` } };
             
             // Fetch profile first to get the correct rider ID
-            const profileRes = await axios.get(`${API_BASE_URL}/api/riders/my-profile`, config).catch(err => {
+            let rider = null;
+            try {
+                const profileRes = await axios.get(`${API_BASE_URL}/api/riders/my-profile`, config);
+                rider = profileRes.data;
+                setRiderData(rider);
+                setIsOnline(rider.isOnline || false);
+            } catch (err: any) {
+                console.warn('Rider profile not found or error:', err.response?.data || err.message);
                 if (err.response?.status === 404) {
-                    throw new Error('Rider profile not found. Are you registered as a rider?');
+                    // Profile not found is okay, we'll show a banner
+                } else {
+                    setError(err.message || 'Failed to load profile');
                 }
-                throw err;
-            });
-
-            const rider = profileRes.data;
-            setRiderData(rider);
-            setIsOnline(rider.isOnline || false);
+            }
 
             // Fetch notifications count
             fetchNotificationsCount();
 
-            // Now fetch orders using the rider's actual ID
-            const ordersRes = await axios.get(`${API_BASE_URL}/api/riders/${rider._id}/orders`, config).catch((err) => {
-                console.error('Error fetching orders:', err);
-                return { data: [] };
-            });
-            
-            const allOrders = ordersRes.data || [];
-            setOrders(allOrders);
-            
-            // Find if there's an active order being delivered (must be assigned to this rider)
-            const currentActive = allOrders.find((o: any) => 
-                (o.rider === rider._id || o.rider?._id === rider._id || (o.rider && o.rider.toString() === rider._id.toString())) &&
-                ['Accepted', 'Confirmed', 'Preparing', 'Ready', 'Picked Up', 'OnTheWay', 'Arrived', 'ArrivedAtCustomer'].includes(o.status)
-            );
+            // Only fetch orders if we have a rider ID
+            if (rider?._id) {
+                const ordersRes = await axios.get(`${API_BASE_URL}/api/riders/${rider._id}/orders`, config).catch((err) => {
+                    console.error('Error fetching orders:', err);
+                    return { data: [] };
+                });
+                
+                const allOrders = ordersRes.data || [];
+                setOrders(allOrders);
+                
+                // Find if there's an active order
+                const currentActive = allOrders.find((o: any) => 
+                    (o.rider === rider._id || o.rider?._id === rider._id || (o.rider && o.rider.toString() === rider._id.toString())) &&
+                    ['Accepted', 'Confirmed', 'Preparing', 'Ready', 'Picked Up', 'OnTheWay', 'Arrived', 'ArrivedAtCustomer'].includes(o.status)
+                );
 
-            if (currentActive) {
-                console.log('Active order found:', currentActive);
-                setActiveOrder(currentActive);
-                // Determine step based on status
-                if (['Accepted', 'Confirmed', 'Preparing', 'Ready', 'Arrived'].includes(currentActive.status)) setActiveStep(1);
-                else if (currentActive.status === 'Picked Up') setActiveStep(2);
-                else if (['OnTheWay', 'ArrivedAtCustomer'].includes(currentActive.status)) setActiveStep(3);
+                if (currentActive) {
+                    setActiveOrder(currentActive);
+                    if (['Accepted', 'Confirmed', 'Preparing', 'Ready', 'Arrived'].includes(currentActive.status)) setActiveStep(1);
+                    else if (currentActive.status === 'Picked Up') setActiveStep(2);
+                    else if (['OnTheWay', 'ArrivedAtCustomer'].includes(currentActive.status)) setActiveStep(3);
+                } else {
+                    setActiveOrder(null);
+                }
             } else {
+                // If no rider ID, maybe fetch available orders anyway?
+                // For now just clear orders
+                setOrders([]);
                 setActiveOrder(null);
             }
 
@@ -328,30 +349,52 @@ const RiderDashboard = ({ riderId: initialRiderId }: { riderId?: string }) => {
         }
     };
 
-    if (loading) {
-        return (
-            <div className="min-h-screen bg-white flex flex-col items-center justify-center p-4">
-                <ModernLoader size="lg" text="Loading Rider Portal..." />
-            </div>
-        );
-    }
+    // if (loading) {
+    //     return (
+    //         <div className="min-h-screen bg-white flex flex-col items-center justify-center p-4">
+    //             <ModernLoader size="lg" text="Loading Rider Portal..." />
+    //         </div>
+    //     );
+    // }
 
-    if (error) {
-        return (
-            <div className="min-h-screen bg-white flex flex-col items-center justify-center p-4 text-center">
-                <p className="text-red-500 font-semibold mb-4">{error}</p>
-                <button 
-                    onClick={fetchRiderData}
-                    className="px-8 py-3 bg-gradient-to-r from-orange-500 to-red-500 text-white rounded-2xl font-semibold shadow-lg shadow-orange-200"
-                >
-                    Retry
-                </button>
-            </div>
-        );
-    }
+    // if (error) {
+    //     return (
+    //         <div className="min-h-screen bg-white flex flex-col items-center justify-center p-4 text-center">
+    //             <p className="text-red-500 font-semibold mb-4">{error}</p>
+    //             <button 
+    //                 onClick={fetchRiderData}
+    //                 className="px-8 py-3 bg-gradient-to-r from-orange-500 to-red-500 text-white rounded-2xl font-semibold shadow-lg shadow-orange-200"
+    //             >
+    //                 Retry
+    //             </button>
+    //         </div>
+    //     );
+    // }
 
     const renderHome = () => (
         <div className="flex flex-col gap-6 animate-in fade-in slide-in-from-bottom-4 duration-500 font-light">
+            {/* Verification Status Banner */}
+            {displayRider.verificationStatus !== 'approved' && !loading && (
+                <div className="bg-orange-50 border-b border-orange-100 px-6 py-3 flex items-center gap-3">
+                    <FaExclamationCircle className="text-orange-500 shrink-0" />
+                    <div className="flex-1">
+                        <p className="text-orange-800 text-[10px] font-medium leading-tight">
+                            {displayRider.verificationStatus === 'pending' 
+                                ? 'Your profile is under review. You can see orders but cannot accept them yet.'
+                                : 'Complete your profile registration to start accepting orders.'}
+                        </p>
+                    </div>
+                    {displayRider.verificationStatus !== 'pending' && (
+                        <button 
+                            onClick={() => window.location.href = '/rider-portal'}
+                            className="bg-orange-500 text-white px-3 py-1.5 rounded-lg text-[9px] font-bold uppercase"
+                        >
+                            Complete
+                        </button>
+                    )}
+                </div>
+            )}
+
             {/* Header Section */}
             <div className="bg-gradient-to-br from-orange-400 via-orange-500 to-red-500 pt-10 pb-24 px-6 rounded-b-[40px] shadow-2xl relative overflow-hidden">
                 <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full -mr-20 -mt-20 blur-3xl" />
@@ -360,15 +403,15 @@ const RiderDashboard = ({ riderId: initialRiderId }: { riderId?: string }) => {
                 <div className="flex justify-between items-center mb-6 relative z-10">
                     <div className="flex items-center gap-3">
                         <div className="w-12 h-12 bg-white/20 backdrop-blur-md rounded-2xl flex items-center justify-center border border-white/20 overflow-hidden">
-                            {riderData?.fullName ? (
-                                <span className="text-white font-semibold text-xl">{riderData.fullName[0]}</span>
+                            {displayRider.fullName ? (
+                                <span className="text-white font-semibold text-xl">{displayRider.fullName[0]}</span>
                             ) : (
                                 <FaUser className="text-white text-xl" />
                             )}
                         </div>
                         <div>
                             <h1 className="text-xl font-medium text-white tracking-tight">
-                                {riderData?.fullName || JSON.parse(localStorage.getItem('userInfo') || '{}').name || 'Rider Dashboard'}
+                                {displayRider.fullName}
                             </h1>
                             <p className="text-[10px] text-white/80 font-medium uppercase tracking-widest mt-0.5">
                                 {isOnline ? 'Online • Accepting Orders' : 'Offline • Go online to start'}
@@ -409,7 +452,7 @@ const RiderDashboard = ({ riderId: initialRiderId }: { riderId?: string }) => {
                 <DashboardStat 
                     icon={<FaWallet size={18} />} 
                     label="Wallet Balance" 
-                    value={`Rs. ${riderData?.walletBalance || 0}`} 
+                    value={`Rs. ${displayRider.walletBalance || 0}`} 
                     color="text-green-500" 
                     bgColor="bg-green-50" 
                 />
@@ -423,14 +466,14 @@ const RiderDashboard = ({ riderId: initialRiderId }: { riderId?: string }) => {
                 <DashboardStat 
                     icon={<FaStar size={18} />} 
                     label="Rating" 
-                    value={riderData?.rating || '4.8'} 
+                    value={displayRider.rating || '4.8'} 
                     color="text-orange-500" 
                     bgColor="bg-orange-50" 
                 />
                 <DashboardStat 
                     icon={<FaClock size={18} />} 
                     label="This Week" 
-                    value={`Rs. ${riderData?.earnings?.thisWeek || 0}`} 
+                    value={`Rs. ${displayRider.earnings?.thisWeek || 0}`} 
                     color="text-purple-500" 
                     bgColor="bg-purple-50" 
                 />

@@ -26,28 +26,33 @@ interface Dish {
     restaurant: string;
 }
 
-export default function DashboardMenu() {
+export default function DashboardMenu({ restaurant: initialRestaurant }: { restaurant?: any }) {
     const [dishes, setDishes] = useState<Dish[]>([]);
     const [searchTerm, setSearchTerm] = useState('');
     const [categoryFilter, setCategoryFilter] = useState('All');
     const [showModal, setShowModal] = useState(false);
     const [editingDish, setEditingDish] = useState<Dish | null>(null);
-    const [restaurant, setRestaurant] = useState<any>(null);
+    const [restaurant, setRestaurant] = useState<any>(initialRestaurant || null);
+    const [userInfo, setUserInfo] = useState<any>(null);
+
+    useEffect(() => {
+        if (typeof window !== 'undefined') {
+            const saved = localStorage.getItem('userInfo');
+            if (saved) setUserInfo(JSON.parse(saved));
+        }
+    }, []);
 
     const fetchDishes = async () => {
         try {
-            const userInfo = JSON.parse(localStorage.getItem('userInfo') || '{}');
-            const token = userInfo.token || localStorage.getItem('token');
-            
-            if (!token) {
+            if (!userInfo?.token) {
                 console.warn('DashboardMenu: No auth token found');
                 return;
             }
-            const config = { headers: { Authorization: `Bearer ${token}` } };
+            const config = { headers: { Authorization: `Bearer ${userInfo.token}` } };
 
-            // Fetch restaurant and dishes in parallel for better performance
+            // If we don't have initial restaurant, fetch it
             const [restaurantRes, dishesRes] = await Promise.all([
-                axios.get(`${API_BASE_URL}/api/restaurants/my-restaurant`, config),
+                !initialRestaurant ? axios.get(`${API_BASE_URL}/api/restaurants/my-restaurant`, config) : Promise.resolve({ data: initialRestaurant }),
                 axios.get(`${API_BASE_URL}/api/dishes/my-dishes`, config)
             ]);
 
@@ -61,17 +66,18 @@ export default function DashboardMenu() {
             }
         } catch (error: any) {
             console.error('DashboardMenu: Error fetching data:', error.response?.data || error.message);
-            // Don't clear dishes on error to prevent them from "disappearing" from UI
         }
     };
 
     useEffect(() => {
-        fetchDishes();
-    }, []);
+        if (userInfo) {
+            fetchDishes();
+        }
+    }, [userInfo]);
 
     const handleModalSubmit = async (data: any) => {
         try {
-            const userInfo = JSON.parse(localStorage.getItem('userInfo') || '{}');
+            if (!userInfo?.token) return alert('Please login again');
             const config = { headers: { Authorization: `Bearer ${userInfo.token}` } };
 
             const restaurantRes = await axios.get(`${API_BASE_URL}/api/restaurants/my-restaurant`, config);
@@ -103,7 +109,7 @@ export default function DashboardMenu() {
         if (!confirm('Are you sure you want to delete this dish?')) return;
 
         try {
-            const userInfo = JSON.parse(localStorage.getItem('userInfo') || '{}');
+            if (!userInfo?.token) return alert('Please login again');
             await axios.delete(`${API_BASE_URL}/api/dishes/${id}`, {
                 headers: { Authorization: `Bearer ${userInfo.token}` }
             });

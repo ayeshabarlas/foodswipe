@@ -28,18 +28,28 @@ export default function RestaurantDashboard() {
     const [isSidebarOpen, setIsSidebarOpen] = useState(false);
     const [notifications, setNotifications] = useState<any[]>([]);
     const [showNotifications, setShowNotifications] = useState(false);
+    const [userInfo, setUserInfo] = useState<any>(null);
     const [stats, setStats] = useState({
         pending: 0,
         preparing: 0,
         ready: 0,
         outForDelivery: 0,
+        revenueToday: 0,
+        ordersToday: 0,
     });
 
     // Socket state
     const [socket, setSocket] = useState<any>(null);
 
     useEffect(() => {
-        const userInfo = JSON.parse(localStorage.getItem('userInfo') || '{}');
+        if (typeof window !== 'undefined') {
+            const saved = localStorage.getItem('userInfo');
+            if (saved) setUserInfo(JSON.parse(saved));
+        }
+    }, []);
+
+    useEffect(() => {
+        if (!userInfo) return;
         const resId = restaurant?._id || userInfo.restaurantId;
         
         if (userInfo && userInfo._id && resId) {
@@ -51,45 +61,78 @@ export default function RestaurantDashboard() {
         return () => { 
             if (socket) disconnectSocket(); 
         };
-    }, [restaurant?._id]);
+    }, [restaurant?._id, userInfo]);
 
     const fetchDashboardData = async (isRefresh = false) => {
         try {
             if (!isRefresh) setLoading(true);
             
-            // Get token from both possible locations
-            const userInfo = JSON.parse(localStorage.getItem('userInfo') || '{}');
-            const token = userInfo.token || localStorage.getItem('token');
+            if (!userInfo) {
+                console.warn('No userInfo found in dashboard state yet');
+                return;
+            }
+
+            const token = userInfo.token;
             
             if (!token) {
                 console.error('No token found in dashboard');
+                if (typeof window !== 'undefined') window.location.href = '/login';
                 return;
             }
             
             const headers = { Authorization: `Bearer ${token}` };
 
-            console.log("Dashboard: Fetching restaurant data...");
-            const [restaurantRes, statsRes] = await Promise.all([
+            console.log("Dashboard: Fetching data in parallel...");
+            
+            // Fetch restaurant and stats in parallel
+            const [restaurantResult, statsResult] = await Promise.allSettled([
                 axios.get(`${API_BASE_URL}/api/restaurants/my-restaurant`, { headers }),
                 axios.get(`${API_BASE_URL}/api/dashboard/stats`, { headers })
             ]);
 
-            if (restaurantRes.data) {
-                console.log("Dashboard: Restaurant found:", restaurantRes.data.name);
-                setRestaurant(restaurantRes.data);
-                localStorage.setItem("hasRestaurant", "true");
+            // Handle restaurant result
+            if (restaurantResult.status === 'fulfilled') {
+                const restaurantData = restaurantResult.value.data;
+                if (restaurantData) {
+                    console.log("Dashboard: Restaurant found:", restaurantData.name);
+                    setRestaurant(restaurantData);
+                    localStorage.setItem("hasRestaurant", "true");
+                    
+                    // Update userInfo cache if needed
+                    let userInfoUpdated = false;
+                    const updatedUserInfo = { ...userInfo };
+                    if (updatedUserInfo.restaurantId !== restaurantData._id) { updatedUserInfo.restaurantId = restaurantData._id; userInfoUpdated = true; }
+                    if (updatedUserInfo.restaurantName !== restaurantData.name) { updatedUserInfo.restaurantName = restaurantData.name; userInfoUpdated = true; }
+                    if (updatedUserInfo.restaurantLogo !== restaurantData.logo) { updatedUserInfo.restaurantLogo = restaurantData.logo; userInfoUpdated = true; }
+                    
+                    if (userInfoUpdated) {
+                        setUserInfo(updatedUserInfo);
+                        localStorage.setItem('userInfo', JSON.stringify(updatedUserInfo));
+                    }
+                }
+            } else {
+                const err = restaurantResult.reason;
+                console.error('Error fetching restaurant:', err.response?.data || err.message);
+                
+                if (err.response?.status === 404) {
+                    setRestaurant({ _id: 'new', isNew: true });
+                } else if (err.response?.status === 401) {
+                    localStorage.removeItem('userInfo');
+                    window.location.href = '/login';
+                } else {
+                    setRestaurant({ _id: 'error', error: true, message: err.response?.data?.message || err.message });
+                }
             }
-            
-            if (statsRes.data) {
-                setStats(statsRes.data);
+
+            // Handle stats result
+            if (statsResult.status === 'fulfilled') {
+                setStats(statsResult.value.data);
+            } else {
+                console.error('Error fetching stats:', statsResult.reason);
             }
+
         } catch (error: any) {
-            console.error('Error fetching dashboard data:', error);
-            if (error.response?.status === 404) {
-                console.log("Dashboard: Restaurant not found (404)");
-                setRestaurant(null);
-                localStorage.removeItem("hasRestaurant");
-            }
+            console.error('Error in fetchDashboardData:', error);
         } finally {
             setLoading(false);
         }
@@ -97,9 +140,9 @@ export default function RestaurantDashboard() {
 
     const fetchNotifications = async () => {
         try {
-            const token = JSON.parse(localStorage.getItem('userInfo') || '{}').token;
+            if (!userInfo?.token) return;
             const res = await axios.get(`${API_BASE_URL}/api/notifications`, {
-                headers: { Authorization: `Bearer ${token}` }
+                headers: { Authorization: `Bearer ${userInfo.token}` }
             });
             // Ensure data is an array before setting
             if (Array.isArray(res.data)) {
@@ -146,9 +189,11 @@ export default function RestaurantDashboard() {
     }, [socket, restaurant]);
 
     useEffect(() => {
-        fetchDashboardData();
-        fetchNotifications();
-    }, []);
+        if (userInfo) {
+            fetchDashboardData();
+            fetchNotifications();
+        }
+    }, [userInfo]);
 
     const playNotificationSound = () => {
         const audio = new Audio('https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3');
@@ -247,13 +292,30 @@ export default function RestaurantDashboard() {
     }
 
     // Force verified status to avoid blocking banners if data is still loading
-    const displayRestaurant = restaurant || {
-        _id: 'loading',
-        name: 'Loading...',
-        logo: '',
-        verificationStatus: 'verified',
-        owner: { name: 'Owner', status: 'active' }
-    };
+    const displayRestaurant = (() => {
+        const info = userInfo || {};
+        
+        // If we have a real restaurant object, use it but merge with userInfo fallbacks
+        if (restaurant && restaurant._id !== 'loading' && restaurant._id !== 'error') {
+            return {
+                ...restaurant,
+                name: restaurant.name || info.restaurantName || info.name || 'Spice Restaurant',
+                logo: restaurant.logo || info.restaurantLogo || '',
+                isVerified: restaurant.verificationStatus === 'verified' || restaurant.isVerified || true
+            };
+        }
+
+        // If it's an error or loading state, use fallbacks
+        return {
+            _id: restaurant?._id || 'loading',
+            name: info.restaurantName || info.name || (restaurant?._id === 'error' ? 'Error Loading' : 'Loading...'),
+            logo: info.restaurantLogo || '',
+            verificationStatus: 'verified',
+            isVerified: true,
+            owner: { name: info.name || 'Owner', status: 'active' },
+            ...(restaurant || {})
+        };
+    })();
 
     const isPending = displayRestaurant.verificationStatus === 'pending' || displayRestaurant.verificationStatus === 'not_started';
 
@@ -361,14 +423,12 @@ export default function RestaurantDashboard() {
                         {!isPending && (
                             <div className="grid grid-cols-2 gap-2">
                                 <div className="bg-gray-800/50 rounded-lg p-2 text-center border border-gray-700/30">
-                                    <p className="text-[8px] text-gray-500 mb-0.5 font-bold uppercase tracking-wider">Rating</p>
-                                    <p className="font-bold text-yellow-400 text-[10px] flex items-center justify-center gap-1">
-                                        <FaStar size={8} /> {displayRestaurant.rating || 'N/A'}
-                                    </p>
+                                    <p className="text-[8px] text-gray-500 mb-0.5 font-bold uppercase tracking-wider">Earnings</p>
+                                    <p className="font-bold text-green-400 text-[10px]">Rs. {stats?.revenueToday?.toLocaleString() || 0}</p>
                                 </div>
                                 <div className="bg-gray-800/50 rounded-lg p-2 text-center border border-gray-700/30">
                                     <p className="text-[8px] text-gray-500 mb-0.5 font-bold uppercase tracking-wider">Today</p>
-                                    <p className="font-bold text-green-400 text-[10px]">{(stats?.ready || 0) + (stats?.outForDelivery || 0)}</p>
+                                    <p className="font-bold text-orange-400 text-[10px]">{(stats?.ready || 0) + (stats?.outForDelivery || 0)} Orders</p>
                                 </div>
                             </div>
                         )}

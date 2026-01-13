@@ -25,28 +25,14 @@ export default function RiderPortal() {
                 if (res.data) {
                     setRiderId(res.data._id);
                     setVerificationStatus(res.data.verificationStatus);
-
-                    // Logic based on verification status
-                    if (res.data.verificationStatus === 'approved') {
-                        setStep('dashboard');
-                    } else if (res.data.verificationStatus === 'new') {
-                        setStep('documents');
-                    } else if (res.data.verificationStatus === 'pending') {
-                        setStep('documents');
-                    } else if (res.data.verificationStatus === 'rejected') {
-                        // For now just show document upload to fix issues
-                        setStep('documents');
-                    } else {
-                        setStep('registration');
-                    }
-                } else {
-                    setStep('registration');
                 }
+                
+                // Always go to dashboard if we reached this point
+                // The dashboard will handle missing data with a banner
+                setStep('dashboard');
             } catch (error: any) {
-                if (error.response?.status === 404) {
-                    // No rider profile exists, start registration
-                    setStep('registration');
-                }
+                console.log("Rider profile not found or error, showing dashboard anyway");
+                setStep('dashboard');
             } finally {
                 setLoading(false);
             }

@@ -37,14 +37,21 @@ interface AnalyticsData {
 export default function DashboardAnalytics({ restaurantId }: { restaurantId: string }) {
     const [data, setData] = useState<AnalyticsData | null>(null);
     const [loading, setLoading] = useState(true);
+    const [userInfo, setUserInfo] = useState<any>(null);
+
+    useEffect(() => {
+        if (typeof window !== 'undefined') {
+            const saved = localStorage.getItem('userInfo');
+            if (saved) setUserInfo(JSON.parse(saved));
+        }
+    }, []);
 
     const fetchAnalytics = async () => {
-        if (!restaurantId) return;
+        if (!restaurantId || restaurantId === 'loading' || restaurantId === 'error' || !userInfo?.token) return;
 
         try {
-            const token = JSON.parse(localStorage.getItem('userInfo') || '{}').token;
             const analyticsRes = await axios.get(`${API_BASE_URL}/api/restaurants/${restaurantId}/analytics`, {
-                headers: { Authorization: `Bearer ${token}` }
+                headers: { Authorization: `Bearer ${userInfo.token}` }
             });
             setData(analyticsRes.data);
         } catch (error) {
@@ -55,10 +62,12 @@ export default function DashboardAnalytics({ restaurantId }: { restaurantId: str
     };
 
     useEffect(() => {
-        fetchAnalytics();
-        const interval = setInterval(fetchAnalytics, 30000); // Poll every 30s
-        return () => clearInterval(interval);
-    }, [restaurantId]);
+        if (userInfo) {
+            fetchAnalytics();
+            const interval = setInterval(fetchAnalytics, 30000); // Poll every 30s
+            return () => clearInterval(interval);
+        }
+    }, [restaurantId, userInfo]);
 
     if (loading) {
         return <div className="p-8 text-center text-gray-500">Loading analytics...</div>;

@@ -33,14 +33,23 @@ export default function OrderTracking({ order: initialOrder, userRole = 'user', 
     const [riderLocation, setRiderLocation] = useState<{ lat: number; lng: number } | null>(order?.riderLocation || null);
     const [eta, setEta] = useState<string>('25-35 mins');
     const [isChatOpen, setIsChatOpen] = useState(false);
-    const userInfo = JSON.parse(localStorage.getItem("userInfo") || "{}");
+    const [userInfo, setUserInfo] = useState<any>(null);
+
+    useEffect(() => {
+        if (typeof window !== 'undefined') {
+            const saved = localStorage.getItem('userInfo');
+            if (saved) setUserInfo(JSON.parse(saved));
+        }
+    }, []);
 
     useEffect(() => {
         if (!initialOrder && targetOrderId && isOpen) {
             const fetchOrder = async () => {
                 try {
                     setLoading(true);
-                    const token = JSON.parse(localStorage.getItem('userInfo') || '{}').token;
+                    const userStr = typeof window !== 'undefined' ? localStorage.getItem('userInfo') : null;
+                    if (!userStr) return;
+                    const token = JSON.parse(userStr).token;
                     const { data } = await axios.get(`${API_BASE_URL}/api/orders/${targetOrderId}`, {
                         headers: { Authorization: `Bearer ${token}` }
                     });
@@ -58,7 +67,7 @@ export default function OrderTracking({ order: initialOrder, userRole = 'user', 
     }, [targetOrderId, initialOrder, isOpen]);
 
     useEffect(() => {
-        if (!order || !isOpen) return;
+        if (!order || !isOpen || !userInfo) return;
 
         const pusher = initSocket(userInfo._id, userRole,
             userRole === 'restaurant' ? userInfo.restaurantId : undefined

@@ -59,13 +59,22 @@ export default function OrderBoard({ restaurant, onUpdate }: OrderBoardProps) {
     const [activeChat, setActiveChat] = useState<Order | null>(null);
     const [prepTimes, setPrepTimes] = useState<Record<string, number>>({});
     
-    const userInfo = JSON.parse(localStorage.getItem('userInfo') || '{}');
+    const [userInfo, setUserInfo] = useState<any>(null);
+
+    useEffect(() => {
+        if (typeof window !== 'undefined') {
+            const saved = localStorage.getItem('userInfo');
+            if (saved) setUserInfo(JSON.parse(saved));
+        }
+    }, []);
 
     const [lastUpdated, setLastUpdated] = useState<Date>(new Date());
 
     const fetchOrders = async () => {
         try {
-            const token = JSON.parse(localStorage.getItem('userInfo') || '{}').token;
+            const userStr = typeof window !== 'undefined' ? localStorage.getItem('userInfo') : null;
+            if (!userStr) return;
+            const token = JSON.parse(userStr).token;
             const res = await axios.get(`${API_BASE_URL}/api/orders/restaurant/my-orders`, {
                 headers: { Authorization: `Bearer ${token}` }
             });

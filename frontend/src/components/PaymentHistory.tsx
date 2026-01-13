@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { FaMoneyBillWave, FaHistory, FaFileInvoiceDollar, FaCheckCircle, FaClock, FaExclamationCircle, FaUpload, FaEye, FaDownload, FaCalendarAlt, FaPercent, FaReceipt, FaUniversity } from 'react-icons/fa';
+import { FaMoneyBillWave, FaHistory, FaFileInvoiceDollar, FaCheckCircle, FaClock, FaExclamationCircle, FaUpload, FaEye, FaDownload, FaCalendarAlt, FaPercent, FaReceipt, FaUniversity, FaShoppingBag } from 'react-icons/fa';
 import axios from 'axios';
 import { io } from 'socket.io-client';
 import PaymentProofModal from './PaymentProofModal';

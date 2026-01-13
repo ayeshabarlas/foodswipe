@@ -39,10 +39,13 @@ router.get('/my-dishes', protect, requireRestaurant, async (req, res) => {
         const restaurant = await Restaurant.findOne({ owner: req.user._id });
 
         if (!restaurant) {
+            console.log(`DishRoutes: No restaurant found for owner ${req.user._id}`);
             return res.status(404).json({ message: 'Restaurant not found' });
         }
 
+        console.log(`DishRoutes: Fetching dishes for restaurant ${restaurant._id} (${restaurant.name})`);
         const dishes = await Dish.find({ restaurant: restaurant._id });
+        console.log(`DishRoutes: Found ${dishes.length} dishes`);
         res.json(dishes);
     } catch (error) {
         console.error('Error fetching my dishes:', error);

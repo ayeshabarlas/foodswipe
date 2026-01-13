@@ -31,7 +31,14 @@ export default function RiderOrders({ riderId, setShowNotifications, unreadCount
     const [showDetailsModal, setShowDetailsModal] = useState(false);
     const [unreadCount, setUnreadCount] = useState(dashboardUnreadCount || 0);
     const [loading, setLoading] = useState(true);
-    const userInfo = JSON.parse(localStorage.getItem('userInfo') || '{}');
+    const [userInfo, setUserInfo] = useState<any>(null);
+
+    useEffect(() => {
+        if (typeof window !== 'undefined') {
+            const saved = localStorage.getItem('userInfo');
+            if (saved) setUserInfo(JSON.parse(saved));
+        }
+    }, []);
 
     // Update local unread count when prop changes
     useEffect(() => {
@@ -48,7 +55,9 @@ export default function RiderOrders({ riderId, setShowNotifications, unreadCount
         if (location && activeDelivery) {
             const updateLocation = async () => {
                 try {
-                    const token = JSON.parse(localStorage.getItem("userInfo") || "{}").token;
+                    const userStr = typeof window !== 'undefined' ? localStorage.getItem('userInfo') : null;
+                    if (!userStr) return;
+                    const token = JSON.parse(userStr).token;
                     await axios.post(
                         `${API_BASE_URL}/api/orders/${activeDelivery._id}/location`,
                         {
