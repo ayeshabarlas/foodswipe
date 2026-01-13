@@ -59,7 +59,9 @@ export default function Home() {
             setUserRole(ui.role);
             setIsLoggedIn(true);
             if (ui.role === "restaurant") {
-                setHasRestaurant(savedHasRestaurant || true); // Default to true to show dashboard
+                // If they are a restaurant, ALWAYS default to showing the dashboard
+                // unless we have explicitly confirmed they don't have one in this session
+                setHasRestaurant(true); 
             }
           }
         } catch (e) {}
@@ -90,11 +92,9 @@ export default function Home() {
                 localStorage.setItem("hasRestaurant", "true");
               }
             } catch (err: any) {
-                // If 404, we might actually not have one
-                if (err.response?.status === 404) {
-                    setHasRestaurant(false);
-                    localStorage.removeItem("hasRestaurant");
-                }
+                console.log("Background restaurant check failed:", err.message);
+                // We DO NOT set hasRestaurant to false here anymore.
+                // We let the RestaurantDashboard component handle its own 404/error state.
             }
           }
         } catch (error: any) {
@@ -150,10 +150,10 @@ export default function Home() {
         // If restaurant owner, show dashboard IMMEDIATELY
         if (role === "restaurant") {
           setUserRole(role);
-          setHasRestaurant(true); // Default to true to show dashboard
+          setHasRestaurant(true); // Always default to dashboard
           setIsLoggedIn(true);
           
-          // Verify profile in background
+          // Just update cache in background, don't trigger state changes that might redirect back
           const token = userInfo.token || localStorage.getItem("token");
           axios.get(`${API_BASE_URL}/api/restaurants/my-restaurant`, {
             headers: { Authorization: `Bearer ${token}` },
@@ -161,13 +161,9 @@ export default function Home() {
           }).then(res => {
             if (res.data) {
               localStorage.setItem("hasRestaurant", "true");
-              setHasRestaurant(true);
             }
           }).catch(err => {
-            if (err.response?.status === 404) {
-              setHasRestaurant(false);
-              localStorage.removeItem("hasRestaurant");
-            }
+             console.log("Login-time background check failed:", err.message);
           });
         } else {
           setUserRole(role);

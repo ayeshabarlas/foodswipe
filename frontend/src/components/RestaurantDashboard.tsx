@@ -56,18 +56,40 @@ export default function RestaurantDashboard() {
     const fetchDashboardData = async (isRefresh = false) => {
         try {
             if (!isRefresh) setLoading(true);
-            const token = JSON.parse(localStorage.getItem('userInfo') || '{}').token;
+            
+            // Get token from both possible locations
+            const userInfo = JSON.parse(localStorage.getItem('userInfo') || '{}');
+            const token = userInfo.token || localStorage.getItem('token');
+            
+            if (!token) {
+                console.error('No token found in dashboard');
+                return;
+            }
+            
             const headers = { Authorization: `Bearer ${token}` };
 
+            console.log("Dashboard: Fetching restaurant data...");
             const [restaurantRes, statsRes] = await Promise.all([
                 axios.get(`${API_BASE_URL}/api/restaurants/my-restaurant`, { headers }),
                 axios.get(`${API_BASE_URL}/api/dashboard/stats`, { headers })
             ]);
 
-            setRestaurant(restaurantRes.data);
-            setStats(statsRes.data);
-        } catch (error) {
+            if (restaurantRes.data) {
+                console.log("Dashboard: Restaurant found:", restaurantRes.data.name);
+                setRestaurant(restaurantRes.data);
+                localStorage.setItem("hasRestaurant", "true");
+            }
+            
+            if (statsRes.data) {
+                setStats(statsRes.data);
+            }
+        } catch (error: any) {
             console.error('Error fetching dashboard data:', error);
+            if (error.response?.status === 404) {
+                console.log("Dashboard: Restaurant not found (404)");
+                setRestaurant(null);
+                localStorage.removeItem("hasRestaurant");
+            }
         } finally {
             setLoading(false);
         }
@@ -221,13 +243,59 @@ export default function RestaurantDashboard() {
 
     if (loading) {
         return (
-            <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-                <ModernLoader size="lg" text="Loading your restaurant..." />
+            <div className="min-h-screen bg-black flex items-center justify-center">
+                <ModernLoader size="lg" text="Loading your restaurant dashboard..." />
             </div>
         );
     }
 
-    if (!restaurant) return <CreateRestaurant onRestaurantCreated={fetchDashboardData} />;
+    if (!restaurant) {
+        return (
+            <div className="min-h-screen bg-black flex flex-col items-center justify-center p-6 text-center text-white">
+                <div className="w-20 h-20 bg-orange-500/10 text-orange-500 rounded-full flex items-center justify-center mb-6 text-3xl animate-pulse">
+                    <FaStore />
+                </div>
+                <h2 className="text-2xl font-bold mb-4">Restaurant Profile Not Found</h2>
+                <p className="text-gray-400 mb-8 max-w-md">
+                    We couldn't load your restaurant profile. This might be a temporary connection issue.
+                </p>
+                <div className="flex flex-col gap-4 w-full max-w-xs">
+                    <button 
+                        onClick={() => fetchDashboardData(true)}
+                        className="w-full py-4 bg-orange-500 text-white rounded-2xl font-bold hover:bg-orange-600 transition-all active:scale-95 shadow-lg shadow-orange-500/20"
+                    >
+                        Retry Loading
+                    </button>
+                    <button 
+                        onClick={() => {
+                            localStorage.removeItem('hasRestaurant');
+                            window.location.reload();
+                        }}
+                        className="w-full py-4 bg-white/5 text-white rounded-2xl font-medium hover:bg-white/10 transition-all border border-white/10"
+                    >
+                        Refresh Connection
+                    </button>
+                    <div className="mt-4 pt-4 border-t border-white/10">
+                        <p className="text-xs text-gray-500 mb-2">If you don't have a profile yet:</p>
+                        <button 
+                            onClick={() => {
+                                // This will force showing the CreateRestaurant component
+                                setRestaurant({ _id: 'new', isNew: true });
+                            }}
+                            className="text-orange-500 text-sm font-bold hover:underline"
+                        >
+                            Create New Restaurant Profile
+                        </button>
+                    </div>
+                </div>
+            </div>
+        );
+    }
+
+    // If it's the "new" placeholder, show CreateRestaurant
+    if (restaurant.isNew) {
+        return <CreateRestaurant onRestaurantCreated={fetchDashboardData} />;
+    }
 
     const isPending = restaurant.verificationStatus === 'pending' || restaurant.verificationStatus === 'not_started';
 
