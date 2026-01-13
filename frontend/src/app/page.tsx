@@ -22,6 +22,19 @@ export default function Home() {
   const [userRole, setUserRole] = useState<string>("");
   const [hasRestaurant, setHasRestaurant] = useState(false);
   const [checkingRestaurant, setCheckingRestaurant] = useState(false);
+
+  // Safety timeout to prevent getting stuck on loading screen
+  useEffect(() => {
+    let timeout: NodeJS.Timeout;
+    if (checkingRestaurant) {
+      timeout = setTimeout(() => {
+        console.warn("Safety timeout: Force clearing checkingRestaurant state");
+        setCheckingRestaurant(false);
+      }, 15000); // 15 seconds safety net
+    }
+    return () => clearTimeout(timeout);
+  }, [checkingRestaurant]);
+
   useEffect(() => {
     const checkAuth = async () => {
       const userInfoStr = localStorage.getItem("userInfo");
@@ -63,7 +76,7 @@ export default function Home() {
           // Verify token with backend
           const response = await axios.get(`${API_BASE_URL}/api/auth/me`, {
             headers: { Authorization: `Bearer ${token}` },
-            timeout: 10000 
+            timeout: 8000 
           });
 
           const user = response.data;
@@ -83,6 +96,7 @@ export default function Home() {
             try {
               const restaurantResponse = await axios.get(`${API_BASE_URL}/api/restaurants/my-restaurant`, {
                 headers: { Authorization: `Bearer ${token}` },
+                timeout: 8000
               });
               if (restaurantResponse.data) {
                 setHasRestaurant(true);
@@ -92,11 +106,16 @@ export default function Home() {
                 localStorage.removeItem("hasRestaurant");
               }
             } catch (error: any) {
+              console.error("Restaurant check error in checkAuth:", error.message);
               if (error.response?.status === 404) {
                 setHasRestaurant(false);
                 localStorage.removeItem("hasRestaurant");
               }
-              // If it's a network error, we keep the previous hasRestaurant state
+              // If it's a network error or timeout, we don't clear hasRestaurant 
+              // to avoid accidentally showing the "Create Profile" screen
+              else if (localStorage.getItem("hasRestaurant") === "true") {
+                setHasRestaurant(true);
+              }
             } finally {
               setCheckingRestaurant(false);
             }
@@ -175,6 +194,7 @@ export default function Home() {
           try {
             const restaurantResponse = await axios.get(`${API_BASE_URL}/api/restaurants/my-restaurant`, {
               headers: { Authorization: `Bearer ${token}` },
+              timeout: 8000
             });
             
             if (restaurantResponse.data) {
@@ -186,9 +206,16 @@ export default function Home() {
               localStorage.removeItem("hasRestaurant");
             }
           } catch (error: any) {
-            console.log("Restaurant profile check failed:", error.message);
-            setHasRestaurant(false);
-            localStorage.removeItem("hasRestaurant");
+            console.log("Restaurant profile check failed in onLogin:", error.message);
+            // Only set to false if it's definitely a 404 (not found)
+            if (error.response?.status === 404) {
+              setHasRestaurant(false);
+              localStorage.removeItem("hasRestaurant");
+            } else {
+              // For other errors (timeout, 500), check localStorage as fallback
+              const saved = localStorage.getItem("hasRestaurant") === "true";
+              setHasRestaurant(saved);
+            }
           } finally {
             setCheckingRestaurant(false);
             setIsLoggedIn(true);
@@ -210,9 +237,33 @@ export default function Home() {
   if (userRole === "restaurant") {
     if (checkingRestaurant) {
       return (
-        <div className="h-screen w-full bg-gradient-to-br from-orange-500/10 via-black to-pink-500/10 flex flex-col items-center justify-center text-white">
+        <div className="h-screen w-full bg-gradient-to-br from-orange-500/10 via-black to-pink-500/10 flex flex-col items-center justify-center text-white p-6 text-center">
           <div className="w-12 h-12 border-4 border-orange-500 border-t-transparent rounded-full animate-spin mb-4 shadow-[0_0_15px_rgba(249,115,22,0.5)]"></div>
-          <p className="animate-pulse text-orange-500 font-medium tracking-wide">Loading restaurant dashboard...</p>
+          <p className="animate-pulse text-orange-500 font-medium tracking-wide mb-8">Loading restaurant dashboard...</p>
+          
+          <div className="mt-8 p-4 bg-white/5 backdrop-blur-md rounded-2xl border border-white/10 max-w-xs">
+            <p className="text-xs text-gray-400 mb-4">Taking too long? You can try to bypass the check if you already have a profile.</p>
+            <div className="flex flex-col gap-2">
+              <button 
+                onClick={() => {
+                  setHasRestaurant(true);
+                  setCheckingRestaurant(false);
+                }}
+                className="text-[10px] uppercase tracking-widest bg-orange-500 hover:bg-orange-600 text-white py-2 px-4 rounded-lg transition-colors font-bold"
+              >
+                Enter Dashboard
+              </button>
+              <button 
+                onClick={() => {
+                  localStorage.clear();
+                  window.location.reload();
+                }}
+                className="text-[10px] uppercase tracking-widest bg-white/10 hover:bg-white/20 text-white py-2 px-4 rounded-lg transition-colors"
+              >
+                Logout & Reset
+              </button>
+            </div>
+          </div>
         </div>
       );
     }
