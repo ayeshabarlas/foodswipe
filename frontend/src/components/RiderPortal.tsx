@@ -12,34 +12,49 @@ export default function RiderPortal() {
     const [verificationStatus, setVerificationStatus] = useState<'new' | 'pending' | 'approved' | 'rejected'>('new');
     const [loading, setLoading] = useState(true);
     const [step, setStep] = useState<'registration' | 'documents' | 'dashboard'>('registration');
+    const [userInfo, setUserInfo] = useState<any>(null);
 
     useEffect(() => {
-        // Check if rider profile already exists
-        const checkRiderProfile = async () => {
-            try {
-                const token = JSON.parse(localStorage.getItem("userInfo") || "{}").token;
-                const res = await axios.get(`${API_BASE_URL}/api/riders/my-profile`, {
-                    headers: { Authorization: `Bearer ${token}` }
-                });
-
-                if (res.data) {
-                    setRiderId(res.data._id);
-                    setVerificationStatus(res.data.verificationStatus);
-                }
-                
-                // Always go to dashboard if we reached this point
-                // The dashboard will handle missing data with a banner
-                setStep('dashboard');
-            } catch (error: any) {
-                console.log("Rider profile not found or error, showing dashboard anyway");
-                setStep('dashboard');
-            } finally {
-                setLoading(false);
-            }
-        };
-
-        checkRiderProfile();
+        if (typeof window !== 'undefined') {
+            const saved = localStorage.getItem('userInfo');
+            if (saved) setUserInfo(JSON.parse(saved));
+        }
     }, []);
+
+    useEffect(() => {
+        if (userInfo) {
+            checkRiderProfile();
+        }
+    }, [userInfo]);
+
+    // Check if rider profile already exists
+    const checkRiderProfile = async () => {
+        if (!userInfo?.token) {
+            setLoading(false);
+            setStep('dashboard'); // Dashboard will handle no-auth state
+            return;
+        }
+
+        try {
+            const res = await axios.get(`${API_BASE_URL}/api/riders/my-profile`, {
+                headers: { Authorization: `Bearer ${userInfo.token}` }
+            });
+
+            if (res.data) {
+                setRiderId(res.data._id);
+                setVerificationStatus(res.data.verificationStatus);
+            }
+            
+            // Always go to dashboard if we reached this point
+            // The dashboard will handle missing data with a banner
+            setStep('dashboard');
+        } catch (error: any) {
+            console.log("Rider profile not found or error, showing dashboard anyway");
+            setStep('dashboard');
+        } finally {
+            setLoading(false);
+        }
+    };
 
     const handleRegistrationComplete = (newRiderId: string) => {
         setRiderId(newRiderId);

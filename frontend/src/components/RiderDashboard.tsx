@@ -37,12 +37,18 @@ const RiderDashboard = ({ riderId: initialRiderId }: { riderId?: string }) => {
     const [selectedOrderForTracking, setSelectedOrderForTracking] = useState<any>(null);
     const [showNotifications, setShowNotifications] = useState(false);
     const [unreadCount, setUnreadCount] = useState(0);
+    const [userInfo, setUserInfo] = useState<any>(null);
 
-    const userInfo = typeof window !== 'undefined' ? JSON.parse(localStorage.getItem('userInfo') || '{}') : {};
+    useEffect(() => {
+        if (typeof window !== 'undefined') {
+            const saved = localStorage.getItem('userInfo');
+            if (saved) setUserInfo(JSON.parse(saved));
+        }
+    }, []);
     
     const displayRider = riderData || {
         _id: 'loading',
-        fullName: userInfo.name || 'Rider',
+        fullName: userInfo?.name || 'Rider',
         walletBalance: 0,
         rating: '4.8',
         isOnline: false,
@@ -52,9 +58,7 @@ const RiderDashboard = ({ riderId: initialRiderId }: { riderId?: string }) => {
 
     const fetchNotificationsCount = async () => {
         try {
-            const userStr = localStorage.getItem('userInfo');
-            if (!userStr) return;
-            const userInfo = JSON.parse(userStr);
+            if (!userInfo?.token) return;
             const config = { headers: { Authorization: `Bearer ${userInfo.token}` } };
             const res = await axios.get(`${API_BASE_URL}/api/notifications`, config);
             const unread = res.data.filter((n: any) => !n.read).length;
@@ -65,13 +69,10 @@ const RiderDashboard = ({ riderId: initialRiderId }: { riderId?: string }) => {
     };
 
     const fetchRiderData = async () => {
+        if (!userInfo) return;
+
         try {
-            const userStr = localStorage.getItem('userInfo');
-            if (!userStr) {
-                window.location.href = '/login';
-                return;
-            }
-            const userInfo = JSON.parse(userStr);
+            setLoading(true);
             const token = userInfo.token;
             
             const config = { headers: { Authorization: `Bearer ${token}` } };
@@ -126,7 +127,6 @@ const RiderDashboard = ({ riderId: initialRiderId }: { riderId?: string }) => {
                 setActiveOrder(null);
             }
 
-            setLoading(false);
             setError(null);
         } catch (err: any) {
             console.error('Error fetching rider data:', err);
@@ -135,6 +135,7 @@ const RiderDashboard = ({ riderId: initialRiderId }: { riderId?: string }) => {
             } else {
                 setError(err.message || err.response?.data?.message || 'Failed to load profile');
             }
+        } finally {
             setLoading(false);
         }
     };
@@ -145,7 +146,9 @@ const RiderDashboard = ({ riderId: initialRiderId }: { riderId?: string }) => {
     };
 
     useEffect(() => {
-        fetchRiderData();
+        if (userInfo) {
+            fetchRiderData();
+        }
         
         // Hide scrollbar style
         const style = document.createElement('style');
@@ -156,13 +159,15 @@ const RiderDashboard = ({ riderId: initialRiderId }: { riderId?: string }) => {
         document.head.appendChild(style);
 
         return () => {
-            document.head.removeChild(style);
+            if (document.head.contains(style)) {
+                document.head.removeChild(style);
+            }
         };
-    }, []);
+    }, [userInfo]);
 
     // Pusher and Geolocation Logic
     useEffect(() => {
-        if (!riderData?.user?._id) return;
+        if (!riderData?.user?._id || !userInfo) return;
 
         const pusher = initSocket(riderData.user._id, 'rider', undefined, riderData._id);
         

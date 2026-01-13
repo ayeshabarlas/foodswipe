@@ -64,14 +64,14 @@ export default function RestaurantDashboard() {
     }, [restaurant?._id, userInfo]);
 
     const fetchDashboardData = async (isRefresh = false) => {
+        if (!userInfo) {
+            console.warn('No userInfo found in dashboard state yet');
+            return;
+        }
+
         try {
             if (!isRefresh) setLoading(true);
             
-            if (!userInfo) {
-                console.warn('No userInfo found in dashboard state yet');
-                return;
-            }
-
             const token = userInfo.token;
             
             if (!token) {
@@ -118,7 +118,7 @@ export default function RestaurantDashboard() {
                     setRestaurant({ _id: 'new', isNew: true });
                 } else if (err.response?.status === 401) {
                     localStorage.removeItem('userInfo');
-                    window.location.href = '/login';
+                    if (typeof window !== 'undefined') window.location.href = '/login';
                 } else {
                     setRestaurant({ _id: 'error', error: true, message: err.response?.data?.message || err.message });
                 }

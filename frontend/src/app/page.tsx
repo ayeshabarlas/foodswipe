@@ -71,25 +71,35 @@ export default function Home() {
       // 2. BACKGROUND RE-VALIDATION
       if (userInfoStr && token) {
         try {
+          console.log("Home: Starting background re-validation...");
           const response = await axios.get(`${API_BASE_URL}/api/auth/me`, {
             headers: { Authorization: `Bearer ${token}` },
             timeout: 5000 
           });
 
           const user = response.data;
+          console.log("Home: Re-validation success, user data:", user);
           const ui = JSON.parse(userInfoStr || '{}');
           const updated = { ...ui, ...user };
           localStorage.setItem("userInfo", JSON.stringify(updated));
           
-          // Only update state if role changed (unlikely but possible)
+          // Update state if needed
           if (updated.role !== userRole) {
+            console.log(`Home: Role changed from ${userRole} to ${updated.role}`);
             setUserRole(updated.role);
           }
+          
+          if (updated.role === "restaurant") {
+             setHasRestaurant(true);
+          }
         } catch (error: any) {
-          console.log("Auth background re-validation failed:", error.message);
-          // If 401/403, we might want to logout, but let's be cautious
-          if (error.response?.status === 401) {
-             // Silently handle or logout if absolutely sure
+          console.error("Home: Auth background re-validation failed:", error.response?.data || error.message);
+          // If 401/403, the token is invalid
+          if (error.response?.status === 401 || error.response?.status === 403) {
+             console.warn("Home: Token invalid, logging out...");
+             // Only logout if we are not in a transient error state
+             // localStorage.clear();
+             // setIsLoggedIn(false);
           }
         }
       }
