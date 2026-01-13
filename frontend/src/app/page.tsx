@@ -51,93 +51,57 @@ export default function Home() {
         } catch (e) {}
       }
 
-      // Proactively set logged in state if we have a token and user info
+      // IMMEDIATE SETTINGS FROM LOCAL STORAGE
       if (userInfoStr && token) {
         try {
-          const existingUserInfo = JSON.parse(userInfoStr);
-          if (existingUserInfo && existingUserInfo.role) {
-            setUserRole(existingUserInfo.role);
-            
-            // If restaurant, set checking state early to avoid flicker
-            if (existingUserInfo.role === "restaurant" && !savedHasRestaurant) {
-              setCheckingRestaurant(true);
-            }
-            
+          const ui = JSON.parse(userInfoStr);
+          if (ui.role) {
+            setUserRole(ui.role);
             setIsLoggedIn(true);
-            if (existingUserInfo.role === "restaurant" && savedHasRestaurant) {
-              setHasRestaurant(true);
+            if (ui.role === "restaurant") {
+                setHasRestaurant(savedHasRestaurant || true); // Default to true to show dashboard
             }
           }
-        } catch (e) {
-          console.error("Error parsing existing userInfo:", e);
-        }
+        } catch (e) {}
+      }
 
+      // Background verification
+      if (userInfoStr && token) {
         try {
-          // Verify token with backend
           const response = await axios.get(`${API_BASE_URL}/api/auth/me`, {
             headers: { Authorization: `Bearer ${token}` },
-            timeout: 8000 
+            timeout: 5000 
           });
 
           const user = response.data;
-          const existingUserInfo = JSON.parse(userInfoStr || '{}');
-          const updatedUserInfo = { ...existingUserInfo, ...user };
+          const ui = JSON.parse(userInfoStr || '{}');
+          const updated = { ...ui, ...user };
+          localStorage.setItem("userInfo", JSON.stringify(updated));
+          setUserRole(updated.role);
 
-          localStorage.setItem("userInfo", JSON.stringify(updatedUserInfo));
-          setUserRole(updatedUserInfo.role || existingUserInfo.role);
-          setIsLoggedIn(true);
-
-          if (updatedUserInfo.role === "restaurant") {
-            // Ensure we are in checking state if we don't have a confirmed restaurant
-            if (!localStorage.getItem("hasRestaurant")) {
-              setCheckingRestaurant(true);
-            }
-            
+          if (updated.role === "restaurant") {
             try {
-              const restaurantResponse = await axios.get(`${API_BASE_URL}/api/restaurants/my-restaurant`, {
+              const res = await axios.get(`${API_BASE_URL}/api/restaurants/my-restaurant`, {
                 headers: { Authorization: `Bearer ${token}` },
-                timeout: 8000
+                timeout: 5000
               });
-              if (restaurantResponse.data) {
+              if (res.data) {
                 setHasRestaurant(true);
                 localStorage.setItem("hasRestaurant", "true");
-              } else {
-                setHasRestaurant(false);
-                localStorage.removeItem("hasRestaurant");
               }
-            } catch (error: any) {
-              console.error("Restaurant check error in checkAuth:", error.message);
-              if (error.response?.status === 404) {
-                setHasRestaurant(false);
-                localStorage.removeItem("hasRestaurant");
-              }
-              // If it's a network error or timeout, we don't clear hasRestaurant 
-              // to avoid accidentally showing the "Create Profile" screen
-              else if (localStorage.getItem("hasRestaurant") === "true") {
-                setHasRestaurant(true);
-              }
-            } finally {
-              setCheckingRestaurant(false);
+            } catch (err: any) {
+                // If 404, we might actually not have one
+                if (err.response?.status === 404) {
+                    setHasRestaurant(false);
+                    localStorage.removeItem("hasRestaurant");
+                }
             }
           }
         } catch (error: any) {
-          console.error("Session verification failed:", error.message);
-          
-          if (error.response && (error.response.status === 401 || error.response.status === 403)) {
-            console.log("Authentication expired - logging out");
-            localStorage.removeItem("userInfo");
-            localStorage.removeItem("token");
-            setIsLoggedIn(false);
-            setUserRole("");
-          } else {
-            // Network error - we already set isLoggedIn to true above, so just keep it
-            console.log("Network issue - maintaining local session");
-          }
+          console.error("Auth check failed:", error.message);
         }
-      } else {
-        setIsLoggedIn(false);
-        setUserRole("");
       }
+      
       setLoading(false);
     };
 
@@ -183,43 +147,28 @@ export default function Home() {
           localStorage.setItem("token", userInfo.token);
         }
 
-        // If restaurant owner, check for profile BEFORE showing dashboard
+        // If restaurant owner, show dashboard IMMEDIATELY
         if (role === "restaurant") {
-          console.log("User is restaurant, checking for existing profile...");
-          setCheckingRestaurant(true);
-          setUserRole(role); // Set role so we know what to show after loading
+          setUserRole(role);
+          setHasRestaurant(true); // Default to true to show dashboard
+          setIsLoggedIn(true);
           
+          // Verify profile in background
           const token = userInfo.token || localStorage.getItem("token");
-          
-          try {
-            const restaurantResponse = await axios.get(`${API_BASE_URL}/api/restaurants/my-restaurant`, {
-              headers: { Authorization: `Bearer ${token}` },
-              timeout: 8000
-            });
-            
-            if (restaurantResponse.data) {
-              console.log("Restaurant profile found");
-              setHasRestaurant(true);
+          axios.get(`${API_BASE_URL}/api/restaurants/my-restaurant`, {
+            headers: { Authorization: `Bearer ${token}` },
+            timeout: 5000
+          }).then(res => {
+            if (res.data) {
               localStorage.setItem("hasRestaurant", "true");
-            } else {
+              setHasRestaurant(true);
+            }
+          }).catch(err => {
+            if (err.response?.status === 404) {
               setHasRestaurant(false);
               localStorage.removeItem("hasRestaurant");
             }
-          } catch (error: any) {
-            console.log("Restaurant profile check failed in onLogin:", error.message);
-            // Only set to false if it's definitely a 404 (not found)
-            if (error.response?.status === 404) {
-              setHasRestaurant(false);
-              localStorage.removeItem("hasRestaurant");
-            } else {
-              // For other errors (timeout, 500), check localStorage as fallback
-              const saved = localStorage.getItem("hasRestaurant") === "true";
-              setHasRestaurant(saved);
-            }
-          } finally {
-            setCheckingRestaurant(false);
-            setIsLoggedIn(true);
-          }
+          });
         } else {
           setUserRole(role);
           setIsLoggedIn(true);
@@ -235,53 +184,22 @@ export default function Home() {
 
   // Restaurant owner flow
   if (userRole === "restaurant") {
-    if (checkingRestaurant) {
-      return (
-        <div className="h-screen w-full bg-gradient-to-br from-orange-500/10 via-black to-pink-500/10 flex flex-col items-center justify-center text-white p-6 text-center">
-          <div className="w-12 h-12 border-4 border-orange-500 border-t-transparent rounded-full animate-spin mb-4 shadow-[0_0_15px_rgba(249,115,22,0.5)]"></div>
-          <p className="animate-pulse text-orange-500 font-medium tracking-wide mb-8">Loading restaurant dashboard...</p>
-          
-          <div className="mt-8 p-4 bg-white/5 backdrop-blur-md rounded-2xl border border-white/10 max-w-xs">
-            <p className="text-xs text-gray-400 mb-4">Taking too long? You can try to bypass the check if you already have a profile.</p>
-            <div className="flex flex-col gap-2">
-              <button 
-                onClick={() => {
-                  setHasRestaurant(true);
-                  setCheckingRestaurant(false);
-                }}
-                className="text-[10px] uppercase tracking-widest bg-orange-500 hover:bg-orange-600 text-white py-2 px-4 rounded-lg transition-colors font-bold"
-              >
-                Enter Dashboard
-              </button>
-              <button 
-                onClick={() => {
-                  localStorage.clear();
-                  window.location.reload();
-                }}
-                className="text-[10px] uppercase tracking-widest bg-white/10 hover:bg-white/20 text-white py-2 px-4 rounded-lg transition-colors"
-              >
-                Logout & Reset
-              </button>
-            </div>
-          </div>
-        </div>
-      );
+       // Show dashboard by default for restaurant roles to avoid flicker
+       // Only show CreateRestaurant if we explicitly know hasRestaurant is false
+       if (hasRestaurant || localStorage.getItem("hasRestaurant") === "true") {
+         return (
+           <div className="h-screen w-full bg-black overflow-hidden">
+             <RestaurantDashboard />
+           </div>
+         );
+       }
+ 
+       return (
+         <div className="h-screen w-full bg-black overflow-y-auto">
+           <CreateRestaurant onRestaurantCreated={handleRestaurantCreated} />
+         </div>
+       );
     }
-
-    if (!hasRestaurant) {
-      return (
-        <div className="h-screen w-full bg-black overflow-y-auto">
-          <CreateRestaurant onRestaurantCreated={handleRestaurantCreated} />
-        </div>
-      );
-    }
-
-    return (
-      <div className="h-screen w-full bg-black overflow-hidden">
-        <RestaurantDashboard />
-      </div>
-    );
-  }
 
   // Rider flow
   if (userRole === "rider") {
