@@ -39,8 +39,8 @@ export default function Home() {
     const checkAuth = async () => {
       const userInfoStr = localStorage.getItem("userInfo");
       let token = localStorage.getItem("token");
-      const savedHasRestaurant = localStorage.getItem("hasRestaurant") === "true";
-
+      
+      // Proactively recover token from userInfo if missing in standalone localStorage
       if (userInfoStr && !token) {
         try {
           const ui = JSON.parse(userInfoStr);
@@ -51,23 +51,24 @@ export default function Home() {
         } catch (e) {}
       }
 
-      // IMMEDIATE SETTINGS FROM LOCAL STORAGE
+      // 1. IMMEDIATE RENDER FROM LOCAL CACHE
       if (userInfoStr && token) {
         try {
           const ui = JSON.parse(userInfoStr);
-          if (ui.role) {
+          if (ui.role === "restaurant") {
+            setUserRole("restaurant");
+            setHasRestaurant(true); // Trust the role, show dashboard
+            setIsLoggedIn(true);
+            setLoading(false); // STOP LOADING EARLY
+          } else if (ui.role) {
             setUserRole(ui.role);
             setIsLoggedIn(true);
-            if (ui.role === "restaurant") {
-                // If they are a restaurant, ALWAYS default to showing the dashboard
-                // unless we have explicitly confirmed they don't have one in this session
-                setHasRestaurant(true); 
-            }
+            setLoading(false);
           }
         } catch (e) {}
       }
 
-      // Background verification
+      // 2. BACKGROUND RE-VALIDATION
       if (userInfoStr && token) {
         try {
           const response = await axios.get(`${API_BASE_URL}/api/auth/me`, {
@@ -79,26 +80,17 @@ export default function Home() {
           const ui = JSON.parse(userInfoStr || '{}');
           const updated = { ...ui, ...user };
           localStorage.setItem("userInfo", JSON.stringify(updated));
-          setUserRole(updated.role);
-
-          if (updated.role === "restaurant") {
-            try {
-              const res = await axios.get(`${API_BASE_URL}/api/restaurants/my-restaurant`, {
-                headers: { Authorization: `Bearer ${token}` },
-                timeout: 5000
-              });
-              if (res.data) {
-                setHasRestaurant(true);
-                localStorage.setItem("hasRestaurant", "true");
-              }
-            } catch (err: any) {
-                console.log("Background restaurant check failed:", err.message);
-                // We DO NOT set hasRestaurant to false here anymore.
-                // We let the RestaurantDashboard component handle its own 404/error state.
-            }
+          
+          // Only update state if role changed (unlikely but possible)
+          if (updated.role !== userRole) {
+            setUserRole(updated.role);
           }
         } catch (error: any) {
-          console.error("Auth check failed:", error.message);
+          console.log("Auth background re-validation failed:", error.message);
+          // If 401/403, we might want to logout, but let's be cautious
+          if (error.response?.status === 401) {
+             // Silently handle or logout if absolutely sure
+          }
         }
       }
       

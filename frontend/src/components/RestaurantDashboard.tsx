@@ -251,40 +251,40 @@ export default function RestaurantDashboard() {
 
     if (!restaurant) {
         return (
-            <div className="min-h-screen bg-black flex flex-col items-center justify-center p-6 text-center text-white">
+            <div className="min-h-screen bg-black flex flex-col items-center justify-center p-6 text-center text-white font-sans">
                 <div className="w-20 h-20 bg-orange-500/10 text-orange-500 rounded-full flex items-center justify-center mb-6 text-3xl animate-pulse">
                     <FaStore />
                 </div>
-                <h2 className="text-2xl font-bold mb-4">Restaurant Profile Not Found</h2>
-                <p className="text-gray-400 mb-8 max-w-md">
-                    We couldn't load your restaurant profile. This might be a temporary connection issue.
+                <h2 className="text-2xl font-bold mb-2">Connecting to Restaurant...</h2>
+                <p className="text-gray-400 mb-8 max-w-md text-sm">
+                    Aapka restaurant profile load ho raha hai. Agar yeh screen zyada der rahay, toh niche "Refresh" button dabayen.
                 </p>
+                
                 <div className="flex flex-col gap-4 w-full max-w-xs">
                     <button 
-                        onClick={() => fetchDashboardData(true)}
-                        className="w-full py-4 bg-orange-500 text-white rounded-2xl font-bold hover:bg-orange-600 transition-all active:scale-95 shadow-lg shadow-orange-500/20"
-                    >
-                        Retry Loading
-                    </button>
-                    <button 
                         onClick={() => {
-                            localStorage.removeItem('hasRestaurant');
-                            window.location.reload();
+                            setLoading(true);
+                            fetchDashboardData(true);
                         }}
-                        className="w-full py-4 bg-white/5 text-white rounded-2xl font-medium hover:bg-white/10 transition-all border border-white/10"
+                        className="w-full py-4 bg-orange-500 text-white rounded-2xl font-bold hover:bg-orange-600 transition-all active:scale-95 shadow-lg shadow-orange-500/20"
                     >
                         Refresh Connection
                     </button>
-                    <div className="mt-4 pt-4 border-t border-white/10">
-                        <p className="text-xs text-gray-500 mb-2">If you don't have a profile yet:</p>
+                    
+                    <button 
+                        onClick={() => window.location.reload()}
+                        className="w-full py-4 bg-white/5 text-white rounded-2xl font-medium hover:bg-white/10 transition-all border border-white/10"
+                    >
+                        Reload Entire Page
+                    </button>
+
+                    <div className="mt-8 pt-6 border-t border-white/10">
+                        <p className="text-xs text-gray-500 mb-4">Aapki profile kahin nahi gayi, yeh sirf connection ka masla ho sakta hai.</p>
                         <button 
-                            onClick={() => {
-                                // This will force showing the CreateRestaurant component
-                                setRestaurant({ _id: 'new', isNew: true });
-                            }}
-                            className="text-orange-500 text-sm font-bold hover:underline"
+                            onClick={() => setRestaurant({ _id: 'new', isNew: true })}
+                            className="text-gray-500 text-xs hover:text-orange-500 transition-colors"
                         >
-                            Create New Restaurant Profile
+                            (Naya profile banayen agar pehle se nahi hai)
                         </button>
                     </div>
                 </div>
