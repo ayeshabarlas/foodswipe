@@ -179,13 +179,24 @@ const getRestaurantById = async (req, res) => {
  */
 const getMyRestaurant = async (req, res) => {
     try {
-        console.log(`Getting restaurant for owner: ${req.user._id} (${req.user.email})`);
+        console.log(`Getting restaurant for owner ID: ${req.user._id} (Email: ${req.user.email})`);
         const restaurant = await Restaurant.findOne({ owner: req.user._id })
             .populate('videos');
 
         if (!restaurant) {
-            console.log(`No restaurant found for user ${req.user._id}`);
-            return res.status(404).json({ message: 'No restaurant found for this user' });
+            console.log(`No restaurant found for user ID ${req.user._id}. Checking if they have a restaurant under a different ID but same email...`);
+            // Safety check: Does this email have a restaurant with a different owner ID? (Shouldn't happen but good for debug)
+            const otherRests = await Restaurant.find({}).populate('owner');
+            const matchByEmail = otherRests.find(r => r.owner && r.owner.email === req.user.email);
+            
+            if (matchByEmail) {
+                console.log(`CRITICAL: Found restaurant ${matchByEmail._id} for email ${req.user.email} but owned by DIFFERENT user ID ${matchByEmail.owner._id}. This suggests account duplication.`);
+            }
+
+            return res.status(404).json({ 
+                message: 'No restaurant found for this user',
+                debug: matchByEmail ? `Email mismatch: Found restaurant under ID ${matchByEmail.owner._id}` : 'No restaurant found for this email/role'
+            });
         }
 
         // Self-healing: Ensure user has 'restaurant' role if they own a restaurant

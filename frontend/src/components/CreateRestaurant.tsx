@@ -189,6 +189,17 @@ export default function CreateRestaurant({ onRestaurantCreated }: CreateRestaura
 
                     <div className="bg-white p-8 rounded-b-3xl shadow-xl">
                         <div className="space-y-4">
+                            <div className="p-4 bg-blue-50 border border-blue-100 rounded-xl mb-4">
+                                <p className="text-sm text-blue-700 flex items-center gap-2">
+                                    <FaStore size={14} /> Already have a restaurant? 
+                                    <button 
+                                        onClick={() => window.location.reload()}
+                                        className="font-bold underline hover:text-blue-800"
+                                    >
+                                        Click here to refresh
+                                    </button>
+                                </p>
+                            </div>
                             <div
                                 onClick={() => setBusinessType('home-chef')}
                                 className={`p-6 rounded-2xl border-2 cursor-pointer transition-all flex items-start gap-4 ${businessType === 'home-chef' ? 'border-gray-800 bg-gray-50' : 'border-gray-200 hover:border-gray-300'}`}
