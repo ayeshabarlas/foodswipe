@@ -578,6 +578,36 @@ const submitVerification = async (req, res) => {
 };
 
 
+const Order = require('../models/Order');
+
+/**
+ * @desc    Get completed orders for the last 7 days for current restaurant
+ * @route   GET /api/restaurants/orders/history/weekly
+ * @access  Private (Owner only)
+ */
+const getWeeklyOrderHistory = async (req, res) => {
+    try {
+        const restaurant = await Restaurant.findOne({ owner: req.user._id });
+        if (!restaurant) {
+            return res.status(404).json({ message: 'Restaurant not found' });
+        }
+
+        const sevenDaysAgo = new Date();
+        sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+
+        const orders = await Order.find({
+            restaurant: restaurant._id,
+            status: 'Delivered',
+            createdAt: { $gte: sevenDaysAgo }
+        }).sort({ createdAt: -1 });
+
+        res.json(orders);
+    } catch (error) {
+        console.error('Get weekly history error:', error);
+        res.status(500).json({ message: 'Failed to fetch weekly history', error: error.message });
+    }
+};
+
 module.exports = {
     createRestaurant,
     getRestaurantById,
@@ -589,7 +619,8 @@ module.exports = {
     getRestaurantReviews,
     updateStoreSettings,
     updatePrepTime,
-    getRestaurantMenu,
     submitVerification,
+    getRestaurantMenu,
+    getWeeklyOrderHistory,
 };
 

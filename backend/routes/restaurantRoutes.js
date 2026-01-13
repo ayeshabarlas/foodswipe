@@ -12,12 +12,14 @@ const {
     updateStoreSettings,
     updatePrepTime,
     submitVerification,
+    getWeeklyOrderHistory,
 } = require('../controllers/restaurantController');
 const { protect } = require('../middleware/authMiddleware');
 
 router.post('/create', protect, createRestaurant);
 router.post('/verify', protect, submitVerification);
 router.get('/my-restaurant', protect, getMyRestaurant);
+router.get('/orders/history/weekly', protect, getWeeklyOrderHistory);
 router.put('/store-settings', protect, updateStoreSettings);
 router.put('/prep-time', protect, updatePrepTime);
 router.get('/:id', getRestaurantById);

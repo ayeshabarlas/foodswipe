@@ -66,10 +66,10 @@ export default function Home() {
 
           localStorage.setItem("userInfo", JSON.stringify(updatedUserInfo));
           setUserRole(updatedUserInfo.role || existingUserInfo.role);
-          
+          setIsLoggedIn(true);
+
           if (updatedUserInfo.role === "restaurant") {
-            // Set isLoggedIn to true but also set checkingRestaurant to avoid flash
-            setIsLoggedIn(true);
+            // Only show loader if we don't already know we have a restaurant
             if (!savedHasRestaurant) {
               setCheckingRestaurant(true);
             }
@@ -86,11 +86,8 @@ export default function Home() {
                 setHasRestaurant(false);
                 localStorage.removeItem("hasRestaurant");
               }
-            } finally {
-              setCheckingRestaurant(false);
             }
-          } else {
-            setIsLoggedIn(true);
+            setCheckingRestaurant(false);
           }
         } catch (error: any) {
           console.error("Session verification failed:", error.message);
@@ -154,14 +151,13 @@ export default function Home() {
         const updatedUserInfo = { ...existingUserInfo, ...userInfo };
         localStorage.setItem("userInfo", JSON.stringify(updatedUserInfo));
 
-        // If restaurant owner, check for profile BEFORE setting isLoggedIn to true
-        // to avoid flashing the CreateRestaurant screen
+        setIsLoggedIn(true);
+
+        // If restaurant owner, check for profile
         if (role === "restaurant") {
           console.log("User is restaurant, checking for existing profile...");
           setCheckingRestaurant(true);
-          setIsLoggedIn(true); // Still set logged in so we show the loader
-          
-          const token = userInfo.token || localStorage.getItem("token");
+          const token = localStorage.getItem("token");
           try {
             const restaurantResponse = await axios.get(`${API_BASE_URL}/api/restaurants/my-restaurant`, {
               headers: { Authorization: `Bearer ${token}` },
@@ -177,11 +173,8 @@ export default function Home() {
               setHasRestaurant(false);
               localStorage.removeItem("hasRestaurant");
             }
-          } finally {
-            setCheckingRestaurant(false);
           }
-        } else {
-          setIsLoggedIn(true);
+          setCheckingRestaurant(false);
         }
       } else {
         setIsLoggedIn(true);
