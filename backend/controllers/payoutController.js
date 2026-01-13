@@ -32,7 +32,7 @@ const calculateTotals = async (restaurantId, start, end) => {
     
     const orders = await Order.find({
         restaurant: restaurantId,
-        status: { $in: ['Pending', 'Preparing', 'Ready', 'Out for Delivery', 'Delivered', 'Completed'] },
+        status: { $nin: ['Cancelled'] },
         createdAt: { $gte: start, $lte: end }
     });
 
@@ -181,8 +181,11 @@ const uploadPaymentProof = async (req, res) => {
 
         await payout.save();
 
-        // Emit socket event for admin (if we had admin room)
-        // req.app.get('io').to('admin_room').emit('new_payment_proof', payout);
+        // Emit socket event for admin real-time update
+        triggerEvent('admin', 'stats_updated', { 
+            type: 'payment_proof_uploaded',
+            payoutId: payout._id 
+        });
 
         // Emit back to restaurant to confirm update
         triggerEvent(`restaurant_${payout.restaurant}`, 'payment_status_updated', {

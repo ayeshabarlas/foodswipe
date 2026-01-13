@@ -22,16 +22,13 @@ export default function CartDrawer({ isOpen, onClose, onTrackOrder }: CartDrawer
     // Enable swipe back gesture
     useSwipeBack({ onSwipeBack: onClose });
 
-    // Distance-based delivery fee tiers (applied at checkout based on location)
-    // < 3 km → Rs. 79
-    // 3–6 km → Rs. 99
-    // 6–9 km → Rs. 129
-    // 9+ km → Rs. 149
-    const deliveryFee = 79; // Starting tier fee
+    // Delivery fee is now distance-based (60 base + 20/km)
+    // We show a starting fee here and calculate exact amount at checkout
+    const baseDeliveryFee = 60; 
     const taxRate = 0.08;
     const subtotal = cartTotal;
     const tax = Math.round(subtotal * taxRate);
-    const total = subtotal + deliveryFee + tax;
+    const estimatedTotal = subtotal + baseDeliveryFee + tax;
 
     return (
         <>
@@ -128,9 +125,12 @@ export default function CartDrawer({ isOpen, onClose, onTrackOrder }: CartDrawer
                             {/* Footer */}
                             {cart.length > 0 && (
                                 <div className="p-5 border-t border-gray-200 bg-white">
-                                    <div className="flex justify-between items-center mb-4">
+                                    <div className="flex justify-between items-center mb-1">
                                         <span className="text-gray-600">Subtotal</span>
                                         <span className="font-bold text-gray-900">Rs. {subtotal.toLocaleString()}</span>
+                                    </div>
+                                    <div className="flex justify-between items-center mb-4">
+                                        <span className="text-gray-500 text-xs italic">* Delivery fee calculated at checkout</span>
                                     </div>
                                     <button
                                         onClick={() => setIsCheckoutOpen(true)}
@@ -151,9 +151,9 @@ export default function CartDrawer({ isOpen, onClose, onTrackOrder }: CartDrawer
                 onClose={() => setIsCheckoutOpen(false)}
                 cart={cart}
                 subtotal={subtotal}
-                deliveryFee={deliveryFee}
+                deliveryFee={baseDeliveryFee}
                 tax={tax}
-                total={total}
+                total={estimatedTotal}
                 onSuccess={() => {
                     // Optional: Close cart drawer too if needed, or just let user close it
                     // onClose(); 

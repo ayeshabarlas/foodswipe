@@ -12,6 +12,12 @@ interface Wallet {
         name: string;
         email: string;
         phone: string;
+        stats?: {
+            completedDeliveries: number;
+        };
+        earnings?: {
+            total: number;
+        };
     };
     cashCollected: number;
     deliveryEarnings: number;
@@ -167,7 +173,17 @@ export default function RiderWalletsView() {
                                             </div>
                                         </td>
                                         <td className="px-6 py-4">
-                                            <span className="text-gray-900 font-semibold">{formatCurrency(wallet.deliveryEarnings)}</span>
+                                            <div className="flex flex-col">
+                                                <span className="text-gray-900 font-semibold">{formatCurrency(wallet.deliveryEarnings)}</span>
+                                                <div className="flex gap-2 mt-1">
+                                                    <span className="text-[10px] bg-blue-50 text-blue-600 px-1.5 py-0.5 rounded">
+                                                        Base: {formatCurrency((wallet.rider?.stats?.completedDeliveries || 0) * 60)}
+                                                    </span>
+                                                    <span className="text-[10px] bg-purple-50 text-purple-600 px-1.5 py-0.5 rounded">
+                                                        Dist: {formatCurrency(Math.max(0, wallet.deliveryEarnings - ((wallet.rider?.stats?.completedDeliveries || 0) * 60)))}
+                                                    </span>
+                                                </div>
+                                            </div>
                                         </td>
                                         <td className="px-6 py-4">
                                             <span className="text-green-600 font-semibold">{formatCurrency(wallet.availableWithdraw)}</span>

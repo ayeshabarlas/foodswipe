@@ -59,9 +59,9 @@ export default function MapComponent({ restaurantLoc, customerLoc, riderLoc, ord
     const safeCustomerLoc = customerLoc || [31.5204, 74.3587];
     const safeRiderLoc = riderLoc || safeRestaurantLoc;
 
-    // Use CartoDB Voyager for a cleaner, more professional look
-    const tileLayerUrl = "https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png";
-    const attribution = '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>';
+    // Use Google Maps style tiles as requested
+    const tileLayerUrl = "https://{s}.google.com/vt/lyrs=m&x={x}&y={y}&z={z}";
+    const attribution = '&copy; Google Maps';
 
     return (
         <MapContainer
@@ -70,9 +70,15 @@ export default function MapComponent({ restaurantLoc, customerLoc, riderLoc, ord
             style={{ height: '100%', width: '100%' }}
             scrollWheelZoom={true}
         >
+            <MapUpdater 
+                restaurantLoc={safeRestaurantLoc} 
+                customerLoc={safeCustomerLoc} 
+                riderLoc={safeRiderLoc} 
+            />
             <TileLayer
                 attribution={attribution}
                 url={tileLayerUrl}
+                subdomains={['mt0', 'mt1', 'mt2', 'mt3']}
             />
 
             {/* Restaurant Marker */}

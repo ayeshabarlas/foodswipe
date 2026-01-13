@@ -66,8 +66,8 @@ export default function OrdersView() {
 
     const stats = {
         live: orders?.length || 0,
-        preparing: Array.isArray(orders) ? orders.filter(o => o.status === 'Preparing' || o.status === 'Confirmed').length : 0,
-        outForDelivery: Array.isArray(orders) ? orders.filter(o => o.status === 'On the Way' || o.status === 'Picked Up').length : 0,
+        preparing: Array.isArray(orders) ? orders.filter(o => ['Confirmed', 'Accepted', 'Preparing', 'Ready'].includes(o.status)).length : 0,
+        outForDelivery: Array.isArray(orders) ? orders.filter(o => ['OnTheWay', 'Picked Up', 'Arrived', 'ArrivedAtCustomer'].includes(o.status)).length : 0,
         totalValue: Array.isArray(orders) ? orders.reduce((acc, curr) => acc + (curr.totalAmount || 0), 0) : 0
     };
 

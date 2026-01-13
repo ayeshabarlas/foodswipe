@@ -35,6 +35,8 @@ interface Stats {
     todayOrders: number;
     totalRevenue: number;
     todayRevenue: number;
+    totalCommission: number;
+    totalPendingPayouts: number;
     revenueStats: { date: string; revenue: number }[];
     orderStatusDist: { delivered: number; cancelled: number; inProgress: number };
     topRestaurants: any[];
@@ -78,6 +80,8 @@ export default function DashboardHome({ stats, refreshStats }: DashboardHomeProp
         todayOrders: 0,
         totalRevenue: 0,
         todayRevenue: 0,
+        totalCommission: 0,
+        totalPendingPayouts: 0,
         revenueStats: [],
         orderStatusDist: { delivered: 0, cancelled: 0, inProgress: 0 },
         topRestaurants: [],
@@ -92,41 +96,42 @@ export default function DashboardHome({ stats, refreshStats }: DashboardHomeProp
 
     const widgets = [
         {
-            label: 'Total Revenue (Today)',
+            label: 'Today Revenue',
             value: `Rs. ${(displayStats.todayRevenue || 0).toLocaleString()}`,
             subValue: `Rs. ${(displayStats.totalRevenue || 0).toLocaleString()}`,
-            subLabel: 'Total Revenue',
+            subLabel: 'Lifetime',
             icon: FaMoneyBillWave,
             color: 'bg-green-100 text-green-600',
             trend: '+12.5%',
             trendColor: 'text-green-500'
         },
         {
-            label: 'Total Orders',
-            value: displayStats.totalOrders.toLocaleString(),
-            subValue: `${displayStats.todayOrders} live orders now`,
-            icon: FaShoppingBag,
+            label: 'Platform Commission',
+            value: `Rs. ${(displayStats.totalCommission || 0).toLocaleString()}`,
+            subValue: `Rs. ${(displayStats.totalPendingPayouts || 0).toLocaleString()}`,
+            subLabel: 'Pending Payouts',
+            icon: FaChartLine,
             color: 'bg-blue-100 text-blue-600',
-            trend: '+8.2%',
+            trend: 'Live',
             trendColor: 'text-blue-500'
         },
         {
-            label: 'Active Restaurants',
-            value: displayStats.totalRestaurants.toLocaleString(),
-            subValue: `${displayStats.pendingRestaurants} pending approval`,
-            icon: FaStore,
+            label: 'Total Orders',
+            value: displayStats.totalOrders.toLocaleString(),
+            subValue: `${displayStats.todayOrders} new today`,
+            icon: FaShoppingBag,
             color: 'bg-orange-100 text-orange-600',
-            trend: `${displayStats.pendingRestaurants} pending`,
+            trend: 'Orders',
             trendColor: 'text-orange-500'
         },
         {
-            label: 'Active Riders',
-            value: (displayStats.totalRiders || 0).toLocaleString(),
-            subValue: `Avg rating: ${(displayStats.avgRiderRating || 0).toFixed(1)}`,
-            icon: FaMotorcycle,
+            label: 'Active Partners',
+            value: (displayStats.totalRestaurants + displayStats.totalRiders).toLocaleString(),
+            subValue: `${displayStats.onlineRiders || 0} riders online`,
+            icon: FaStore,
             color: 'bg-purple-100 text-purple-600',
-            trend: `${displayStats.onlineRiders || 0} online`,
-            trendColor: 'text-green-500'
+            trend: 'Partners',
+            trendColor: 'text-purple-500'
         }
     ];
 
@@ -140,7 +145,13 @@ export default function DashboardHome({ stats, refreshStats }: DashboardHomeProp
         <div className="p-4 space-y-4">
             <div className="flex justify-between items-center mb-4">
                 <div>
-                    <h2 className="text-lg font-bold text-gray-800">Platform Overview</h2>
+                    <div className="flex items-center gap-2">
+                        <h2 className="text-lg font-bold text-gray-800">Platform Overview</h2>
+                        <div className="flex items-center gap-1.5 px-2 py-0.5 bg-green-50 rounded-full border border-green-100">
+                            <span className="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse"></span>
+                            <span className="text-[9px] font-bold text-green-600 uppercase tracking-tight">Live</span>
+                        </div>
+                    </div>
                     <p className="text-[10px] text-gray-500 uppercase tracking-wider font-bold">Real-time statistics and insights</p>
                 </div>
                 <div className="flex gap-2">

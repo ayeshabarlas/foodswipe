@@ -37,6 +37,8 @@ interface Stats {
     todayOrders: number;
     totalRevenue: number;
     todayRevenue: number;
+    totalCommission: number;
+    totalPendingPayouts: number;
     revenueStats: { date: string; revenue: number }[];
     orderStatusDist: { delivered: number; cancelled: number; inProgress: number };
     topRestaurants: any[];

@@ -26,15 +26,15 @@ const calculateRiderEarning = (distanceKm) => {
 };
 
 /**
- * Calculates delivery fee for the customer based on distance tiers
+ * Calculates delivery fee for the customer
+ * MVP Logic: Customer pays exactly what the rider gets (Rs 60 Base + Rs 20/km)
  * @param {number} distanceKm - Distance in kilometers
  * @returns {number} - Delivery fee in Rs.
  */
 const calculateDeliveryFee = (distanceKm) => {
-    if (distanceKm < 3) return 79;
-    if (distanceKm < 6) return 99;
-    if (distanceKm < 9) return 129;
-    return 149;
+    // Ensuring it matches calculateRiderEarning's gross logic
+    const fee = BASE_RIDER_PAY + (distanceKm * PER_KM_RATE);
+    return Math.round(fee);
 };
 
 module.exports = {

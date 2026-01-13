@@ -96,7 +96,7 @@ export default function RiderOrders({ riderId, setShowNotifications, unreadCount
                 // Check for active delivery (any status that isn't Delivered or Cancelled, and assigned to ME)
                 const active = res.data.find((o: any) => 
                     (o.rider === riderId || o.rider?._id === riderId) &&
-                    ['Accepted', 'Preparing', 'Ready', 'OnTheWay', 'Arrived', 'Picked Up', 'ArrivedAtCustomer'].includes(o.status)
+                    ['Accepted', 'Confirmed', 'Preparing', 'Ready', 'OnTheWay', 'Arrived', 'Picked Up', 'ArrivedAtCustomer'].includes(o.status)
                 );
                 setActiveDelivery(active);
             }
@@ -157,12 +157,24 @@ export default function RiderOrders({ riderId, setShowNotifications, unreadCount
 
     // Calculate potential earnings from available orders
     const potentialEarnings = orders
-        .filter(o => !o.rider && ['Ready', 'OnTheWay'].includes(o.status))
-        .reduce((sum, o) => sum + (o.netRiderEarning || 0), 0);
+        .filter(o => {
+            const isAvailable = !o.rider && ['Accepted', 'Confirmed', 'Preparing', 'Ready', 'OnTheWay'].includes(o.status);
+            const isMyActive = (o.rider === riderId || o.rider?._id === riderId) && o.status !== 'Delivered';
+            return isAvailable || isMyActive;
+        })
+        .reduce((sum, o) => {
+            const earnings = o.netRiderEarning || o.earnings || o.riderEarning || 0;
+            // Fallback calculation if earnings are 0
+            if (earnings === 0) {
+                const dist = o.distanceKm || o.distance || 4.2;
+                return sum + Math.round(60 + (dist * 20));
+            }
+            return sum + earnings;
+        }, 0);
 
-    const availableOrdersCount = orders.filter(o => !o.rider && ['Ready', 'OnTheWay'].includes(o.status)).length;
-    const nearbyOrdersCount = orders.filter(o => !o.rider && ['Ready', 'OnTheWay'].includes(o.status) && (o.distanceKm || 0) < 5).length;
-    const highPayOrdersCount = orders.filter(o => !o.rider && ['Ready', 'OnTheWay'].includes(o.status) && (o.netRiderEarning || 0) > 300).length;
+    const availableOrdersCount = orders.filter(o => !o.rider && ['Accepted', 'Confirmed', 'Preparing', 'Ready', 'OnTheWay'].includes(o.status)).length;
+    const nearbyOrdersCount = orders.filter(o => !o.rider && ['Accepted', 'Confirmed', 'Preparing', 'Ready', 'OnTheWay'].includes(o.status) && (o.distanceKm || 0) < 5).length;
+    const highPayOrdersCount = orders.filter(o => !o.rider && ['Accepted', 'Confirmed', 'Preparing', 'Ready', 'OnTheWay'].includes(o.status) && (o.netRiderEarning || o.earnings || 0) > 300).length;
 
     const filteredOrders = orders.filter(order => {
         if (filter === 'active') {
@@ -170,7 +182,7 @@ export default function RiderOrders({ riderId, setShowNotifications, unreadCount
             // but prioritize assigned orders by showing them in the tracking card
             if (activeDelivery && order._id === activeDelivery._id) return false;
             
-            const isAvailable = !order.rider && ['Ready', 'OnTheWay'].includes(order.status);
+            const isAvailable = !order.rider && ['Accepted', 'Confirmed', 'Preparing', 'Ready', 'OnTheWay'].includes(order.status);
             const isAssignedToMe = order.rider === riderId || (order.rider?._id === riderId);
             
             if (!isAvailable && !isAssignedToMe) return false;
@@ -238,25 +250,30 @@ export default function RiderOrders({ riderId, setShowNotifications, unreadCount
     const handleDeliverOrder = async (orderId: string) => {
         try {
             const token = JSON.parse(localStorage.getItem("userInfo") || "{}").token;
-            // For now, we'll pass a random distance between 2 and 8 km for demo/testing
-            const distanceKm = (Math.random() * 6 + 2).toFixed(1);
-            const dist = parseFloat(distanceKm);
             
-            // Calculate earnings for the UI (matching backend: Base 60 + 20/km)
-            const BASE_PAY = 60;
-            const PER_KM_RATE = 20;
-            const gross = BASE_PAY + (dist * PER_KM_RATE);
-            const net = gross; // Platform fee is 0 for rider now
-
+            // Get the order to use its actual distance if available
+            const orderToDeliver = orders.find(o => o._id === orderId);
+            const dist = orderToDeliver?.distanceKm || orderToDeliver?.distance || 0;
+            
+            // If distance is still 0, the backend will calculate it using locationUtils
+            // but we'll send it if we have it to be explicit.
+            
             await axios.post(
                 `${API_BASE_URL}/api/orders/${orderId}/complete`,
                 { distanceKm: dist },
                 { headers: { Authorization: `Bearer ${token}` } }
             );
             
-            // Set data for the summary modal
+            // The backend returns the updated order with correct earnings
+            // We'll set the completion data for the summary modal
+            const BASE_PAY = 60;
+            const PER_KM_RATE = 20;
+            const finalDist = dist || 4.2; // Match backend fallback for UI preview
+            const gross = BASE_PAY + (finalDist * PER_KM_RATE);
+            const net = gross;
+
             setCompletionData({
-                distanceKm: dist,
+                distanceKm: finalDist,
                 grossEarning: gross,
                 platformFee: 0,
                 netEarning: net,
@@ -390,7 +407,7 @@ export default function RiderOrders({ riderId, setShowNotifications, unreadCount
                                     <div className="flex flex-col bg-gray-50">
                                         {/* Map Area at the top */}
                                         <div className="h-[250px] w-full relative">
-                                            <OrderTracking order={activeDelivery} userRole="rider" />
+                                            <OrderTracking order={activeDelivery} userRole="rider" isInline={true} />
                                             <div className="absolute top-4 left-4 right-4 flex justify-between items-center pointer-events-none">
                                                 <div className="bg-white/90 backdrop-blur-md px-3 py-1.5 rounded-full shadow-sm flex items-center gap-2">
                                                     <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
@@ -444,10 +461,23 @@ export default function RiderOrders({ riderId, setShowNotifications, unreadCount
                                                 <div className="pt-4 border-t border-gray-50 space-y-3">
                                                     <div className="flex justify-between items-center">
                                                         <div className="flex items-center gap-2 text-gray-400 font-semibold text-xs">
-                                                            <span>Rs.</span> You'll earn
+                                                            <span>Rs.</span> Total Earning
                                                         </div>
-                                                        <span className="text-[#FF4D00] font-semibold text-lg">Rs. {activeDelivery.netRiderEarning || 180}</span>
+                                                        <span className="text-[#FF4D00] font-semibold text-lg">Rs. {activeDelivery.netRiderEarning || Math.round(60 + ((activeDelivery.distanceKm || 4.2) * 20))}</span>
                                                     </div>
+                                                    
+                                                    {/* MVP Earnings Breakdown */}
+                                                    <div className="bg-gray-50/80 rounded-2xl p-3 space-y-2">
+                                                        <div className="flex justify-between items-center text-[10px]">
+                                                            <span className="text-gray-500">Base Pay</span>
+                                                            <span className="font-semibold text-gray-700">Rs. 60</span>
+                                                        </div>
+                                                        <div className="flex justify-between items-center text-[10px]">
+                                                            <span className="text-gray-500">Distance ({activeDelivery.distanceKm || 4.2} km x 20)</span>
+                                                            <span className="font-semibold text-gray-700">Rs. {Math.round((activeDelivery.distanceKm || 4.2) * 20)}</span>
+                                                        </div>
+                                                    </div>
+
                                                     <div className="flex justify-between items-center">
                                                         <div className="flex items-center gap-2 text-gray-400 font-semibold text-xs">
                                                             <FaClock /> Estimated time
@@ -522,7 +552,7 @@ export default function RiderOrders({ riderId, setShowNotifications, unreadCount
 
                                         {/* Map Area */}
                                         <div className="rounded-2xl overflow-hidden h-64 border border-gray-100 shadow-inner mt-4 mb-6">
-                                            <OrderTracking order={activeDelivery} userRole="rider" />
+                                            <OrderTracking order={activeDelivery} userRole="rider" isInline={true} />
                                         </div>
 
                                         {/* Action Buttons based on status */}
@@ -560,19 +590,29 @@ export default function RiderOrders({ riderId, setShowNotifications, unreadCount
                                                 </button>
                                             )}
                                             
-                                            <div className="flex gap-3">
+                                            <div className="flex gap-2 w-full">
                                                 <button 
                                                     onClick={() => handleChat(activeDelivery)}
-                                                    className="flex-1 bg-white border border-gray-100 py-3.5 rounded-2xl font-semibold flex items-center justify-center gap-2 text-gray-700 hover:bg-gray-50 transition-all"
+                                                    className="flex-1 bg-white border border-gray-100 py-3 rounded-xl font-bold flex items-center justify-center gap-2 text-gray-700 hover:bg-gray-50 transition-all text-[10px] uppercase tracking-wider shadow-sm"
                                                 >
-                                                    <FaCommentDots className="text-orange-500" /> CHAT
+                                                    <FaCommentDots className="text-orange-500" /> Chat
                                                 </button>
-                                                <a 
-                                                    href={`tel:${activeDelivery.status === 'OnTheWay' || activeDelivery.status === 'Arrived' ? activeDelivery.restaurant?.contact : activeDelivery.user?.phone}`}
-                                                    className="flex-1 bg-white border border-gray-100 py-3.5 rounded-2xl font-semibold flex items-center justify-center gap-2 text-gray-700 hover:bg-gray-50 transition-all"
-                                                >
-                                                    <FaPhone className="text-green-500" /> CALL
-                                                </a>
+                                                {activeDelivery.restaurant?.contact && (
+                                                    <a 
+                                                        href={`tel:${activeDelivery.restaurant.contact}`}
+                                                        className="flex-1 bg-white border border-gray-100 py-3 rounded-xl font-bold flex items-center justify-center gap-2 text-gray-700 hover:bg-gray-50 transition-all text-[10px] uppercase tracking-wider shadow-sm"
+                                                    >
+                                                        <FaPhone className="text-orange-500" /> Restaurant
+                                                    </a>
+                                                )}
+                                                {activeDelivery.user?.phone && (
+                                                    <a 
+                                                        href={`tel:${activeDelivery.user.phone}`}
+                                                        className="flex-1 bg-white border border-gray-100 py-3 rounded-xl font-bold flex items-center justify-center gap-2 text-gray-700 hover:bg-gray-50 transition-all text-[10px] uppercase tracking-wider shadow-sm"
+                                                    >
+                                                        <FaPhone className="text-green-500" /> Customer
+                                                    </a>
+                                                )}
                                             </div>
                                         </div>
                                     </div>
@@ -633,19 +673,21 @@ export default function RiderOrders({ riderId, setShowNotifications, unreadCount
                         <div className="p-8">
                             <div className="space-y-4 mb-6">
                                 <div className="flex justify-between items-center text-gray-600">
-                                    <span className="font-medium">Distance</span>
+                                    <span className="font-medium">Distance Covered</span>
                                     <span className="font-semibold text-gray-900">{completionData.distanceKm} km</span>
                                 </div>
-                                <div className="flex justify-between items-center text-gray-600">
-                                    <span className="font-medium">Gross Earning</span>
-                                    <span className="font-semibold text-gray-900">Rs. {completionData.grossEarning}</span>
-                                </div>
-                                <div className="flex justify-between items-center text-gray-600">
-                                    <span className="font-medium">Platform Fee</span>
-                                    <span className="font-semibold text-red-500">-Rs. {completionData.platformFee}</span>
+                                <div className="bg-gray-50 rounded-2xl p-4 space-y-2">
+                                    <div className="flex justify-between items-center text-xs">
+                                        <span className="text-gray-500">Base Pay</span>
+                                        <span className="font-semibold text-gray-900">Rs. 60</span>
+                                    </div>
+                                    <div className="flex justify-between items-center text-xs">
+                                        <span className="text-gray-500">Distance Pay ({completionData.distanceKm} km x 20)</span>
+                                        <span className="font-semibold text-gray-900">Rs. {Math.round(completionData.distanceKm * 20)}</span>
+                                    </div>
                                 </div>
                                 <div className="pt-4 border-t border-dashed border-gray-200 flex justify-between items-center">
-                                    <span className="font-semibold text-gray-900 text-lg">You Earned</span>
+                                    <span className="font-semibold text-gray-900 text-lg">Total Earning</span>
                                     <span className="font-semibold text-green-600 text-2xl">Rs. {completionData.netEarning}</span>
                                 </div>
                             </div>
@@ -824,7 +866,10 @@ function OrderCard({
                         {/* Restaurant Name & Earnings */}
                         <div className="flex items-center gap-2">
                             <h3 className="text-base font-medium text-gray-900">{order.restaurant?.name || 'Restaurant'}</h3>
-                            <span className="text-green-600 font-medium text-sm">+Rs. {order.netRiderEarning || 250}</span>
+                            <div className="flex flex-col items-end">
+                                <span className="text-green-600 font-medium text-sm">Rs. {order.netRiderEarning || Math.round(60 + ((order.distanceKm || 4.2) * 20))}</span>
+                                <span className="text-[9px] text-gray-400 font-medium">(60 + {order.distanceKm || 4.2}km)</span>
+                            </div>
                         </div>
                         {/* Order Age */}
                         <span className="text-[10px] font-medium text-gray-400 uppercase tracking-wider">
@@ -855,7 +900,7 @@ function OrderCard({
                         </div>
                         <div className="flex-1">
                             <p className="text-[10px] font-medium text-gray-400 uppercase tracking-widest leading-none mb-1">Pickup</p>
-                            <p className="text-[12px] font-medium text-gray-900 line-clamp-1">{order.restaurant?.address || 'Restaurant Address'}</p>
+                            <p className="text-[12px] font-medium text-gray-900 leading-tight">{order.restaurant?.address || 'Restaurant Address'}</p>
                         </div>
                     </div>
 
@@ -865,7 +910,7 @@ function OrderCard({
                         </div>
                         <div className="flex-1">
                             <p className="text-[10px] font-medium text-gray-400 uppercase tracking-widest leading-none mb-1">Delivery</p>
-                            <p className="text-[12px] font-medium text-gray-900 line-clamp-1">{order.deliveryAddress || 'Delivery Address'}</p>
+                            <p className="text-[12px] font-medium text-gray-900 leading-tight">{order.deliveryAddress || order.shippingAddress?.address || 'Delivery Address'}</p>
                         </div>
                     </div>
                 </div>

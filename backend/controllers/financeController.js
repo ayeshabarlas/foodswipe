@@ -6,6 +6,7 @@ const Payout = require('../models/Payout');
 const Order = require('../models/Order');
 const Restaurant = require('../models/Restaurant');
 const User = require('../models/User');
+const { triggerEvent } = require('../socket');
 
 /**
  * Calculate commission amount
@@ -183,7 +184,7 @@ const getAllRestaurantWallets = async (req, res) => {
  */
 const getAllRiderWallets = async (req, res) => {
     try {
-        const wallets = await RiderWallet.find().populate('rider', 'name email phone');
+        const wallets = await RiderWallet.find().populate('rider', 'name email phone stats earnings');
         res.json(wallets);
     } catch (error) {
         res.status(500).json({ message: error.message });
@@ -233,6 +234,12 @@ const createPayoutBatch = async (req, res) => {
                 payouts.push(payout);
             }
         }
+
+        // Emit socket event for admin real-time update
+        triggerEvent('admin', 'stats_updated', { 
+            type: 'payout_batch_created',
+            count: payouts.length 
+        });
 
         res.status(201).json({
             message: `Created ${payouts.length} payout(s)`,
@@ -291,6 +298,12 @@ const processRefund = async (req, res) => {
             amount: amount,
             balanceAfter: 0,
             description: `Refund for order ${orderId}: ${reason}`,
+        });
+
+        // Emit socket event for admin real-time update
+        triggerEvent('admin', 'stats_updated', { 
+            type: 'refund_processed',
+            orderId 
         });
 
         res.json({

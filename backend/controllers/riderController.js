@@ -2,6 +2,7 @@ const Rider = require('../models/Rider');
 const Transaction = require('../models/Transaction');
 const Order = require('../models/Order');
 const { calculateRiderEarning } = require('../utils/paymentUtils');
+const { calculateDistance } = require('../utils/locationUtils');
 const { createNotification } = require('./notificationController');
 
 const { triggerEvent } = require('../socket');
@@ -222,9 +223,12 @@ const getAvailableOrders = async (req, res) => {
     try {
         const Order = require('../models/Order');
 
-        // Get orders that are Ready or OnTheWay without a rider assigned
+        // Get orders that are Accepted, Confirmed, Preparing, Ready or OnTheWay without a rider assigned
         const orders = await Order.find({
             $or: [
+                { rider: null, status: 'Accepted' },
+                { rider: null, status: 'Confirmed' },
+                { rider: null, status: 'Preparing' },
                 { rider: null, status: 'Ready' },
                 { rider: null, status: 'OnTheWay' }
             ]
@@ -238,7 +242,17 @@ const getAvailableOrders = async (req, res) => {
 
         // Format the order for the rider
         const formattedOrders = orders.map(order => {
-            const distance = 3.2; // Calculate real distance later
+            let distance = order.distanceKm || 0;
+            
+            // Calculate real distance if we have both locations and distance is 0
+            if (distance === 0 && order.restaurant?.location?.coordinates && order.deliveryLocation?.lat) {
+                const [restLng, restLat] = order.restaurant.location.coordinates;
+                distance = calculateDistance(restLat, restLng, order.deliveryLocation.lat, order.deliveryLocation.lng);
+            }
+            
+            // Fallback if still 0
+            if (distance === 0) distance = 4.2;
+
             const earnings = calculateRiderEarning(distance);
             
             return {
@@ -253,8 +267,10 @@ const getAvailableOrders = async (req, res) => {
                 },
                 deliveryAddress: order.shippingAddress?.address || 'Delivery Address',
                 distance: distance,
-                earnings: earnings.netEarning,
-                estimatedTime: 15, // Calculate based on distance
+                distanceKm: distance,
+                earnings: (order.netRiderEarning && order.netRiderEarning > 0) ? order.netRiderEarning : earnings.netEarning,
+                netRiderEarning: (order.netRiderEarning && order.netRiderEarning > 0) ? order.netRiderEarning : earnings.netEarning,
+                estimatedTime: Math.round(distance * 3) + 10, // ~3 mins per km + 10 mins prep/wait
                 totalAmount: order.totalPrice
             };
         });
@@ -324,7 +340,7 @@ const acceptOrder = async (req, res) => {
         // Emit Real-time Notification
         triggerEvent(`user-${rider.user._id}`, 'notification', notification);
 
-        res.json({ message: 'Order accepted', order });
+        res.json({ message: 'Order accepted', order: updatedOrder });
     } catch (error) {
         console.error('Accept order error:', error);
         res.status(500).json({ message: 'Server error', error: error.message });
@@ -344,8 +360,6 @@ const rejectOrder = async (req, res) => {
 };
 
 // @desc    Get rider earnings
-// @route   GET /api/riders/:id/earnings
-// @access  Private
 const getEarnings = async (req, res) => {
     try {
         const rider = await Rider.findById(req.params.id);
@@ -354,8 +368,15 @@ const getEarnings = async (req, res) => {
             return res.status(404).json({ message: 'Rider not found' });
         }
 
-        // Calculate totals from rider model (already updated on order completion)
+        // Calculate totals from rider model
         const totalEarnings = rider.earnings?.total || 0;
+        const completedDeliveries = rider.stats?.completedDeliveries || 0;
+        
+        // MVP Logic: 60 Base + 20/km
+        const BASE_PAY_PER_DELIVERY = 60;
+        const totalBasePay = completedDeliveries * BASE_PAY_PER_DELIVERY;
+        const totalDistancePay = Math.max(0, totalEarnings - totalBasePay);
+        
         const totalTips = 0; // Tips logic to be added later
 
         // Calculate daily/weekly stats
@@ -364,10 +385,11 @@ const getEarnings = async (req, res) => {
 
         res.json({
             total: totalEarnings,
-            basePay: totalEarnings, 
+            basePay: totalBasePay, 
+            distancePay: totalDistancePay,
             bonuses: 0,
             tips: totalTips,
-            deliveries: rider.stats?.completedDeliveries || 0,
+            deliveries: completedDeliveries,
             pendingPayout: rider.walletBalance || 0,
             nextPayoutDate: getNextPayoutDate(),
             today: todayEarnings,
@@ -440,7 +462,7 @@ const getDeliveryHistory = async (req, res) => {
         const formattedDeliveries = deliveries.map(order => ({
             orderNumber: order.orderNumber,
             restaurant: order.restaurant,
-            earnings: 250,
+            earnings: order.riderEarning || order.netRiderEarning || 250,
             rating: '5.0',
             timeAgo: getTimeAgo(order.createdAt)
         }));
@@ -484,11 +506,11 @@ const getRiderOrders = async (req, res) => {
             riderId = rider._id;
         }
 
-        // Show orders that are Ready or OnTheWay AND don't have a rider assigned (available for pickup)
+        // Show orders that are Accepted, Confirmed, Preparing, Ready or OnTheWay AND don't have a rider assigned (available for pickup)
         // Plus orders already assigned to this specific rider
         const orders = await Order.find({
             $or: [
-                { status: { $in: ['Ready', 'OnTheWay'] }, rider: null }, // Available ready orders
+                { status: { $in: ['Accepted', 'Confirmed', 'Preparing', 'Ready', 'OnTheWay'] }, rider: null }, // Available ready orders
                 { rider: riderId } // Orders assigned to this rider
             ]
         })
@@ -498,8 +520,17 @@ const getRiderOrders = async (req, res) => {
             .limit(20);
 
         const formattedOrders = orders.map(order => {
-            // Use real distance or default to 4.8km for display if missing
-            const distance = order.distanceKm || 4.8;
+            let distance = order.distanceKm || 0;
+            
+            // Calculate real distance if we have both locations and distance is 0
+            if (distance === 0 && order.restaurant?.location?.coordinates && order.deliveryLocation?.lat) {
+                const [restLng, restLat] = order.restaurant.location.coordinates;
+                distance = calculateDistance(restLat, restLng, order.deliveryLocation.lat, order.deliveryLocation.lng);
+            }
+            
+            // Fallback if still 0
+            if (distance === 0) distance = 4.2;
+
             const earnings = calculateRiderEarning(distance);
             
             return {
@@ -519,8 +550,11 @@ const getRiderOrders = async (req, res) => {
                 timeAgo: getTimeAgo(order.createdAt),
                 totalAmount: order.totalPrice,
                 rider: order.rider, // Include rider info to check if already assigned
+                distance: distance,
                 distanceKm: distance,
-                netRiderEarning: order.netRiderEarning || earnings.netEarning
+                earnings: (order.netRiderEarning && order.netRiderEarning > 0) ? order.netRiderEarning : earnings.netEarning,
+                netRiderEarning: (order.netRiderEarning && order.netRiderEarning > 0) ? order.netRiderEarning : earnings.netEarning,
+                estimatedTime: Math.round(distance * 3) + 10 // ~3 mins per km + 10 mins prep/wait
             };
         });
 
@@ -685,6 +719,13 @@ const cashout = async (req, res) => {
             balanceAfter: 0,
             description: `Cashout request of Rs. ${totalAmount}`,
             reference: payout._id.toString()
+        });
+
+        // Emit socket event for admin real-time update
+        triggerEvent('admin', 'stats_updated', { 
+            type: 'payout_request',
+            riderId: rider._id,
+            amount: totalAmount 
         });
 
         res.json({ message: 'Cashout request submitted', payout });

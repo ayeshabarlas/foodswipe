@@ -18,14 +18,15 @@ const MapComponent = dynamic(() => import('./MapComponent'), {
 
 interface OrderTrackingProps {
     order?: any;
-    userRole?: 'user' | 'restaurant';
+    userRole?: 'user' | 'restaurant' | 'rider';
     isOpen?: boolean;
     onClose?: () => void;
     currentOrderId?: string;
     orderId?: string;
+    isInline?: boolean;
 }
 
-export default function OrderTracking({ order: initialOrder, userRole = 'user', isOpen, onClose, orderId, currentOrderId }: OrderTrackingProps) {
+export default function OrderTracking({ order: initialOrder, userRole = 'user', isOpen = true, onClose, orderId, currentOrderId, isInline = false }: OrderTrackingProps) {
     const targetOrderId = orderId || currentOrderId;
     const [order, setOrder] = useState<any>(initialOrder);
     const [loading, setLoading] = useState(!initialOrder && !!targetOrderId);
@@ -128,6 +129,24 @@ export default function OrderTracking({ order: initialOrder, userRole = 'user', 
     const riderLoc: [number, number] = riderLocation
         ? [riderLocation.lat, riderLocation.lng]
         : restaurantLoc;
+
+    if (isInline) {
+        return (
+            <div className="h-full w-full relative bg-gray-200 z-0">
+                <MapComponent
+                    restaurantLoc={restaurantLoc}
+                    customerLoc={customerLoc}
+                    riderLoc={riderLoc}
+                    order={order}
+                />
+                <div className="absolute top-4 left-1/2 -translate-x-1/2 pointer-events-none flex flex-col items-center z-10">
+                    <span className="bg-white/90 backdrop-blur-md px-4 py-1.5 rounded-full text-[10px] font-bold uppercase tracking-widest text-gray-900 shadow-lg border border-gray-100">
+                        Live tracking map
+                    </span>
+                </div>
+            </div>
+        );
+    }
 
     return (
         <AnimatePresence>

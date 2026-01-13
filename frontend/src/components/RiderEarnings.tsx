@@ -149,7 +149,7 @@ export default function RiderEarnings({ riderId }: RiderEarningsProps) {
             {/* Stats Grid */}
             <div className="px-6 -mt-10 grid grid-cols-3 gap-3 mb-8 relative z-20">
                 <SmallStat icon={<FaMoneyBillWave />} label="Base Pay" value={earnings.basePay} color="bg-blue-500" />
-                <SmallStat icon={<FaStar />} label="Bonuses" value={earnings.bonuses} color="bg-purple-500" />
+                <SmallStat icon={<FaRoute />} label="Distance" value={earnings.distancePay} color="bg-purple-500" />
                 <SmallStat icon={<FaWallet />} label="Tips" value={earnings.tips} color="bg-gradient-to-r from-orange-500 to-red-500" />
             </div>
 

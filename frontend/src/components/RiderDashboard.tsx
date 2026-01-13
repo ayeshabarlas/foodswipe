@@ -55,17 +55,24 @@ const RiderDashboard = ({ riderId: initialRiderId }: { riderId?: string }) => {
     const fetchRiderData = async () => {
         try {
             const userStr = localStorage.getItem('userInfo');
-            if (!userStr) return;
+            if (!userStr) {
+                window.location.href = '/login';
+                return;
+            }
             const userInfo = JSON.parse(userStr);
-                const token = userInfo.token;
-                const userName = userInfo.name;
-                
-                const config = { headers: { Authorization: `Bearer ${token}` } };
+            const token = userInfo.token;
+            
+            const config = { headers: { Authorization: `Bearer ${token}` } };
             
             // Fetch profile first to get the correct rider ID
-            const profileRes = await axios.get(`${API_BASE_URL}/api/riders/my-profile`, config);
+            const profileRes = await axios.get(`${API_BASE_URL}/api/riders/my-profile`, config).catch(err => {
+                if (err.response?.status === 404) {
+                    throw new Error('Rider profile not found. Are you registered as a rider?');
+                }
+                throw err;
+            });
+
             const rider = profileRes.data;
-            console.log('Rider profile loaded:', rider);
             setRiderData(rider);
             setIsOnline(rider.isOnline || false);
 
@@ -77,18 +84,21 @@ const RiderDashboard = ({ riderId: initialRiderId }: { riderId?: string }) => {
                 console.error('Error fetching orders:', err);
                 return { data: [] };
             });
-            console.log('Rider orders loaded:', ordersRes.data);
-            setOrders(ordersRes.data || []);
+            
+            const allOrders = ordersRes.data || [];
+            setOrders(allOrders);
             
             // Find if there's an active order being delivered (must be assigned to this rider)
-            const currentActive = (ordersRes.data || []).find((o: any) => 
-                (o.rider === rider._id || o.rider?._id === rider._id) &&
-                ['Accepted', 'Preparing', 'Ready', 'Picked Up', 'OnTheWay', 'Arrived', 'ArrivedAtCustomer'].includes(o.status)
+            const currentActive = allOrders.find((o: any) => 
+                (o.rider === rider._id || o.rider?._id === rider._id || (o.rider && o.rider.toString() === rider._id.toString())) &&
+                ['Accepted', 'Confirmed', 'Preparing', 'Ready', 'Picked Up', 'OnTheWay', 'Arrived', 'ArrivedAtCustomer'].includes(o.status)
             );
+
             if (currentActive) {
+                console.log('Active order found:', currentActive);
                 setActiveOrder(currentActive);
                 // Determine step based on status
-                if (['Accepted', 'Preparing', 'Ready', 'Arrived'].includes(currentActive.status)) setActiveStep(1);
+                if (['Accepted', 'Confirmed', 'Preparing', 'Ready', 'Arrived'].includes(currentActive.status)) setActiveStep(1);
                 else if (currentActive.status === 'Picked Up') setActiveStep(2);
                 else if (['OnTheWay', 'ArrivedAtCustomer'].includes(currentActive.status)) setActiveStep(3);
             } else {
@@ -99,7 +109,11 @@ const RiderDashboard = ({ riderId: initialRiderId }: { riderId?: string }) => {
             setError(null);
         } catch (err: any) {
             console.error('Error fetching rider data:', err);
-            setError(err.response?.data?.message || 'Failed to load profile');
+            if (err.message.includes('Rider profile not found')) {
+                setError('Rider profile not found. Please contact admin to activate your rider account.');
+            } else {
+                setError(err.message || err.response?.data?.message || 'Failed to load profile');
+            }
             setLoading(false);
         }
     };
@@ -401,8 +415,8 @@ const RiderDashboard = ({ riderId: initialRiderId }: { riderId?: string }) => {
                 />
                 <DashboardStat 
                     icon={<FaBox size={18} />} 
-                    label="Today's Earnings" 
-                    value={`Rs. ${riderData?.earnings?.today || 0}`} 
+                    label="Today's Deliveries" 
+                    value={orders.filter(o => o.status === 'Delivered').length} 
                     color="text-blue-500" 
                     bgColor="bg-blue-50" 
                 />
@@ -422,8 +436,8 @@ const RiderDashboard = ({ riderId: initialRiderId }: { riderId?: string }) => {
                 />
             </div>
 
-            {/* Active Order Stepper - Only show if there's an active order */}
-            {activeOrder && (
+            {/* Active Order Stepper or Available Orders Map */}
+            {activeOrder ? (
                 <div className="mt-4 px-2">
                     <div className="bg-white rounded-[40px] p-6 shadow-xl shadow-orange-500/5 border border-orange-500/10">
                         <div className="flex justify-between items-center mb-6">
@@ -462,17 +476,70 @@ const RiderDashboard = ({ riderId: initialRiderId }: { riderId?: string }) => {
                         </div>
 
                         {/* Order Info */}
-                        <div className="bg-gray-50 rounded-3xl p-4 mb-6">
-                            <div className="flex justify-between items-center mb-4">
-                                <div>
-                                    <p className="text-gray-900 font-medium">{activeOrder.restaurant?.name}</p>
-                                    <p className="text-gray-400 text-[10px] line-clamp-1">{activeStep === 1 ? activeOrder.restaurant?.address : activeOrder.shippingAddress?.address}</p>
+                        <div className="bg-gray-50 rounded-3xl p-5 mb-4">
+                            <div className="space-y-4">
+                                {/* Restaurant Details */}
+                                <div className="flex justify-between items-start border-b border-gray-100 pb-3">
+                                    <div className="flex-1">
+                                        <div className="flex items-center gap-2 mb-1">
+                                            <div className="w-5 h-5 bg-orange-100 rounded-lg flex items-center justify-center text-orange-600">
+                                                <FaHome size={10} />
+                                            </div>
+                                            <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Pickup From</p>
+                                        </div>
+                                        <p className="text-gray-900 font-bold text-sm leading-tight mb-1">{activeOrder.restaurant?.name}</p>
+                                        <p className="text-gray-500 text-[11px] leading-relaxed line-clamp-2">{activeOrder.restaurant?.address}</p>
+                                    </div>
+                                    <div className="flex flex-col items-end gap-2">
+                                        <div className="text-right">
+                                            <p className="text-orange-600 font-bold text-base">Rs. {activeOrder.netRiderEarning || activeOrder.riderEarning || activeOrder.earnings || 120}</p>
+                                            <p className="text-gray-400 text-[9px] font-bold uppercase tracking-widest">Your Pay</p>
+                                        </div>
+                                        {activeOrder.restaurant?.contact && (
+                                            <a 
+                                                href={`tel:${activeOrder.restaurant.contact}`}
+                                                className="w-8 h-8 bg-green-500 text-white rounded-xl flex items-center justify-center shadow-lg shadow-green-200 active:scale-90 transition-transform"
+                                            >
+                                                <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path d="M2 3a1 1 0 011-1h2.153a1 1 0 01.986.836l.74 4.435a1 1 0 01-.54 1.06l-1.548.773a11.037 11.037 0 005.405 5.405l.773-1.548a1 1 0 011.06-.54l4.435.74a1 1 0 01.836.986V17a1 1 0 01-1 1h-2C7.82 18 2 12.18 2 5V3z"></path></svg>
+                                            </a>
+                                        )}
+                                    </div>
                                 </div>
-                                <div className="text-right">
-                                    <p className="text-orange-500 font-medium">Rs. {activeOrder.riderEarning || 120}</p>
-                                    <p className="text-gray-400 text-[10px] uppercase">Earning</p>
+
+                                {/* Customer Details */}
+                                <div className="flex justify-between items-start">
+                                    <div className="flex-1">
+                                        <div className="flex items-center gap-2 mb-1">
+                                            <div className="w-5 h-5 bg-blue-100 rounded-lg flex items-center justify-center text-blue-600">
+                                                <FaUser size={10} />
+                                            </div>
+                                            <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Deliver To</p>
+                                        </div>
+                                        <p className="text-gray-900 font-bold text-sm leading-tight mb-1">{activeOrder.user?.name || 'Customer'}</p>
+                                        <p className="text-gray-500 text-[11px] leading-relaxed line-clamp-2">{activeOrder.shippingAddress?.address || activeOrder.deliveryLocation?.address || 'Loading address...'}</p>
+                                    </div>
+                                    <div className="flex flex-col items-end gap-2">
+                                        <div className="text-right">
+                                            <p className="text-gray-900 font-bold text-[11px] tracking-tight">#{activeOrder._id?.slice(-6).toUpperCase()}</p>
+                                            <p className="text-gray-400 text-[9px] font-bold uppercase tracking-widest">Order ID</p>
+                                        </div>
+                                        {activeOrder.user?.phone && (
+                                            <a 
+                                                href={`tel:${activeOrder.user.phone}`}
+                                                className="w-8 h-8 bg-blue-500 text-white rounded-xl flex items-center justify-center shadow-lg shadow-blue-200 active:scale-90 transition-transform"
+                                            >
+                                                <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path d="M2 3a1 1 0 011-1h2.153a1 1 0 01.986.836l.74 4.435a1 1 0 01-.54 1.06l-1.548.773a11.037 11.037 0 005.405 5.405l.773-1.548a1 1 0 011.06-.54l4.435.74a1 1 0 01.836.986V17a1 1 0 01-1 1h-2C7.82 18 2 12.18 2 5V3z"></path></svg>
+                                            </a>
+                                        )}
+                                    </div>
                                 </div>
                             </div>
+                        </div>
+
+                        {/* Google Maps Integration */}
+                        <div className="rounded-3xl overflow-hidden h-48 border border-gray-100 shadow-inner mb-6 relative group">
+                            <OrderTracking order={activeOrder} userRole="rider" isInline={true} />
+                            <div className="absolute inset-0 bg-black/5 group-hover:bg-transparent transition-colors pointer-events-none" />
                         </div>
 
                         {/* Action Button */}
@@ -502,6 +569,59 @@ const RiderDashboard = ({ riderId: initialRiderId }: { riderId?: string }) => {
                             </span>
                             <FaArrowRight />
                         </button>
+                    </div>
+                </div>
+            ) : (
+                <div className="mt-4 px-2">
+                    <div className="bg-white rounded-[40px] p-2 shadow-xl shadow-orange-500/5 border border-orange-500/10 relative overflow-hidden">
+                        <div className="h-64 rounded-[35px] overflow-hidden relative">
+                            {/* Available Orders Map View */}
+                            <div className="absolute inset-0 bg-gray-100 flex items-center justify-center">
+                                {orders.length > 0 ? (
+                                    <OrderTracking 
+                                        order={orders.find(o => !o.rider && ['Accepted', 'Confirmed', 'Preparing', 'Ready', 'OnTheWay'].includes(o.status)) || orders[0]} 
+                                        userRole="rider" 
+                                        isInline={true} 
+                                    />
+                                ) : (
+                                    <div className="flex flex-col items-center gap-2">
+                                        <div className="w-10 h-10 border-2 border-orange-500 border-t-transparent rounded-full animate-spin" />
+                                        <p className="text-[10px] text-gray-400 font-medium uppercase tracking-widest">Scanning for orders...</p>
+                                    </div>
+                                )}
+                            </div>
+                            
+                            {/* Map Overlay */}
+                            <div className="absolute top-4 left-4 z-10">
+                                <div className="bg-white/90 backdrop-blur-md px-4 py-2 rounded-2xl shadow-lg border border-white/20">
+                                    <div className="flex items-center gap-2">
+                                        <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
+                                        <span className="text-[10px] font-bold text-gray-900 uppercase tracking-widest">
+                                            {isOnline ? 'Network Live' : 'System Offline'}
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div className="absolute bottom-4 left-4 right-4 z-10">
+                                <div className="bg-black/40 backdrop-blur-md p-4 rounded-2xl border border-white/10 text-white">
+                                    <div className="flex justify-between items-center">
+                                        <div>
+                                            <p className="text-[10px] font-medium opacity-80 uppercase tracking-widest mb-1">Available Nearby</p>
+                                            <p className="text-sm font-bold">
+                                                {orders.filter(o => !o.rider && ['Accepted', 'Confirmed', 'Preparing', 'Ready', 'OnTheWay'].includes(o.status)).length} Orders found
+                                            </p>
+                                        </div>
+                                        <button 
+                                            onClick={() => setActiveTab('orders')}
+                                            className="bg-white text-orange-500 px-4 py-2 rounded-xl text-[10px] font-bold uppercase tracking-widest shadow-lg"
+                                        >
+                                            View All
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
             )}
@@ -565,8 +685,8 @@ function ActionItem({ icon, label, sublabel, onClick }: any) {
 }
 
     const renderOrders = () => {
-        const availableOrders = orders.filter(o => !o.rider && (o.status === 'Ready' || o.status === 'OnTheWay'));
-        const activeOrders = orders.filter(o => o.rider && ['Ready', 'OnTheWay', 'Picked Up'].includes(o.status));
+        const availableOrders = orders.filter(o => !o.rider && ['Accepted', 'Preparing', 'Ready', 'OnTheWay'].includes(o.status));
+        const activeOrders = orders.filter(o => o.rider && ['Accepted', 'Preparing', 'Ready', 'OnTheWay', 'Picked Up', 'Arrived', 'ArrivedAtCustomer'].includes(o.status));
 
         return (
             <div className="flex flex-col gap-6 animate-in fade-in slide-in-from-bottom-4 duration-500 font-light pb-20">
@@ -625,9 +745,22 @@ function ActionItem({ icon, label, sublabel, onClick }: any) {
                                     <div className="w-8 h-8 rounded-xl bg-blue-50 flex items-center justify-center text-blue-500 mt-0.5">
                                         <FaMapMarkerAlt size={12} />
                                     </div>
-                                    <div>
-                                        <p className="text-gray-400 text-[10px] font-semibold uppercase tracking-widest mb-1">Delivery</p>
-                                        <p className="text-gray-900 text-sm font-medium leading-relaxed">{order.shippingAddress?.address}</p>
+                                    <div className="flex-1">
+                                        <div className="flex justify-between items-start">
+                                            <div>
+                                                <p className="text-gray-400 text-[10px] font-semibold uppercase tracking-widest mb-1">Delivery</p>
+                                                <p className="text-gray-900 text-sm font-medium leading-relaxed">{order.shippingAddress?.address || order.deliveryAddress}</p>
+                                            </div>
+                                            {order.customer?.phone && (
+                                                <a 
+                                                    href={`tel:${order.customer.phone}`}
+                                                    className="w-8 h-8 bg-blue-500 text-white rounded-xl flex items-center justify-center shadow-lg shadow-blue-200"
+                                                    onClick={(e) => e.stopPropagation()}
+                                                >
+                                                    <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20"><path d="M2 3a1 1 0 011-1h2.153a1 1 0 01.986.836l.74 4.435a1 1 0 01-.54 1.06l-1.548.773a11.037 11.037 0 005.405 5.405l.773-1.548a1 1 0 011.06-.54l4.435.74a1 1 0 01.836.986V17a1 1 0 01-1 1h-2C7.82 18 2 12.18 2 5V3z"></path></svg>
+                                                </a>
+                                            )}
+                                        </div>
                                     </div>
                                 </div>
                             </div>

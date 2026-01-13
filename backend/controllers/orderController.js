@@ -7,6 +7,7 @@ const RestaurantWallet = require('../models/RestaurantWallet');
 const RiderWallet = require('../models/RiderWallet');
 const Transaction = require('../models/Transaction');
 const { calculateRiderEarning, calculateDeliveryFee } = require('../utils/paymentUtils');
+const { calculateDistance } = require('../utils/locationUtils');
 const { triggerEvent } = require('../socket');
 const { createNotification } = require('./notificationController');
 
@@ -80,6 +81,24 @@ const createOrder = async (req, res) => {
         const commissionAmount = (subtotalValue * commissionPercent) / 100;
         const restaurantEarning = subtotalValue - commissionAmount;
 
+        // Calculate Distance and Rider Earnings on backend for accuracy
+        let distanceKm = 0;
+        let finalDeliveryFee = deliveryFee || 0;
+
+        if (deliveryLocation && restaurantExists.location?.coordinates) {
+            const [restLng, restLat] = restaurantExists.location.coordinates;
+            distanceKm = calculateDistance(restLat, restLng, deliveryLocation.lat, deliveryLocation.lng);
+            // If distance is extremely small or zero, use fallback
+            if (distanceKm < 0.1) distanceKm = 4.2;
+            finalDeliveryFee = calculateDeliveryFee(distanceKm);
+        } else {
+            // Fallback distance if location data is missing
+            distanceKm = 4.2;
+            finalDeliveryFee = calculateDeliveryFee(distanceKm);
+        }
+
+        const riderEarnings = calculateRiderEarning(distanceKm);
+
         const order = await Order.create({
             user: req.user._id,
             restaurant,
@@ -87,10 +106,14 @@ const createOrder = async (req, res) => {
             shippingAddress,
             deliveryLocation: deliveryLocation || null,
             paymentMethod: paymentMethod || 'COD',
-            totalPrice: totalAmount,
+            totalPrice: subtotalValue + finalDeliveryFee, // Use recalculated fee
             subtotal: subtotalValue,
-            deliveryFee: deliveryFee || 0,
-            deliveryFeeCustomerPaid: deliveryFee || 0,
+            deliveryFee: finalDeliveryFee,
+            deliveryFeeCustomerPaid: finalDeliveryFee,
+            distanceKm: distanceKm,
+            grossRiderEarning: riderEarnings.grossEarning,
+            netRiderEarning: riderEarnings.netEarning,
+            platformFee: riderEarnings.platformFee,
             status: 'Pending',
             commissionPercent,
             commissionAmount,
@@ -123,6 +146,7 @@ const createOrder = async (req, res) => {
         // Emit Pusher events for real-time update to restaurant and admin
         triggerEvent(`restaurant-${restaurant}`, 'newOrder', populatedOrder);
         triggerEvent('admin', 'order_created', populatedOrder);
+        triggerEvent('admin', 'stats_updated', { type: 'order_created', orderId: populatedOrder._id });
 
         res.status(201).json(populatedOrder);
     } catch (error) {
@@ -150,6 +174,9 @@ const getUserOrders = async (req, res) => {
                 price: item.price,
             })),
             totalAmount: order.totalPrice,
+            subtotal: order.subtotal || (order.totalPrice - (order.deliveryFee || 0)),
+            deliveryFee: order.deliveryFee,
+            distanceKm: order.distanceKm,
             status: order.status,
             createdAt: order.createdAt,
             deliveryAddress: order.shippingAddress?.address || 'No address provided',
@@ -244,9 +271,19 @@ const updateOrderStatus = async (req, res) => {
 
         // Always notify admin about any order status update
         triggerEvent('admin', 'order_updated', updatedOrder);
+        triggerEvent('admin', 'stats_updated', { type: 'order_status_updated', orderId: updatedOrder._id });
 
         // When order is ready, notify all available riders
         if (status === 'Ready') {
+            // Calculate potential earnings for riders
+            let distance = updatedOrder.distanceKm || 0;
+            if (distance === 0 && updatedOrder.restaurant?.location?.coordinates && updatedOrder.deliveryLocation?.lat) {
+                const [restLng, restLat] = updatedOrder.restaurant.location.coordinates;
+                distance = calculateDistance(restLat, restLng, updatedOrder.deliveryLocation.lat, updatedOrder.deliveryLocation.lng);
+            }
+            if (distance === 0) distance = 4.2; // Default fallback
+            const earnings = calculateRiderEarning(distance);
+
             triggerEvent('riders', 'newOrderAvailable', {
                 _id: updatedOrder._id,
                 restaurant: {
@@ -260,7 +297,11 @@ const updateOrderStatus = async (req, res) => {
                 },
                 totalPrice: updatedOrder.totalPrice,
                 orderItems: updatedOrder.orderItems,
-                createdAt: updatedOrder.createdAt
+                createdAt: updatedOrder.createdAt,
+                distance: distance,
+                distanceKm: distance,
+                earnings: earnings.netEarning,
+                netRiderEarning: earnings.netEarning
             });
         }
 
@@ -287,10 +328,20 @@ const updateOrderStatus = async (req, res) => {
 /**
  * Helper to process order completion payments
  */
-const processOrderCompletion = async (order, distanceKm = 5, req = null) => {
+const processOrderCompletion = async (order, distanceKm, req = null) => {
     try {
         console.log(`[Finance] Processing completion for Order: ${order._id}, Status: ${order.status}`);
         
+        // If distanceKm is not provided or 0, try to calculate it
+        let finalDistance = distanceKm || order.distanceKm || 0;
+        if ((!finalDistance || finalDistance === 0) && order.restaurant?.location?.coordinates && order.deliveryLocation?.lat) {
+            const [restLng, restLat] = order.restaurant.location.coordinates;
+            finalDistance = calculateDistance(restLat, restLng, order.deliveryLocation.lat, order.deliveryLocation.lng);
+        }
+        
+        // Fallback if still 0
+        if (!finalDistance || finalDistance === 0) finalDistance = 4.2;
+
         if (!order.rider) {
             console.error(`[Finance] Order ${order._id} completion attempted without rider assigned.`);
             throw new Error('No rider assigned to this order. Please accept the order first.');
@@ -316,7 +367,7 @@ const processOrderCompletion = async (order, distanceKm = 5, req = null) => {
         const restaurantEarning = subtotal - commissionAmount;
         
         // Rider Pay: Rs 60 Base + Rs 20/km
-        const riderPayCalc = calculateRiderEarning(distanceKm);
+        const riderPayCalc = calculateRiderEarning(finalDistance);
         const riderEarning = riderPayCalc.netEarning;
 
         console.log(`[Finance] Split: Subtotal=${subtotal}, Commission=${commissionAmount}, RestEarning=${restaurantEarning}, RiderEarning=${riderEarning}`);
@@ -332,7 +383,7 @@ const processOrderCompletion = async (order, distanceKm = 5, req = null) => {
         order.netRiderEarning = riderEarning;
         order.adminEarning = commissionAmount; 
         order.platformRevenue = commissionAmount;
-        order.distanceKm = distanceKm;
+        order.distanceKm = finalDistance;
         
         order.isPaid = true; 
         order.paidAt = new Date();
@@ -398,8 +449,8 @@ const processOrderCompletion = async (order, distanceKm = 5, req = null) => {
                 type: 'earning',
                 amount: riderEarning,
                 balanceAfter: rider.walletBalance,
-                description: `Earning for order #${order.orderNumber || order._id.toString().slice(-6)} (Base 60 + ${distanceKm}km x 20)`,
-                metadata: { distanceKm, basePay: 60, kmRate: 20 }
+                description: `Earning for order #${order.orderNumber || order._id.toString().slice(-6)} (Base 60 + ${finalDistance}km x 20)`,
+                metadata: { distanceKm: finalDistance, basePay: 60, kmRate: 20 }
             });
 
             const riderUserId = rider.user?._id || rider.user;

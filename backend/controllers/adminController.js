@@ -114,7 +114,7 @@ const getDashboardStats = async (req, res) => {
 
         // Calculate Revenue & Commission (Total & Today)
         const totalStatsResult = await Order.aggregate([
-            { $match: { status: { $in: ['Delivered', 'Completed'] } } },
+            { $match: { status: { $nin: ['Cancelled'] } } },
             {
                 $group: {
                     _id: null,
@@ -134,7 +134,7 @@ const getDashboardStats = async (req, res) => {
         const todayRevenueResult = await Order.aggregate([
             {
                 $match: {
-                    status: { $in: ['Delivered', 'Completed'] },
+                    status: { $nin: ['Cancelled'] },
                     createdAt: { $gte: todayStart }
                 }
             },
@@ -159,7 +159,7 @@ const getDashboardStats = async (req, res) => {
         const revenueStatsRaw = await Order.aggregate([
             {
                 $match: {
-                    status: { $in: ['Delivered', 'Completed'] },
+                    status: { $nin: ['Cancelled'] },
                     createdAt: { $gte: sevenDaysAgo }
                 }
             },
@@ -200,16 +200,21 @@ const getDashboardStats = async (req, res) => {
         const orderStatusDist = {
             delivered: orderStatusStats.find(s => s._id === 'Delivered' || s._id === 'Completed')?.count || 0,
             cancelled: orderStatusStats.find(s => ['Cancelled', 'Rejected'].includes(s._id))?.count || 0,
-            inProgress: orderStatusStats.find(s => !['Delivered', 'Completed', 'Cancelled', 'Rejected'].includes(s._id))?.count || 0,
+            inProgress: orderStatusStats.reduce((sum, s) => {
+                if (['Pending', 'Confirmed', 'Accepted', 'Preparing', 'Ready', 'Picked Up', 'OnTheWay', 'Arrived', 'ArrivedAtCustomer'].includes(s._id)) {
+                    return sum + s.count;
+                }
+                return sum;
+            }, 0)
         };
 
         // Top Performing Restaurants (by Revenue)
         const topRestaurants = await Order.aggregate([
-            { $match: { status: { $in: ['Delivered', 'Completed'] } } },
+            { $match: { status: { $nin: ['Cancelled'] } } },
             {
                 $group: {
                     _id: "$restaurant",
-                    revenue: { $sum: "$totalAmount" },
+                    revenue: { $sum: "$totalPrice" },
                     orders: { $sum: 1 }
                 }
             },
@@ -320,7 +325,7 @@ const getAllRestaurants = async (req, res) => {
                         totalOrders: { $sum: 1 },
                         revenue: {
                             $sum: {
-                                $cond: [{ $in: ["$status", ["Delivered", "Completed"]] }, "$totalAmount", 0]
+                                $cond: [{ $nin: ["$status", ["Cancelled"]] }, "$totalPrice", 0]
                             }
                         }
                     }
@@ -383,7 +388,7 @@ const getAllRiders = async (req, res) => {
                                 $expr: {
                                     $and: [
                                         { $eq: ['$rider', '$$riderId'] },
-                                        { $in: ['$status', ['Delivered', 'Completed']] }
+                                        { $nin: ['$status', ['Cancelled']] }
                                     ]
                                 }
                             }
@@ -522,6 +527,10 @@ const updateSystemSettings = async (req, res) => {
         if (announcement !== undefined) settings.announcement = announcement;
 
         await settings.save();
+
+        // Emit socket event for admin real-time update (so other admins see it)
+        triggerEvent('admin', 'stats_updated', { type: 'settings_updated' });
+
         res.json({ message: 'Settings updated successfully', settings });
     } catch (error) {
         res.status(500).json({ message: 'Server error', error: error.message });

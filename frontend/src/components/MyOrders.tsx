@@ -31,6 +31,9 @@ interface Order {
         price: number;
     }>;
     totalAmount: number;
+    subtotal?: number;
+    deliveryFee?: number;
+    distanceKm?: number;
     status: string;
     createdAt: string;
     deliveryAddress: string;
@@ -222,6 +225,18 @@ const MyOrders = forwardRef<MyOrdersRef, MyOrdersProps>(({ isOpen, onClose, onTr
                                                     <span>{item.quantity}x {item.name}</span>
                                                 </div>
                                             ))}
+                                        </div>
+
+                                        {/* Order Breakdown */}
+                                        <div className="mb-3 px-1 py-2 border-t border-gray-50 space-y-1">
+                                            <div className="flex justify-between text-[11px] text-gray-500">
+                                                <span>Items Subtotal</span>
+                                                <span>Rs. {order.subtotal || (order.totalAmount - (order.deliveryFee || 0))}</span>
+                                            </div>
+                                            <div className="flex justify-between text-[11px] text-gray-500">
+                                                <span>Delivery Fee {order.distanceKm ? `(${order.distanceKm}km)` : ''}</span>
+                                                <span>Rs. {order.deliveryFee || 0}</span>
+                                            </div>
                                         </div>
 
                                         <div className="flex items-center justify-between mb-3">

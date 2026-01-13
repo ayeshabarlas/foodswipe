@@ -61,7 +61,7 @@ const getDashboardStats = async (req, res) => {
 
         const outForDeliveryCount = await Order.countDocuments({
             restaurant: restaurant._id,
-            status: 'OnTheWay'
+            status: { $in: ['OnTheWay', 'Picked Up', 'Arrived', 'ArrivedAtCustomer'] }
         });
 
         // 4. Top Selling Items (All time for now, or add date filter)

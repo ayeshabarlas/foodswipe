@@ -42,6 +42,7 @@ export default function EnhancedOrdersView() {
 
         socket.on('order_created', handleUpdate);
         socket.on('order_updated', handleUpdate);
+        socket.on('stats_updated', handleUpdate);
 
         return () => {
             socket.disconnect();
@@ -81,7 +82,13 @@ export default function EnhancedOrdersView() {
         <div className="p-4">
             <div className="flex justify-between items-center mb-6">
                 <div>
-                    <h2 className="text-lg font-bold text-gray-800">All Orders</h2>
+                    <div className="flex items-center gap-2">
+                        <h2 className="text-lg font-bold text-gray-800">All Orders</h2>
+                        <div className="flex items-center gap-1.5 px-2 py-0.5 bg-green-50 rounded-full border border-green-100">
+                            <span className="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse"></span>
+                            <span className="text-[9px] font-bold text-green-600 uppercase tracking-tight">Live</span>
+                        </div>
+                    </div>
                     <p className="text-[10px] text-gray-400 font-bold uppercase tracking-wider">Complete order history and management</p>
                 </div>
                 <div className="flex gap-2">

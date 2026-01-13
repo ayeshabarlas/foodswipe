@@ -9,6 +9,7 @@ import { useSwipeBack } from '../hooks/useSwipeBack';
 import ModernLoader from './ModernLoader';
 import PhoneAuthModal from './PhoneAuthModal';
 import { API_BASE_URL } from '../utils/config';
+import { calculateDistance } from '../utils/location';
 
 interface CheckoutModalProps {
     isOpen: boolean;
@@ -43,6 +44,41 @@ export default function CheckoutModal({ isOpen, onClose, cart, total, subtotal, 
     const [applyingVoucher, setApplyingVoucher] = useState(false);
     const [showPhoneAuth, setShowPhoneAuth] = useState(false);
     const [phoneVerified, setPhoneVerified] = useState(false);
+    const [calculatedFee, setCalculatedFee] = useState(deliveryFee);
+    const [distance, setDistance] = useState<number | null>(null);
+
+    // Fetch restaurant location and calculate fee
+    useEffect(() => {
+        const fetchRestaurantAndCalculateFee = async () => {
+            if (!isOpen || !cart || cart.length === 0) return;
+
+            const resId = cart[0].restaurantId || cart[0].restaurant?._id || cart[0].restaurant;
+            if (!resId) return;
+
+            try {
+                const response = await axios.get(`${API_BASE_URL}/api/restaurants/${resId}`);
+                const restaurant = response.data;
+                
+                if (restaurant?.location?.coordinates && deliveryLocation) {
+                    const [restLng, restLat] = restaurant.location.coordinates;
+                    const dist = calculateDistance(restLat, restLng, deliveryLocation.lat, deliveryLocation.lng);
+                    setDistance(dist);
+                    
+                    // MVP Logic: 60 + (distance * 20)
+                    const newFee = 60 + (dist * 20);
+                    setCalculatedFee(Math.round(newFee));
+                } else if (!deliveryLocation) {
+                    // Fallback to base fee if no location selected yet
+                    setCalculatedFee(deliveryFee);
+                    setDistance(null);
+                }
+            } catch (err) {
+                console.error('Error fetching restaurant for fee calculation:', err);
+            }
+        };
+
+        fetchRestaurantAndCalculateFee();
+    }, [isOpen, deliveryLocation, cart, deliveryFee]);
 
     // Enable swipe back gesture
     useSwipeBack({ onSwipeBack: onClose });
@@ -197,11 +233,13 @@ export default function CheckoutModal({ isOpen, onClose, cart, total, subtotal, 
         }
     };
 
-    // Calculate discount
+    // Calculate discount and dynamic totals
     const discountAmount = appliedVoucher
         ? Math.round((subtotal * appliedVoucher.discount) / 100)
         : 0;
-    const finalTotal = total - discountAmount;
+    
+    // Recalculate total with dynamic delivery fee
+    const currentTotal = subtotal + calculatedFee + tax - discountAmount;
 
     const handlePlaceOrder = async () => {
         console.log('handlePlaceOrder initiated');
@@ -297,8 +335,8 @@ export default function CheckoutModal({ isOpen, onClose, cart, total, subtotal, 
                 deliveryAddress: fullAddress,
                 deliveryLocation: deliveryLocation,
                 subtotal: subtotal,
-                deliveryFee: deliveryFee,
-                totalAmount: finalTotal,
+                deliveryFee: calculatedFee,
+                totalAmount: currentTotal,
                 paymentMethod,
                 deliveryInstructions,
                 promoCode: appliedVoucher ? appliedVoucher.code : ''
@@ -314,7 +352,7 @@ export default function CheckoutModal({ isOpen, onClose, cart, total, subtotal, 
                 id: response.data._id || '#8703',
                 estimatedTime: '25-35 min',
                 deliveryAddress: fullAddress,
-                total: finalTotal
+                total: currentTotal
             });
 
             // Sync address to user profile if changed
@@ -817,8 +855,17 @@ export default function CheckoutModal({ isOpen, onClose, cart, total, subtotal, 
                                                 <span>Rs. {subtotal.toLocaleString()}</span>
                                             </div>
                                             <div className="flex justify-between text-gray-600">
-                                                <span>Delivery Fee</span>
-                                                <span>Rs. {deliveryFee.toLocaleString()}</span>
+                                                <div className="flex flex-col">
+                                                    <span>Delivery Fee</span>
+                                                    {distance !== null ? (
+                                                        <span className="text-[10px] text-gray-400 font-normal">
+                                                            (Rs. 60 base + Rs. {Math.round(distance * 20)} for {distance.toFixed(1)} km)
+                                                        </span>
+                                                    ) : (
+                                                        <span className="text-[10px] text-gray-400 font-normal">Based on distance</span>
+                                                    )}
+                                                </div>
+                                                <span>Rs. {calculatedFee.toLocaleString()}</span>
                                             </div>
                                             <div className="flex justify-between text-gray-600">
                                                 <span>Tax (8%)</span>
@@ -832,7 +879,7 @@ export default function CheckoutModal({ isOpen, onClose, cart, total, subtotal, 
                                             )}
                                             <div className="border-t border-gray-100 pt-3 flex justify-between items-center">
                                                 <span className="font-bold text-gray-900 text-base">Total</span>
-                                                <span className="font-bold text-orange-500 text-xl">Rs. {finalTotal.toLocaleString()}</span>
+                                                <span className="font-bold text-orange-500 text-xl">Rs. {currentTotal.toLocaleString()}</span>
                                             </div>
                                         </div>
                                     </div>
@@ -846,7 +893,7 @@ export default function CheckoutModal({ isOpen, onClose, cart, total, subtotal, 
                                         className="w-full py-4 bg-gradient-to-r from-orange-500 to-red-500 rounded-2xl text-white font-bold text-base shadow-lg hover:shadow-xl transition active:scale-[0.99] disabled:opacity-50 disabled:cursor-not-allowed flex justify-between px-6 items-center"
                                     >
                                         <span>{loading ? 'Placing Order...' : 'Place Order'}</span>
-                                        <span>Rs. {finalTotal.toLocaleString()}</span>
+                                        <span>Rs. {currentTotal.toLocaleString()}</span>
                                     </button>
                                 </div>
                             </>

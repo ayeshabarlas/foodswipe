@@ -14,6 +14,7 @@ export default function PaymentsView() {
 
         const socket = io(SOCKET_URL);
         socket.on('order_updated', fetchPayouts); // Orders affect payouts
+        socket.on('stats_updated', fetchPayouts); // Global stats update affects payouts
         
         return () => {
             socket.disconnect();
