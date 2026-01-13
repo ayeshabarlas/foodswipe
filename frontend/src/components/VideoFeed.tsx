@@ -255,7 +255,11 @@ const VideoCard = ({
                     />
                     <div className="flex flex-col text-left">
                         <p className="text-white font-bold text-sm">{dish.restaurant.name}</p>
-                        {distance && <p className="text-white/80 text-xs">{distance} km away</p>}
+                        {distance && (
+                            <p className="text-white/80 text-xs">
+                                {distance === 'Location not set' ? distance : `${distance} away`}
+                            </p>
+                        )}
                     </div>
                 </button>
 
@@ -499,6 +503,11 @@ export default function VideoFeed() {
     }, []); // Run on mount to catch saved location or after first fix
 
     const calculateDistance = (lat1: number, lon1: number, lat2: number, lon2: number): string => {
+        // If restaurant location is 0,0 or very far, it's likely not set
+        if ((lat2 === 0 && lon2 === 0) || (Math.abs(lat2) < 0.1 && Math.abs(lon2) < 0.1)) {
+            return 'Location not set';
+        }
+
         const R = 6371; // km
         const dLat = (lat2 - lat1) * Math.PI / 180;
         const dLon = (lon2 - lon1) * Math.PI / 180;

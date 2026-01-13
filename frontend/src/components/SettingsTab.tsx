@@ -28,9 +28,13 @@ export default function SettingsTab({ restaurant, onUpdate }: SettingsTabProps) 
             thursday: { open: '09:00', close: '22:00', isClosed: false },
             friday: { open: '09:00', close: '23:00', isClosed: false },
             saturday: { open: '10:00', close: '23:00', isClosed: false },
-            sunday: { open: '10:00', close: '23:00', isClosed: false },
+            sunday: { open: '10:00', close: '22:00', isClosed: false },
         },
         logo: '',
+        location: {
+            type: 'Point',
+            coordinates: [0, 0]
+        },
         bankDetails: {
             accountType: 'bank',
             accountHolderName: '',
@@ -67,6 +71,7 @@ export default function SettingsTab({ restaurant, onUpdate }: SettingsTabProps) 
                 },
                 deliveryZones: restaurant.deliveryZones || [],
                 logo: restaurant.logo || '',
+                location: restaurant.location || { type: 'Point', coordinates: [0, 0] },
                 bankDetails: {
                     accountType: restaurant.bankDetails?.accountType || 'bank',
                     accountHolderName: restaurant.bankDetails?.accountHolderName || '',
@@ -126,6 +131,9 @@ export default function SettingsTab({ restaurant, onUpdate }: SettingsTabProps) 
         setSaving(true);
         try {
             const token = JSON.parse(localStorage.getItem("userInfo") || "{}").token;
+            
+            // We send the formData as is. The backend will handle geocoding 
+            // the address into coordinates if the address has changed.
             await axios.put(`${API_BASE_URL}/api/restaurants/${restaurant._id}`, formData, {
                 headers: { Authorization: `Bearer ${token}` }
             });

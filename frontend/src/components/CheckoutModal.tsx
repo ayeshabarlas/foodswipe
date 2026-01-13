@@ -221,6 +221,17 @@ export default function CheckoutModal({ isOpen, onClose, cart, total, subtotal, 
 
                     setSuggestions(lahoreResults);
                     setShowSuggestions(true);
+
+                    // If we have results, and deliveryLocation is null, pick the first one as a tentative location
+                    if (lahoreResults.length > 0 && !deliveryLocation) {
+                        const first = lahoreResults[0];
+                        if (first.geometry && first.geometry.coordinates) {
+                            setDeliveryLocation({
+                                lat: first.geometry.coordinates[1],
+                                lng: first.geometry.coordinates[0]
+                            });
+                        }
+                    }
                 } catch (err) {
                     console.error("Address fetch error", err);
                 } finally {
@@ -231,6 +242,39 @@ export default function CheckoutModal({ isOpen, onClose, cart, total, subtotal, 
             setShowSuggestions(false);
             setLoadingAddress(false);
         }
+    };
+
+    // New: Attempt to geocode address on blur if location is still null
+    const handleAddressBlur = async () => {
+        setTimeout(async () => {
+            setShowSuggestions(false);
+            
+            if (deliveryAddress.length > 5 && !deliveryLocation) {
+                setLoadingAddress(true);
+                try {
+                    const res = await axios.get(`https://photon.komoot.io/api/`, {
+                        params: {
+                            q: `${deliveryAddress}, Lahore, Pakistan`,
+                            limit: 1,
+                            lat: 31.5204,
+                            lon: 74.3587
+                        }
+                    });
+                    
+                    if (res.data.features && res.data.features.length > 0) {
+                        const feature = res.data.features[0];
+                        setDeliveryLocation({
+                            lat: feature.geometry.coordinates[1],
+                            lng: feature.geometry.coordinates[0]
+                        });
+                    }
+                } catch (err) {
+                    console.error("Manual geocode error", err);
+                } finally {
+                    setLoadingAddress(false);
+                }
+            }
+        }, 200);
     };
 
     // Calculate discount and dynamic totals
@@ -589,7 +633,7 @@ export default function CheckoutModal({ isOpen, onClose, cart, total, subtotal, 
                                                 value={houseNumber}
                                                 onChange={(e) => setHouseNumber(e.target.value)}
                                                 placeholder="e.g., House 123, Flat 4B"
-                                                className="w-full bg-white border border-gray-200 rounded-xl px-4 py-2.5 outline-none focus:border-orange-500 focus:ring-2 focus:ring-orange-100 transition text-sm"
+                                                className="w-full bg-white border border-gray-200 rounded-xl px-4 py-2.5 outline-none focus:border-orange-500 focus:ring-2 focus:ring-orange-100 transition text-sm text-gray-900"
                                             />
                                         </div>
 
@@ -610,11 +654,9 @@ export default function CheckoutModal({ isOpen, onClose, cart, total, subtotal, 
                                                 onFocus={() => {
                                                     if (deliveryAddress.length > 2 && suggestions.length > 0) setShowSuggestions(true);
                                                 }}
-                                                onBlur={() => {
-                                                    setTimeout(() => setShowSuggestions(false), 200);
-                                                }}
+                                                onBlur={handleAddressBlur}
                                                 placeholder="Type area/block (e.g., Allama Iqbal Town)"
-                                                className="w-full bg-white border border-gray-200 rounded-xl px-4 py-2.5 outline-none focus:border-orange-500 focus:ring-2 focus:ring-orange-100 transition text-sm pr-10"
+                                                className="w-full bg-white border border-gray-200 rounded-xl px-4 py-2.5 outline-none focus:border-orange-500 focus:ring-2 focus:ring-orange-100 transition text-sm pr-10 text-gray-900"
                                             />
                                             {deliveryAddress && (
                                                 <button
@@ -794,7 +836,7 @@ export default function CheckoutModal({ isOpen, onClose, cart, total, subtotal, 
                                                             setVoucherError('');
                                                         }}
                                                         placeholder="Enter code"
-                                                        className="flex-1 bg-white border border-gray-200 rounded-xl px-4 py-2.5 outline-none focus:border-orange-500 focus:ring-2 focus:ring-orange-100 transition text-sm uppercase"
+                                                        className="flex-1 bg-white border border-gray-200 rounded-xl px-4 py-2.5 outline-none focus:border-orange-500 focus:ring-2 focus:ring-orange-100 transition text-sm uppercase text-gray-900"
                                                         onKeyDown={(e) => {
                                                             if (e.key === 'Enter') handleApplyPromoCode();
                                                         }}
@@ -842,7 +884,7 @@ export default function CheckoutModal({ isOpen, onClose, cart, total, subtotal, 
                                             value={deliveryInstructions}
                                             onChange={(e) => setDeliveryInstructions(e.target.value)}
                                             placeholder="e.g. Ring doorbell, leave at gate..."
-                                            className="w-full bg-white border border-gray-200 rounded-xl px-4 py-3 outline-none focus:border-orange-500 focus:ring-2 focus:ring-orange-100 transition h-24 resize-none text-sm"
+                                            className="w-full bg-white border border-gray-200 rounded-xl px-4 py-3 outline-none focus:border-orange-500 focus:ring-2 focus:ring-orange-100 transition h-24 resize-none text-sm text-gray-900"
                                         />
                                     </div>
 

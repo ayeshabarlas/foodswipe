@@ -42,8 +42,13 @@ const createOrder = async (req, res) => {
         // Map frontend data to model schema with fallback for image
         const orderItems = await Promise.all(items.map(async item => {
             let itemImage = item.image;
-            const dishId = item.dish || item._id || item.product;
+            let dishId = item.dish || item._id || item.product;
             
+            // Clean dishId if it has suffixes like -combo or -drink
+            if (typeof dishId === 'string' && dishId.includes('-')) {
+                dishId = dishId.split('-')[0];
+            }
+
             // If image is missing, try to fetch it from the Dish model
             if (!itemImage && dishId) {
                 try {
@@ -66,7 +71,7 @@ const createOrder = async (req, res) => {
         }));
 
         const shippingAddress = {
-            address: deliveryInstructions ? `${deliveryAddress} (Note: ${deliveryInstructions})` : deliveryAddress,
+            address: (deliveryAddress || 'No address provided') + (deliveryInstructions ? ` (Note: ${deliveryInstructions})` : ''),
             city: 'Lahore', // Default for now
             postalCode: '54000', // Default for now
             country: 'Pakistan' // Default for now
@@ -104,7 +109,10 @@ const createOrder = async (req, res) => {
             restaurant,
             orderItems,
             shippingAddress,
-            deliveryLocation: deliveryLocation || null,
+            deliveryLocation: (deliveryLocation && deliveryLocation.lat && deliveryLocation.lng) ? {
+                lat: Number(deliveryLocation.lat),
+                lng: Number(deliveryLocation.lng)
+            } : null,
             paymentMethod: paymentMethod || 'COD',
             totalPrice: subtotalValue + finalDeliveryFee, // Use recalculated fee
             subtotal: subtotalValue,

@@ -440,22 +440,29 @@ export default function RiderOrders({ riderId, setShowNotifications, unreadCount
                                                                 <FaMapMarkerAlt size={16} />
                                                             </div>
                                                             <div>
-                                                            <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-widest">Pickup from</p>
-                                                            <p className="font-semibold text-gray-900 text-sm">{activeDelivery.restaurant?.name}</p>
-                                                            <p className="text-[11px] font-semibold text-gray-500 mt-0.5">{activeDelivery.distanceKm || '1.2'} km away</p>
-                                                        </div>
+                                                                <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-widest">Pickup from</p>
+                                                                <p className="font-semibold text-gray-900 text-sm">{activeDelivery.restaurant?.name}</p>
+                                                                <p className="text-[11px] text-gray-500 line-clamp-1">{activeDelivery.restaurant?.address || 'Restaurant Address'}</p>
+                                                                <p className="text-[11px] font-semibold text-gray-500 mt-0.5">{activeDelivery.distanceKm || '1.2'} km away</p>
+                                                            </div>
                                                     </div>
 
-                                                    <div className="flex gap-4">
-                                                        <div className="w-10 h-10 bg-pink-50 rounded-2xl flex items-center justify-center text-pink-500 flex-shrink-0">
-                                                            <FaMapMarkerAlt size={16} />
+                                                        <div className="flex gap-4">
+                                                            <div className="w-10 h-10 bg-pink-50 rounded-2xl flex items-center justify-center text-pink-500 flex-shrink-0">
+                                                                <FaMapMarkerAlt size={16} />
+                                                            </div>
+                                                            <div>
+                                                                <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-widest">Deliver to</p>
+                                                                <p className="font-semibold text-gray-900 text-sm line-clamp-1">{activeDelivery.user?.name || 'Customer'}</p>
+                                                                <p className="text-[11px] text-gray-500 line-clamp-1">{activeDelivery.user?.address || 'Customer Address'}</p>
+                                                                {activeDelivery.user?.phone && (
+                                                                    <p className="text-[11px] font-bold text-orange-500 mt-1 flex items-center gap-1.5 bg-orange-50 w-fit px-2 py-0.5 rounded-md">
+                                                                        <FaPhone size={10} /> {activeDelivery.user.phone}
+                                                                    </p>
+                                                                )}
+                                                                <p className="text-[11px] font-semibold text-gray-500 mt-1.5">{(activeDelivery.distanceKm * 1.5).toFixed(1) || '3.5'} km from restaurant</p>
+                                                            </div>
                                                         </div>
-                                                        <div>
-                                                            <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-widest">Deliver to</p>
-                                                            <p className="font-semibold text-gray-900 text-sm line-clamp-1">{activeDelivery.user?.address || 'Customer Location'}</p>
-                                                            <p className="text-[11px] font-semibold text-gray-500 mt-0.5">{(activeDelivery.distanceKm * 1.5).toFixed(1) || '3.5'} km from restaurant</p>
-                                                        </div>
-                                                    </div>
                                                 </div>
 
                                                 <div className="pt-4 border-t border-gray-50 space-y-3">
@@ -548,6 +555,35 @@ export default function RiderOrders({ riderId, setShowNotifications, unreadCount
                                                     </div>
                                                 );
                                             })}
+                                        </div>
+
+                                        {/* Address Details for Tracking */}
+                                        <div className="bg-gray-50 rounded-2xl p-4 mb-4 space-y-4">
+                                            <div className="flex gap-3">
+                                                <div className="w-8 h-8 bg-orange-100 rounded-xl flex items-center justify-center text-orange-600 flex-shrink-0">
+                                                    <FaMapMarkerAlt size={12} />
+                                                </div>
+                                                <div>
+                                                    <p className="text-[9px] font-bold text-gray-400 uppercase tracking-wider">Pickup</p>
+                                                    <p className="font-semibold text-gray-900 text-xs">{activeDelivery.restaurant?.name}</p>
+                                                    <p className="text-[10px] text-gray-500 line-clamp-1">{activeDelivery.restaurant?.address}</p>
+                                                </div>
+                                            </div>
+                                            <div className="flex gap-3">
+                                                <div className="w-8 h-8 bg-pink-100 rounded-xl flex items-center justify-center text-pink-600 flex-shrink-0">
+                                                    <FaMapMarkerAlt size={12} />
+                                                </div>
+                                                <div>
+                                                    <p className="text-[9px] font-bold text-gray-400 uppercase tracking-wider">Deliver to</p>
+                                                    <p className="font-semibold text-gray-900 text-xs">{activeDelivery.user?.name || 'Customer'}</p>
+                                                    <p className="text-[10px] text-gray-500 line-clamp-1">{activeDelivery.user?.address}</p>
+                                                    {activeDelivery.user?.phone && (
+                                                        <p className="text-[10px] font-bold text-orange-500 mt-1 flex items-center gap-1.5">
+                                                            <FaPhone size={8} /> {activeDelivery.user.phone}
+                                                        </p>
+                                                    )}
+                                                </div>
+                                            </div>
                                         </div>
 
                                         {/* Map Area */}
@@ -941,7 +977,7 @@ function OrderCard({
                 {/* Real-time Accept Button for available orders */}
                 {isAvailable && (
                     <button 
-                            onClick={() => handleAcceptOrder(order._id)}
+                            onClick={() => onAccept(order._id)}
                             className="w-full mt-4 bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600 text-white py-3 rounded-xl font-semibold text-xs uppercase tracking-widest shadow-lg shadow-orange-500/20 transition-all active:scale-95"
                         >
                             Accept Order

@@ -2,7 +2,37 @@ const Restaurant = require('../models/Restaurant');
 const Video = require('../models/Video');
 const User = require('../models/User');
 const Order = require('../models/Order');
-const { triggerEvent } = require('../socket');
+const { triggerEvent } = require('../utils/pusher');
+const path = require('path');
+const axios = require('axios');
+
+// Geocoding utility function
+const geocodeAddress = async (address) => {
+    try {
+        console.log(`Geocoding address: ${address}`);
+        const response = await axios.get(`https://nominatim.openstreetmap.org/search`, {
+            params: {
+                format: 'json',
+                q: address,
+                limit: 1
+            },
+            headers: {
+                'User-Agent': 'FoodSwipe-App'
+            }
+        });
+
+        if (response.data && response.data.length > 0) {
+            const { lat, lon } = response.data[0];
+            return {
+                lat: parseFloat(lat),
+                lng: parseFloat(lon)
+            };
+        }
+    } catch (error) {
+        console.error('Geocoding error:', error.message);
+    }
+    return null;
+};
 
 /**
  * Normalizes image/video paths to store only the relative path
@@ -43,6 +73,19 @@ const createRestaurant = async (req, res) => {
             return res.status(400).json({ message: 'You already have a restaurant registered' });
         }
 
+        // Geocode address if location is missing or default [0,0]
+        let finalLocation = location;
+        if ((!location || (location.coordinates[0] === 0 && location.coordinates[1] === 0)) && address) {
+            const coords = await geocodeAddress(address);
+            if (coords) {
+                finalLocation = {
+                    type: 'Point',
+                    coordinates: [coords.lng, coords.lat],
+                    description: address
+                };
+            }
+        }
+
         // Create restaurant
         const restaurant = await Restaurant.create({
             name,
@@ -51,7 +94,7 @@ const createRestaurant = async (req, res) => {
             contact,
             description,
             logo: normalizePath(logo),
-            location,
+            location: finalLocation,
             cuisineTypes,
             priceRange,
             socialMedia,
@@ -174,6 +217,21 @@ const updateRestaurant = async (req, res) => {
         // Check ownership
         if (restaurant.owner.toString() !== req.user._id.toString()) {
             return res.status(403).json({ message: 'Not authorized to update this restaurant' });
+        }
+
+        // Geocode if address changed and location not provided
+        const addressChanged = req.body.address && req.body.address !== restaurant.address;
+        const locationProvided = req.body.location !== undefined;
+
+        if (addressChanged && !locationProvided) {
+            const coords = await geocodeAddress(req.body.address);
+            if (coords) {
+                restaurant.location = {
+                    type: 'Point',
+                    coordinates: [coords.lng, coords.lat],
+                    description: req.body.address
+                };
+            }
         }
 
         // Update fields

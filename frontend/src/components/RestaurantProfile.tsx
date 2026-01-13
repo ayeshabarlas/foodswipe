@@ -131,6 +131,11 @@ export default function RestaurantProfile({ restaurant: initialRestaurant, onBac
 
     // Calculate distance from user's location to restaurant
     const calculateDistance = (lat1: number, lon1: number, lat2: number, lon2: number) => {
+        // If restaurant location is 0,0 or very far, it's likely not set
+        if ((lat2 === 0 && lon2 === 0) || (Math.abs(lat2) < 0.1 && Math.abs(lon2) < 0.1)) {
+            return 'Location not set';
+        }
+
         const R = 6371; // Radius of the Earth in km
         const dLat = (lat2 - lat1) * Math.PI / 180;
         const dLon = (lon2 - lon1) * Math.PI / 180;
@@ -141,10 +146,10 @@ export default function RestaurantProfile({ restaurant: initialRestaurant, onBac
         const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
         const distance = R * c;
 
-        if (distance >= 1000) {
-            return (distance / 1000).toFixed(1) + 'k';
+        if (distance >= 1) {
+            return distance.toFixed(1) + ' km';
         }
-        return distance.toFixed(1);
+        return (distance * 1000).toFixed(0) + ' m';
     };
 
     // Get user's location and calculate distance
@@ -156,7 +161,7 @@ export default function RestaurantProfile({ restaurant: initialRestaurant, onBac
                     const userLon = position.coords.longitude;
                     const [restLon, restLat] = restaurantData.location!.coordinates;
                     const dist = calculateDistance(userLat, userLon, restLat, restLon);
-                    setDistance(`${dist} km`);
+                    setDistance(dist);
                 },
                 (error) => {
                     console.error('Error getting location:', error);
@@ -164,7 +169,7 @@ export default function RestaurantProfile({ restaurant: initialRestaurant, onBac
                 }
             );
         } else {
-            setDistance('2.3 km'); // Fallback
+            setDistance('Location not set');
         }
     }, [restaurantData]);
 
