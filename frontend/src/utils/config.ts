@@ -4,23 +4,23 @@ const getApiUrl = () => {
     return 'http://localhost:8080';
   }
 
-  // Priority 2: Use current origin if we are on Vercel (monorepo support)
-  if (typeof window !== 'undefined' && window.location.hostname.includes('vercel.app')) {
-    return window.location.origin;
-  }
-
-  // Priority 3: Environment variable
+  // Priority 2: Use Environment variable if provided
   let url = process.env.NEXT_PUBLIC_API_URL;
-  
-  // Only override if it's NOT the current vercel app and we want to force Render
-  // But usually, if NEXT_PUBLIC_API_URL is set, we should respect it.
-  // The previous override was a bit aggressive.
-  if (url && url.includes('vercel.app') && !url.includes(window.location.hostname)) {
-    // Only override if it's clearly an old/different vercel app
-    // url = 'https://foodswipe-6178.onrender.com'; 
+
+  // Priority 3: Vercel Monorepo Support
+  // If we are on Vercel, and NO explicit API URL is provided, 
+  // we check if this specific deployment is supposed to be the backend too.
+  // But since the user is getting 404s, it's safer to use the dedicated backend URL.
+  if (!url && typeof window !== 'undefined' && window.location.hostname.includes('vercel.app')) {
+    // If the hostname IS foodswipe-backend, then use origin
+    if (window.location.hostname.includes('backend')) {
+      return window.location.origin;
+    }
+    // Otherwise, try the known backend on Vercel
+    url = 'https://foodswipe-backend.vercel.app';
   }
   
-  // Priority 3: Production fallback (Hardcoded Render URL)
+  // Priority 4: Production fallback (Hardcoded Render URL)
   if (!url && process.env.NODE_ENV === 'production') {
     url = 'https://foodswipe-6178.onrender.com';
   }
