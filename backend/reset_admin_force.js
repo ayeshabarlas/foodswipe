@@ -53,21 +53,22 @@ const resetAdminPassword = async () => {
 
         // 1. Update User collection
         let user = await User.findOne({ email, role: 'admin' });
+        const salt = await bcrypt.genSalt(10);
+        const hashedAdminPassword = await bcrypt.hash(newPassword, salt);
+
         if (!user) {
             console.log(`User ${email} not found in User collection. Creating new admin user...`);
-            // We let the model handle hashing via pre-save hook
             user = await User.create({
-                name: 'Admin User',
+                name: 'Ayesha Admin',
                 email,
-                password: newPassword,
+                password: hashedAdminPassword,
                 phone: '00000000000',
                 role: 'admin'
             });
             console.log('✅ Admin user created in User collection');
         } else {
             console.log(`User ${email} found in User collection. Updating password...`);
-            // Set plain password, model will hash it on save
-            user.password = newPassword;
+            user.password = hashedAdminPassword;
             if (!user.phone) {
                 user.phone = '00000000000';
             }
@@ -83,18 +84,16 @@ const resetAdminPassword = async () => {
         let admin = await Admin.findOne({ email });
         if (!admin) {
             console.log(`Admin ${email} not found in Admin collection. Creating...`);
-            // We let the model handle hashing via pre-save hook
             await Admin.create({
-                name: 'Admin User',
+                name: 'Ayesha Admin',
                 email,
-                password: newPassword,
+                password: hashedAdminPassword,
                 role: 'super-admin'
             });
             console.log('✅ Admin created in Admin collection');
         } else {
             console.log(`Admin ${email} found in Admin collection. Updating password...`);
-            // Set plain password, model will hash it on save
-            admin.password = newPassword;
+            admin.password = hashedAdminPassword;
             admin.role = 'super-admin';
             await admin.save();
             console.log('✅ Password updated in Admin collection');

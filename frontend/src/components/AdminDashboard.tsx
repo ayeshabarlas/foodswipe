@@ -242,10 +242,10 @@ export default function AdminDashboard() {
     };
 
     return (
-        <div className="min-h-screen bg-gray-100 flex">
+        <div className="min-h-screen bg-gray-100 flex overflow-hidden">
             <Toaster />
             <Sidebar activeTab={activeTab} setActiveTab={handleTabChange} onLogout={handleLogout} />
-            <div className="flex-1 w-full md:ml-64 pt-16 md:pt-0">
+            <div className="flex-1 w-full md:ml-56 pt-16 md:pt-0 h-screen overflow-y-auto">
                 {renderView()}
             </div>
         </div>

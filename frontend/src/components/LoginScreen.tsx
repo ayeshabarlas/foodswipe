@@ -150,7 +150,7 @@ export default function LoginScreen({ onLogin }: LoginScreenProps) {
     };
 
     return (
-        <div className="relative h-screen w-full overflow-hidden bg-gradient-to-b from-orange-500 via-orange-600 to-pink-500 flex flex-col items-center justify-center p-6">
+        <div className="relative min-h-screen w-full overflow-y-auto bg-gradient-to-b from-orange-500 via-orange-600 to-pink-500 flex flex-col items-center justify-center p-6">
             <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}

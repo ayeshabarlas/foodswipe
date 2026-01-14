@@ -3,7 +3,19 @@ const admin = require('firebase-admin');
 if (!admin.apps.length) {
     console.log('🔥 Firebase Admin SDK Initialization Check');
     try {
-        const serviceAccountVar = process.env.FIREBASE_SERVICE_ACCOUNT_JSON;
+        let serviceAccountVar = process.env.FIREBASE_SERVICE_ACCOUNT_JSON;
+        const serviceAccountPath = process.env.FIREBASE_SERVICE_ACCOUNT_PATH || './serviceAccountKey.json';
+        const path = require('path');
+        const fs = require('fs');
+
+        if (!serviceAccountVar && fs.existsSync(path.resolve(__dirname, '..', serviceAccountPath))) {
+            console.log(`ℹ️ Loading Firebase service account from path: ${serviceAccountPath}`);
+            try {
+                serviceAccountVar = JSON.parse(fs.readFileSync(path.resolve(__dirname, '..', serviceAccountPath), 'utf8'));
+            } catch (err) {
+                console.error(`❌ Error reading service account file: ${err.message}`);
+            }
+        }
         
         if (serviceAccountVar) {
             let serviceAccount;

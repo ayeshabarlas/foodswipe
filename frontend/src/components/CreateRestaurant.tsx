@@ -173,8 +173,8 @@ export default function CreateRestaurant({ onRestaurantCreated }: CreateRestaura
 
     if (step === 'selection') {
         return (
-            <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
-                <div className="max-w-2xl w-full">
+            <div className="min-h-screen bg-gray-50 flex flex-col items-center justify-start md:justify-center p-4 overflow-y-auto">
+                <div className="max-w-2xl w-full my-auto">
                     <button
                         onClick={handleBackToLogin}
                         className="flex items-center gap-2 text-gray-600 hover:text-gray-900 mb-4 font-normal transition"
@@ -254,7 +254,7 @@ export default function CreateRestaurant({ onRestaurantCreated }: CreateRestaura
     }
 
     return (
-        <div className="min-h-screen bg-gray-50">
+        <div className="min-h-screen bg-gray-50 overflow-y-auto">
             <div className="max-w-3xl mx-auto p-4 md:p-6 pb-20">
                 <button onClick={() => setStep('selection')} className="flex items-center gap-2 text-blue-600 hover:text-blue-700 mb-6 font-normal transition">
                     <FaArrowLeft size={14} /> Back to selection

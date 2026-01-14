@@ -357,7 +357,7 @@ const verifyFirebaseToken = async (req, res) => {
     } catch (err) {
         console.error('Firebase verification CRITICAL error:', err);
         return res.status(401).json({ 
-            message: 'Invalid Firebase token', 
+            message: `Google Login Error: ${err.message}`, 
             error: err.message,
             stack: process.env.NODE_ENV === 'development' ? err.stack : undefined 
         });

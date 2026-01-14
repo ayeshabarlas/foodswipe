@@ -212,18 +212,18 @@ export default function Home() {
   }
 
   // Admin flow
+  useEffect(() => {
+    if (userRole === "admin") {
+      router.push('/admin');
+    }
+  }, [userRole, router]);
+
   if (userRole === "admin") {
     return (
-      <div className="h-screen w-full bg-black overflow-y-auto">
-        <div className="p-8 text-white text-center">
-          <h1 className="text-2xl font-bold mb-4">Admin Dashboard</h1>
-          <p className="mb-8">Redirecting to Admin Panel...</p>
-          <button 
-            onClick={() => router.push('/admin')}
-            className="px-6 py-2 bg-orange-500 rounded-lg"
-          >
-            Go to Admin Dashboard
-          </button>
+      <div className="h-screen w-full bg-black flex items-center justify-center">
+        <div className="text-center">
+          <div className="w-16 h-16 border-4 border-orange-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+          <p className="text-white text-lg font-medium">Redirecting to Admin Panel...</p>
         </div>
       </div>
     );
