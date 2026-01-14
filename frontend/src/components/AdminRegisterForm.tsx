@@ -72,7 +72,7 @@ export default function AdminRegisterForm() {
     // Success screen
     if (success) {
         return (
-            <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-purple-500 to-pink-600 p-4">
+            <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-purple-500 to-pink-600 p-4 overflow-y-auto">
                 <div className="bg-white rounded-3xl shadow-2xl w-full max-w-md p-8 md:p-10">
                     <div className="flex flex-col items-center mb-8">
                         <div className="bg-gradient-to-br from-green-500 to-emerald-500 text-white p-4 rounded-2xl shadow-lg mb-4">

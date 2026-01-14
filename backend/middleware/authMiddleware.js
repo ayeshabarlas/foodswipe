@@ -46,7 +46,8 @@ const requireAdmin = async (req, res, next) => {
         
         if (!adminUser) {
             // 2. Try User collection with role check
-            adminUser = await User.findOne({ _id: userId, role: 'admin' });
+            const adminRoles = ['admin', 'super-admin', 'finance-admin', 'support-admin', 'restaurant-manager'];
+            adminUser = await User.findOne({ _id: userId, role: { $in: adminRoles } });
         }
 
         if (adminUser) {

@@ -380,7 +380,7 @@ export default function RestaurantDashboard() {
 
             {/* Sidebar */}
             <aside
-                className={`fixed lg:sticky top-0 inset-y-0 left-0 z-50 w-64 bg-gray-900 text-white transform transition-transform duration-300 ease-in-out shadow-2xl h-screen
+                className={`fixed lg:sticky top-0 inset-y-0 left-0 z-50 w-64 bg-gray-900 text-white transform transition-transform duration-300 ease-in-out shadow-2xl min-h-screen overflow-y-auto
                 ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'} lg:translate-x-0 lg:static`}
             >
                 <div className="h-full flex flex-col">

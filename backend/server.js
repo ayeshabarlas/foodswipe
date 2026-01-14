@@ -1,3 +1,6 @@
+const express = require('express');
+const path = require('path');
+
 console.log('🚀 Backend Server Starting...');
 
 // Load environment variables
@@ -6,8 +9,6 @@ if (process.env.NODE_ENV !== 'production') {
     require('dotenv').config({ path: path.join(__dirname, '.env') });
 }
 
-const express = require('express');
-const path = require('path');
 const cors = require('cors');
 const { initSocket } = require('./socket');
 const { connectDB, getDbStatus } = require('./config/db');
@@ -146,7 +147,7 @@ const startServer = async () => {
             
             // Start server for non-Vercel environments (Local, Render, etc.)
             if (!process.env.VERCEL) {
-                const PORT = process.env.PORT || 8080;
+                const PORT = process.env.PORT || 5000;
                 app.listen(PORT, '0.0.0.0', () => {
                     console.log(`🚀 SERVER RUNNING ON PORT ${PORT}`);
                     console.log(`📡 Health Check: http://localhost:${PORT}/health`);

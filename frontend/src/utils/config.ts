@@ -1,7 +1,7 @@
 const getApiUrl = () => {
   // Priority 1: Force localhost if we are on localhost in browser
   if (typeof window !== 'undefined' && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')) {
-    return 'http://localhost:8080';
+    return 'http://localhost:5000';
   }
 
   // Priority 2: Use Render URL as the MAIN production backend
@@ -22,7 +22,7 @@ const getApiUrl = () => {
   
   // Priority 5: Localhost fallback
   if (!url) {
-    url = 'http://localhost:8080';
+    url = 'http://localhost:5000';
   }
   
   // Ensure protocol
@@ -58,7 +58,7 @@ const getSocketUrl = () => {
 
   // Priority 3: Localhost fallback
   if (!url) {
-    url = 'http://localhost:8080';
+    url = 'http://localhost:5000';
   }
 
   // Ensure protocol

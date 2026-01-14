@@ -102,7 +102,7 @@ export default function LoginPage() {
     };
 
     return (
-        <div className="min-h-screen bg-gray-50 flex flex-col justify-center items-center p-4">
+        <div className="min-h-screen bg-white flex items-center justify-center overflow-y-auto">
             <div className="w-full max-w-md bg-white rounded-3xl shadow-xl overflow-hidden">
                 {/* Header Image/Logo Placeholder */}
                 <div className="bg-gradient-orange-red h-32 flex items-center justify-center">

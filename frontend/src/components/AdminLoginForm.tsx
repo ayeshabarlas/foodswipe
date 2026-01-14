@@ -31,7 +31,7 @@ export default function AdminLoginForm() {
             console.log('Login response:', data);
 
             // Safer check for admin role
-            const adminRoles = ['admin', 'super-admin', 'finance-admin', 'support-admin'];
+            const adminRoles = ['admin', 'super-admin', 'finance-admin', 'support-admin', 'restaurant-manager'];
             const isAdmin = data.isAdmin || adminRoles.includes(data.role) || (data.role && data.role.includes && data.role.includes('admin'));
 
             if (isAdmin) {
@@ -56,8 +56,8 @@ export default function AdminLoginForm() {
     };
 
     return (
-        <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-orange-500 to-orange-600 p-4">
-            <div className="bg-white rounded-3xl shadow-2xl w-full max-w-md p-8 md:p-10">
+        <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-orange-500 to-orange-600 p-4 overflow-y-auto">
+            <div className="bg-white rounded-3xl shadow-2xl w-full max-w-md p-8 md:p-10 my-8">
                 <div className="flex flex-col items-center mb-8">
                     <div className="bg-gradient-to-br from-orange-500 to-pink-500 text-white p-4 rounded-2xl shadow-lg mb-4">
                         <FaShoppingBag className="text-3xl" />

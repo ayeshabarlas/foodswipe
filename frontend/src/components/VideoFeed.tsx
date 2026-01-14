@@ -538,7 +538,7 @@ export default function VideoFeed() {
     };
 
     return (
-        <div className="relative h-screen w-full bg-black">
+        <div className="relative min-h-screen w-full bg-black">
             <div className="fixed top-4 left-4 right-4 z-[50] flex flex-col gap-3">
                 <div className="flex items-center gap-3">
                     <button onClick={() => setIsNavOpen(true)} className="p-2 text-white flex-shrink-0 cursor-pointer z-50" type="button">

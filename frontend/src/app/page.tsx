@@ -189,7 +189,7 @@ export default function Home() {
        // Only show CreateRestaurant if we explicitly know hasRestaurant is false
        if (hasRestaurant || localStorage.getItem("hasRestaurant") === "true") {
          return (
-           <div className="min-h-screen w-full bg-black">
+           <div className="min-h-screen w-full bg-black overflow-y-auto">
              <RestaurantDashboard />
            </div>
          );
@@ -241,7 +241,7 @@ export default function Home() {
 
   // Fallback for unknown roles or session cleanup
   return (
-    <div className="h-screen w-full bg-gray-900 text-white flex flex-col items-center justify-center p-4">
+    <div className="min-h-screen w-full bg-gray-900 text-white flex flex-col items-center justify-center p-4">
       <div className="mb-4 text-xl font-bold text-red-500">Navigation Error</div>
       <p className="mb-4 text-center text-gray-400 max-w-md">
         You are logged in as <span className="text-yellow-400 font-mono">{userRole || "Unknown Role"}</span>,

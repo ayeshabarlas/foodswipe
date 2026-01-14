@@ -356,7 +356,7 @@ const RiderDashboard = ({ riderId: initialRiderId }: { riderId?: string }) => {
 
     // if (loading) {
     //     return (
-    //         <div className="min-h-screen bg-white flex flex-col items-center justify-center p-4">
+    //         <div className="min-h-screen bg-white flex flex-col items-center justify-center p-4 overflow-y-auto">
     //             <ModernLoader size="lg" text="Loading Rider Portal..." />
     //         </div>
     //     );
@@ -863,7 +863,7 @@ function ActionItem({ icon, label, sublabel, onClick }: any) {
     };
 
     return (
-        <div className="min-h-screen bg-[#F8F9FA] pb-32 font-light overflow-x-hidden">
+        <div className="min-h-screen bg-[#F8F9FA] pb-32 font-light overflow-x-hidden overflow-y-auto">
             <div className="max-w-md mx-auto px-4 pt-4">
                 {activeTab === 'home' && renderHome()}
             {activeTab === 'orders' && (

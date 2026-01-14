@@ -67,8 +67,8 @@ export default function RiderRegistration({ onComplete }: RiderRegistrationProps
     };
 
     return (
-        <div className="min-h-screen bg-gradient-to-br from-orange-500 via-orange-600 to-pink-600 flex items-center justify-center p-4">
-            <div className="w-full max-w-sm">
+        <div className="min-h-screen bg-gradient-to-br from-orange-500 via-orange-600 to-pink-600 flex items-center justify-center p-4 overflow-y-auto">
+            <div className="w-full max-w-sm my-8">
                 <button
                     onClick={handleBackToLogin}
                     className="flex items-center gap-2 text-white/90 hover:text-white mb-4 font-normal transition"

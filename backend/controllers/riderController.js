@@ -1,6 +1,8 @@
 const Rider = require('../models/Rider');
-const Transaction = require('../models/Transaction');
+const User = require('../models/User');
 const Order = require('../models/Order');
+const Payout = require('../models/Payout');
+const Transaction = require('../models/Transaction');
 const { calculateRiderEarning } = require('../utils/paymentUtils');
 const { calculateDistance } = require('../utils/locationUtils');
 const { createNotification } = require('./notificationController');
@@ -61,7 +63,6 @@ const registerRider = async (req, res) => {
         const rider = await Rider.create(riderData);
 
         // Update user role to rider (if not already rider/admin)
-        const User = require('../models/User');
         if (req.user.role !== 'rider' && req.user.role !== 'admin') {
             await User.findByIdAndUpdate(req.user._id, { role: 'rider' });
         }
@@ -119,7 +120,6 @@ const getRiderById = async (req, res) => {
 
         // If still not found, check if this is a user with rider role
         if (!rider) {
-            const User = require('../models/User');
             const user = await User.findOne({ _id: req.params.id, role: 'rider' });
             
             if (user) {
@@ -221,8 +221,6 @@ const updateStatus = async (req, res) => {
 // @access  Private
 const getAvailableOrders = async (req, res) => {
     try {
-        const Order = require('../models/Order');
-
         // Get orders that are Accepted, Confirmed, Preparing, Ready or OnTheWay without a rider assigned
         const orders = await Order.find({
             $or: [
@@ -287,7 +285,6 @@ const getAvailableOrders = async (req, res) => {
 // @access  Private
 const acceptOrder = async (req, res) => {
     try {
-        const Order = require('../models/Order');
         const { orderId } = req.body;
 
         const order = await Order.findById(orderId)
@@ -449,8 +446,6 @@ const getTransactions = async (req, res) => {
 // @access  Private
 const getDeliveryHistory = async (req, res) => {
     try {
-        const Order = require('../models/Order');
-
         const deliveries = await Order.find({
             rider: req.params.id,
             status: { $in: ['Delivered', 'Completed'] }
@@ -491,7 +486,6 @@ const getTimeAgo = (date) => {
 // @access  Private
 const getRiderOrders = async (req, res) => {
     try {
-        const Order = require('../models/Order');
         let riderId = req.params.id;
 
         // If the ID provided is a User ID, find the associated Rider ID
@@ -635,7 +629,6 @@ const updateLocation = async (req, res) => {
 // @access  Private
 const markPickedUp = async (req, res) => {
     try {
-        const Order = require('../models/Order');
         const order = await Order.findById(req.params.orderId).populate('user').populate('restaurant');
 
         if (!order) {
@@ -677,7 +670,6 @@ const markPickedUp = async (req, res) => {
 // @access  Private
 const cashout = async (req, res) => {
     try {
-        const Payout = require('../models/Payout');
         const rider = await Rider.findById(req.params.id);
 
         if (!rider) {

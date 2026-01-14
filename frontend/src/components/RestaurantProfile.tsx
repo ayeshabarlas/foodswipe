@@ -405,7 +405,7 @@ export default function RestaurantProfile({ restaurant: initialRestaurant, onBac
             </div>
 
             {/* Main Content Area */}
-            <div className="bg-white min-h-screen">
+            <div className="bg-white min-h-screen overflow-y-auto">
                 {/* Main Tabs */}
                 <div className="flex px-8 pt-4 border-b border-gray-100 bg-white z-20">
                     <button

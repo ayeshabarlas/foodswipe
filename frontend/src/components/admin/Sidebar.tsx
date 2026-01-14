@@ -95,8 +95,8 @@ export default function Sidebar({ activeTab, setActiveTab, onLogout }: SidebarPr
                 />
             )}
 
-            <div className={`w-56 bg-white min-h-screen fixed left-0 top-0 flex flex-col border-r border-gray-100 z-50 font-sans transition-transform duration-300 transform
-                ${isMobileOpen ? 'translate-x-0' : '-translate-x-full'} md:translate-x-0`}>
+            <div className={`w-64 bg-gray-900 text-white min-h-screen overflow-y-auto fixed left-0 top-0 flex flex-col border-r border-gray-100 z-50 font-sans transition-transform duration-300 transform
+                  ${isMobileOpen ? 'translate-x-0' : '-translate-x-full'} md:translate-x-0`}>
                 {/* Logo Section */}
                 <div className="p-4 border-b border-gray-50">
                     <div className="flex items-center gap-2.5">

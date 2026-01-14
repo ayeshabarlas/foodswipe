@@ -185,7 +185,7 @@ export default function RestaurantManagement() {
     }
 
     return (
-        <div className="min-h-screen bg-gray-900 text-white">
+        <div className="min-h-screen bg-gray-900 text-white overflow-y-auto">
             {/* Header */}
             <div className="bg-gradient-to-r from-primary to-accent p-6 shadow-lg">
                 <div className="max-w-7xl mx-auto">

@@ -190,7 +190,7 @@ export default function RestaurantRegistration() {
     };
 
     return (
-        <div className="min-h-screen bg-gradient-to-br from-orange-50 to-red-50 py-12 px-4">
+        <div className="min-h-screen bg-gradient-to-br from-orange-50 to-red-50 py-12 px-4 overflow-y-auto">
             <div className="max-w-4xl mx-auto bg-white rounded-2xl shadow-2xl p-8">
                 <h1 className="text-3xl font-bold text-gray-900 mb-2">Restaurant Registration</h1>
                 <p className="text-gray-600 mb-8">Complete all steps to submit your application for approval</p>

@@ -38,7 +38,7 @@ export default function AdminPage() {
             console.log('User role:', user.role);
 
             // Verify admin role (allow any admin-related role)
-            const isAdminRole = ['admin', 'super-admin', 'finance-admin', 'support-admin'].includes(user.role);
+            const isAdminRole = ['admin', 'super-admin', 'finance-admin', 'support-admin', 'restaurant-manager'].includes(user.role);
             
             if (!isAdminRole) {
                 console.error('Unauthorized: User role is', user.role, 'but expected an admin role');

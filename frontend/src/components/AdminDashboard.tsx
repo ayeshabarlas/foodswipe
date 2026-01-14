@@ -67,7 +67,7 @@ export default function AdminDashboard() {
         if (userInfo) {
             try {
                 user = JSON.parse(userInfo);
-                const isAdminRole = ['admin', 'super-admin', 'finance-admin', 'support-admin'].includes(user.role);
+                const isAdminRole = ['admin', 'super-admin', 'finance-admin', 'support-admin', 'restaurant-manager'].includes(user.role);
                 
                 if (!isAdminRole) {
                     console.error('Unauthorized: User is not an admin. Role:', user.role);
@@ -230,7 +230,7 @@ export default function AdminDashboard() {
 
     if (!mounted || loading) {
         return (
-            <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+            <div className="min-h-screen bg-gray-50 flex items-center justify-center overflow-y-auto">
                 <ModernLoader size="lg" text="Initializing Admin Panel..." />
             </div>
         );
@@ -242,7 +242,7 @@ export default function AdminDashboard() {
     };
 
     return (
-        <div className="min-h-screen bg-gray-100 flex overflow-x-hidden">
+        <div className="min-h-screen bg-gray-100 flex overflow-x-hidden overflow-y-auto">
             <Toaster />
             <Sidebar activeTab={activeTab} setActiveTab={handleTabChange} onLogout={handleLogout} />
             <div className="flex-1 w-full md:ml-56 pt-16 md:pt-0 min-h-screen overflow-y-auto">

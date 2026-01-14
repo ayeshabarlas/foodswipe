@@ -2,7 +2,7 @@ const Restaurant = require('../models/Restaurant');
 const Video = require('../models/Video');
 const User = require('../models/User');
 const Order = require('../models/Order');
-const { triggerEvent } = require('../utils/pusher');
+const { triggerEvent } = require('../socket');
 const path = require('path');
 const axios = require('axios');
 
@@ -577,8 +577,6 @@ const submitVerification = async (req, res) => {
     }
 };
 
-
-const Order = require('../models/Order');
 
 /**
  * @desc    Get completed orders for the last 7 days for current restaurant

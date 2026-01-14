@@ -150,16 +150,15 @@ export default function LoginScreen({ onLogin }: LoginScreenProps) {
     };
 
     return (
-        <div className="relative min-h-screen w-full overflow-y-auto bg-gradient-to-b from-orange-500 via-orange-600 to-pink-500 flex flex-col items-center justify-center p-6">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm overflow-y-auto">
             <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.5 }}
-                className="w-full max-w-md"
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
+                className="bg-white rounded-[32px] w-full max-w-md shadow-2xl overflow-hidden my-8"
             >
                 {/* Header */}
-                <div className="text-center text-white mb-8">
-                    <h1 className="text-4xl font-bold mb-2">
+                <div className="text-center p-8 bg-gradient-to-r from-orange-500 to-pink-500">
+                    <h1 className="text-3xl font-bold text-white mb-2">
                         {step === "method" ? "Welcome Back!" : step === "signup" ? "Sign Up" : "Login"}
                     </h1>
                     <p className="text-white/90 text-sm">
@@ -167,8 +166,8 @@ export default function LoginScreen({ onLogin }: LoginScreenProps) {
                     </p>
                 </div>
 
-                {/* Main Card */}
-                <div className="bg-white rounded-3xl shadow-2xl overflow-hidden p-8">
+                {/* Main Content */}
+                <div className="p-8">
                     {step !== "method" && (
                         <button
                             onClick={() => setStep("method")}
