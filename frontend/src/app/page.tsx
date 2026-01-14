@@ -80,24 +80,6 @@ export default function Home() {
           const user = response.data;
           console.log("Home: Re-validation success, user data:", user);
           const ui = JSON.parse(userInfoStr || '{}');
-          
-          // CRITICAL: If user is logged in as customer but says they have a restaurant,
-          // or if they are this specific user, let's try to see if they have a restaurant role.
-          if (user.role === 'customer') {
-            try {
-              const resCheck = await axios.get(`${API_BASE_URL}/api/restaurants/my-restaurant`, {
-                headers: { Authorization: `Bearer ${token}` },
-                timeout: 3000
-              });
-              if (resCheck.data) {
-                console.log("Home: Found restaurant for customer user, switching role to restaurant");
-                user.role = 'restaurant';
-              }
-            } catch (e) {
-              // No restaurant found, stay as customer
-            }
-          }
-
           const updated = { ...ui, ...user };
           localStorage.setItem("userInfo", JSON.stringify(updated));
           
@@ -250,23 +232,8 @@ export default function Home() {
   // Customer feed for customers
   if (userRole === "customer") {
     return (
-      <main className="h-screen w-full bg-black overflow-hidden relative">
+      <main className="h-screen w-full bg-black overflow-hidden">
         <VideoFeed />
-        
-        {/* Role Switcher Overlay - Help users find their dashboard */}
-        <div className="absolute top-4 right-4 z-[100]">
-           <button 
-             onClick={() => {
-                localStorage.removeItem("userInfo");
-                localStorage.removeItem("token");
-                window.location.href = "/login";
-             }}
-             className="bg-orange-500 text-white px-4 py-2 rounded-full text-sm font-bold shadow-lg flex items-center gap-2 hover:bg-orange-600 transition-colors"
-           >
-             <span className="hidden sm:inline">Looking for Restaurant Dashboard?</span>
-             <span className="sm:hidden">Switch to Restaurant</span>
-           </button>
-        </div>
       </main>
     );
   }

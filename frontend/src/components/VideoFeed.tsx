@@ -585,15 +585,15 @@ export default function VideoFeed() {
                                 Retry
                             </button>
                             <button 
-                                onClick={() => {
-                                    localStorage.removeItem('userInfo');
-                                    localStorage.removeItem('token');
-                                    window.location.href = '/login';
-                                }}
-                                className="bg-white/10 text-white py-3 rounded-xl font-medium active:scale-95 transition-transform"
-                            >
-                                Log Out & Switch to Restaurant/Rider
-                            </button>
+                                 onClick={() => {
+                                     localStorage.removeItem('userInfo');
+                                     localStorage.removeItem('token');
+                                     window.location.href = '/login';
+                                 }}
+                                 className="bg-white/10 text-white py-3 rounded-xl font-medium active:scale-95 transition-transform"
+                             >
+                                 Log Out & Re-login
+                             </button>
                         </div>
                     </div>
                 )}
