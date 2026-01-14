@@ -79,7 +79,7 @@ const loginUser = async (req, res) => {
 
             if (existsAnywhere) {
                 return res.status(401).json({ 
-                    message: `This account is registered as a ${existsAnywhere.role}. Please log in through the ${existsAnywhere.role} section.` 
+                    message: `Account not found for this role. Please ensure you've selected the correct role or sign up.` 
                 });
             }
 
@@ -194,7 +194,7 @@ const verifyOtp = async (req, res) => {
 
             if (existsAnywhere) {
                 return res.status(400).json({ 
-                    message: `This phone number is registered as a ${existsAnywhere.role}. Please log in through the ${existsAnywhere.role} section.` 
+                    message: `Account not found for this role. Please ensure you've selected the correct role or sign up.` 
                 });
             }
 
@@ -297,7 +297,7 @@ const verifyFirebaseToken = async (req, res) => {
 
             if (existsAnywhere && existsAnywhere.role !== requestedRole) {
                 return res.status(400).json({
-                    message: `This account is registered as a ${existsAnywhere.role}. Please log in through the ${existsAnywhere.role} section.`
+                    message: `Account not found for this role. Please ensure you've selected the correct role or sign up.`
                 });
             }
 
