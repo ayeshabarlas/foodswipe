@@ -272,11 +272,21 @@ const verifyFirebaseToken = async (req, res) => {
         let decoded;
         try {
             // Verify the ID token using Firebase Admin SDK
-            decoded = await admin.auth().verifyIdToken(idToken, true); // Added 'true' to check for revoked tokens too
+            decoded = await admin.auth().verifyIdToken(idToken, true);
         } catch (verifyError) {
             console.error('Firebase verifyIdToken error:', verifyError.message);
             
-            // LOGGING ENHANCEMENT: Help identify if it's an expiration issue or config issue
+            // Check if Firebase was actually initialized with credentials
+            const firebaseConfigured = !!process.env.FIREBASE_SERVICE_ACCOUNT_JSON;
+            if (!firebaseConfigured) {
+                return res.status(500).json({ 
+                    message: 'Backend Configuration Error', 
+                    error: 'Firebase service account is not configured on this server. Please check environment variables.',
+                    code: 'auth/config-missing'
+                });
+            }
+            
+            // Detailed error messages for common issues
             if (verifyError.code === 'auth/id-token-expired') {
                 return res.status(401).json({ message: 'Firebase token expired. Please try signing in again.' });
             }
@@ -288,7 +298,7 @@ const verifyFirebaseToken = async (req, res) => {
             }
             
             return res.status(401).json({ 
-                message: 'Invalid Firebase token', 
+                message: `Firebase Error: ${verifyError.message}`, 
                 error: verifyError.message,
                 code: verifyError.code 
             });

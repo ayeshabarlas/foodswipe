@@ -49,6 +49,19 @@ app.get('/health', async (req, res) => {
     console.log('💓 Health check requested');
     const dbStatus = getDbStatus();
     
+    // Check Firebase
+    const firebaseConfigured = !!process.env.FIREBASE_SERVICE_ACCOUNT_JSON;
+    let firebaseProjectId = 'not_configured';
+    
+    if (firebaseConfigured) {
+        try {
+            const sa = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT_JSON);
+            firebaseProjectId = sa.project_id || 'unknown';
+        } catch (e) {
+            firebaseProjectId = 'parse_error';
+        }
+    }
+    
     // If not connected, try one more time (lazy connect)
     if (!dbStatus.isConnected) {
         console.log('🔌 DB not connected, retrying...');
@@ -67,9 +80,11 @@ app.get('/health', async (req, res) => {
         status: 'OK', 
         db: statusMap[updatedStatus.readyState] || 'unknown',
         dbError: updatedStatus.lastError,
+        firebase: firebaseConfigured ? 'configured' : 'missing_env_var',
+        firebaseProject: firebaseProjectId,
         timestamp: new Date().toISOString(),
         env: process.env.NODE_ENV,
-        vercel: !!process.env.VERCEL
+        vercel: !!process.env.VERCEL || !!process.env.NOW_REGION || !!process.env.VERCEL_URL
     });
 });
 

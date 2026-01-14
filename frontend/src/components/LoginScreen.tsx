@@ -179,24 +179,23 @@ export default function LoginScreen({ onLogin }: LoginScreenProps) {
                     )}
 
                     {error && (
-                        <div className="mb-4 p-3 rounded-lg bg-red-50 text-red-500 text-sm text-center border border-red-100">
-                            {error}
+                        <div className="mb-6 p-4 bg-red-50 border-l-4 border-red-500 text-red-700 text-sm rounded relative">
+                            <p className="font-bold">{error}</p>
                             <button 
                                 onClick={async () => {
                                     try {
-                                          const res = await axios.get(`${API_BASE_URL}/health?t=${Date.now()}`);
-                                          const status = typeof res.data === 'object' ? JSON.stringify(res.data, null, 2) : res.data;
-                                          alert(`Backend is reachable! Status: ${status}`);
-                                          
-                                          // If DB is connected, clear the error
-                                          if (res.data && res.data.db === 'connected') {
-                                              setError("");
-                                          }
-                                      } catch (e: any) {
-                                        alert(`Backend unreachable: ${e.message}. URL: ${API_BASE_URL}`);
+                                        setError("Checking connection...");
+                                        const res = await axios.get(`${API_BASE_URL}/health?t=${Date.now()}`);
+                                        const data = res.data;
+                                        let msg = `Backend: ${data.status}\nDB: ${data.db}\nFirebase: ${data.firebase}\nURL: ${API_BASE_URL}`;
+                                        alert(msg);
+                                        setError("");
+                                    } catch (e: any) {
+                                        alert(`Backend unreachable!\nURL: ${API_BASE_URL}\nError: ${e.message}`);
+                                        setError(`Connection failed: ${e.message}`);
                                     }
                                 }}
-                                className="block mt-2 text-xs underline text-red-600 mx-auto"
+                                className="mt-2 text-xs font-bold underline hover:text-red-900"
                             >
                                 Check Connectivity
                             </button>

@@ -11,6 +11,11 @@ if (!admin.apps.length) {
                 // Try to parse if it's a stringified JSON
                 serviceAccount = typeof serviceAccountVar === 'string' ? JSON.parse(serviceAccountVar) : serviceAccountVar;
                 
+                // Fix private key formatting (common issue in environment variables)
+                if (serviceAccount && serviceAccount.private_key) {
+                    serviceAccount.private_key = serviceAccount.private_key.replace(/\\n/g, '\n');
+                }
+                
                 // Improved bucket name derivation
                 let bucketName = process.env.FIREBASE_STORAGE_BUCKET;
                 
