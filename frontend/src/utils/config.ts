@@ -4,28 +4,23 @@ const getApiUrl = () => {
     return 'http://localhost:8080';
   }
 
-  // Priority 2: Use Environment variable if provided
+  // Priority 2: Use Render URL as the MAIN production backend
+  // Since Vercel deployment is not working for backend, we force Render
+  const RENDER_URL = 'https://foodswipe-6178.onrender.com';
+  
+  if (process.env.NODE_ENV === 'production') {
+    return RENDER_URL;
+  }
+
+  // Priority 3: Use Environment variable if provided
   let url = process.env.NEXT_PUBLIC_API_URL;
 
-  // Priority 3: Vercel Monorepo Support
-  // If we are on Vercel, and NO explicit API URL is provided, 
-  // we check if this specific deployment is supposed to be the backend too.
-  // But since the user is getting 404s, it's safer to use the dedicated backend URL.
+  // Priority 4: Vercel fallback (if not production environment or if needed)
   if (!url && typeof window !== 'undefined' && window.location.hostname.includes('vercel.app')) {
-    // If the hostname IS foodswipe-backend, then use origin
-    if (window.location.hostname.includes('backend')) {
-      return window.location.origin;
-    }
-    // Otherwise, try the known backend on Vercel
-    url = 'https://foodswipe-backend.vercel.app';
+    return RENDER_URL; // Force Render even on Vercel frontend
   }
   
-  // Priority 4: Production fallback (Hardcoded Render URL)
-  if (!url && process.env.NODE_ENV === 'production') {
-    url = 'https://foodswipe-6178.onrender.com';
-  }
-
-  // Priority 4: Localhost fallback
+  // Priority 5: Localhost fallback
   if (!url) {
     url = 'http://localhost:8080';
   }
