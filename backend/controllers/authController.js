@@ -5,7 +5,7 @@ const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs'); // used by User model for hashing
 const User = require('../models/User');
 const Otp = require('../models/Otp');
-const admin = require('../config/firebase');
+const { admin } = require('../config/firebase');
 
 // Helper to generate a JWT token for a user id
 const generateToken = (id) => {
