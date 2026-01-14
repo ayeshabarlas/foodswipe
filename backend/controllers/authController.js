@@ -307,20 +307,24 @@ const verifyFirebaseToken = async (req, res) => {
         console.log('Token decoded successfully for:', decoded.email);
         const verifiedPhone = decoded.phone_number || phone;
         const requestedRole = req.body.role || 'customer';
+        console.log(`Requested role for ${decoded.email}: ${requestedRole}`);
 
         // Find user by email AND strict role match. 
         // Using email as primary because Google accounts always have emails.
         let user = await User.findOne({ email: decoded.email, role: requestedRole });
+        console.log(`User found by email/role: ${!!user}`);
         
         if (!user && verifiedPhone) {
             user = await User.findOne({
                 $or: [{ phone: verifiedPhone }, { phoneNumber: verifiedPhone }],
                 role: requestedRole
             });
+            console.log(`User found by phone/role: ${!!user}`);
         }
 
         let type = 'login';
         if (!user) {
+            console.log(`Creating new user for ${decoded.email} with role ${requestedRole}`);
             // RELAXED ROLE CHECK: If user exists with another role, we still allow creating a new account for the requested role
             // This allows one email to have multiple roles (Customer, Rider, etc.)
             
@@ -337,10 +341,13 @@ const verifyFirebaseToken = async (req, res) => {
                 role: requestedRole,
                 firebaseUid: decoded.uid
             });
+            console.log(`User created successfully: ${user._id}`);
             type = 'signup';
         } else {
+            console.log(`Existing user found: ${user._id}, checking password...`);
             // Existing user – ensure they are not a password‑based account
             if (user.password && user.password !== '') {
+                console.log(`User ${user._id} has a password set, blocking Google login`);
                 return res.status(400).json({
                     message: 'This account was created with email/password. Please log in with your email and password instead of Google Sign-In.'
                 });
@@ -348,8 +355,12 @@ const verifyFirebaseToken = async (req, res) => {
         }
         return res.json({ verified: true, type, token: generateToken(user._id), user: { _id: user._id, name: user.name, email: user.email, phone: user.phone, phoneVerified: user.phoneVerified, role: user.role } });
     } catch (err) {
-        console.error('Firebase verification error:', err);
-        return res.status(401).json({ message: 'Invalid Firebase token' });
+        console.error('Firebase verification CRITICAL error:', err);
+        return res.status(401).json({ 
+            message: 'Invalid Firebase token', 
+            error: err.message,
+            stack: process.env.NODE_ENV === 'development' ? err.stack : undefined 
+        });
     }
 };
 
