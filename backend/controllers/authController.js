@@ -270,7 +270,26 @@ const verifyFirebaseToken = async (req, res) => {
         const decoded = await admin.auth().verifyIdToken(idToken);
         console.log('Token decoded:', decoded);
         const verifiedPhone = decoded.phone_number || phone;
-        const requestedRole = req.body.role || 'customer';
+        let requestedRole = req.body.role || 'customer';
+
+        // IMPROVED LOGIC: If this is a Google Sign-In, let's see if the user already exists 
+        // with ANY role. If they exist with only one role, use that instead of the requested one.
+        // This prevents creating duplicate "customer" accounts for restaurant owners.
+        if (email) {
+            const allAccounts = await User.find({ email });
+            if (allAccounts.length > 0) {
+                // If they have multiple roles, we'll try to match the requested one,
+                // but if they only have one role and it's not 'customer', use that.
+                const hasRequested = allAccounts.find(a => a.role === requestedRole);
+                if (hasRequested) {
+                    // Match found, continue
+                } else if (allAccounts.length === 1) {
+                    // Only one account exists, let's use its role
+                    console.log(`Google Login: Only one account found for ${email} with role ${allAccounts[0].role}. Using that instead of ${requestedRole}.`);
+                    requestedRole = allAccounts[0].role;
+                }
+            }
+        }
 
         // Find user by phone/email AND strict role match.
         let user = null;

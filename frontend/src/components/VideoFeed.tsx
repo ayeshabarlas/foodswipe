@@ -592,7 +592,7 @@ export default function VideoFeed() {
                                 }}
                                 className="bg-white/10 text-white py-3 rounded-xl font-medium active:scale-95 transition-transform"
                             >
-                                Log Out & Re-login
+                                Log Out & Switch to Restaurant/Rider
                             </button>
                         </div>
                     </div>
