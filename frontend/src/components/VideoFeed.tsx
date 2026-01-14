@@ -573,28 +573,9 @@ export default function VideoFeed() {
                     return <VideoCard key={dish._id} dish={dish} isActive={index === currentVideoIndex} onOpenDetails={setSelectedDish} onOpenProfile={setSelectedRestaurant} distance={distance} />;
                 })}
                 {dishes.length === 0 && (
-                    <div className="h-screen flex flex-col items-center justify-center text-white bg-gray-900 px-6 text-center">
+                    <div className="h-screen flex flex-col items-center justify-center text-white bg-gray-900">
                         <div className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin mb-4"></div>
-                        <p className="text-lg font-medium mb-2">Finding delicious food...</p>
-                        <p className="text-sm text-gray-400 mb-6">If this takes too long, your session might have expired or the server is busy.</p>
-                        <div className="flex flex-col gap-3 w-full max-w-xs">
-                            <button 
-                                onClick={() => window.location.reload()}
-                                className="bg-primary text-white py-3 rounded-xl font-bold active:scale-95 transition-transform"
-                            >
-                                Retry
-                            </button>
-                            <button 
-                                 onClick={() => {
-                                     localStorage.removeItem('userInfo');
-                                     localStorage.removeItem('token');
-                                     window.location.href = '/login';
-                                 }}
-                                 className="bg-white/10 text-white py-3 rounded-xl font-medium active:scale-95 transition-transform"
-                             >
-                                 Log Out & Re-login
-                             </button>
-                        </div>
+                        <p className="text-lg font-medium animate-pulse">Finding delicious food...</p>
                     </div>
                 )}
             </div>
