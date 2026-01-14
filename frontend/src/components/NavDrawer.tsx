@@ -231,7 +231,8 @@ export default function NavDrawer({ isOpen, onClose, user, onOpenProfile, active
                                 </div>
                             )}
                             {section.items.map((item, itemIndex) => {
-                                if (item.adminOnly && user?.role !== 'admin') {
+                                const isAdmin = ['admin', 'super-admin', 'finance-admin', 'support-admin'].includes(user?.role);
+                                if (item.adminOnly && !isAdmin) {
                                     return null;
                                 }
 

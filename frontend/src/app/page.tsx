@@ -213,12 +213,13 @@ export default function Home() {
 
   // Admin flow
   useEffect(() => {
-    if (userRole === "admin") {
+    const isAdmin = ["admin", "super-admin", "finance-admin", "support-admin"].includes(userRole);
+    if (isAdmin) {
       router.push('/admin');
     }
   }, [userRole, router]);
 
-  if (userRole === "admin") {
+  if (["admin", "super-admin", "finance-admin", "support-admin"].includes(userRole)) {
     return (
       <div className="h-screen w-full bg-black flex items-center justify-center">
         <div className="text-center">

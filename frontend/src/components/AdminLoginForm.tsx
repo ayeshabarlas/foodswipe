@@ -31,7 +31,8 @@ export default function AdminLoginForm() {
             console.log('Login response:', data);
 
             // Safer check for admin role
-            const isAdmin = data.isAdmin || (data.role && data.role.includes && data.role.includes('admin')) || data.role === 'admin' || data.role === 'super-admin';
+            const adminRoles = ['admin', 'super-admin', 'finance-admin', 'support-admin'];
+            const isAdmin = data.isAdmin || adminRoles.includes(data.role) || (data.role && data.role.includes && data.role.includes('admin'));
 
             if (isAdmin) {
                 localStorage.setItem('userInfo', JSON.stringify(data));

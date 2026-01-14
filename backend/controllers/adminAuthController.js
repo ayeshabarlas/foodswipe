@@ -103,7 +103,7 @@ const loginAdmin = async (req, res) => {
         console.log(`Checking User collection for ${loginEmail}...`);
         const user = await User.findOne({
             email: { $regex: new RegExp(`^${loginEmail}$`, 'i') },
-            role: 'admin' // Only allow if they have admin role in User collection
+            role: { $in: ['admin', 'super-admin', 'finance-admin', 'support-admin'] }
         });
 
         if (user) {
@@ -146,7 +146,14 @@ const loginAdmin = async (req, res) => {
  */
 const getAdminMe = async (req, res) => {
     try {
-        const admin = await Admin.findById(req.admin.id).select('-password');
+        // Try Admin collection first
+        let admin = await Admin.findById(req.admin.id).select('-password');
+        
+        // If not in Admin collection, try User collection
+        if (!admin) {
+            admin = await User.findById(req.admin.id).select('-password');
+        }
+
         if (admin) {
             res.json(admin);
         } else {

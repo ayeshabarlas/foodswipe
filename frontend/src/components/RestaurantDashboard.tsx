@@ -356,7 +356,7 @@ export default function RestaurantDashboard() {
     };
 
     return (
-        <div className="flex h-screen bg-gray-50 overflow-hidden font-sans text-[11px]">
+        <div className="flex min-h-screen bg-gray-50 font-sans text-[11px] overflow-x-hidden">
             {/* Account Status Banner */}
             {restaurant?.owner?.status === 'suspended' && (
                 <div className="fixed top-0 left-0 right-0 bg-red-600 text-white px-4 py-2 text-center text-xs font-bold z-[9999] shadow-lg flex items-center justify-center gap-2">
@@ -380,7 +380,7 @@ export default function RestaurantDashboard() {
 
             {/* Sidebar */}
             <aside
-                className={`fixed inset-y-0 left-0 z-50 w-64 bg-gray-900 text-white transform transition-transform duration-300 ease-in-out shadow-2xl
+                className={`fixed lg:sticky top-0 inset-y-0 left-0 z-50 w-64 bg-gray-900 text-white transform transition-transform duration-300 ease-in-out shadow-2xl h-screen
                 ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'} lg:translate-x-0 lg:static`}
             >
                 <div className="h-full flex flex-col">
@@ -480,9 +480,9 @@ export default function RestaurantDashboard() {
             </aside>
 
             {/* Main Content */}
-            <main className="flex-1 min-w-0 flex flex-col h-screen overflow-hidden">
+            <main className="flex-1 min-w-0 flex flex-col min-h-screen">
                 {/* Desktop Header */}
-                <header className="bg-white border-b border-gray-100 p-4 hidden lg:flex items-center justify-between shadow-sm shrink-0">
+                <header className="bg-white border-b border-gray-100 p-4 hidden lg:flex items-center justify-between shadow-sm sticky top-0 z-30">
                     <div className="flex items-center gap-4">
                         <h1 className="text-xl font-bold text-gray-900 tracking-tight">
                             {menuItems.find((i) => i.id === activePage)?.label}
@@ -523,7 +523,7 @@ export default function RestaurantDashboard() {
                 </header>
 
                 {/* Mobile Header */}
-                <header className="bg-white border-b border-gray-100 p-4 lg:hidden flex items-center justify-between shadow-sm shrink-0">
+                <header className="bg-white border-b border-gray-100 p-4 lg:hidden flex items-center justify-between shadow-sm sticky top-0 z-30">
                     <div className="flex items-center gap-3">
                         <button
                             onClick={() => setIsSidebarOpen(true)}
@@ -539,7 +539,7 @@ export default function RestaurantDashboard() {
 
                 {/* Banner for Pending Status */}
                 {isPending && (
-                    <div className="bg-gradient-orange-red text-white px-6 py-2.5 text-[10px] font-bold uppercase tracking-wider flex items-center justify-between z-20 shadow-md shrink-0">
+                    <div className="bg-gradient-orange-red text-white px-6 py-2.5 text-[10px] font-bold uppercase tracking-wider flex items-center justify-between z-20 shadow-md sticky top-16 md:top-20">
                         <div className="flex items-center gap-2">
                             <div className="bg-white/20 p-1 rounded-full animate-pulse">
                                 <FaClock size={12} />
@@ -557,7 +557,7 @@ export default function RestaurantDashboard() {
                     </div>
                 )}
 
-                <div className="flex-1 overflow-hidden bg-gray-50/50 flex flex-col">
+                <div className="flex-1 bg-gray-50/50 flex flex-col">
                     <div className="flex-1 overflow-y-auto custom-scrollbar p-4 lg:p-6 max-w-7xl mx-auto w-full text-[13px]">
                         <AnimatePresence mode="wait">
                             <motion.div
