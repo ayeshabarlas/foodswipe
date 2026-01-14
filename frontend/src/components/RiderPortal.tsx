@@ -31,7 +31,10 @@ export default function RiderPortal() {
     const checkRiderProfile = async () => {
         if (!userInfo?.token) {
             setLoading(false);
-            setStep('dashboard'); // Dashboard will handle no-auth state
+            // If no token, they need to login again
+            localStorage.removeItem('userInfo');
+            localStorage.removeItem('token');
+            window.location.reload();
             return;
         }
 
@@ -43,14 +46,14 @@ export default function RiderPortal() {
             if (res.data) {
                 setRiderId(res.data._id);
                 setVerificationStatus(res.data.verificationStatus);
+                setStep('dashboard');
+            } else {
+                // No profile found, go to registration
+                setStep('registration');
             }
-            
-            // Always go to dashboard if we reached this point
-            // The dashboard will handle missing data with a banner
-            setStep('dashboard');
         } catch (error: any) {
-            console.log("Rider profile not found or error, showing dashboard anyway");
-            setStep('dashboard');
+            console.log("Rider profile not found or error, showing registration");
+            setStep('registration');
         } finally {
             setLoading(false);
         }
@@ -87,10 +90,28 @@ export default function RiderPortal() {
     }
 
     return (
-        <div className="h-screen w-full bg-gray-50 flex items-center justify-center">
-            <div className="text-center">
+        <div className="h-screen w-full bg-gray-50 flex items-center justify-center p-6">
+            <div className="text-center max-w-sm w-full">
                 <h1 className="text-2xl font-bold text-gray-900 mb-2">Rider Portal</h1>
-                <p className="text-gray-600">Loading...</p>
+                <p className="text-gray-600 mb-6">Setting up your dashboard...</p>
+                <div className="flex flex-col gap-3">
+                    <button 
+                        onClick={() => window.location.reload()}
+                        className="bg-orange-500 text-white py-3 rounded-xl font-bold active:scale-95 transition-transform"
+                    >
+                        Retry
+                    </button>
+                    <button 
+                        onClick={() => {
+                            localStorage.removeItem('userInfo');
+                            localStorage.removeItem('token');
+                            window.location.href = '/login';
+                        }}
+                        className="bg-gray-200 text-gray-700 py-3 rounded-xl font-medium active:scale-95 transition-transform"
+                    >
+                        Log Out
+                    </button>
+                </div>
             </div>
         </div>
     );

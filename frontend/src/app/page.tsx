@@ -94,12 +94,15 @@ export default function Home() {
           }
         } catch (error: any) {
           console.error("Home: Auth background re-validation failed:", error.response?.data || error.message);
-          // If 401/403, the token is invalid
+          
+          // If 401/403, the token is invalid or expired
           if (error.response?.status === 401 || error.response?.status === 403) {
-             console.warn("Home: Token invalid, logging out...");
-             // Only logout if we are not in a transient error state
-             // localStorage.clear();
-             // setIsLoggedIn(false);
+             console.warn("Home: Token invalid, clearing session...");
+             localStorage.removeItem("userInfo");
+             localStorage.removeItem("token");
+             localStorage.removeItem("hasRestaurant");
+             setIsLoggedIn(false);
+             setUserRole("");
           }
         }
       }
