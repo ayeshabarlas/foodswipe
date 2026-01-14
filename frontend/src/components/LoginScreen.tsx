@@ -44,7 +44,9 @@ export default function LoginScreen({ onLogin }: LoginScreenProps) {
 
             console.log('Google sign-in successful! User:', result.user.email);
             const user = result.user;
-            const idToken = await user.getIdToken();
+            
+            // CRITICAL: Refresh token to ensure it's not expired
+            const idToken = await user.getIdToken(true); 
 
             console.log('Sending token to backend...');
             const response = await axios.post(`${API_BASE_URL}/api/auth/verify-firebase-token`, {

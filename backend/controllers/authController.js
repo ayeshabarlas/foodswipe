@@ -263,25 +263,50 @@ const verifyPhone = async (req, res) => {
 const verifyFirebaseToken = async (req, res) => {
     const { idToken, name, email, phone } = req.body;
     console.log('verifyFirebaseToken called with:', { name, email, phone, idToken: idToken ? 'present' : 'missing' });
+    
     if (!idToken) {
         return res.status(400).json({ message: 'idToken is required' });
     }
+    
     try {
-        const decoded = await admin.auth().verifyIdToken(idToken);
-        console.log('Token decoded:', decoded);
+        let decoded;
+        try {
+            // Verify the ID token using Firebase Admin SDK
+            decoded = await admin.auth().verifyIdToken(idToken, true); // Added 'true' to check for revoked tokens too
+        } catch (verifyError) {
+            console.error('Firebase verifyIdToken error:', verifyError.message);
+            
+            // LOGGING ENHANCEMENT: Help identify if it's an expiration issue or config issue
+            if (verifyError.code === 'auth/id-token-expired') {
+                return res.status(401).json({ message: 'Firebase token expired. Please try signing in again.' });
+            }
+            if (verifyError.code === 'auth/id-token-revoked') {
+                return res.status(401).json({ message: 'Firebase token has been revoked. Please sign in again.' });
+            }
+            if (verifyError.code === 'auth/argument-error') {
+                return res.status(401).json({ message: 'Invalid token format.' });
+            }
+            
+            return res.status(401).json({ 
+                message: 'Invalid Firebase token', 
+                error: verifyError.message,
+                code: verifyError.code 
+            });
+        }
+        
+        console.log('Token decoded successfully for:', decoded.email);
         const verifiedPhone = decoded.phone_number || phone;
         const requestedRole = req.body.role || 'customer';
 
-        // Find user by phone/email AND strict role match.
-        let user = null;
-        if (verifiedPhone) {
+        // Find user by email AND strict role match. 
+        // Using email as primary because Google accounts always have emails.
+        let user = await User.findOne({ email: decoded.email, role: requestedRole });
+        
+        if (!user && verifiedPhone) {
             user = await User.findOne({
                 $or: [{ phone: verifiedPhone }, { phoneNumber: verifiedPhone }],
                 role: requestedRole
             });
-        }
-        if (!user && email) {
-            user = await User.findOne({ email, role: requestedRole });
         }
 
         let type = 'login';

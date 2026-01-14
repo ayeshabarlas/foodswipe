@@ -27,7 +27,8 @@ export default function LoginPage() {
         setError('');
         try {
             const result = await signInWithPopup(auth, googleProvider);
-            const token = await result.user.getIdToken();
+            // CRITICAL: Refresh token to ensure it's not expired
+            const token = await result.user.getIdToken(true);
 
             // Send to backend
             const { data } = await axios.post(`${API_BASE_URL}/api/auth/verify-firebase-token`, {
