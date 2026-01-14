@@ -35,8 +35,10 @@ export default function AdminLoginForm() {
             const isAdmin = data.isAdmin || adminRoles.includes(data.role) || (data.role && data.role.includes && data.role.includes('admin'));
 
             if (isAdmin) {
-                localStorage.setItem('userInfo', JSON.stringify(data));
                 localStorage.setItem('token', data.token);
+                localStorage.setItem('userInfo', JSON.stringify(data));
+                localStorage.setItem('isAdmin', 'true');
+                localStorage.setItem('userRole', data.role || 'admin');
                 router.push('/admin');
             } else {
                 console.error('Authorization failed. Data:', data);

@@ -189,14 +189,14 @@ export default function Home() {
        // Only show CreateRestaurant if we explicitly know hasRestaurant is false
        if (hasRestaurant || localStorage.getItem("hasRestaurant") === "true") {
          return (
-           <div className="h-screen w-full bg-black overflow-hidden">
+           <div className="min-h-screen w-full bg-black">
              <RestaurantDashboard />
            </div>
          );
        }
- 
+
        return (
-         <div className="h-screen w-full bg-black overflow-y-auto">
+         <div className="min-h-screen w-full bg-black overflow-y-auto">
            <CreateRestaurant onRestaurantCreated={handleRestaurantCreated} />
          </div>
        );
@@ -205,7 +205,7 @@ export default function Home() {
   // Rider flow
   if (userRole === "rider") {
     return (
-      <div className="h-screen w-full bg-black overflow-y-auto">
+      <div className="min-h-screen w-full bg-black overflow-y-auto">
         <RiderPortal />
       </div>
     );
@@ -221,7 +221,7 @@ export default function Home() {
 
   if (["admin", "super-admin", "finance-admin", "support-admin"].includes(userRole)) {
     return (
-      <div className="h-screen w-full bg-black flex items-center justify-center">
+      <div className="min-h-screen w-full bg-black flex items-center justify-center">
         <div className="text-center">
           <div className="w-16 h-16 border-4 border-orange-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
           <p className="text-white text-lg font-medium">Redirecting to Admin Panel...</p>
@@ -233,7 +233,7 @@ export default function Home() {
   // Customer feed for customers
   if (userRole === "customer") {
     return (
-      <main className="h-screen w-full bg-black overflow-hidden">
+      <main className="min-h-screen w-full bg-black overflow-hidden">
         <VideoFeed />
       </main>
     );
