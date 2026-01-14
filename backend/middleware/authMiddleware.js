@@ -36,18 +36,28 @@ const protect = async (req, res, next) => {
     }
 };
 
-// Admin only middleware - strict check against Admin collection
+// Admin only middleware - checks both Admin and User collections
 const requireAdmin = async (req, res, next) => {
-    // Re-verify against Admin model to be absolutely sure
     try {
-        const adminUser = await Admin.findById(req.admin?._id || req.user?._id);
+        const userId = req.admin?._id || req.user?._id;
+        
+        // 1. Try Admin collection
+        let adminUser = await Admin.findById(userId);
+        
+        if (!adminUser) {
+            // 2. Try User collection with role check
+            adminUser = await User.findOne({ _id: userId, role: 'admin' });
+        }
+
         if (adminUser) {
             req.admin = adminUser;
             next();
         } else {
+            console.warn(`Admin access denied for ID: ${userId}`);
             res.status(403).json({ message: 'Access denied. Admin only.' });
         }
     } catch (error) {
+        console.error('requireAdmin error:', error);
         res.status(403).json({ message: 'Access denied. Admin only.' });
     }
 };

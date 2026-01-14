@@ -1,5 +1,6 @@
 const jwt = require('jsonwebtoken');
 const Admin = require('../models/Admin');
+const User = require('../models/User'); // Added User model support
 
 // Helper to generate a JWT token for an admin id
 const generateToken = (id) => {
@@ -73,35 +74,67 @@ const loginAdmin = async (req, res) => {
     try {
         console.log(`Admin Login attempt: email=${loginEmail}`);
 
-        const admin = await Admin.findOne({
+        // 1. Check Admin Collection first
+        let admin = await Admin.findOne({
             email: { $regex: new RegExp(`^${loginEmail}$`, 'i') }
         });
 
-        if (!admin) {
-            console.log(`Admin login failed: No admin found for ${loginEmail}`);
-            return res.status(401).json({ 
-                message: "Account not registered. Please login." 
-            });
+        if (admin) {
+            const isMatch = await admin.matchPassword(password);
+            console.log(`Admin (Admin Coll) password match for ${loginEmail}: ${isMatch}`);
+
+            if (isMatch) {
+                const userData = {
+                    _id: admin._id,
+                    name: admin.name,
+                    email: admin.email,
+                    role: admin.role || 'admin',
+                    isAdmin: true,
+                    token: generateToken(admin._id),
+                };
+                console.log('Sending admin login response:', JSON.stringify(userData, null, 2));
+                return res.json(userData);
+            } else {
+                return res.status(401).json({ message: 'Invalid admin credentials' });
+            }
         }
 
-        const isMatch = await admin.matchPassword(password);
-        console.log(`Admin password match for ${loginEmail}: ${isMatch}`);
+        // 2. Check User Collection if not found in Admin collection
+        console.log(`Checking User collection for ${loginEmail}...`);
+        const user = await User.findOne({
+            email: { $regex: new RegExp(`^${loginEmail}$`, 'i') },
+            role: 'admin' // Only allow if they have admin role in User collection
+        });
 
-        if (isMatch) {
-            const userData = {
-                _id: admin._id,
-                name: admin.name,
-                email: admin.email,
-                role: admin.role || 'admin', // Fallback
-                isAdmin: true,
-                token: generateToken(admin._id),
-            };
-            console.log('Sending login response:', JSON.stringify(userData, null, 2));
-            return res.json(userData);
-        } else {
-            return res.status(401).json({ message: 'Invalid admin credentials' });
+        if (user) {
+            // User model uses matchPassword or bcrypt.compare?
+            // Usually User model has matchPassword method too.
+            const isMatch = await user.matchPassword(password);
+            console.log(`Admin (User Coll) password match for ${loginEmail}: ${isMatch}`);
+
+            if (isMatch) {
+                const userData = {
+                    _id: user._id,
+                    name: user.name,
+                    email: user.email,
+                    role: 'admin',
+                    isAdmin: true,
+                    token: generateToken(user._id),
+                };
+                console.log('Sending user-as-admin login response:', JSON.stringify(userData, null, 2));
+                return res.json(userData);
+            } else {
+                return res.status(401).json({ message: 'Invalid admin credentials' });
+            }
         }
+
+        console.log(`Admin login failed: No admin/user-admin found for ${loginEmail}`);
+        return res.status(401).json({ 
+            message: "Account not registered as Admin. Please check your credentials." 
+        });
+
     } catch (err) {
+        console.error('Admin login error:', err);
         return res.status(500).json({ message: err.message });
     }
 };
