@@ -321,30 +321,21 @@ const verifyFirebaseToken = async (req, res) => {
 
         let type = 'login';
         if (!user) {
-            // Check if this identifier exists for ANY role (optional, for better error message)
-            const existsAnywhere = await User.findOne({
-                $or: [
-                    { email: email || 'nevermatch' },
-                    { phone: verifiedPhone || 'nevermatch' },
-                    { phoneNumber: verifiedPhone || 'nevermatch' }
-                ]
-            });
-
-            if (existsAnywhere && existsAnywhere.role !== requestedRole) {
-                return res.status(400).json({
-                    message: `Account not found for this role. Please ensure you've selected the correct role or sign up.`
-                });
+            // RELAXED ROLE CHECK: If user exists with another role, we still allow creating a new account for the requested role
+            // This allows one email to have multiple roles (Customer, Rider, etc.)
+            
+            if (!name && !decoded.name) {
+                // If we don't have a name from the request or the token, use a fallback
+                // but usually decoded.name is present in Google tokens
             }
-
-            if (!name || !email) {
-                return res.status(400).json({ message: 'Name and email required for signup' });
-            }
+            
             user = await User.create({
-                name,
-                email,
+                name: name || decoded.name || 'Google User',
+                email: decoded.email,
                 phone: verifiedPhone || undefined,
-                password: '',
-                role: requestedRole
+                password: '', // No password for Google users
+                role: requestedRole,
+                firebaseUid: decoded.uid
             });
             type = 'signup';
         } else {
