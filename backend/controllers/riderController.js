@@ -85,8 +85,19 @@ const getMyProfile = async (req, res) => {
         let rider = await Rider.findOne({ user: req.user._id }).populate('user', 'name email phone');
 
         if (!rider) {
-            // Check if user exists and has rider role
-            if (req.user.role === 'rider') {
+            console.log(`No rider profile for user ID ${req.user._id}. Checking by email ${req.user.email}...`);
+            // SMART LINKING: Check if a rider profile exists for this email but different user ID
+            const otherRiders = await Rider.find({}).populate('user');
+            rider = otherRiders.find(r => r.user && r.user.email.toLowerCase() === req.user.email.toLowerCase());
+
+            if (rider) {
+                console.log(`SMART LINKING: Re-linking rider ${rider._id} to new user ID ${req.user._id}`);
+                rider.user = req.user._id;
+                await rider.save();
+                // Re-fetch with population
+                rider = await Rider.findById(rider._id).populate('user', 'name email phone');
+            } else if (req.user.role === 'rider') {
+                // Auto-create if role is rider but profile missing (and no email match)
                 rider = await Rider.create({
                     user: req.user._id,
                     fullName: req.user.name,
