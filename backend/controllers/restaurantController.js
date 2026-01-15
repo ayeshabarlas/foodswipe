@@ -180,23 +180,27 @@ const getRestaurantById = async (req, res) => {
 const getMyRestaurant = async (req, res) => {
     try {
         console.log(`Getting restaurant for owner ID: ${req.user._id} (Email: ${req.user.email})`);
-        const restaurant = await Restaurant.findOne({ owner: req.user._id })
+        let restaurant = await Restaurant.findOne({ owner: req.user._id })
             .populate('videos');
 
         if (!restaurant) {
-            console.log(`No restaurant found for user ID ${req.user._id}. Checking if they have a restaurant under a different ID but same email...`);
-            // Safety check: Does this email have a restaurant with a different owner ID? (Shouldn't happen but good for debug)
+            console.log(`No restaurant found for user ID ${req.user._id}. Checking by email ${req.user.email}...`);
+            // SMART LINKING: Check if a restaurant exists for this email but different owner ID
             const otherRests = await Restaurant.find({}).populate('owner');
-            const matchByEmail = otherRests.find(r => r.owner && r.owner.email === req.user.email);
+            restaurant = otherRests.find(r => r.owner && r.owner.email.toLowerCase() === req.user.email.toLowerCase());
             
-            if (matchByEmail) {
-                console.log(`CRITICAL: Found restaurant ${matchByEmail._id} for email ${req.user.email} but owned by DIFFERENT user ID ${matchByEmail.owner._id}. This suggests account duplication.`);
+            if (restaurant) {
+                console.log(`SMART LINKING: Re-linking restaurant ${restaurant._id} to new owner ID ${req.user._id}`);
+                restaurant.owner = req.user._id;
+                await restaurant.save();
+                // Re-fetch with population
+                restaurant = await Restaurant.findById(restaurant._id).populate('videos');
+            } else {
+                return res.status(404).json({ 
+                    message: 'No restaurant found for this user',
+                    redirect: '/restaurant/create-profile'
+                });
             }
-
-            return res.status(404).json({ 
-                message: 'No restaurant found for this user',
-                debug: matchByEmail ? `Email mismatch: Found restaurant under ID ${matchByEmail.owner._id}` : 'No restaurant found for this email/role'
-            });
         }
 
         // Self-healing: Ensure user has 'restaurant' role if they own a restaurant
@@ -278,8 +282,10 @@ const getAllRestaurants = async (req, res) => {
     try {
         const { page = 1, limit = 10, search, cuisineType, priceRange, isVerified } = req.query;
 
-        const query = { isActive: true };
-
+        // MVP: Show all restaurants for now, don't be too strict with isActive
+        // unless explicitly requested, so users don't see an empty feed
+        const query = {}; 
+        
         // Add filters
         if (search) {
             query.$or = [
@@ -300,6 +306,8 @@ const getAllRestaurants = async (req, res) => {
             query.isVerified = isVerified === 'true';
         }
 
+        console.log('Fetching restaurants with query:', JSON.stringify(query));
+        
         const restaurants = await Restaurant.find(query)
             .populate('owner', 'name')
             .limit(parseInt(limit))
@@ -307,6 +315,7 @@ const getAllRestaurants = async (req, res) => {
             .sort({ createdAt: -1 });
 
         const total = await Restaurant.countDocuments(query);
+        console.log(`Found ${total} restaurants`);
 
         res.json({
             restaurants,
