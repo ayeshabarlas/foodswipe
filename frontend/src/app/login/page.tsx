@@ -102,11 +102,15 @@ export default function LoginPage() {
     };
 
     return (
-        <div className="min-h-screen bg-white flex items-center justify-center overflow-y-auto">
-            <div className="w-full max-w-md bg-white rounded-3xl shadow-xl overflow-hidden">
+        <div className="min-h-screen bg-gradient-to-br from-orange-500 via-red-500 to-pink-500 flex items-center justify-center p-4 overflow-y-auto">
+            <div className="w-full max-w-md bg-white/95 backdrop-blur-sm rounded-3xl shadow-2xl overflow-hidden">
                 {/* Header Image/Logo Placeholder */}
-                <div className="bg-gradient-orange-red h-32 flex items-center justify-center">
-                    <h1 className="text-4xl font-bold text-white tracking-tight">FoodSwipe</h1>
+                <div className="bg-gradient-orange-red h-32 flex items-center justify-center relative overflow-hidden">
+                    {/* Decorative circles */}
+                    <div className="absolute top-[-20%] left-[-10%] w-32 h-32 bg-white/10 rounded-full blur-2xl" />
+                    <div className="absolute bottom-[-20%] right-[-10%] w-32 h-32 bg-white/10 rounded-full blur-2xl" />
+                    
+                    <h1 className="text-4xl font-bold text-white tracking-tight relative z-10">FoodSwipe</h1>
                 </div>
 
                 <div className="p-8">

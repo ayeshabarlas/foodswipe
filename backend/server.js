@@ -47,6 +47,7 @@ app.use((req, res, next) => {
 
 // 🚀 3. HEALTH & ROOT
 app.get('/health', async (req, res) => {
+    // Force deployment trigger - 2026-01-15 18:35
     console.log('💓 Health check requested');
     const dbStatus = getDbStatus();
     
