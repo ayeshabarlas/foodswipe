@@ -11,6 +11,7 @@ import RiderPortal from "@/components/RiderPortal";
 import axios from "axios";
 import { API_BASE_URL } from "@/utils/config";
 
+// Force redeploy trigger - 2026-01-15 11:05
 export default function Home() {
   const router = useRouter();
   useEffect(() => {
