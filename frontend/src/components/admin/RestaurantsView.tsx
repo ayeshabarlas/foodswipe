@@ -20,6 +20,7 @@ interface Restaurant {
     rating: number;
     totalOrders: number;
     revenue: number;
+    commission: number;
     commissionRate: number;
     businessType: string;
     documents?: {
@@ -190,12 +191,12 @@ export default function RestaurantsView() {
         total: restaurants?.length || 0,
         online: Array.isArray(restaurants) ? restaurants.filter(r => r.isActive && r.verificationStatus === 'approved').length : 0,
         pending: Array.isArray(restaurants) ? restaurants.filter(r => r.verificationStatus === 'pending').length : 0,
-        commission: Array.isArray(restaurants) ? restaurants.reduce((acc, curr) => acc + (curr.revenue * 0.1), 0) : 0
+        commission: Array.isArray(restaurants) ? restaurants.reduce((acc, curr) => acc + (curr.commission || 0), 0) : 0
     };
 
     const filteredRestaurants = Array.isArray(restaurants) ? restaurants.filter(r => {
-        const matchesSearch = r.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            r.owner?.name.toLowerCase().includes(searchTerm.toLowerCase());
+        const matchesSearch = (r.name || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+            (r.owner?.name || '').toLowerCase().includes(searchTerm.toLowerCase());
 
         let matchesFilter = true;
         if (filter === 'pending') matchesFilter = r.verificationStatus === 'pending';
@@ -377,12 +378,12 @@ export default function RestaurantsView() {
                                     </td>
                                     <td className="px-6 py-3 text-[11px] font-semibold text-red-600">
                                         <div className="flex flex-col">
-                                            <span>Rs. {(Math.round((restaurant.revenue || 0) * (restaurant.commissionRate / 100))).toLocaleString()}</span>
-                                            <span className="text-[8px] text-gray-400 font-normal">{restaurant.commissionRate}% rate</span>
+                                            <span>Rs. {(restaurant.commission || 0).toLocaleString()}</span>
+                                            <span className="text-[8px] text-gray-400 font-normal">{(restaurant.commissionRate || 15)}% rate</span>
                                         </div>
                                     </td>
                                     <td className="px-6 py-3 text-[11px] font-bold text-green-600">
-                                        Rs. {(Math.round((restaurant.revenue || 0) * (1 - restaurant.commissionRate / 100))).toLocaleString()}
+                                        Rs. {(Math.round((restaurant.revenue || 0) - (restaurant.commission || 0))).toLocaleString()}
                                     </td>
                                     <td className="px-6 py-3 text-right">
                                         {restaurant.verificationStatus === 'pending' ? (

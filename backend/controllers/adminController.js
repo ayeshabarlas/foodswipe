@@ -6,6 +6,7 @@ const RestaurantWallet = require('../models/RestaurantWallet');
 const RiderWallet = require('../models/RiderWallet');
 const Video = require('../models/Video');
 const Settings = require('../models/Settings');
+const Dish = require('../models/Dish');
 const { triggerEvent } = require('../socket');
 
 // @desc    Get all pending restaurants
@@ -327,17 +328,23 @@ const getAllRestaurants = async (req, res) => {
                             $sum: {
                                 $cond: [{ $nin: ["$status", ["Cancelled"]] }, "$totalPrice", 0]
                             }
+                        },
+                        commission: {
+                            $sum: {
+                                $cond: [{ $nin: ["$status", ["Cancelled"]] }, "$commissionAmount", 0]
+                            }
                         }
                     }
                 }
             ]);
 
-            const stat = stats[0] || { totalOrders: 0, revenue: 0 };
+            const stat = stats[0] || { totalOrders: 0, revenue: 0, commission: 0 };
 
             return {
                 ...restaurant,
                 totalOrders: stat.totalOrders,
-                revenue: stat.revenue
+                revenue: stat.revenue,
+                commission: stat.commission
             };
         }));
 
