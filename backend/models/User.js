@@ -39,6 +39,18 @@ const userSchema = mongoose.Schema(
             type: Date,
             default: null,
         },
+        otp: {
+            type: String,
+            default: null,
+        },
+        otpExpires: {
+            type: Date,
+            default: null,
+        },
+        otpAttempts: {
+            type: Number,
+            default: 0,
+        },
         address: {
             type: String,
             default: '',
@@ -66,8 +78,8 @@ const userSchema = mongoose.Schema(
 userSchema.index({ email: 1, role: 1 }, { unique: true });
 // Compound unique index: same phone can exist for different roles
 userSchema.index({ phone: 1, role: 1 }, { unique: true, partialFilterExpression: { phone: { $exists: true } } });
-// Index for phoneNumber+role uniqueness
-userSchema.index({ phoneNumber: 1, role: 1 }, { unique: true, partialFilterExpression: { phoneNumber: { $exists: true, $ne: null } } });
+// Index for phoneNumber uniqueness across ALL accounts if verified
+userSchema.index({ phoneNumber: 1 }, { unique: true, partialFilterExpression: { phoneVerified: true } });
 
 // Match user entered password to hashed password in database
 userSchema.methods.matchPassword = async function (enteredPassword) {
