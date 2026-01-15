@@ -3,7 +3,7 @@
 import React, { useState } from 'react';
 import axios from 'axios';
 import { API_BASE_URL } from '../utils/config';
-import { FaWallet, FaStar, FaDownload, FaHistory, FaArrowRight, FaUniversity, FaMoneyBillWave } from 'react-icons/fa';
+import { FaWallet, FaStar, FaDownload, FaHistory, FaArrowRight, FaUniversity, FaMoneyBillWave, FaRoute } from 'react-icons/fa';
 
 interface RiderEarningsProps {
     riderId: string;

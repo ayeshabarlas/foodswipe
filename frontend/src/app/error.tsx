@@ -33,12 +33,6 @@ export default function Error({
           >
             Try again
           </button>
-          <button
-            onClick={() => window.location.href = '/admin'}
-            className="w-full bg-gray-100 text-gray-700 font-bold py-3 rounded-xl hover:bg-gray-200 transition"
-          >
-            Go to Admin Dashboard
-          </button>
         </div>
         {error.digest && (
           <p className="mt-4 text-[10px] text-gray-400 uppercase tracking-widest font-bold">
