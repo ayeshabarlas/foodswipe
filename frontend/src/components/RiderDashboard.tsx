@@ -21,7 +21,13 @@ const RiderProfile = dynamic(() => import('./RiderProfile'), { ssr: false });
 const OrderTracking = dynamic(() => import('./OrderTracking'), { ssr: false });
 const NotificationPanel = dynamic(() => import('./NotificationPanel'), { ssr: false });
 
-const RiderDashboard = ({ riderId: initialRiderId }: { riderId?: string }) => {
+const RiderDashboard = ({ 
+    riderId: initialRiderId, 
+    onCompleteProfile 
+}: { 
+    riderId?: string;
+    onCompleteProfile?: () => void;
+}) => {
     const [activeTab, setActiveTab] = useState('home');
     const [orderFilter, setOrderFilter] = useState('available');
     const [riderData, setRiderData] = useState<any>(null);
@@ -380,7 +386,14 @@ const RiderDashboard = ({ riderId: initialRiderId }: { riderId?: string }) => {
         <div className="flex flex-col gap-6 animate-in fade-in slide-in-from-bottom-4 duration-500 font-light">
             {/* Verification Status Banner */}
             {displayRider.verificationStatus !== 'approved' && !loading && (
-                <div className="bg-orange-50 border-b border-orange-100 px-6 py-3 flex items-center gap-3">
+                <div 
+                    onClick={() => {
+                        if (displayRider.verificationStatus !== 'pending') {
+                            onCompleteProfile ? onCompleteProfile() : window.location.href = '/rider/register';
+                        }
+                    }}
+                    className={`bg-orange-50 border-b border-orange-100 px-6 py-3 flex items-center gap-3 ${displayRider.verificationStatus !== 'pending' ? 'cursor-pointer hover:bg-orange-100 transition-colors' : ''}`}
+                >
                     <FaExclamationCircle className="text-orange-500 shrink-0" />
                     <div className="flex-1">
                         <p className="text-orange-800 text-[10px] font-medium leading-tight">
@@ -391,7 +404,6 @@ const RiderDashboard = ({ riderId: initialRiderId }: { riderId?: string }) => {
                     </div>
                     {displayRider.verificationStatus !== 'pending' && (
                         <button 
-                            onClick={() => window.location.href = '/rider/register'}
                             className="bg-orange-500 text-white px-3 py-1.5 rounded-lg text-[9px] font-bold uppercase"
                         >
                             Complete

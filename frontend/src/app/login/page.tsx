@@ -10,7 +10,7 @@ import { auth, googleProvider } from '@/config/firebase';
 import { signInWithPopup } from 'firebase/auth';
 
 export default function LoginPage() {
-    const [mode, setMode] = useState<'login' | 'signup' | 'select'>('select');
+    const [mode, setMode] = useState<'login' | 'signup' | 'select'>('login');
     const [emailMode, setEmailMode] = useState<'login' | 'signup'>('login');
     const [formData, setFormData] = useState({
         firstName: '',

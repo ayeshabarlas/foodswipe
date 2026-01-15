@@ -86,7 +86,7 @@ export default function RiderPortal() {
     }
 
     if (step === 'dashboard' && riderId) {
-        return <RiderDashboard riderId={riderId} />;
+        return <RiderDashboard riderId={riderId} onCompleteProfile={() => setStep('documents')} />;
     }
 
     return (
