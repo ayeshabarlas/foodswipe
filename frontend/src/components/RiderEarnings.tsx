@@ -119,7 +119,7 @@ export default function RiderEarnings({ riderId }: RiderEarningsProps) {
     };
 
     return (
-        <div className="pb-32 bg-[#F8F9FB] min-h-screen font-light overflow-y-auto">
+        <div className="pb-32 bg-[#F8F9FB] font-light">
             {/* Header */}
             <div className="bg-gradient-to-br from-orange-500 to-rose-500 px-6 pt-12 pb-24 rounded-b-[40px] text-white relative overflow-hidden">
                 <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full -mr-20 -mt-20 blur-3xl" />

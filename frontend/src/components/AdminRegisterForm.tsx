@@ -94,10 +94,10 @@ export default function AdminRegisterForm() {
                     </div>
 
                     <button
-                        onClick={() => router.push('/admin')}
+                        onClick={() => router.push('/')}
                         className="w-full bg-gradient-to-r from-purple-500 to-pink-500 text-white font-bold py-3 px-4 rounded-xl shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 transition-all mb-3"
                     >
-                        Go to Admin Dashboard
+                        Go to Home
                     </button>
 
                     <Link href="/admin/login" className="block text-center text-gray-600 text-sm hover:text-purple-500">

@@ -120,7 +120,7 @@ export default function RiderProfile({ riderId }: RiderProfileProps) {
     }
 
     return (
-        <div className="min-h-screen bg-[#F8F9FA] pb-32 font-light overflow-y-auto">
+        <div className="bg-[#F8F9FA] pb-32 font-light">
             {/* SS-style Gradient Header */}
             <div className="bg-gradient-to-br from-orange-500 to-rose-500 px-6 pt-12 pb-32 rounded-b-[40px] relative overflow-hidden">
                 <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full -mr-20 -mt-20 blur-3xl" />

@@ -311,7 +311,7 @@ export default function RiderOrders({ riderId, setShowNotifications, unreadCount
     if (loading) return <ModernLoader />;
 
     return (
-        <div className="flex flex-col min-h-screen bg-[#F8F9FA] text-[13px] pb-32 overflow-y-auto">
+        <div className="flex flex-col bg-[#F8F9FA] text-[13px] pb-32">
             <Toaster />
             
             {/* 1. Header Section - Gradient with Notification Bell */}

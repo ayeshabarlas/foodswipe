@@ -251,6 +251,7 @@ export default function CreateRestaurant({ onRestaurantCreated }: CreateRestaura
                     </div>
                 </div>
             </div>
+        </div>
         );
     }
 
