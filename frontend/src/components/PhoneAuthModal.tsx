@@ -2,9 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { FaTimes, FaPhone, FaLock } from 'react-icons/fa';
-import { sendOTP, verifyOTP, initRecaptcha, cleanupRecaptcha } from '../utils/firebase-phone-auth';
-import { ConfirmationResult } from 'firebase/auth';
+import { FaTimes, FaPhone, FaLock, FaArrowRight, FaCheckCircle } from 'react-icons/fa';
 import axios from 'axios';
 import { API_BASE_URL } from '../utils/config';
 import toast from 'react-hot-toast';
@@ -22,36 +20,7 @@ export default function PhoneAuthModal({ isOpen, onClose, onSuccess }: PhoneAuth
     const [otp, setOtp] = useState('');
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
-    const [confirmationResult, setConfirmationResult] = useState<ConfirmationResult | null>(null);
     const [countdown, setCountdown] = useState(0);
-    const [recaptchaReady, setRecaptchaReady] = useState(false);
-
-    // Initialize visible reCAPTCHA when modal opens
-    useEffect(() => {
-        if (isOpen && !recaptchaReady) {
-            // Delay to ensure DOM is ready
-            const timer = setTimeout(() => {
-                try {
-                    console.log('Initializing visible reCAPTCHA...');
-                    initRecaptcha('recaptcha-container');
-                    setRecaptchaReady(true);
-                    console.log('Visible reCAPTCHA ready');
-                } catch (err: any) {
-                    console.error('reCAPTCHA init error:', err);
-                    setError(`Verification error: ${err.message || 'Please refresh the page.'}`);
-                }
-            }, 1000); // Increased delay to 1000ms
-
-            return () => clearTimeout(timer);
-        }
-
-        return () => {
-            if (!isOpen) {
-                cleanupRecaptcha();
-                setRecaptchaReady(false);
-            }
-        };
-    }, [isOpen]); // Removed recaptchaReady from dependencies
 
     // Countdown timer for resend
     useEffect(() => {
@@ -75,352 +44,215 @@ export default function PhoneAuthModal({ isOpen, onClose, onSuccess }: PhoneAuth
             return;
         }
 
-        // Format number for Firebase: strip leading 0 and prepend country code
+        // Format number: strip leading 0 and prepend country code
         const formattedPhone = phoneNumber.startsWith('0') ? phoneNumber.substring(1) : phoneNumber;
         const fullNumber = `${countryCode}${formattedPhone}`;
+        
         setLoading(true);
 
         try {
-            // Check for specific bypass flag or development environment
-            const isLocalhost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
-            const isDebugEnabled = localStorage.getItem('debug_otp') === 'true';
-            const isDevelopment = process.env.NODE_ENV === 'development' || isLocalhost || isDebugEnabled;
-
-            if (isDevelopment && countryCode === '+92') {
-                console.log('🔧 DEVELOPMENT MODE: Bypassing Firebase OTP for testing');
-                console.log('📱 Use test OTP code: 123456');
-
-                // Create a mock confirmation result for development
-                const mockConfirmationResult = {
-                    confirm: async (code: string) => {
-                        if (code === '123456') {
-                            console.log('✅ Development OTP verified');
-                            // Return a mock user credential
-                            return {
-                                user: {
-                                    uid: 'dev-user-' + Date.now(),
-                                    phoneNumber: fullNumber
-                                }
-                            };
-                        } else {
-                            throw { code: 'auth/invalid-verification-code', message: 'Invalid OTP' };
-                        }
-                    },
-                    verificationId: 'dev-verification-' + Date.now()
-                } as any;
-
-                setConfirmationResult(mockConfirmationResult);
-                setStep('otp');
-                setCountdown(60);
-                toast.success('Development Mode: Use OTP 123456');
-                setLoading(false);
+            const userInfoStr = localStorage.getItem('userInfo');
+            if (!userInfoStr) {
+                toast.error('Please login first');
                 return;
             }
+            const userInfo = JSON.parse(userInfoStr);
+            const config = {
+                headers: { Authorization: `Bearer ${userInfo.token}` }
+            };
 
-            // PRODUCTION MODE: Use real Firebase OTP
-            if (!recaptchaReady) {
-                setError('Verification not ready. Please wait a moment.');
-                setLoading(false);
-                return;
+            const { data } = await axios.post(`${API_BASE_URL}/api/users/send-otp`, {
+                phoneNumber: fullNumber
+            }, config);
+
+            toast.success('OTP sent successfully!');
+            if (data.otp) {
+                console.log('🔧 Development OTP:', data.otp);
+                toast(`Development OTP: ${data.otp}`, { icon: '🔧' });
             }
-
-            console.log('Attempting to send OTP to:', fullNumber);
-            const result = await sendOTP(fullNumber);
-            console.log('OTP sent successfully');
-
-            setConfirmationResult(result);
+            
             setStep('otp');
-            setCountdown(60);
-            toast.success('OTP sent to your phone!');
+            setCountdown(30);
         } catch (err: any) {
             console.error('Send OTP error:', err);
-            console.error('Error code:', err.code);
-            console.error('Error message:', err.message);
-
-            let errorMessage = 'Failed to send OTP. Please try again.';
-
-            if (err.code === 'auth/internal-error') {
-                errorMessage = 'Phone verification setup issue. Please ensure Phone sign-in is enabled in Firebase Console.';
-            } else if (err.code === 'auth/invalid-phone-number') {
-                errorMessage = 'Invalid phone number format';
-            } else if (err.code === 'auth/too-many-requests') {
-                errorMessage = 'Too many attempts. Please try again later.';
-            } else if (err.code === 'auth/quota-exceeded') {
-                errorMessage = 'SMS quota exceeded. Please contact support.';
-            } else if (err.message?.includes('reCAPTCHA')) {
-                errorMessage = 'Please complete the reCAPTCHA challenge and try again.';
-            } else if (err.code === 'auth/invalid-app-credential') {
-                errorMessage = 'Configuration Error: Domain not authorized or App Check failed. See console for details.';
-            } else if (err.code === 'auth/captcha-check-failed') {
-                errorMessage = 'reCAPTCHA verification failed. Using development mode instead - try again!';
-            }
-
-            setError(errorMessage);
-            toast.error(errorMessage);
-
-            // DEBUG: Show detailed error in console and potentially UI
-            console.error('❌ Detailed Error for Debugging:', {
-                code: err.code,
-                message: err.message,
-                stack: err.stack,
-                fullError: err
-            });
-
-            // If it's a generic error, append the code for visibility
-            if (errorMessage === 'Failed to send OTP. Please try again.') {
-                setError(`Failed to send OTP (${err.code || err.message}). Please try again.`);
-            }
-
-            // Reinitialize reCAPTCHA for retry
-            setRecaptchaReady(false);
-            setTimeout(() => {
-                try {
-                    initRecaptcha('recaptcha-container');
-                    setRecaptchaReady(true);
-                } catch (e) {
-                    console.error('Failed to reinitialize reCAPTCHA:', e);
-                }
-            }, 1000);
+            setError(err.response?.data?.message || 'Failed to send OTP. Please try again.');
+            toast.error(err.response?.data?.message || 'Failed to send OTP');
         } finally {
             setLoading(false);
         }
     };
 
     const handleVerifyOTP = async () => {
-        if (!confirmationResult) return;
-
-        setError('');
         if (otp.length !== 6) {
-            setError('Please enter the 6-digit OTP');
+            setError('Please enter a 6-digit OTP');
             return;
         }
 
         setLoading(true);
+        setError('');
 
         try {
-            // Verify OTP with Firebase
-            const result = await verifyOTP(confirmationResult, otp);
-            console.log('Firebase verification successful:', result);
+            const userInfoStr = localStorage.getItem('userInfo');
+            if (!userInfoStr) return;
+            const userInfo = JSON.parse(userInfoStr);
+            const config = {
+                headers: { Authorization: `Bearer ${userInfo.token}` }
+            };
 
-            // Update backend with verified phone
-            const token = localStorage.getItem('token');
-            if (!token) {
-                console.error('No token found in localStorage');
-                throw new Error('Authentication token missing');
-            }
+            const formattedPhone = phoneNumber.startsWith('0') ? phoneNumber.substring(1) : phoneNumber;
+            const fullNumber = `${countryCode}${formattedPhone}`;
 
-            const fullNumber = `${countryCode}${phoneNumber}`;
-            console.log('Calling backend verify-phone with:', { fullNumber, hasToken: !!token });
+            const { data } = await axios.post(`${API_BASE_URL}/api/users/verify-otp`, {
+                phoneNumber: fullNumber,
+                otp
+            }, config);
 
-            await axios.post(
-                `${API_BASE_URL}/api/auth/verify-phone`,
-                { phoneNumber: fullNumber },
-                { headers: { Authorization: `Bearer ${token}` } }
-            );
-
-            // Update localStorage
-            const userInfo = JSON.parse(localStorage.getItem('userInfo') || '{}');
-            userInfo.phoneVerified = true;
-            userInfo.phoneNumber = fullNumber;
-            localStorage.setItem('userInfo', JSON.stringify(userInfo));
-
+            // Update local storage
+            const updatedUserInfo = { 
+                ...userInfo, 
+                phoneVerified: true, 
+                phoneNumber: data.phoneNumber 
+            };
+            localStorage.setItem('userInfo', JSON.stringify(updatedUserInfo));
+            
             toast.success('Phone verified successfully!');
             onSuccess();
-            handleClose();
         } catch (err: any) {
             console.error('Verify OTP error:', err);
-            console.error('Error details:', {
-                code: err.code,
-                message: err.message,
-                fullError: JSON.stringify(err, null, 2)
-            });
-
-            let errorMessage = 'Invalid OTP. Please try again.';
-
-            if (err.code === 'auth/invalid-verification-code') {
-                errorMessage = 'Invalid OTP code';
-            } else if (err.code === 'auth/code-expired') {
-                errorMessage = 'OTP expired. Please request a new one.';
-            }
-
-            setError(errorMessage);
-            toast.error(errorMessage);
+            setError(err.response?.data?.message || 'Invalid OTP. Please try again.');
+            toast.error(err.response?.data?.message || 'Invalid OTP');
         } finally {
             setLoading(false);
         }
-    };
-
-    const handleClose = () => {
-        setStep('phone');
-        setPhoneNumber('');
-        setOtp('');
-        setError('');
-        setConfirmationResult(null);
-        setCountdown(0);
-        cleanupRecaptcha();
-        setRecaptchaReady(false);
-        onClose();
-    };
-
-    const handleResendOTP = () => {
-        setOtp('');
-        setError('');
-        setStep('phone');
     };
 
     if (!isOpen) return null;
 
     return (
         <AnimatePresence>
-            <motion.div
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[80] flex items-center justify-center p-4"
-                onClick={handleClose}
-            >
+            <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
                 <motion.div
-                    initial={{ scale: 0.9, y: 20 }}
-                    animate={{ scale: 1, y: 0 }}
-                    exit={{ scale: 0.9, y: 20 }}
-                    onClick={(e) => e.stopPropagation()}
-                    className="bg-white rounded-3xl p-8 max-w-md w-full shadow-2xl"
+                    initial={{ scale: 0.9, opacity: 0 }}
+                    animate={{ scale: 1, opacity: 1 }}
+                    exit={{ scale: 0.9, opacity: 0 }}
+                    className="bg-white rounded-3xl w-full max-w-md overflow-hidden shadow-2xl"
                 >
                     {/* Header */}
-                    <div className="flex justify-between items-center mb-6">
-                        <div className="flex items-center gap-3">
-                            <div className="w-12 h-12 bg-gradient-to-br from-orange-500 to-red-500 rounded-full flex items-center justify-center">
-                                {step === 'phone' ? <FaPhone className="text-white text-xl" /> : <FaLock className="text-white text-xl" />}
-                            </div>
-                            <div>
-                                <h2 className="text-xl font-bold text-gray-900">
-                                    {step === 'phone' ? 'Verify Phone Number' : 'Enter OTP'}
-                                </h2>
-                                <p className="text-sm text-gray-500">
-                                    {step === 'phone' ? 'Required to place orders' : `Sent to ${countryCode}${phoneNumber}`}
-                                </p>
-                            </div>
-                        </div>
-                        <button
-                            onClick={handleClose}
-                            className="p-2 hover:bg-gray-100 rounded-full transition"
+                    <div className="bg-gradient-to-r from-orange-500 to-pink-500 p-6 text-white relative">
+                        <button 
+                            onClick={onClose}
+                            className="absolute top-4 right-4 text-white/80 hover:text-white transition-colors"
                         >
-                            <FaTimes className="text-gray-500" />
+                            <FaTimes size={20} />
                         </button>
+                        <div className="flex flex-col items-center">
+                            <div className="bg-white/20 p-4 rounded-full mb-4">
+                                {step === 'phone' ? <FaPhone size={30} /> : <FaLock size={30} />}
+                            </div>
+                            <h2 className="text-2xl font-bold">Phone Verification</h2>
+                            <p className="text-white/80 text-center mt-2">
+                                {step === 'phone' 
+                                    ? 'Enter your phone number to receive an OTP' 
+                                    : `Enter the 6-digit code sent to ${countryCode} ${phoneNumber}`
+                                }
+                            </p>
+                        </div>
                     </div>
 
-                    {/* Error Message */}
-                    {error && (
-                        <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-xl text-red-600 text-sm">
-                            {error}
-                        </div>
-                    )}
-
-                    {/* Phone Input Screen */}
-                    {step === 'phone' && (
-                        <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-2">
-                                Phone Number
-                            </label>
-                            <div className="flex gap-2 mb-4">
-                                <select
-                                    value={countryCode}
-                                    onChange={(e) => setCountryCode(e.target.value)}
-                                    className="w-24 px-3 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-orange-500 outline-none"
-                                >
-                                    <option value="+92">🇵🇰 +92</option>
-                                    <option value="+1">🇺🇸 +1</option>
-                                    <option value="+44">🇬🇧 +44</option>
-                                </select>
-                                <input
-                                    type="tel"
-                                    value={phoneNumber}
-                                    onChange={(e) => setPhoneNumber(e.target.value.replace(/\D/g, ''))}
-                                    placeholder="3001234567"
-                                    maxLength={10}
-                                    className="flex-1 px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-orange-500 outline-none"
-                                />
+                    {/* Body */}
+                    <div className="p-8">
+                        {error && (
+                            <div className="mb-6 p-4 bg-red-50 border-l-4 border-red-500 text-red-700 text-sm rounded-r-lg">
+                                {error}
                             </div>
+                        )}
 
+                        {step === 'phone' ? (
+                            <div className="space-y-6">
+                                <div>
+                                    <label className="block text-sm font-bold text-gray-700 mb-2">Phone Number</label>
+                                    <div className="flex gap-2">
+                                        <div className="w-24 bg-gray-100 border border-gray-200 rounded-xl px-4 py-3 text-gray-500 font-medium flex items-center justify-center">
+                                            {countryCode}
+                                        </div>
+                                        <input
+                                            type="tel"
+                                            value={phoneNumber}
+                                            onChange={(e) => setPhoneNumber(e.target.value.replace(/\D/g, ''))}
+                                            placeholder="3XXXXXXXXX"
+                                            className="flex-1 bg-gray-100 border border-gray-200 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 transition-all font-medium"
+                                            maxLength={11}
+                                        />
+                                    </div>
+                                    <p className="text-xs text-gray-500 mt-2">Example: 3001234567</p>
+                                </div>
 
-
-                            <button
-                                onClick={handleSendOTP}
-                                disabled={loading || !phoneNumber || !recaptchaReady}
-                                className="w-full bg-gradient-to-r from-orange-500 to-red-500 text-white py-3 rounded-xl font-semibold disabled:opacity-50 disabled:cursor-not-allowed hover:shadow-lg transition"
-                            >
-                                {loading ? 'Sending...' : !recaptchaReady ? 'Initializing...' : 'Send OTP'}
-                            </button>
-
-                            {/* Hidden Debug Option */}
-                            <div className="mt-4 text-center">
-                                <button 
-                                    onClick={() => {
-                                        localStorage.setItem('debug_otp', 'true');
-                                        toast.success('Debug Mode Enabled: Click Send OTP again');
-                                    }}
-                                    className="text-[10px] text-gray-300 hover:text-gray-400 transition"
+                                <button
+                                    onClick={handleSendOTP}
+                                    disabled={loading || !phoneNumber}
+                                    className="w-full bg-gradient-to-r from-orange-500 to-pink-500 text-white py-4 rounded-xl font-bold text-lg shadow-lg shadow-orange-500/30 hover:shadow-orange-500/50 transform hover:-translate-y-0.5 active:scale-95 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                                 >
-                                    Having trouble? Enable Test Mode
+                                    {loading ? (
+                                        <div className="w-6 h-6 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                                    ) : (
+                                        <>Send OTP <FaArrowRight /></>
+                                    )}
                                 </button>
                             </div>
-                        </div>
-                    )}
+                        ) : (
+                            <div className="space-y-6">
+                                <div>
+                                    <label className="block text-sm font-bold text-gray-700 mb-2">6-Digit Code</label>
+                                    <input
+                                        type="text"
+                                        value={otp}
+                                        onChange={(e) => setOtp(e.target.value.replace(/\D/g, ''))}
+                                        placeholder="Enter OTP"
+                                        className="w-full bg-gray-100 border border-gray-200 rounded-xl px-4 py-3 text-center text-2xl tracking-[0.5em] font-bold focus:outline-none focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 transition-all"
+                                        maxLength={6}
+                                    />
+                                </div>
 
-                    {/* OTP Input Screen */}
-                    {step === 'otp' && (
-                        <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-2">
-                                Enter 6-Digit OTP
-                            </label>
-                            <input
-                                type="tel"
-                                value={otp}
-                                onChange={(e) => setOtp(e.target.value.replace(/\D/g, ''))}
-                                placeholder="123456"
-                                maxLength={6}
-                                autoFocus
-                                className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-orange-500 outline-none text-center text-2xl tracking-widest font-bold mb-4"
-                            />
-
-                            <button
-                                onClick={handleVerifyOTP}
-                                disabled={loading || otp.length !== 6}
-                                className="w-full bg-gradient-to-r from-orange-500 to-red-500 text-white py-3 rounded-xl font-semibold disabled:opacity-50 disabled:cursor-not-allowed hover:shadow-lg transition mb-3"
-                            >
-                                {loading ? 'Verifying...' : 'Verify OTP'}
-                            </button>
-
-                            <div className="text-center">
-                                {countdown > 0 ? (
-                                    <p className="text-sm text-gray-500">
-                                        Resend OTP in {countdown}s
-                                    </p>
-                                ) : (
+                                <div className="flex flex-col gap-4">
                                     <button
-                                        onClick={handleResendOTP}
-                                        disabled={loading}
-                                        className="text-sm text-orange-500 font-semibold hover:text-orange-600 transition"
+                                        onClick={handleVerifyOTP}
+                                        disabled={loading || otp.length !== 6}
+                                        className="w-full bg-gradient-to-r from-orange-500 to-pink-500 text-white py-4 rounded-xl font-bold text-lg shadow-lg shadow-orange-500/30 hover:shadow-orange-500/50 transform hover:-translate-y-0.5 active:scale-95 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                                     >
-                                        Resend OTP
+                                        {loading ? (
+                                            <div className="w-6 h-6 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                                        ) : (
+                                            <>Verify & Continue <FaCheckCircle /></>
+                                        )}
                                     </button>
-                                )}
-                            </div>
 
-                            <button
-                                onClick={() => setStep('phone')}
-                                className="w-full mt-3 text-sm text-gray-500 hover:text-gray-700 transition"
-                            >
-                                ← Change Phone Number
-                            </button>
-                        </div>
-                    )}
-                    {/* reCAPTCHA container - Always present but hidden if not needed */}
-                    <div className="mb-4" style={{ display: step === 'phone' ? 'block' : 'none' }}>
-                        <div id="recaptcha-container"></div>
+                                    <button
+                                        onClick={handleSendOTP}
+                                        disabled={loading || countdown > 0}
+                                        className="text-sm font-bold text-gray-500 hover:text-orange-500 transition-colors disabled:opacity-50"
+                                    >
+                                        {countdown > 0 ? `Resend OTP in ${countdown}s` : "Didn't receive code? Resend"}
+                                    </button>
+
+                                    <button
+                                        onClick={() => setStep('phone')}
+                                        className="text-sm font-bold text-orange-500 hover:underline"
+                                    >
+                                        Change Phone Number
+                                    </button>
+                                </div>
+                            </div>
+                        )}
+                    </div>
+
+                    <div className="p-6 bg-gray-50 text-center">
+                        <p className="text-xs text-gray-400">
+                            By continuing, you agree to receive an SMS for verification. 
+                            Standard message and data rates may apply.
+                        </p>
                     </div>
                 </motion.div>
-            </motion.div>
+            </div>
         </AnimatePresence>
     );
 }

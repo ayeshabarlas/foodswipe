@@ -34,7 +34,17 @@ const updateUserProfile = async (req, res) => {
         if (user) {
             user.name = req.body.name || user.name;
             user.email = req.body.email || user.email;
-            user.phone = req.body.phone || user.phone;
+
+            // If phone is changed, reset verification status
+            if (req.body.phone && req.body.phone !== user.phone) {
+                user.phone = req.body.phone;
+                user.phoneNumber = req.body.phone; // Keep in sync
+                user.phoneVerified = false;
+                user.phoneVerifiedAt = null;
+            } else {
+                user.phone = req.body.phone || user.phone;
+            }
+
             user.address = req.body.address || user.address;
             user.houseNumber = req.body.houseNumber || user.houseNumber;
 
@@ -46,6 +56,7 @@ const updateUserProfile = async (req, res) => {
                 email: updatedUser.email,
                 role: updatedUser.role,
                 phone: updatedUser.phone,
+                phoneVerified: updatedUser.phoneVerified,
                 address: updatedUser.address,
                 houseNumber: updatedUser.houseNumber,
                 token: req.headers.authorization.split(' ')[1],
