@@ -1,3 +1,4 @@
+const mongoose = require('mongoose');
 const Restaurant = require('../models/Restaurant');
 const Rider = require('../models/Rider');
 const Order = require('../models/Order');
@@ -106,7 +107,7 @@ const getDashboardStats = async (req, res) => {
 
         // Basic Counts
         const totalUsers = await User.countDocuments({ role: 'customer' });
-        const totalRestaurants = await Restaurant.countDocuments({ isVerified: true, isActive: true });
+        const totalRestaurants = await Restaurant.countDocuments({}); // Count all restaurants
         const pendingRestaurants = await Restaurant.countDocuments({ verificationStatus: 'pending' });
         const totalOrders = await Order.countDocuments({});
         const todayOrders = await Order.countDocuments({
@@ -272,7 +273,7 @@ const getDashboardStats = async (req, res) => {
             .slice(0, 10);
 
         // Rider Stats
-        const totalRiders = await Rider.countDocuments({ verificationStatus: 'approved' });
+        const totalRiders = await Rider.countDocuments({}); // Count all riders
         const pendingRiders = await Rider.countDocuments({ verificationStatus: 'pending' });
         const onlineRiders = await Rider.countDocuments({ isOnline: true, verificationStatus: 'approved' });
 
@@ -313,43 +314,60 @@ const getDashboardStats = async (req, res) => {
 // @desc    Get all restaurants (active & pending)
 const getAllRestaurants = async (req, res) => {
     try {
+        console.log('Fetching all restaurants for admin...');
         const restaurants = await Restaurant.find()
             .populate('owner', 'name email status')
             .lean();
 
+        console.log(`Found ${restaurants.length} restaurants. Enriching with stats...`);
+
         const enrichedRestaurants = await Promise.all(restaurants.map(async (restaurant) => {
-            const stats = await Order.aggregate([
-                { $match: { restaurant: restaurant._id } },
-                {
-                    $group: {
-                        _id: null,
-                        totalOrders: { $sum: 1 },
-                        revenue: {
-                            $sum: {
-                                $cond: [{ $nin: ["$status", ["Cancelled"]] }, "$totalPrice", 0]
-                            }
-                        },
-                        commission: {
-                            $sum: {
-                                $cond: [{ $nin: ["$status", ["Cancelled"]] }, "$commissionAmount", 0]
+            try {
+                const stats = await Order.aggregate([
+                    { $match: { restaurant: new mongoose.Types.ObjectId(restaurant._id) } },
+                    {
+                        $group: {
+                            _id: null,
+                            totalOrders: { $sum: 1 },
+                            revenue: {
+                                $sum: {
+                                    $cond: [{ $nin: ["$status", ["Cancelled"]] }, "$totalPrice", 0]
+                                }
+                            },
+                            commission: {
+                                $sum: {
+                                    $cond: [{ $nin: ["$status", ["Cancelled"]] }, "$commissionAmount", 0]
+                                }
                             }
                         }
                     }
-                }
-            ]);
+                ]);
 
-            const stat = stats[0] || { totalOrders: 0, revenue: 0, commission: 0 };
+                const stat = stats[0] || { totalOrders: 0, revenue: 0, commission: 0 };
 
-            return {
-                ...restaurant,
-                totalOrders: stat.totalOrders,
-                revenue: stat.revenue,
-                commission: stat.commission
-            };
+                return {
+                    ...restaurant,
+                    totalOrders: stat.totalOrders,
+                    revenue: stat.revenue,
+                    commission: stat.commission
+                };
+            } catch (err) {
+                console.error(`Error enriching restaurant ${restaurant._id}:`, err);
+                return {
+                    ...restaurant,
+                    totalOrders: 0,
+                    revenue: 0,
+                    commission: 0
+                };
+            }
         }));
 
-        enrichedRestaurants.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
-
+        enrichedRestaurants.sort((a, b) => {
+            const dateA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+            const dateB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+            return dateB - dateA;
+        });
+        console.log(`Returning ${enrichedRestaurants.length} enriched restaurants`);
         res.json(enrichedRestaurants);
     } catch (error) {
         console.error('Error in getAllRestaurants:', error);
@@ -360,6 +378,7 @@ const getAllRestaurants = async (req, res) => {
 // @desc    Get all riders
 const getAllRiders = async (req, res) => {
     try {
+        console.log('Fetching all riders for admin...');
         const riders = await Rider.aggregate([
             {
                 $lookup: {
@@ -380,7 +399,7 @@ const getAllRiders = async (req, res) => {
             {
                 $lookup: {
                     from: 'riderwallets',
-                    localField: 'user._id',
+                    localField: '_id', // Fix: Use Rider ID, not User ID
                     foreignField: 'rider',
                     as: 'walletDetails'
                 }
@@ -420,11 +439,13 @@ const getAllRiders = async (req, res) => {
             { $sort: { createdAt: -1 } }
         ]);
 
+        console.log(`Found ${riders.length} riders. Calculating today stats...`);
+
         const today = new Date();
         today.setHours(0, 0, 0, 0);
 
         const ridersWithStats = riders.map(rider => {
-            const todayOrders = rider.allOrders.filter(o => new Date(o.createdAt) >= today).length;
+            const todayOrders = (rider.allOrders || []).filter(o => new Date(o.createdAt) >= today).length;
             return {
                 ...rider,
                 todayOrders,
@@ -432,8 +453,10 @@ const getAllRiders = async (req, res) => {
             };
         });
 
+        console.log(`Returning ${ridersWithStats.length} riders with stats`);
         res.json(ridersWithStats);
     } catch (error) {
+        console.error('Error in getAllRiders:', error);
         res.status(500).json({ message: 'Server error', error: error.message });
     }
 };
