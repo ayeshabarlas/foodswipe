@@ -121,7 +121,7 @@ export default function DishDetails({ dish, onClose }: DishDetailsProps) {
             animate={{ y: 0 }}
             exit={{ y: "100%" }}
             transition={{ type: "spring", damping: 25, stiffness: 200 }}
-            className="fixed inset-0 z-[60] flex flex-col bg-white"
+            className="fixed inset-0 z-[60] flex flex-col bg-gradient-orange-red"
         >
             {/* Header Video Area */}
             <div className="relative h-[40vh] w-full shrink-0 bg-black" onClick={togglePlay}>
@@ -133,7 +133,7 @@ export default function DishDetails({ dish, onClose }: DishDetailsProps) {
                     autoPlay
                     playsInline
                 />
-                <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-transparent to-transparent pointer-events-none" />
+                <div className="absolute inset-0 bg-gradient-to-b from-orange-500/40 via-transparent to-transparent pointer-events-none" />
 
                 {!isPlaying && (
                     <div className="absolute inset-0 flex items-center justify-center bg-black/20 pointer-events-none">
@@ -152,8 +152,9 @@ export default function DishDetails({ dish, onClose }: DishDetailsProps) {
             </div>
 
             {/* Content Area */}
-            <div className="flex-1 overflow-y-auto no-scrollbar px-6 py-6 pb-32">
+            <div className="flex-1 overflow-y-auto no-scrollbar px-6 py-8 pb-32 bg-white rounded-t-[32px] -mt-8 relative z-10 shadow-2xl">
                 <div className="mb-6">
+                    <div className="w-12 h-1.5 bg-gray-200 rounded-full mx-auto mb-6" />
                     <h1 className="text-2xl font-bold text-gray-900 mb-1">{dish.name}</h1>
                     <p className="text-gray-500 font-medium mb-3">{dish.restaurant.name}</p>
 
@@ -320,8 +321,8 @@ export default function DishDetails({ dish, onClose }: DishDetailsProps) {
             </div>
 
             {/* Bottom Action Bar */}
-            <div className="absolute bottom-0 left-0 w-full p-4 bg-white border-t border-gray-100 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)] flex items-center justify-between gap-4">
-                <div className="flex items-center gap-4 bg-gray-100 rounded-full px-4 py-2">
+            <div className="absolute bottom-0 left-0 w-full p-4 bg-white/80 backdrop-blur-lg border-t border-white/20 shadow-[0_-8px_30px_rgb(0,0,0,0.04)] flex items-center justify-between gap-4 z-20">
+                <div className="flex items-center gap-4 bg-gray-100/80 backdrop-blur-sm rounded-full px-4 py-2">
                     <button
                         onClick={() => setQuantity(Math.max(1, quantity - 1))}
                         className="w-8 h-8 flex items-center justify-center bg-white rounded-full text-gray-600 shadow-sm hover:text-primary transition"
