@@ -46,8 +46,8 @@ app.use((req, res, next) => {
 });
 
 // 🚀 3. HEALTH & ROOT
+// Force deployment trigger - 2026-01-15 18:50 - Fixing package.json paths
 app.get('/health', async (req, res) => {
-    // Force deployment trigger - 2026-01-15 18:35
     console.log('💓 Health check requested');
     const dbStatus = getDbStatus();
     
@@ -148,7 +148,7 @@ const startServer = async () => {
             
             // Start server for non-Vercel environments (Local, Render, etc.)
             if (!process.env.VERCEL) {
-                const PORT = process.env.PORT || 5000;
+                const PORT = process.env.PORT || 10000; // Use 10000 as default for Render/Production
                 app.listen(PORT, '0.0.0.0', () => {
                     console.log(`🚀 SERVER RUNNING ON PORT ${PORT}`);
                     console.log(`📡 Health Check: http://localhost:${PORT}/health`);
@@ -159,7 +159,7 @@ const startServer = async () => {
             
             // Still start for health reporting
             if (!process.env.VERCEL) {
-                const PORT = process.env.PORT || 8080;
+                const PORT = process.env.PORT || 10000; // Keep port consistent
                 app.listen(PORT, '0.0.0.0', () => {
                     console.log(`🚀 SERVER RUNNING ON PORT ${PORT} (LIMITED MODE - NO DB)`);
                 });

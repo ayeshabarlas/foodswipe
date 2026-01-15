@@ -18,9 +18,10 @@ const checkRestaurantApproval = async (req, res, next) => {
             });
         }
 
-        if (restaurant.verificationStatus !== 'approved') {
+        // MVP Relaxed Check: Allow 'approved' OR 'pending' to add dishes
+        if (restaurant.verificationStatus !== 'approved' && restaurant.verificationStatus !== 'pending') {
             return res.status(403).json({
-                message: `Your restaurant is ${restaurant.verificationStatus}. You can only add dishes after admin approval.`,
+                message: `Your restaurant is ${restaurant.verificationStatus}. You can only add dishes after registration.`,
                 verificationStatus: restaurant.verificationStatus,
                 rejectionReason: restaurant.rejectionReason
             });

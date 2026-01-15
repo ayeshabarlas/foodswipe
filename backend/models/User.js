@@ -26,12 +26,15 @@ const userSchema = mongoose.Schema(
             unique: false, // Changed from true to false to allow same phone for different roles
             sparse: true, // Allow multiple users with no phone number
         },
-        phoneNumber: {
+      phoneNumber: {
             type: String,
             default: null,
-            sparse: true,
         },
         phoneVerified: {
+            type: Boolean,
+            default: false,
+        },
+        is_phone_verified: {
             type: Boolean,
             default: false,
         },

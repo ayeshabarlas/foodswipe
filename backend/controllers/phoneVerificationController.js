@@ -86,6 +86,7 @@ const verifyOTP = asyncHandler(async (req, res) => {
     user.phoneNumber = phoneNumber;
     user.phone = phoneNumber; // Sync both fields
     user.phoneVerified = true;
+    user.is_phone_verified = true; // Sync for compatibility
     user.phoneVerifiedAt = new Date();
     user.otp = null;
     user.otpExpires = null;

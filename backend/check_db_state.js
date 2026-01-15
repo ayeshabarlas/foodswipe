@@ -1,36 +1,34 @@
 const mongoose = require('mongoose');
-const path = require('path');
-require('dotenv').config({ path: path.resolve(__dirname, '.env') });
+const Dish = require('./models/Dish');
+const Restaurant = require('./models/Restaurant');
+const dotenv = require('dotenv');
+dotenv.config();
 
-async function check() {
+async function checkDishes() {
     try {
-        console.log('Connecting to MongoDB...');
         await mongoose.connect(process.env.MONGO_URI);
-        console.log('✅ Connected');
+        console.log('✅ Connected to DB');
 
-        const db = mongoose.connection.db;
-        
-        console.log('\n--- ALL USERS IN DB ---');
-        const users = await db.collection('users').find({}).toArray();
-        users.forEach(u => {
-            console.log(`- ID: ${u._id}, Email: ${u.email}, Role: ${u.role}, Name: ${u.name}`);
-        });
+        const dishesCount = await Dish.countDocuments({});
+        console.log(`📊 Total Dishes: ${dishesCount}`);
 
-        console.log('\n--- ALL ADMINS IN DB ---');
-        const admins = await db.collection('admins').find({}).toArray();
-        if (admins.length === 0) {
-            console.log('No documents in "admins" collection!');
-        } else {
-            admins.forEach(a => {
-                console.log(`- ID: ${a._id}, Email: ${a.email}, Role: ${a.role}, Name: ${a.name}`);
-            });
+        const restaurantsCount = await Restaurant.countDocuments({});
+        console.log(`📊 Total Restaurants: ${restaurantsCount}`);
+
+        const User = require('./models/User');
+        const usersCount = await User.countDocuments({});
+        console.log(`📊 Total Users: ${usersCount}`);
+
+        const dishesAll = await Dish.find({});
+        console.log(`📊 Total Dishes (no filters): ${dishesAll.length}`);
+        if (dishesAll.length > 0) {
+            console.log('Sample dish:', dishesAll[0]);
         }
 
-    } catch (err) {
-        console.error('❌ Error:', err.message);
-    } finally {
         await mongoose.disconnect();
+    } catch (err) {
+        console.error('❌ Error:', err);
     }
 }
 
-check();
+checkDishes();

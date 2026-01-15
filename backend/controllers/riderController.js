@@ -85,11 +85,16 @@ const getMyProfile = async (req, res) => {
         let rider = await Rider.findOne({ user: req.user._id }).populate('user', 'name email phone');
 
         if (!rider) {
-            console.log(`No rider profile for user ID ${req.user._id}. Checking by email ${req.user.email}...`);
-            // SMART LINKING: Check if a rider profile exists for this email but different user ID
+            console.log(`No rider profile for user ID ${req.user._id}. Checking by email ${req.user.email} and phone ${req.user.phone}...`);
+            // SMART LINKING: Check if a rider profile exists for this email or phone but different user ID
             const otherRiders = await Rider.find({}).populate('user');
-            rider = otherRiders.find(r => r.user && r.user.email.toLowerCase() === req.user.email.toLowerCase());
-
+            rider = otherRiders.find(r => {
+                const emailMatch = r.user && r.user.email && r.user.email.toLowerCase() === req.user.email.toLowerCase();
+                // We don't have a contact field in Rider model, so we check the user's phone
+                const phoneMatch = r.user && (r.user.phone === req.user.phone || r.user.phone === req.user.phoneNumber);
+                return emailMatch || phoneMatch;
+            });
+            
             if (rider) {
                 console.log(`SMART LINKING: Re-linking rider ${rider._id} to new user ID ${req.user._id}`);
                 rider.user = req.user._id;

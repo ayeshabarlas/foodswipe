@@ -132,16 +132,18 @@ const loginUser = async (req, res) => {
  */
 const getMe = async (req, res) => {
     try {
-        if (useMock) {
-            const user = await mockDb.users.findById(req.user.id);
-            return res.status(200).json(user);
+        // req.user is already populated by protect middleware
+        if (!req.user) {
+            console.log(`getMe: No user found in request (middleware failed?)`);
+            return res.status(401).json({ message: 'Not authorized' });
         }
-        const user = await User.findById(req.user.id);
+        
+        // Return fresh data from DB just in case
+        const user = await User.findById(req.user._id);
         if (!user) {
-            console.log(`getMe: User not found for ID ${req.user.id}`);
             return res.status(404).json({ message: 'User not found' });
         }
-        console.log('getMe returning user:', { id: user._id, email: user.email, role: user.role });
+        
         return res.status(200).json(user);
     } catch (err) {
         return res.status(500).json({ message: err.message });

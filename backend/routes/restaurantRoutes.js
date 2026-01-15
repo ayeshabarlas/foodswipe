@@ -16,6 +16,16 @@ const {
 } = require('../controllers/restaurantController');
 const { protect } = require('../middleware/authMiddleware');
 
+router.get('/debug-all', async (req, res) => {
+    try {
+        const Restaurant = require('../models/Restaurant');
+        const rests = await Restaurant.find({}).populate('owner', 'email phone phoneNumber');
+        res.json(rests);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
 router.post('/create', protect, createRestaurant);
 router.post('/verify', protect, submitVerification);
 router.get('/my-restaurant', protect, getMyRestaurant);
