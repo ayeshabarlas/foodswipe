@@ -99,6 +99,13 @@ export default function NavDrawer({ isOpen, onClose, user, onOpenProfile, active
             section: 'Menu',
             items: [
                 {
+                    icon: FaShieldAlt,
+                    label: 'Admin Dashboard',
+                    href: '/admin',
+                    badge: null,
+                    adminOnly: true
+                },
+                {
                     icon: FaUser,
                     label: 'My Profile',
                     onClick: () => {
