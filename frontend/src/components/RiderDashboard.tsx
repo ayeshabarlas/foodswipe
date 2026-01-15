@@ -391,7 +391,7 @@ const RiderDashboard = ({ riderId: initialRiderId }: { riderId?: string }) => {
                     </div>
                     {displayRider.verificationStatus !== 'pending' && (
                         <button 
-                            onClick={() => window.location.href = '/rider-portal'}
+                            onClick={() => window.location.href = '/rider/register'}
                             className="bg-orange-500 text-white px-3 py-1.5 rounded-lg text-[9px] font-bold uppercase"
                         >
                             Complete
