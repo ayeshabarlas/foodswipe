@@ -132,10 +132,6 @@ const loginUser = async (req, res) => {
  */
 const getMe = async (req, res) => {
     try {
-        if (useMock) {
-            const user = await mockDb.users.findById(req.user.id);
-            return res.status(200).json(user);
-        }
         const user = await User.findById(req.user.id);
         if (!user) {
             console.log(`getMe: User not found for ID ${req.user.id}`);
