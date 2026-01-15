@@ -111,7 +111,16 @@ export default function Home() {
     };
 
     checkAuth();
-  }, []);
+  }, [userRole]);
+
+  // Admin flow redirect hook - moved here to follow rules of hooks
+  useEffect(() => {
+    const adminRoles = ["admin", "super-admin", "finance-admin", "support-admin", "restaurant-manager"];
+    const isAdmin = adminRoles.includes(userRole);
+    if (isAdmin) {
+      router.push('/admin');
+    }
+  }, [userRole, router]);
 
   const handleRestaurantCreated = () => {
     setHasRestaurant(true);
@@ -210,15 +219,6 @@ export default function Home() {
       </div>
     );
   }
-
-  // Admin flow
-  useEffect(() => {
-    const adminRoles = ["admin", "super-admin", "finance-admin", "support-admin", "restaurant-manager"];
-    const isAdmin = adminRoles.includes(userRole);
-    if (isAdmin) {
-      router.push('/admin');
-    }
-  }, [userRole, router]);
 
   if (["admin", "super-admin", "finance-admin", "support-admin", "restaurant-manager"].includes(userRole)) {
     return (

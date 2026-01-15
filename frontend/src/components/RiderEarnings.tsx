@@ -14,6 +14,7 @@ export default function RiderEarnings({ riderId }: RiderEarningsProps) {
     const [earnings, setEarnings] = useState({
         total: 0,
         basePay: 0,
+        distancePay: 0,
         bonuses: 0,
         tips: 0,
         deliveries: 0,
@@ -141,16 +142,16 @@ export default function RiderEarnings({ riderId }: RiderEarningsProps) {
 
                 <div className="text-center relative z-10">
                     <p className="text-white/60 text-[10px] mb-2 uppercase tracking-[0.2em] font-semibold">Total This {period}</p>
-                    <h2 className="text-5xl font-semibold mb-2 tracking-tighter">Rs {earnings.total.toLocaleString()}</h2>
-                    <p className="text-white/80 text-xs font-light tracking-wide">{earnings.deliveries} deliveries completed</p>
+                    <h2 className="text-5xl font-semibold mb-2 tracking-tighter">Rs {(earnings.total || 0).toLocaleString()}</h2>
+                    <p className="text-white/80 text-xs font-light tracking-wide">{earnings.deliveries || 0} deliveries completed</p>
                 </div>
             </div>
 
             {/* Stats Grid */}
             <div className="px-6 -mt-10 grid grid-cols-3 gap-3 mb-8 relative z-20">
-                <SmallStat icon={<FaMoneyBillWave />} label="Base Pay" value={earnings.basePay} color="bg-blue-500" />
-                <SmallStat icon={<FaRoute />} label="Distance" value={earnings.distancePay} color="bg-purple-500" />
-                <SmallStat icon={<FaWallet />} label="Tips" value={earnings.tips} color="bg-gradient-to-r from-orange-500 to-red-500" />
+                <SmallStat icon={<FaMoneyBillWave />} label="Base Pay" value={earnings.basePay || 0} color="bg-blue-500" />
+                <SmallStat icon={<FaRoute />} label="Distance" value={earnings.distancePay || 0} color="bg-purple-500" />
+                <SmallStat icon={<FaWallet />} label="Tips" value={earnings.tips || 0} color="bg-gradient-to-r from-orange-500 to-red-500" />
             </div>
 
             {/* Payout Card */}
@@ -163,7 +164,7 @@ export default function RiderEarnings({ riderId }: RiderEarningsProps) {
                         <div className="flex justify-between items-start mb-4">
                             <div>
                                 <p className="text-white/70 text-sm font-light mb-1">Pending Payout</p>
-                                <h3 className="text-3xl font-semibold">Rs {earnings.pendingPayout.toLocaleString()}</h3>
+                                <h3 className="text-3xl font-semibold">Rs {(earnings.pendingPayout || 0).toLocaleString()}</h3>
                             </div>
                             <div className="w-12 h-12 bg-white/20 backdrop-blur-md rounded-2xl flex items-center justify-center">
                                 <FaWallet size={24} />
@@ -310,7 +311,7 @@ function SmallStat({ icon, label, value, color }: { icon: any; label: string; va
                 <div className="text-sm">{icon}</div>
             </div>
             <p className="text-gray-400 text-[9px] font-bold uppercase tracking-widest mb-1">{label}</p>
-            <p className="font-bold text-xs text-gray-900 tracking-tight">Rs {value.toLocaleString()}</p>
+            <p className="font-bold text-xs text-gray-900 tracking-tight">Rs {(value || 0).toLocaleString()}</p>
         </div>
     );
 }

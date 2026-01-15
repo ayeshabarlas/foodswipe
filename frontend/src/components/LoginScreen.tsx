@@ -150,7 +150,17 @@ export default function LoginScreen({ onLogin }: LoginScreenProps) {
     };
 
     return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm overflow-y-auto">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 overflow-y-auto">
+            {/* Background (copied from SplashScreen for consistency) */}
+            <div className="fixed inset-0 -z-10">
+                <img
+                    src="https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=1920&q=80"
+                    alt="Food background"
+                    className="absolute inset-0 w-full h-full object-cover blur-sm scale-105"
+                />
+                <div className="absolute inset-0 bg-black/40 backdrop-blur-[2px]" />
+            </div>
+
             <motion.div
                 initial={{ opacity: 0, scale: 0.95 }}
                 animate={{ opacity: 1, scale: 1 }}
