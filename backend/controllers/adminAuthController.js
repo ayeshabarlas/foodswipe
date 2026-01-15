@@ -103,7 +103,7 @@ const loginAdmin = async (req, res) => {
         console.log(`Checking User collection for ${loginEmail}...`);
         const user = await User.findOne({
             email: { $regex: new RegExp(`^${loginEmail}$`, 'i') },
-            role: { $in: ['admin', 'super-admin', 'finance-admin', 'support-admin'] }
+            role: { $in: ['admin', 'super-admin', 'finance-admin', 'support-admin', 'restaurant-manager'] }
         });
 
         if (user) {

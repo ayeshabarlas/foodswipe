@@ -93,10 +93,14 @@ export default function RiderProfile({ riderId }: RiderProfileProps) {
         window.location.reload();
     };
 
-    if (error && !riderData) {
+    if (error) {
         return (
             <div className="min-h-screen bg-gray-50 flex flex-col items-center justify-center p-6 overflow-y-auto">
-                <p className="text-red-500 mb-4">{error}</p>
+                <div className="w-16 h-16 bg-red-100 rounded-2xl flex items-center justify-center text-red-500 mb-4">
+                    <FaTimes size={32} />
+                </div>
+                <h2 className="text-xl font-bold text-gray-900 mb-2">Error</h2>
+                <p className="text-gray-600 text-center mb-6">{error}</p>
                 <button
                     onClick={() => window.location.reload()}
                     className="px-6 py-2 bg-gradient-to-r from-orange-500 to-red-500 text-white rounded-xl font-semibold shadow-md hover:from-orange-600 hover:to-red-600 transition-all"
@@ -109,7 +113,7 @@ export default function RiderProfile({ riderId }: RiderProfileProps) {
 
     if (!riderData) {
         return (
-            <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+            <div className="min-h-screen bg-gray-50 flex items-center justify-center overflow-y-auto">
                 <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-500"></div>
             </div>
         );

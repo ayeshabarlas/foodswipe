@@ -178,7 +178,7 @@ export default function RestaurantManagement() {
 
     if (loading) {
         return (
-            <div className="min-h-screen bg-white flex items-center justify-center">
+            <div className="min-h-screen bg-white flex items-center justify-center overflow-y-auto">
                 <ModernLoader size="lg" text="Loading Management..." />
             </div>
         );

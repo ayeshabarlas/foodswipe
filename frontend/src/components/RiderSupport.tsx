@@ -13,7 +13,7 @@ export default function RiderSupport() {
     };
 
     return (
-        <div className="min-h-screen bg-gray-50 pb-20">
+        <div className="min-h-screen bg-gray-50 pb-20 overflow-y-auto">
             {/* Header */}
             <div className="bg-white px-6 pt-8 pb-6 border-b border-gray-200">
                 <h1 className="text-2xl font-bold text-gray-900 mb-1">Help & Support</h1>

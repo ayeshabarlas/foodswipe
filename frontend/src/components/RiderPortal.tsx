@@ -90,7 +90,7 @@ export default function RiderPortal() {
     }
 
     return (
-        <div className="min-h-screen w-full bg-gray-50 flex items-center justify-center p-6">
+        <div className="min-h-screen w-full bg-gray-50 flex items-center justify-center p-6 overflow-y-auto">
             <div className="text-center max-w-sm w-full">
                 <h1 className="text-2xl font-bold text-gray-900 mb-2">Rider Portal</h1>
                 <p className="text-gray-600 mb-6">Setting up your dashboard...</p>

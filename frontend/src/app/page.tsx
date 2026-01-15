@@ -189,14 +189,14 @@ export default function Home() {
        // Only show CreateRestaurant if we explicitly know hasRestaurant is false
        if (hasRestaurant || localStorage.getItem("hasRestaurant") === "true") {
          return (
-           <div className="min-h-screen w-full bg-black overflow-y-auto">
+           <div className="min-h-screen w-full bg-black">
              <RestaurantDashboard />
            </div>
          );
        }
 
        return (
-         <div className="min-h-screen w-full bg-black overflow-y-auto">
+         <div className="min-h-screen w-full bg-black">
            <CreateRestaurant onRestaurantCreated={handleRestaurantCreated} />
          </div>
        );
@@ -205,7 +205,7 @@ export default function Home() {
   // Rider flow
   if (userRole === "rider") {
     return (
-      <div className="min-h-screen w-full bg-black overflow-y-auto">
+      <div className="min-h-screen w-full bg-black">
         <RiderPortal />
       </div>
     );
@@ -213,13 +213,14 @@ export default function Home() {
 
   // Admin flow
   useEffect(() => {
-    const isAdmin = ["admin", "super-admin", "finance-admin", "support-admin"].includes(userRole);
+    const adminRoles = ["admin", "super-admin", "finance-admin", "support-admin", "restaurant-manager"];
+    const isAdmin = adminRoles.includes(userRole);
     if (isAdmin) {
       router.push('/admin');
     }
   }, [userRole, router]);
 
-  if (["admin", "super-admin", "finance-admin", "support-admin"].includes(userRole)) {
+  if (["admin", "super-admin", "finance-admin", "support-admin", "restaurant-manager"].includes(userRole)) {
     return (
       <div className="min-h-screen w-full bg-black flex items-center justify-center">
         <div className="text-center">

@@ -120,7 +120,7 @@ export default function RiderDocumentUpload({ riderId, onVerified }: RiderDocume
 
     if (verified) {
         return (
-            <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
+            <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4 overflow-y-auto">
                 <div className="bg-white rounded-3xl p-8 shadow-lg text-center max-w-sm w-full">
                     <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6">
                         <FaCheckCircle className="text-green-500 text-4xl" />
@@ -142,7 +142,7 @@ export default function RiderDocumentUpload({ riderId, onVerified }: RiderDocume
 
     if (verificationStatus === 'pending') {
         return (
-            <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
+            <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4 overflow-y-auto">
                 <div className="bg-white rounded-3xl p-8 shadow-lg text-center max-w-sm w-full">
                     <div className="w-20 h-20 bg-orange-100 rounded-full flex items-center justify-center mx-auto mb-6">
                         <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-orange-500"></div>
@@ -165,7 +165,7 @@ export default function RiderDocumentUpload({ riderId, onVerified }: RiderDocume
     const totalRequired = 5;
 
     return (
-        <div className="min-h-screen bg-gray-50 p-4">
+        <div className="min-h-screen bg-gray-50 p-4 overflow-y-auto">
             <div className="max-w-2xl mx-auto pt-8">
                 <div className="mb-8">
                     <h1 className="text-2xl font-bold text-gray-900 mb-2">Upload Documents</h1>
