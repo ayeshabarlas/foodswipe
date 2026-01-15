@@ -56,10 +56,10 @@ export default function AdminLoginForm() {
     };
 
     return (
-        <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-orange-500 to-orange-600 p-4 overflow-y-auto">
-            <div className="bg-white rounded-3xl shadow-2xl w-full max-w-md p-8 md:p-10 my-8">
+        <div className="min-h-screen bg-gradient-to-br from-orange-500 via-red-500 to-pink-500 flex items-center justify-center p-4 overflow-y-auto">
+            <div className="bg-white/95 backdrop-blur-sm rounded-3xl shadow-2xl w-full max-w-md p-8 md:p-10 my-8">
                 <div className="flex flex-col items-center mb-8">
-                    <div className="bg-gradient-to-br from-orange-500 to-pink-500 text-white p-4 rounded-2xl shadow-lg mb-4">
+                    <div className="bg-gradient-to-br from-orange-500 via-red-500 to-pink-500 text-white p-4 rounded-2xl shadow-lg mb-4">
                         <FaShoppingBag className="text-3xl" />
                     </div>
                     <h1 className="text-2xl font-bold text-gray-800">FOODSWIPE</h1>
