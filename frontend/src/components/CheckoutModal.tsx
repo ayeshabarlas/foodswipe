@@ -182,6 +182,12 @@ export default function CheckoutModal({ isOpen, onClose, cart, total, subtotal, 
 
     const handleAddressSearch = async (val: string) => {
         setDeliveryAddress(val);
+        // Clear previous location when user starts typing a new address
+        // This ensures the delivery fee recalculates for the new address
+        if (deliveryLocation) {
+            setDeliveryLocation(null);
+            setDistance(null);
+        }
 
         // Clear previous timeout
         if ((window as any).addressSearchTimeout) {
@@ -662,6 +668,8 @@ export default function CheckoutModal({ isOpen, onClose, cart, total, subtotal, 
                                                 <button
                                                     onClick={() => {
                                                         setDeliveryAddress('');
+                                                        setDeliveryLocation(null);
+                                                        setDistance(null);
                                                         setSuggestions([]);
                                                         setShowSuggestions(false);
                                                     }}
