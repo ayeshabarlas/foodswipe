@@ -169,27 +169,46 @@ export default function RestaurantDashboard() {
             console.log('New order received via socket:', order);
             playNotificationSound();
             const newNotification = {
-                _id: Date.now().toString(),
-                title: 'New Order Received',
-                message: `Order #${order._id.slice(-6).toUpperCase()} has been placed`,
+                _id: `socket-${Date.now()}`,
+                title: 'New Order',
+                message: `Order #${order._id.slice(-6).toUpperCase()} has been placed by ${order.user?.name || 'Customer'}`,
                 createdAt: new Date().toISOString(),
-                read: false
+                read: false,
+                type: 'order'
             };
             setNotifications(prev => [newNotification, ...prev]);
-            fetchDashboardData(true); // Silent refresh
+            fetchDashboardData(true);
         };
 
-        const handleOrderUpdate = () => {
-            console.log('Order update received via socket');
-            fetchDashboardData(true); // Silent refresh
+        const handleOrderUpdate = (updatedOrder: any) => {
+            console.log('Order update received via socket:', updatedOrder);
+            if (updatedOrder.status === 'Picked Up' || updatedOrder.status === 'Delivered') {
+                const newNotification = {
+                    _id: `socket-${Date.now()}`,
+                    title: `Order ${updatedOrder.status}`,
+                    message: `Order #${updatedOrder._id.slice(-6).toUpperCase()} is now ${updatedOrder.status}`,
+                    createdAt: new Date().toISOString(),
+                    read: false,
+                    type: 'status'
+                };
+                setNotifications(prev => [newNotification, ...prev]);
+            }
+            fetchDashboardData(true);
+        };
+
+        const handleGenericNotification = (notification: any) => {
+            console.log('Generic notification received:', notification);
+            setNotifications(prev => [notification, ...prev]);
         };
 
         socket.on('newOrder', handleNewOrder);
         socket.on('orderStatusUpdate', handleOrderUpdate);
+        socket.on('notification', handleGenericNotification);
 
         return () => {
             socket.off('newOrder', handleNewOrder);
             socket.off('orderStatusUpdate', handleOrderUpdate);
+            socket.off('notification', handleGenericNotification);
         };
     }, [socket, restaurant]);
 
@@ -497,41 +516,140 @@ export default function RestaurantDashboard() {
             {/* Main Content */}
             <main className="flex-1 min-w-0 flex flex-col min-h-screen">
                 {/* Desktop Header */}
-                <header className="bg-white border-b border-gray-100 p-4 hidden lg:flex items-center justify-between shadow-sm sticky top-0 z-30">
-                    <div className="flex items-center gap-4">
-                        <h1 className="text-xl font-bold text-gray-900 tracking-tight">
-                            {menuItems.find((i) => i.id === activePage)?.label}
-                        </h1>
-                        <div className="h-6 w-[1px] bg-gray-200" />
-                        <p className="text-gray-500 text-xs">
-                            Welcome back, {displayRestaurant.owner?.name?.split(' ')[0] || 'Partner'}
-                        </p>
+                <header className="bg-white/80 backdrop-blur-md border-b border-gray-100 p-4 hidden lg:flex items-center justify-between sticky top-0 z-30 shadow-sm">
+                    <div className="flex items-center gap-6">
+                        <div className="flex flex-col">
+                            <h1 className="text-xl font-extrabold text-gray-900 tracking-tight flex items-center gap-2">
+                                {menuItems.find((i) => i.id === activePage)?.label}
+                                {activePage === 'overview' && <span className="text-[10px] bg-orange-100 text-orange-600 px-2 py-0.5 rounded-full font-bold uppercase tracking-wider">Live</span>}
+                            </h1>
+                            <p className="text-gray-400 text-[10px] font-medium uppercase tracking-widest mt-0.5">
+                                Merchant Portal <span className="mx-1">•</span> {new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                            </p>
+                        </div>
                     </div>
 
-                    <div className="flex items-center gap-3">
+                    <div className="flex items-center gap-6">
+                        {/* Search or Quick Stats could go here */}
+                        <div className="hidden xl:flex items-center gap-4 pr-6 border-r border-gray-100">
+                            <div className="flex flex-col items-end">
+                                <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Store Status</span>
+                                <span className="flex items-center gap-1.5 text-[11px] font-bold text-green-500">
+                                    <span className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" />
+                                    Online & Accepting
+                                </span>
+                            </div>
+                        </div>
                         {/* Notifications */}
                         <div className="relative">
                             <button
                                 onClick={() => setShowNotifications(!showNotifications)}
-                                className="p-2.5 bg-gray-50 text-gray-600 rounded-xl hover:bg-orange-50 hover:text-orange-500 transition relative group"
+                                className={`p-2.5 rounded-2xl transition-all duration-300 relative group
+                                ${showNotifications 
+                                    ? 'bg-orange-500 text-white shadow-lg shadow-orange-200' 
+                                    : 'bg-gray-50 text-gray-500 hover:bg-orange-50 hover:text-orange-500'}`}
                             >
-                                <FaBell className="text-sm" />
-                                {notifications.length > 0 && (
-                                    <span className="absolute top-2 right-2 w-2 h-2 bg-red-500 rounded-full border-2 border-white animate-pulse" />
+                                <FaBell className={showNotifications ? 'animate-none' : 'group-hover:animate-bounce'} size={18} />
+                                {notifications.filter(n => !n.read).length > 0 && (
+                                    <span className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 text-white text-[10px] font-bold rounded-full border-2 border-white flex items-center justify-center shadow-sm">
+                                        {notifications.filter(n => !n.read).length}
+                                    </span>
                                 )}
                             </button>
+
+                            <AnimatePresence>
+                                {showNotifications && (
+                                    <>
+                                        <motion.div
+                                            initial={{ opacity: 0 }}
+                                            animate={{ opacity: 1 }}
+                                            exit={{ opacity: 0 }}
+                                            onClick={() => setShowNotifications(false)}
+                                            className="fixed inset-0 z-40"
+                                        />
+                                        <motion.div
+                                            initial={{ opacity: 0, y: 10, scale: 0.95 }}
+                                            animate={{ opacity: 1, y: 0, scale: 1 }}
+                                            exit={{ opacity: 0, y: 10, scale: 0.95 }}
+                                            className="absolute right-0 mt-3 w-80 bg-white rounded-[32px] shadow-2xl border border-gray-100 z-50 overflow-hidden"
+                                        >
+                                            <div className="p-5 border-b border-gray-50 flex items-center justify-between bg-gray-50/50">
+                                                <h3 className="font-bold text-gray-900">Notifications</h3>
+                                                {notifications.filter(n => !n.read).length > 0 && (
+                                                    <button 
+                                                        onClick={() => {
+                                                            notifications.forEach(n => !n.read && markAsRead(n._id));
+                                                        }}
+                                                        className="text-[10px] font-bold text-orange-600 uppercase tracking-wider hover:text-orange-700 transition-colors"
+                                                    >
+                                                        Mark all as read
+                                                    </button>
+                                                )}
+                                            </div>
+                                            <div className="max-h-[400px] overflow-y-auto custom-scrollbar">
+                                                {notifications.length > 0 ? (
+                                                    <div className="divide-y divide-gray-50">
+                                                        {notifications.map((notification) => (
+                                                            <div 
+                                                                key={notification._id}
+                                                                onClick={() => !notification.read && markAsRead(notification._id)}
+                                                                className={`p-4 hover:bg-gray-50 transition-colors cursor-pointer relative group ${!notification.read ? 'bg-orange-50/30' : ''}`}
+                                                            >
+                                                                {!notification.read && (
+                                                                    <div className="absolute left-0 top-0 bottom-0 w-1 bg-orange-500" />
+                                                                )}
+                                                                <div className="flex gap-3">
+                                                                    <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 
+                                                                        ${notification.title.includes('Order') ? 'bg-orange-100 text-orange-600' : 'bg-blue-100 text-blue-600'}`}>
+                                                                        {notification.title.includes('Order') ? <FaShoppingBag size={16} /> : <FaBell size={16} />}
+                                                                    </div>
+                                                                    <div className="flex-1 min-w-0">
+                                                                        <p className={`text-sm leading-tight mb-1 ${!notification.read ? 'font-bold text-gray-900' : 'text-gray-600'}`}>
+                                                                            {notification.title}
+                                                                        </p>
+                                                                        <p className="text-xs text-gray-500 line-clamp-2 mb-2">{notification.message}</p>
+                                                                        <p className="text-[10px] font-medium text-gray-400">
+                                                                            {new Date(notification.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                                                        </p>
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                        ))}
+                                                    </div>
+                                                ) : (
+                                                    <div className="p-10 text-center">
+                                                        <div className="w-16 h-16 bg-gray-50 rounded-full flex items-center justify-center text-gray-300 mx-auto mb-4">
+                                                            <FaBell size={24} />
+                                                        </div>
+                                                        <p className="text-sm font-medium text-gray-400">No notifications yet</p>
+                                                    </div>
+                                                )}
+                                            </div>
+                                            <button className="w-full p-4 text-[10px] font-bold text-gray-400 uppercase tracking-widest bg-gray-50 hover:bg-gray-100 transition-colors">
+                                                View All Notifications
+                                            </button>
+                                        </motion.div>
+                                    </>
+                                )}
+                            </AnimatePresence>
                         </div>
 
                         {/* User Profile */}
-                        <div className="flex items-center gap-3 pl-3 border-l border-gray-100">
-                            <div className="text-right hidden sm:block">
-                                <p className="text-xs font-bold text-gray-900 leading-none">{displayRestaurant?.owner?.name}</p>
-                                <p className="text-[10px] text-gray-500 mt-1 uppercase tracking-tighter">Restaurant Owner</p>
-                            </div>
-                            <div className="w-9 h-9 rounded-full bg-gradient-to-tr from-orange-500 to-orange-400 p-[2px] shadow-md">
-                                <div className="w-full h-full rounded-full bg-white flex items-center justify-center text-orange-500 font-bold text-xs uppercase">
-                                    {displayRestaurant?.owner?.name?.charAt(0)}
+                        <div className="flex items-center gap-3 pl-4 border-l border-gray-100 group cursor-pointer">
+                            <div className="text-right hidden sm:block transition-transform group-hover:-translate-x-1 duration-300">
+                                <p className="text-[13px] font-bold text-gray-900 leading-none mb-1">{displayRestaurant?.owner?.name}</p>
+                                <div className="flex items-center justify-end gap-1.5">
+                                    <div className="w-1.5 h-1.5 rounded-full bg-green-500" />
+                                    <p className="text-[10px] text-gray-500 font-bold uppercase tracking-wider">Restaurant Owner</p>
                                 </div>
+                            </div>
+                            <div className="relative">
+                                <div className="w-11 h-11 rounded-2xl bg-gradient-to-tr from-orange-500 to-red-500 p-[2px] shadow-lg shadow-orange-200 group-hover:scale-105 transition-transform duration-300">
+                                    <div className="w-full h-full rounded-2xl bg-white flex items-center justify-center text-orange-600 font-bold text-base uppercase">
+                                        {displayRestaurant?.owner?.name?.charAt(0)}
+                                    </div>
+                                </div>
+                                <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-green-500 border-2 border-white rounded-full shadow-sm" />
                             </div>
                         </div>
                     </div>
