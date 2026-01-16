@@ -24,9 +24,11 @@ export default function PhoneAuthModal({ isOpen, onClose, onSuccess }: PhoneAuth
     const [error, setError] = useState('');
     const [countdown, setCountdown] = useState(0);
     const [confirmationResult, setConfirmationResult] = useState<ConfirmationResult | null>(null);
+    const [sentToNumber, setSentToNumber] = useState('');
 
     // Initialize reCAPTCHA
     useEffect(() => {
+        console.log('📱 PhoneAuthModal Loaded - Version: 2026-01-16 11:45');
         if (isOpen && step === 'phone') {
             const timer = setTimeout(() => {
                 try {
@@ -64,9 +66,17 @@ export default function PhoneAuthModal({ isOpen, onClose, onSuccess }: PhoneAuth
             return;
         }
 
-        // Format number: strip leading 0 and prepend country code
-        const formattedPhone = phoneNumber.startsWith('0') ? phoneNumber.substring(1) : phoneNumber;
+        // Format number: strip leading 0 or country code if already present
+        let formattedPhone = phoneNumber.replace(/\D/g, ''); // Ensure only digits
+        
+        if (formattedPhone.startsWith('92')) {
+            formattedPhone = formattedPhone.substring(2);
+        } else if (formattedPhone.startsWith('0')) {
+            formattedPhone = formattedPhone.substring(1);
+        }
+        
         const fullNumber = `${countryCode}${formattedPhone}`;
+        setSentToNumber(fullNumber);
         
         setLoading(true);
 
@@ -186,7 +196,7 @@ export default function PhoneAuthModal({ isOpen, onClose, onSuccess }: PhoneAuth
                             <p className="text-white/80 text-center mt-2">
                                 {step === 'phone' 
                                     ? 'Enter your phone number to receive an OTP' 
-                                    : `Enter the 6-digit code sent to ${countryCode} ${phoneNumber}`
+                                    : `Enter the 6-digit code sent to ${sentToNumber}`
                                 }
                             </p>
                         </div>
