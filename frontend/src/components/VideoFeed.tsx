@@ -307,7 +307,7 @@ const VideoCard = ({
                     <div className="flex-1">
                         <h2 className="text-2xl font-bold mb-1 leading-tight">{dish.name}</h2>
                         <p className="text-xs text-white/80 mb-4">{dish.description.substring(0, 60)}...</p>
-                        <button onClick={(e) => { e.stopPropagation(); onOpenDetails(dish); }} className="bg-gradient-to-r from-orange-500 to-red-500 text-white px-6 py-3 rounded-full font-bold text-sm shadow-lg active:scale-95 transition-transform flex items-center gap-2">
+                        <button onClick={(e) => { e.stopPropagation(); onOpenDetails(dish); }} className="bg-gradient-orange-red text-white px-6 py-3 rounded-full font-bold text-sm shadow-lg active:scale-95 transition-transform flex items-center gap-2">
                             View Details & Ingredients
                             <FaChevronRight size={14} />
                         </button>
@@ -336,7 +336,7 @@ const VideoCard = ({
                             ) : (
                                 comments.map((c, i) => (
                                     <div key={i} className="flex gap-3">
-                                        <div className="w-8 h-8 rounded-full bg-gradient-to-br from-orange-400 to-red-500 flex items-center justify-center text-xs font-bold text-white shrink-0">
+                                        <div className="w-8 h-8 rounded-full bg-gradient-orange-red flex items-center justify-center text-xs font-bold text-white shrink-0">
                                             {c.user?.name?.[0] || 'U'}
                                         </div>
                                         <div>
@@ -356,9 +356,9 @@ const VideoCard = ({
                                 value={commentText}
                                 onChange={(e) => setCommentText(e.target.value)}
                                 placeholder="Add a comment..."
-                                className="flex-1 bg-gray-800 rounded-full px-4 py-3 text-white outline-none focus:ring-2 focus:ring-orange-500"
+                                className="flex-1 bg-gray-800 rounded-full px-4 py-3 text-white outline-none focus:ring-2 focus:ring-[#FF6A00]"
                             />
-                            <button type="submit" className="p-3 bg-gradient-to-r from-orange-500 to-red-500 rounded-full text-white hover:from-orange-600 hover:to-red-600 transition shadow-lg">
+                            <button type="submit" className="p-3 bg-gradient-orange-red rounded-full text-white hover:opacity-90 transition shadow-lg">
                                 <FaPaperPlane />
                             </button>
                         </form>
@@ -538,6 +538,13 @@ export default function VideoFeed() {
         if (index !== currentVideoIndex) setCurrentVideoIndex(index);
     };
 
+    useEffect(() => {
+        setCurrentVideoIndex(0);
+        // Also scroll to top of the container if possible
+        const container = document.querySelector('.snap-y');
+        if (container) container.scrollTop = 0;
+    }, [searchTerm]);
+
     const filteredDishes = Array.isArray(dishes) ? dishes.filter(dish => {
         const matchesSearch = 
             dish.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -564,9 +571,17 @@ export default function VideoFeed() {
                             placeholder="Search restaurants or dishes" 
                             value={searchTerm}
                             onChange={(e) => setSearchTerm(e.target.value)}
-                            className="w-full bg-white/10 backdrop-blur-sm text-white placeholder-gray-400 rounded-lg px-4 py-2.5 pl-10 outline-none focus:bg-white/15 transition text-sm" 
+                            className="w-full bg-white/10 backdrop-blur-sm text-white placeholder-gray-400 rounded-lg px-4 py-2.5 pl-10 pr-10 outline-none focus:bg-white/15 transition text-sm" 
                         />
                         <FaSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={14} />
+                        {searchTerm && (
+                            <button 
+                                onClick={() => setSearchTerm('')}
+                                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-white"
+                            >
+                                <FaTimes size={14} />
+                            </button>
+                        )}
                     </div>
                     <button onClick={() => { console.log('🛒 Cart clicked!'); setIsCartOpen(true); }} className="p-2 text-white flex-shrink-0 cursor-pointer z-50" type="button">
                         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -574,7 +589,7 @@ export default function VideoFeed() {
                             <line x1="3" y1="6" x2="21" y2="6" />
                             <path d="M16 10a4 4 0 0 1-8 0" />
                         </svg>
-                        {cartCount > 0 && <span className="absolute -top-1 -right-1 bg-primary text-white text-xs font-bold w-5 h-5 flex items-center justify-center rounded-full">{cartCount}</span>}
+                        {cartCount > 0 && <span className="absolute -top-1 -right-1 bg-[#FF6A00] text-white text-xs font-bold w-5 h-5 flex items-center justify-center rounded-full">{cartCount}</span>}
                     </button>
                 </div>
             </div>
@@ -589,9 +604,27 @@ export default function VideoFeed() {
                     return <VideoCard key={dish._id} dish={dish} isActive={index === currentVideoIndex} onOpenDetails={setSelectedDish} onOpenProfile={setSelectedRestaurant} distance={distance} />;
                 })}
                 {filteredDishes.length === 0 && (
-                    <div className="h-screen flex flex-col items-center justify-center text-white bg-gray-900">
-                        <div className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin mb-4"></div>
-                        <p className="text-lg font-medium animate-pulse">Finding delicious food...</p>
+                    <div className="h-screen flex flex-col items-center justify-center text-white bg-gray-900 px-6 text-center">
+                        {searchTerm ? (
+                            <>
+                                <div className="w-16 h-16 bg-white/10 rounded-full flex items-center justify-center mb-4">
+                                    <FaSearch className="text-gray-400 text-2xl" />
+                                </div>
+                                <h3 className="text-xl font-bold mb-2">No results found</h3>
+                                <p className="text-gray-400 max-w-xs">We couldn't find any dishes or restaurants matching "{searchTerm}"</p>
+                                <button 
+                                    onClick={() => setSearchTerm('')}
+                                    className="mt-6 text-[#FF6A00] font-medium hover:underline"
+                                >
+                                    Clear search
+                                </button>
+                            </>
+                        ) : (
+                            <>
+                                <div className="w-12 h-12 border-4 border-[#FF6A00] border-t-transparent rounded-full animate-spin mb-4"></div>
+                                <p className="text-lg font-medium animate-pulse">Finding delicious food...</p>
+                            </>
+                        )}
                     </div>
                 )}
             </div>
