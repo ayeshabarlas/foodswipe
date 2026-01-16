@@ -11,7 +11,10 @@ import {
     FaArrowUp,
     FaCheckCircle,
     FaMoneyBillWave,
-    FaTrashAlt
+    FaTrashAlt,
+    FaWallet,
+    FaPercentage,
+    FaStar
 } from 'react-icons/fa';
 import {
     LineChart,
@@ -52,7 +55,7 @@ interface DashboardHomeProps {
     refreshStats?: () => void;
 }
 
-const COLORS = ['#00C49F', '#FFBB28', '#FF8042'];
+const COLORS = ['#FF6A00', '#10B981', '#F59E0B'];
 
 export default function DashboardHome({ stats, refreshStats }: DashboardHomeProps) {
     const handleCleanupMock = async () => {
@@ -71,7 +74,6 @@ export default function DashboardHome({ stats, refreshStats }: DashboardHomeProp
         }
     };
 
-    // Default stats to prevent UI from vanishing
     const defaultStats: Stats = {
         totalUsers: 0,
         totalRestaurants: 0,
@@ -101,37 +103,37 @@ export default function DashboardHome({ stats, refreshStats }: DashboardHomeProp
             subValue: `Rs. ${(displayStats.totalRevenue || 0).toLocaleString()}`,
             subLabel: 'Lifetime',
             icon: FaMoneyBillWave,
-            color: 'bg-green-100 text-green-600',
+            color: 'bg-emerald-50 text-emerald-600',
             trend: '+12.5%',
-            trendColor: 'text-green-500'
+            trendColor: 'text-emerald-500'
         },
         {
             label: 'Platform Commission',
             value: `Rs. ${(displayStats.totalCommission || 0).toLocaleString()}`,
             subValue: `Rs. ${(displayStats.totalPendingPayouts || 0).toLocaleString()}`,
             subLabel: 'Pending Payouts',
-            icon: FaChartLine,
-            color: 'bg-blue-100 text-blue-600',
+            icon: FaWallet,
+            color: 'bg-orange-50 text-[#FF6A00]',
             trend: 'Live',
-            trendColor: 'text-blue-500'
+            trendColor: 'text-[#FF6A00]'
         },
         {
             label: 'Total Orders',
             value: displayStats.totalOrders.toLocaleString(),
             subValue: `${displayStats.todayOrders} new today`,
             icon: FaShoppingBag,
-            color: 'bg-orange-100 text-orange-600',
+            color: 'bg-blue-50 text-blue-600',
             trend: 'Orders',
-            trendColor: 'text-orange-500'
+            trendColor: 'text-blue-500'
         },
         {
             label: 'Active Partners',
             value: (displayStats.totalRestaurants + displayStats.totalRiders).toLocaleString(),
             subValue: `${displayStats.onlineRiders || 0} riders online`,
-            icon: FaStore,
-            color: 'bg-purple-100 text-purple-600',
+            icon: FaMotorcycle,
+            color: 'bg-indigo-50 text-indigo-600',
             trend: 'Partners',
-            trendColor: 'text-purple-500'
+            trendColor: 'text-indigo-500'
         }
     ];
 
@@ -142,95 +144,108 @@ export default function DashboardHome({ stats, refreshStats }: DashboardHomeProp
     ];
 
     return (
-        <div className="p-4 space-y-4">
+        <div className="p-6 space-y-8 max-w-[1600px] mx-auto font-sans">
             <div className="flex justify-between items-center mb-4">
                 <div>
-                    <div className="flex items-center gap-2">
-                        <h2 className="text-lg font-bold text-gray-800">Platform Overview</h2>
-                        <div className="flex items-center gap-1.5 px-2 py-0.5 bg-green-50 rounded-full border border-green-100">
-                            <span className="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse"></span>
-                            <span className="text-[9px] font-bold text-green-600 uppercase tracking-tight">Live</span>
+                    <div className="flex items-center gap-3">
+                        <h2 className="text-[24px] font-bold text-[#111827] tracking-tight">Dashboard Overview</h2>
+                        <div className="flex items-center gap-1.5 px-3 py-1 bg-emerald-50 rounded-full border border-emerald-100">
+                            <span className="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-pulse"></span>
+                            <span className="text-[10px] font-bold text-emerald-600 uppercase tracking-widest">Live</span>
                         </div>
                     </div>
-                    <p className="text-[10px] text-gray-500 uppercase tracking-wider font-bold">Real-time statistics and insights</p>
+                    <p className="text-[14px] font-medium text-[#6B7280] mt-1">Welcome back! Here's what's happening today.</p>
                 </div>
-                <div className="flex gap-2">
+                <div className="flex gap-3">
                     <button
                         onClick={handleCleanupMock}
-                        className="flex items-center gap-2 px-3 py-1.5 bg-red-50 text-red-600 rounded-lg text-[10px] font-bold hover:bg-red-100 transition uppercase tracking-wider"
-                        title="Delete Mock Data"
+                        className="flex items-center gap-2 px-4 py-2 bg-red-50 text-red-600 rounded-xl text-[13px] font-bold hover:bg-red-100 transition-all uppercase tracking-wider shadow-sm"
                     >
                         <FaTrashAlt /> Clean Data
                     </button>
-                    <button className="flex items-center gap-2 px-3 py-1.5 bg-white border border-gray-200 rounded-lg text-[10px] font-bold text-gray-600 hover:bg-gray-50 transition uppercase tracking-wider">
+                    <button className="flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 rounded-xl text-[13px] font-bold text-[#111827] hover:bg-gray-50 transition-all shadow-sm">
                         Export Report
                     </button>
                 </div>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                 {widgets.map((w, i) => (
                     <motion.div
                         key={i}
                         initial={{ opacity: 0, y: 10 }}
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ delay: i * 0.1 }}
-                        className="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 flex items-center justify-between hover:shadow-md transition-shadow"
+                        className="bg-white p-6 rounded-[2rem] shadow-sm border border-gray-100 flex items-center justify-between hover:shadow-md transition-all group"
                     >
                         <div>
-                            <p className="text-gray-400 text-[10px] mb-1 font-bold uppercase tracking-wider">{w.label}</p>
-                            <h3 className="text-lg font-bold text-gray-800">{w.value}</h3>
-                            <div className="flex items-center gap-1 mt-1">
-                                <span className="text-[9px] font-bold text-gray-400 uppercase">{w.subLabel}:</span>
-                                <span className="text-[9px] font-bold text-gray-700">{w.subValue}</span>
+                            <p className="text-[13px] font-bold text-[#6B7280] mb-2 uppercase tracking-wider">{w.label}</p>
+                            <h3 className="text-[26px] font-bold text-[#111827] tracking-tight">{w.value}</h3>
+                            <div className="flex items-center gap-2 mt-2">
+                                <span className="text-[12px] font-medium text-[#9CA3AF] uppercase tracking-wide">{w.subLabel}:</span>
+                                <span className="text-[12px] font-bold text-[#111827]">{w.subValue}</span>
                             </div>
                         </div>
-                        <div className={`w-9 h-9 ${w.color} rounded-xl flex items-center justify-center`}>
-                            <w.icon className="text-base" />
+                        <div className={`w-14 h-14 ${w.color} rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform`}>
+                            <w.icon className="text-2xl" />
                         </div>
                     </motion.div>
                 ))}
             </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
                 {/* Revenue Chart */}
-                <div className="lg:col-span-2 bg-white p-4 rounded-2xl shadow-sm border border-gray-100">
-                    <div className="flex justify-between items-center mb-6">
+                <div className="lg:col-span-2 bg-white p-8 rounded-[2rem] shadow-sm border border-gray-100">
+                    <div className="flex justify-between items-center mb-8">
                         <div>
-                            <h3 className="text-base font-bold text-gray-800">Revenue Overview</h3>
-                            <p className="text-[10px] text-gray-500 uppercase font-bold tracking-wider">Last 7 days performance</p>
+                            <h3 className="text-[18px] font-bold text-[#111827] tracking-tight">Revenue Analytics</h3>
+                            <p className="text-[13px] font-medium text-[#9CA3AF] uppercase tracking-wider mt-1">Last 7 days performance</p>
                         </div>
-                        <select className="px-2 py-1 border rounded-lg text-xs text-gray-600 outline-none font-bold">
+                        <select className="px-4 py-2 bg-gray-50 border border-gray-100 rounded-xl text-[13px] text-[#111827] outline-none font-bold focus:ring-2 focus:ring-[#FF6A00]/20 transition-all cursor-pointer">
                             <option>Last 7 days</option>
+                            <option>Last 30 days</option>
                         </select>
                     </div>
-                    <div className="h-64">
+                    <div className="h-80">
                         <ResponsiveContainer width="100%" height="100%">
                             <LineChart data={displayStats.revenueStats || []}>
-                                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#E5E7EB" />
+                                <defs>
+                                    <linearGradient id="colorRev" x1="0" y1="0" x2="0" y2="1">
+                                        <stop offset="5%" stopColor="#FF6A00" stopOpacity={0.1}/>
+                                        <stop offset="95%" stopColor="#FF6A00" stopOpacity={0}/>
+                                    </linearGradient>
+                                </defs>
+                                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#F3F4F6" />
                                 <XAxis
                                     dataKey="date"
                                     tickFormatter={(val) => new Date(val).toLocaleDateString(undefined, { weekday: 'short' })}
                                     axisLine={false}
                                     tickLine={false}
-                                    tick={{ fill: '#9CA3AF', fontSize: 10 }}
-                                    dy={10}
+                                    tick={{ fill: '#9CA3AF', fontSize: 11, fontWeight: 500 }}
+                                    dy={15}
                                 />
                                 <YAxis
                                     axisLine={false}
                                     tickLine={false}
-                                    tick={{ fill: '#9CA3AF', fontSize: 10 }}
+                                    tick={{ fill: '#9CA3AF', fontSize: 11, fontWeight: 500 }}
+                                    tickFormatter={(val) => `Rs.${val > 1000 ? (val/1000).toFixed(1) + 'k' : val}`}
                                 />
                                 <Tooltip
-                                    contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)', fontSize: '10px' }}
+                                    contentStyle={{ 
+                                        borderRadius: '12px', 
+                                        border: 'none', 
+                                        boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)', 
+                                        fontSize: '12px',
+                                        fontWeight: 500
+                                    }}
                                 />
                                 <Line
                                     type="monotone"
                                     dataKey="revenue"
-                                    stroke="#F97316"
-                                    strokeWidth={2}
-                                    dot={{ fill: '#F97316', strokeWidth: 1, r: 3, stroke: '#fff' }}
-                                    activeDot={{ r: 5, strokeWidth: 0 }}
+                                    stroke="#FF6A00"
+                                    strokeWidth={3}
+                                    dot={{ fill: '#FF6A00', strokeWidth: 2, r: 4, stroke: '#fff' }}
+                                    activeDot={{ r: 6, strokeWidth: 0 }}
                                 />
                             </LineChart>
                         </ResponsiveContainer>
@@ -238,102 +253,131 @@ export default function DashboardHome({ stats, refreshStats }: DashboardHomeProp
                 </div>
 
                 {/* Order Status Pie Chart */}
-                <div className="bg-white p-4 rounded-2xl shadow-sm border border-gray-100">
-                    <h3 className="text-base font-bold text-gray-800 mb-0.5">Order Status</h3>
-                    <p className="text-[10px] text-gray-500 mb-6 uppercase font-bold tracking-wider">This week distribution</p>
-                    <div className="h-56 relative">
+                <div className="bg-white p-8 rounded-[2rem] shadow-sm border border-gray-100">
+                    <h3 className="text-[18px] font-bold text-[#111827] mb-1 tracking-tight">Order Status</h3>
+                    <p className="text-[13px] font-medium text-[#9CA3AF] mb-8 uppercase tracking-wider">Weekly distribution</p>
+                    <div className="h-64 relative">
                         <ResponsiveContainer width="100%" height="100%">
                             <PieChart>
                                 <Pie
                                     data={pieData}
                                     cx="50%"
                                     cy="50%"
-                                    innerRadius={50}
-                                    outerRadius={70}
+                                    innerRadius={70}
+                                    outerRadius={90}
                                     paddingAngle={5}
                                     dataKey="value"
+                                    stroke="none"
                                 >
                                     {pieData.map((entry, index) => (
                                         <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                                     ))}
                                 </Pie>
                                 <Tooltip />
-                                <Legend verticalAlign="bottom" height={36} wrapperStyle={{ fontSize: '10px' }} />
+                                <Legend 
+                                    verticalAlign="bottom" 
+                                    height={36} 
+                                    iconType="circle"
+                                    wrapperStyle={{ fontSize: '12px', fontWeight: 600, color: '#111827', textTransform: 'uppercase', letterSpacing: '0.05em' }} 
+                                />
                             </PieChart>
                         </ResponsiveContainer>
-                        <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                        <div className="absolute inset-0 flex items-center justify-center pointer-events-none pb-9">
                             <div className="text-center">
-                                <p className="text-lg font-bold text-gray-800">
+                                <p className="text-[26px] font-bold text-[#111827] tracking-tight">
                                     {Math.round(((displayStats.orderStatusDist?.delivered || 0) / (displayStats.totalOrders || 1)) * 100)}%
                                 </p>
-                                <p className="text-[10px] text-gray-500 uppercase font-bold">Completed</p>
+                                <p className="text-[11px] font-bold text-[#9CA3AF] uppercase tracking-widest">Success</p>
                             </div>
                         </div>
                     </div>
                 </div>
             </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
                 {/* Top Performing Restaurants */}
-                <div className="bg-white p-4 rounded-2xl shadow-sm border border-gray-100">
-                    <div className="flex justify-between items-center mb-6">
-                        <h3 className="text-base font-bold text-gray-800">Top Performing Restaurants</h3>
-                        <button className="text-[10px] text-orange-500 font-bold hover:text-orange-600 uppercase tracking-wider">View All</button>
+                <div className="bg-white p-8 rounded-[2rem] shadow-sm border border-gray-100">
+                    <div className="flex justify-between items-center mb-8">
+                        <div>
+                            <h3 className="text-[18px] font-bold text-[#111827] tracking-tight">Top Sellers</h3>
+                            <p className="text-[13px] font-medium text-[#9CA3AF] uppercase tracking-wider mt-1">Highest performing vendors</p>
+                        </div>
+                        <button className="text-[13px] text-[#FF6A00] font-bold hover:underline uppercase tracking-wider">View All</button>
                     </div>
-                    <div className="space-y-3">
+                    <div className="space-y-4">
                         {(displayStats.topRestaurants || []).map((restaurant, index) => (
-                            <div key={index} className="flex items-center justify-between p-2.5 hover:bg-gray-50 rounded-xl transition-colors">
-                                <div className="flex items-center gap-3">
-                                    <div className={`w-7 h-7 rounded-lg flex items-center justify-center text-white font-bold text-xs
-                                        ${index === 0 ? 'bg-orange-500' :
-                                            index === 1 ? 'bg-orange-400' :
-                                                index === 2 ? 'bg-orange-300' : 'bg-gray-300'}`}>
+                            <div key={index} className="flex items-center justify-between p-4 hover:bg-gray-50/50 rounded-[1.5rem] border border-transparent hover:border-gray-100 transition-all group">
+                                <div className="flex items-center gap-4">
+                                    <div className={`w-10 h-10 rounded-xl flex items-center justify-center text-white font-bold text-sm
+                                        ${index === 0 ? 'bg-yellow-400 shadow-lg shadow-yellow-400/20' :
+                                            index === 1 ? 'bg-slate-300 shadow-lg shadow-slate-300/20' :
+                                                index === 2 ? 'bg-amber-600 shadow-lg shadow-amber-600/20' : 'bg-gray-100 text-[#9CA3AF]'}`}>
                                         {index + 1}
                                     </div>
                                     <div>
-                                        <h4 className="font-bold text-gray-800 text-xs">{restaurant.name}</h4>
-                                        <p className="text-[10px] text-gray-500 font-bold uppercase">{restaurant.orders} orders</p>
+                                        <h4 className="font-bold text-[#111827] text-[15px] group-hover:text-[#FF6A00] transition-colors tracking-tight">{restaurant.name}</h4>
+                                        <div className="flex items-center gap-2 mt-0.5">
+                                            <span className="text-[12px] font-medium text-[#6B7280]">{restaurant.orders} Orders</span>
+                                            <span className="text-gray-300">•</span>
+                                            <div className="flex items-center gap-1 text-[12px] text-yellow-500 font-bold">
+                                                <FaStar size={10} /> {restaurant.rating.toFixed(1)}
+                                            </div>
+                                        </div>
                                     </div>
                                 </div>
                                 <div className="text-right">
-                                    <p className="font-bold text-gray-800 text-xs">Rs. {restaurant.revenue.toLocaleString()}</p>
-                                    <p className="text-[10px] text-gray-500 font-bold uppercase">⭐ {restaurant.rating.toFixed(1)}</p>
+                                    <p className="font-bold text-[#111827] text-[15px] tracking-tight">Rs. {restaurant.revenue.toLocaleString()}</p>
+                                    <p className="text-[11px] text-emerald-500 font-bold mt-0.5 flex items-center justify-end gap-1">
+                                        <FaArrowUp size={8} /> 12%
+                                    </p>
                                 </div>
                             </div>
                         ))}
                         {(displayStats.topRestaurants || []).length === 0 && (
-                            <div className="text-center py-6 text-[10px] text-gray-500 font-bold uppercase">No data available</div>
+                            <div className="text-center py-12">
+                                <p className="text-[14px] font-medium text-[#6B7280]">No vendor data available</p>
+                            </div>
                         )}
                     </div>
                 </div>
 
                 {/* Recent Activity */}
-                <div className="bg-white p-4 rounded-2xl shadow-sm border border-gray-100">
-                    <div className="flex justify-between items-center mb-6">
-                        <h3 className="text-base font-bold text-gray-800">Recent Activity</h3>
-                        <button className="text-[10px] text-orange-500 font-bold hover:text-orange-600 uppercase tracking-wider">View All</button>
+                <div className="bg-white p-8 rounded-[2rem] shadow-sm border border-gray-100">
+                    <div className="flex justify-between items-center mb-8">
+                        <div>
+                            <h3 className="text-[18px] font-bold text-[#111827] tracking-tight">Recent Activity</h3>
+                            <p className="text-[13px] font-medium text-[#9CA3AF] uppercase tracking-wider mt-1">Latest platform events</p>
+                        </div>
+                        <button className="text-[13px] text-[#6B7280] font-bold hover:text-[#111827] uppercase tracking-wider">Live Log</button>
                     </div>
-                    <div className="space-y-4">
+                    <div className="space-y-6">
                         {(displayStats.recentActivity || []).map((activity, index) => (
-                            <div key={index} className="flex gap-3">
-                                <div className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 text-sm
-                                    ${activity.type === 'order' ? 'bg-green-100 text-green-500' :
-                                        activity.type === 'restaurant_approval' ? 'bg-blue-100 text-blue-500' :
-                                            'bg-orange-100 text-orange-500'}`}>
+                            <div key={index} className="flex gap-4 relative">
+                                {index !== displayStats.recentActivity.length - 1 && (
+                                    <div className="absolute left-5 top-10 bottom-0 w-[2px] bg-gray-50"></div>
+                                )}
+                                <div className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 text-sm shadow-sm
+                                    ${activity.type === 'order' ? 'bg-emerald-50 text-emerald-500 border border-emerald-100' :
+                                        activity.type === 'restaurant_approval' ? 'bg-blue-50 text-blue-500 border border-blue-100' :
+                                            'bg-orange-50 text-[#FF6A00] border border-orange-100'}`}>
                                     {activity.type === 'order' ? <FaShoppingBag /> :
                                         activity.type === 'restaurant_approval' ? <FaStore /> : <FaMotorcycle />}
                                 </div>
-                                <div>
-                                    <h4 className="font-bold text-gray-800 text-xs">{activity.text}</h4>
-                                    <p className="text-[10px] text-gray-500 font-bold">{activity.subtext}</p>
-                                    <p className="text-[9px] text-gray-400 font-bold uppercase mt-0.5">
-                                        {new Date(activity.time).toLocaleString()}
-                                    </p>
+                                <div className="flex-1 pt-0.5">
+                                    <h4 className="font-bold text-[#111827] text-[14px] leading-tight tracking-tight">{activity.text}</h4>
+                                    <p className="text-[13px] font-medium text-[#6B7280] mt-1">{activity.subtext}</p>
+                                    <div className="flex items-center gap-2 mt-2 text-[10px] font-bold text-[#9CA3AF] uppercase tracking-widest">
+                                        <span>{new Date(activity.time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                                        <span className="text-gray-200">•</span>
+                                        <span>{new Date(activity.time).toLocaleDateString([], { month: 'short', day: 'numeric' })}</span>
+                                    </div>
                                 </div>
                             </div>
                         ))}
                         {displayStats.recentActivity.length === 0 && (
-                            <div className="text-center py-6 text-[10px] text-gray-500 font-bold uppercase">No recent activity</div>
+                            <div className="text-center py-12">
+                                <p className="text-[14px] font-medium text-[#6B7280]">No recent activity found</p>
+                            </div>
                         )}
                     </div>
                 </div>

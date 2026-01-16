@@ -48,95 +48,112 @@ export default function AdminManagementView() {
     ];
 
     return (
-        <div className="p-6">
-            <div className="flex justify-between items-center mb-6">
+        <div className="p-8">
+            <div className="flex justify-between items-center mb-8">
                 <div>
-                    <h2 className="text-lg font-bold text-gray-800">Admin Management</h2>
-                    <p className="text-[10px] text-gray-500 uppercase tracking-wider font-bold">Manage system administrators and roles</p>
+                    <h2 className="text-[24px] font-semibold text-[#111827] tracking-tight">Admin Management</h2>
+                    <p className="text-[14px] font-normal text-[#6B7280] mt-1">Manage system administrators and role-based permissions</p>
                 </div>
-                <button className="flex items-center gap-2 px-3 py-1.5 bg-orange-500 text-white rounded-lg font-bold hover:bg-orange-600 shadow-md shadow-orange-500/20 transition text-xs uppercase tracking-wider">
+                <button className="flex items-center gap-2 px-6 py-3 bg-[#FF6A00] text-white rounded-xl font-bold hover:bg-[#e65f00] shadow-lg shadow-[#FF6A00]/20 transition-all active:scale-95 text-[12px] uppercase tracking-wider">
                     <FaPlus /> Add Admin
                 </button>
             </div>
 
             {/* Stats Row */}
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
-                <div className="bg-white p-4 rounded-xl border border-gray-100 shadow-sm flex items-center justify-between">
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-10">
+                <div className="bg-white p-6 rounded-[2rem] border border-gray-100 shadow-sm flex items-center justify-between hover:shadow-md transition-all group">
                     <div>
-                        <p className="text-gray-500 text-[10px] uppercase font-bold mb-1">Total Admins</p>
-                        <h3 className="text-xl font-bold text-gray-800">{admins.length}</h3>
+                        <p className="text-[#6B7280] text-[13px] uppercase font-bold mb-2 tracking-wider">Total Admins</p>
+                        <h3 className="text-[26px] font-bold text-[#111827] tracking-tight">{admins.length}</h3>
                     </div>
-                    <div className="bg-blue-50 p-2.5 rounded-lg text-blue-500">
-                        <FaUserShield className="text-lg" />
+                    <div className="bg-orange-50 w-14 h-14 rounded-2xl flex items-center justify-center text-[#FF6A00] group-hover:scale-110 transition-transform">
+                        <FaUserShield className="text-2xl" />
                     </div>
                 </div>
-                <div className="bg-white p-4 rounded-xl border border-gray-100 shadow-sm">
-                    <p className="text-gray-500 text-[10px] uppercase font-bold mb-1">Active Now</p>
-                    <h3 className="text-xl font-bold text-green-600">{admins.length}</h3>
+                <div className="bg-white p-6 rounded-[2rem] border border-gray-100 shadow-sm flex items-center justify-between hover:shadow-md transition-all group">
+                    <div>
+                        <p className="text-[#6B7280] text-[13px] uppercase font-bold mb-2 tracking-wider">Active Now</p>
+                        <h3 className="text-[26px] font-bold text-emerald-600 tracking-tight">{admins.length}</h3>
+                    </div>
+                    <div className="bg-emerald-50 w-14 h-14 rounded-2xl flex items-center justify-center text-emerald-600 group-hover:scale-110 transition-transform">
+                        <div className="w-2.5 h-2.5 bg-emerald-500 rounded-full animate-pulse"></div>
+                    </div>
                 </div>
-                <div className="bg-white p-4 rounded-xl border border-gray-100 shadow-sm">
-                    <p className="text-gray-500 text-[10px] uppercase font-bold mb-1">Defined Roles</p>
-                    <h3 className="text-xl font-bold text-gray-800">{roles.length}</h3>
+                <div className="bg-white p-6 rounded-[2rem] border border-gray-100 shadow-sm flex items-center justify-between hover:shadow-md transition-all group">
+                    <div>
+                        <p className="text-[#6B7280] text-[13px] uppercase font-bold mb-2 tracking-wider">Defined Roles</p>
+                        <h3 className="text-[26px] font-bold text-[#111827] tracking-tight">{roles.length}</h3>
+                    </div>
+                    <div className="bg-blue-50 w-14 h-14 rounded-2xl flex items-center justify-center text-blue-600 group-hover:scale-110 transition-transform">
+                        <FaShieldAlt className="text-2xl" />
+                    </div>
                 </div>
-                <div className="bg-white p-4 rounded-xl border border-gray-100 shadow-sm">
-                    <p className="text-gray-500 text-[10px] uppercase font-bold mb-1">Recent Logs</p>
-                    <h3 className="text-xl font-bold text-gray-800">24h</h3>
+                <div className="bg-white p-6 rounded-[2rem] border border-gray-100 shadow-sm flex items-center justify-between hover:shadow-md transition-all group">
+                    <div>
+                        <p className="text-[#6B7280] text-[13px] uppercase font-bold mb-2 tracking-wider">Recent Activity</p>
+                        <h3 className="text-[26px] font-bold text-[#111827] tracking-tight">24h</h3>
+                    </div>
+                    <div className="bg-purple-50 w-14 h-14 rounded-2xl flex items-center justify-center text-purple-600 group-hover:scale-110 transition-transform">
+                        <FaSearch className="text-2xl" />
+                    </div>
                 </div>
             </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
                 {/* Admin List */}
                 <div className="lg:col-span-2">
-                    <div className="flex justify-between items-center mb-4 gap-4">
+                    <div className="flex justify-between items-center mb-6 gap-4">
                         <div className="relative flex-1 max-w-sm">
-                            <FaSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 text-xs" />
+                            <FaSearch className="absolute left-4 top-1/2 transform -translate-y-1/2 text-[#9CA3AF]" />
                             <input
                                 type="text"
-                                placeholder="Search admins..."
-                                className="w-full pl-9 pr-4 py-2 bg-white border border-gray-200 rounded-lg outline-none focus:ring-2 focus:ring-orange-500 text-xs"
+                                placeholder="Search administrators..."
+                                className="w-full pl-12 pr-4 py-3 bg-white border border-gray-200 rounded-2xl outline-none focus:ring-2 focus:ring-[#FF6A00]/20 focus:border-[#FF6A00] transition-all text-[14px] text-[#111827]"
                             />
                         </div>
-                        <select className="px-3 py-2 bg-white border border-gray-200 rounded-lg outline-none text-gray-600 text-xs font-bold uppercase">
+                        <select className="px-4 py-3 bg-white border border-gray-200 rounded-2xl outline-none text-[#6B7280] text-[12px] font-bold uppercase tracking-wider focus:border-[#FF6A00] cursor-pointer">
                             <option>All Roles</option>
                         </select>
                     </div>
 
-                    <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+                    <div className="bg-white rounded-[2rem] shadow-sm border border-gray-100 overflow-hidden">
                         <table className="w-full">
-                            <thead className="bg-gray-50 border-b border-gray-100">
+                            <thead className="bg-gray-50/50 border-b border-gray-100">
                                 <tr>
-                                    <th className="px-6 py-3 text-left text-[10px] font-bold text-gray-500 uppercase tracking-wider">Admin</th>
-                                    <th className="px-6 py-3 text-left text-[10px] font-bold text-gray-500 uppercase tracking-wider">Role</th>
-                                    <th className="px-6 py-3 text-left text-[10px] font-bold text-gray-500 uppercase tracking-wider">Status</th>
-                                    <th className="px-6 py-3 text-left text-[10px] font-bold text-gray-500 uppercase tracking-wider">Joined</th>
-                                    <th className="px-6 py-3 text-right text-[10px] font-bold text-gray-500 uppercase tracking-wider">Actions</th>
+                                    <th className="px-8 py-5 text-left text-[11px] font-bold text-[#6B7280] uppercase tracking-widest">Administrator</th>
+                                    <th className="px-8 py-5 text-left text-[11px] font-bold text-[#6B7280] uppercase tracking-widest">Role</th>
+                                    <th className="px-8 py-5 text-left text-[11px] font-bold text-[#6B7280] uppercase tracking-widest">Status</th>
+                                    <th className="px-8 py-5 text-left text-[11px] font-bold text-[#6B7280] uppercase tracking-widest">Joined</th>
+                                    <th className="px-8 py-5 text-right text-[11px] font-bold text-[#6B7280] uppercase tracking-widest">Actions</th>
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-gray-100">
                                 {admins.map(admin => (
-                                    <tr key={admin._id} className="hover:bg-gray-50 transition">
-                                        <td className="px-6 py-3">
-                                            <div className="text-xs">
-                                                <p className="font-bold text-gray-800">{admin.name}</p>
-                                                <p className="text-[10px] text-gray-500">{admin.email}</p>
+                                    <tr key={admin._id} className="hover:bg-gray-50/50 transition-colors group">
+                                        <td className="px-8 py-5">
+                                            <div>
+                                                <p className="font-bold text-[#111827] text-[14px] group-hover:text-[#FF6A00] transition-colors">{admin.name}</p>
+                                                <p className="text-[12px] text-[#6B7280] mt-0.5">{admin.email}</p>
                                             </div>
                                         </td>
-                                        <td className="px-6 py-3">
-                                            <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-red-50 text-red-600 border border-red-100 uppercase">
+                                        <td className="px-8 py-5">
+                                            <span className="px-3 py-1 rounded-lg text-[10px] font-bold bg-red-50 text-red-600 border border-red-100 uppercase tracking-wider">
                                                 {admin.role}
                                             </span>
                                         </td>
-                                        <td className="px-6 py-3">
-                                            <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-green-50 text-green-600 rounded-full text-[10px] font-bold uppercase">
-                                                <div className="w-1 h-1 bg-green-500 rounded-full"></div>
+                                        <td className="px-8 py-5">
+                                            <span className="inline-flex items-center gap-2 px-3 py-1 bg-emerald-50 text-emerald-600 rounded-full text-[10px] font-bold uppercase tracking-wider">
+                                                <div className="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-pulse"></div>
                                                 Active
                                             </span>
                                         </td>
-                                        <td className="px-6 py-3 text-[11px] text-gray-500 font-medium">
-                                            {new Date(admin.createdAt).toLocaleDateString()}
+                                        <td className="px-8 py-5 text-[13px] text-[#6B7280] font-medium">
+                                            {new Date(admin.createdAt).toLocaleDateString(undefined, { day: 'numeric', month: 'short', year: 'numeric' })}
                                         </td>
-                                        <td className="px-6 py-3 text-right text-gray-400">
-                                            <button className="p-1.5 hover:bg-gray-100 rounded-lg transition"><FaEllipsisV className="text-xs" /></button>
+                                        <td className="px-8 py-5 text-right">
+                                            <button className="p-2.5 hover:bg-gray-100 text-[#9CA3AF] hover:text-[#111827] rounded-xl transition-all">
+                                                <FaEllipsisV className="text-sm" />
+                                            </button>
                                         </td>
                                     </tr>
                                 ))}
@@ -147,12 +164,15 @@ export default function AdminManagementView() {
 
                 {/* Role Permissions */}
                 <div>
-                    <h3 className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-4">Role Definitions</h3>
-                    <div className="space-y-3">
+                    <h3 className="text-[11px] font-bold text-[#6B7280] uppercase tracking-widest mb-6 flex items-center gap-2">
+                        <div className="w-1.5 h-4 bg-[#FF6A00] rounded-full"></div>
+                        Role Definitions
+                    </h3>
+                    <div className="space-y-4">
                         {roles.map((role, idx) => (
-                            <div key={idx} className={`p-3 rounded-xl border ${role.color.replace('text-', 'border-').replace('700', '200')} ${role.color.split(' ')[0]} bg-opacity-30`}>
-                                <h4 className="text-xs font-bold mb-0.5">{role.name}</h4>
-                                <p className="text-[10px] font-medium opacity-70">{role.desc}</p>
+                            <div key={idx} className={`p-5 rounded-[1.5rem] border ${role.color.replace('text-', 'border-').replace('700', '200')} ${role.color.split(' ')[0]} bg-opacity-30 hover:scale-[1.02] transition-transform cursor-default`}>
+                                <h4 className="text-[14px] font-bold text-[#111827] mb-1">{role.name}</h4>
+                                <p className="text-[12px] text-[#6B7280] font-medium leading-relaxed">{role.desc}</p>
                             </div>
                         ))}
                     </div>

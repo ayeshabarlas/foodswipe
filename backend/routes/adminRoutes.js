@@ -9,11 +9,14 @@ const {
     getDashboardStats,
     getAllRestaurants,
     getAllRiders,
+    approveRider,
+    rejectRider,
     getRestaurantSales,
     getDailyStats,
     getSystemSettings,
     updateSystemSettings,
     getUsers,
+    syncFirebaseUsers,
     suspendUser,
     unsuspendUser,
     deleteUser,
@@ -46,10 +49,13 @@ router.get('/orders', getAllOrders);
 
 // Rider management
 router.get('/riders', getAllRiders);
+router.put('/riders/:id/approve', approveRider);
+router.put('/riders/:id/reject', rejectRider);
 router.delete('/riders/:id', deleteRider);
 
 // User management
 router.get('/users', getUsers);
+router.post('/users/sync', syncFirebaseUsers);
 router.put('/users/:id/suspend', suspendUser);
 router.put('/users/:id/unsuspend', unsuspendUser);
 router.delete('/users/:id', deleteUser);

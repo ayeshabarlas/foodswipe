@@ -79,6 +79,54 @@ const rejectRestaurant = async (req, res) => {
     }
 };
 
+// @desc    Approve rider
+// @route   PUT /api/admin/riders/:id/approve
+// @access  Private/Admin
+const approveRider = async (req, res) => {
+    try {
+        const rider = await Rider.findById(req.params.id);
+
+        if (!rider) {
+            return res.status(404).json({ message: 'Rider not found' });
+        }
+
+        rider.verificationStatus = 'approved';
+        await rider.save();
+
+        // Notify admins about status update
+        triggerEvent('admin', 'rider_updated', rider);
+
+        res.json({ message: 'Rider approved successfully', rider });
+    } catch (error) {
+        res.status(500).json({ message: 'Server error', error: error.message });
+    }
+};
+
+// @desc    Reject rider
+// @route   PUT /api/admin/riders/:id/reject
+// @access  Private/Admin
+const rejectRider = async (req, res) => {
+    try {
+        const { reason } = req.body;
+        const rider = await Rider.findById(req.params.id);
+
+        if (!rider) {
+            return res.status(404).json({ message: 'Rider not found' });
+        }
+
+        rider.verificationStatus = 'rejected';
+        // Add rejection reason if you have a field for it, or just update status
+        await rider.save();
+
+        // Notify admins about status update
+        triggerEvent('admin', 'rider_updated', rider);
+
+        res.json({ message: 'Rider rejected', rider });
+    } catch (error) {
+        res.status(500).json({ message: 'Server error', error: error.message });
+    }
+};
+
 // @desc    Get all orders (admin overview)
 // @route   GET /api/admin/orders
 // @access  Private/Admin
@@ -568,6 +616,57 @@ const updateSystemSettings = async (req, res) => {
 };
 
 // @desc    Get all users (customers) with stats
+// @desc    Sync Firebase users with MongoDB
+const syncFirebaseUsers = async (req, res) => {
+    try {
+        const { admin } = require('../config/firebase');
+        const listUsersResult = await admin.auth().listUsers();
+        const firebaseUsers = listUsersResult.users;
+
+        let syncedCount = 0;
+        let alreadyExistsCount = 0;
+
+        for (const fbUser of firebaseUsers) {
+            const email = fbUser.email;
+            if (!email) continue;
+
+            // Check if user exists in MongoDB for any role
+            // Usually, we want to ensure they exist as a 'customer' at least
+            const existingUser = await User.findOne({ email: { $regex: new RegExp(`^${email}$`, 'i') }, role: 'customer' });
+
+            if (!existingUser) {
+                await User.create({
+                    name: fbUser.displayName || 'Firebase User',
+                    email: email,
+                    phone: fbUser.phoneNumber || undefined,
+                    password: '', // Social login users don't have passwords
+                    role: 'customer',
+                    firebaseUid: fbUser.uid,
+                    status: 'active'
+                });
+                syncedCount++;
+            } else {
+                // If user exists but firebaseUid is missing, update it
+                if (!existingUser.firebaseUid) {
+                    existingUser.firebaseUid = fbUser.uid;
+                    await existingUser.save();
+                }
+                alreadyExistsCount++;
+            }
+        }
+
+        res.json({
+            message: 'Sync completed',
+            syncedCount,
+            alreadyExistsCount,
+            totalFirebaseUsers: firebaseUsers.length
+        });
+    } catch (error) {
+        console.error('Sync Error:', error);
+        res.status(500).json({ message: 'Error syncing users', error: error.message });
+    }
+};
+
 const getUsers = async (req, res) => {
     try {
         const role = req.query.role || 'customer';
@@ -762,6 +861,8 @@ module.exports = {
     getPendingRestaurants,
     approveRestaurant,
     rejectRestaurant,
+    approveRider,
+    rejectRider,
     getAllOrders,
     getDashboardStats,
     getAllRestaurants,
@@ -771,6 +872,7 @@ module.exports = {
     getSystemSettings,
     updateSystemSettings,
     getUsers,
+    syncFirebaseUsers,
     suspendUser,
     unsuspendUser,
     deleteUser,

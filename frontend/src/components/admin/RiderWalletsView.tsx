@@ -89,128 +89,129 @@ export default function RiderWalletsView() {
 
     return (
         <div className="p-8">
-            <div className="mb-6">
-                <h1 className="text-3xl font-bold text-gray-800">Rider Wallets</h1>
-                <p className="text-gray-600 mt-1">Manage rider earnings and cash collections</p>
+            <div className="flex justify-between items-center mb-8">
+                <div>
+                    <h1 className="text-[24px] font-semibold text-[#111827] tracking-tight">Rider Wallets</h1>
+                    <p className="text-[14px] font-normal text-[#6B7280] mt-1">Manage rider earnings, cash collections, and payouts</p>
+                </div>
             </div>
 
             {/* Summary Cards */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
-                <div className="bg-white rounded-lg shadow p-6 border-l-4 border-purple-500">
-                    <div className="flex items-center justify-between">
-                        <div>
-                            <p className="text-gray-600 text-sm">Total Riders</p>
-                            <p className="text-3xl font-bold text-gray-800 mt-1">{wallets.length}</p>
-                        </div>
-                        <FaMotorcycle className="text-purple-500 text-3xl" />
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
+                <div className="bg-white p-6 rounded-[2rem] border border-gray-100 shadow-sm flex items-center justify-between hover:shadow-md transition-all group">
+                    <div>
+                        <p className="text-[#6B7280] text-[13px] uppercase font-bold mb-2 tracking-wider">Total Active Riders</p>
+                        <h3 className="text-[26px] font-bold text-[#111827] tracking-tight">{wallets.length}</h3>
+                    </div>
+                    <div className="bg-purple-50 w-14 h-14 rounded-2xl flex items-center justify-center text-purple-600 group-hover:scale-110 transition-transform">
+                        <FaMotorcycle className="text-2xl" />
                     </div>
                 </div>
 
-                <div className="bg-white rounded-lg shadow p-6 border-l-4 border-green-500">
-                    <div className="flex items-center justify-between">
-                        <div>
-                            <p className="text-gray-600 text-sm">Pending Withdrawals</p>
-                            <p className="text-3xl font-bold text-gray-800 mt-1">{formatCurrency(totalPending)}</p>
-                        </div>
-                        <FaWallet className="text-green-500 text-3xl" />
+                <div className="bg-white p-6 rounded-[2rem] border border-gray-100 shadow-sm flex items-center justify-between hover:shadow-md transition-all group">
+                    <div>
+                        <p className="text-[#6B7280] text-[13px] uppercase font-bold mb-2 tracking-wider">Pending Withdrawals</p>
+                        <h3 className="text-[26px] font-bold text-emerald-600 tracking-tight">{formatCurrency(totalPending)}</h3>
+                    </div>
+                    <div className="bg-emerald-50 w-14 h-14 rounded-2xl flex items-center justify-center text-emerald-600 group-hover:scale-110 transition-transform">
+                        <FaWallet className="text-2xl" />
                     </div>
                 </div>
 
-                <div className="bg-white rounded-lg shadow p-6 border-l-4 border-red-500">
-                    <div className="flex items-center justify-between">
-                        <div>
-                            <p className="text-gray-600 text-sm">Cash to Deposit</p>
-                            <p className="text-3xl font-bold text-gray-800 mt-1">{formatCurrency(totalCashToDeposit)}</p>
-                        </div>
-                        <FaMoneyBillWave className="text-red-500 text-3xl" />
+                <div className="bg-white p-6 rounded-[2rem] border border-gray-100 shadow-sm flex items-center justify-between hover:shadow-md transition-all group">
+                    <div>
+                        <p className="text-[#6B7280] text-[13px] uppercase font-bold mb-2 tracking-wider">Cash to Deposit</p>
+                        <h3 className="text-[26px] font-bold text-red-600 tracking-tight">{formatCurrency(totalCashToDeposit)}</h3>
+                    </div>
+                    <div className="bg-red-50 w-14 h-14 rounded-2xl flex items-center justify-center text-red-600 group-hover:scale-110 transition-transform">
+                        <FaMoneyBillWave className="text-2xl" />
                     </div>
                 </div>
             </div>
 
             {/* Wallets Table */}
-            <div className="bg-white rounded-lg shadow overflow-hidden">
+            <div className="bg-white rounded-[2rem] shadow-sm border border-gray-100 overflow-hidden">
                 <div className="overflow-x-auto">
                     <table className="w-full">
-                        <thead className="bg-gray-50 border-b border-gray-200">
+                        <thead className="bg-gray-50/50 border-b border-gray-100">
                             <tr>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                <th className="px-8 py-5 text-left text-[11px] font-bold text-[#6B7280] uppercase tracking-widest">
                                     Rider
                                 </th>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                    Delivery Earnings
+                                <th className="px-8 py-5 text-left text-[11px] font-bold text-[#6B7280] uppercase tracking-widest">
+                                    Earnings
                                 </th>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                    Available Withdraw
+                                <th className="px-8 py-5 text-left text-[11px] font-bold text-[#6B7280] uppercase tracking-widest">
+                                    Available
                                 </th>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                    Cash to Deposit
+                                <th className="px-8 py-5 text-left text-[11px] font-bold text-[#6B7280] uppercase tracking-widest">
+                                    Cash Limit
                                 </th>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                    Bonuses/Penalties
+                                <th className="px-8 py-5 text-left text-[11px] font-bold text-[#6B7280] uppercase tracking-widest">
+                                    Bonuses
                                 </th>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                    Last Withdrawal
+                                <th className="px-8 py-5 text-left text-[11px] font-bold text-[#6B7280] uppercase tracking-widest">
+                                    Last Activity
                                 </th>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                <th className="px-8 py-5 text-right text-[11px] font-bold text-[#6B7280] uppercase tracking-widest">
                                     Actions
                                 </th>
                             </tr>
                         </thead>
-                        <tbody className="bg-white divide-y divide-gray-200">
+                        <tbody className="divide-y divide-gray-100">
                             {wallets.length === 0 ? (
                                 <tr>
-                                    <td colSpan={7} className="px-6 py-8 text-center text-gray-500">
-                                        No rider wallets found
+                                    <td colSpan={7} className="px-8 py-12 text-center">
+                                        <div className="flex flex-col items-center justify-center text-[#9CA3AF]">
+                                            <FaWallet className="text-3xl mb-3 opacity-20" />
+                                            <p className="text-[14px] font-medium">No rider wallets found</p>
+                                        </div>
                                     </td>
                                 </tr>
                             ) : (
                                 wallets.map((wallet) => (
-                                    <tr key={wallet._id} className="hover:bg-gray-50 transition">
-                                        <td className="px-6 py-4">
+                                    <tr key={wallet._id} className="hover:bg-gray-50/50 transition-colors group">
+                                        <td className="px-8 py-5">
                                             <div>
-                                                <p className="font-medium text-gray-900">{wallet.rider?.name || 'Unknown'}</p>
-                                                <p className="text-sm text-gray-500">{wallet.rider?.phone}</p>
+                                                <p className="font-bold text-[#111827] text-[14px] group-hover:text-[#FF6A00] transition-colors">{wallet.rider?.name || 'Unknown'}</p>
+                                                <p className="text-[12px] text-[#6B7280] mt-0.5">{wallet.rider?.phone}</p>
                                             </div>
                                         </td>
-                                        <td className="px-6 py-4">
+                                        <td className="px-8 py-5">
                                             <div className="flex flex-col">
-                                                <span className="text-gray-900 font-semibold">{formatCurrency(wallet.deliveryEarnings)}</span>
+                                                <span className="text-[#111827] font-bold text-[14px]">{formatCurrency(wallet.deliveryEarnings)}</span>
                                                 <div className="flex gap-2 mt-1">
-                                                    <span className="text-[10px] bg-blue-50 text-blue-600 px-1.5 py-0.5 rounded">
+                                                    <span className="text-[10px] bg-blue-50 text-blue-600 px-2 py-0.5 rounded-md font-bold uppercase tracking-wider">
                                                         Base: {formatCurrency((wallet.rider?.stats?.completedDeliveries || 0) * 60)}
-                                                    </span>
-                                                    <span className="text-[10px] bg-purple-50 text-purple-600 px-1.5 py-0.5 rounded">
-                                                        Dist: {formatCurrency(Math.max(0, wallet.deliveryEarnings - ((wallet.rider?.stats?.completedDeliveries || 0) * 60)))}
                                                     </span>
                                                 </div>
                                             </div>
                                         </td>
-                                        <td className="px-6 py-4">
-                                            <span className="text-green-600 font-semibold">{formatCurrency(wallet.availableWithdraw)}</span>
+                                        <td className="px-8 py-5">
+                                            <span className="text-emerald-600 font-bold text-[14px]">{formatCurrency(wallet.availableWithdraw)}</span>
                                         </td>
-                                        <td className="px-6 py-4">
-                                            <span className={wallet.cashToDeposit > 0 ? 'text-red-600 font-semibold' : 'text-gray-600'}>
+                                        <td className="px-8 py-5">
+                                            <span className={`text-[14px] font-bold ${wallet.cashToDeposit > 0 ? 'text-red-600' : 'text-[#6B7280]'}`}>
                                                 {formatCurrency(wallet.cashToDeposit)}
                                             </span>
                                         </td>
-                                        <td className="px-6 py-4">
-                                            <div className="text-sm">
-                                                <span className="text-green-600">+{formatCurrency(wallet.bonuses)}</span>
-                                                {' / '}
-                                                <span className="text-red-600">-{formatCurrency(wallet.penalties)}</span>
+                                        <td className="px-8 py-5">
+                                            <div className="flex items-center gap-2">
+                                                <span className="text-emerald-600 text-[12px] font-bold">+{formatCurrency(wallet.bonuses)}</span>
+                                                <span className="text-gray-300">/</span>
+                                                <span className="text-red-600 text-[12px] font-bold">-{formatCurrency(wallet.penalties)}</span>
                                             </div>
                                         </td>
-                                        <td className="px-6 py-4">
-                                            <span className="text-gray-600 text-sm">{formatDate(wallet.lastWithdrawDate)}</span>
+                                        <td className="px-8 py-5">
+                                            <span className="text-[#6B7280] text-[13px] font-medium">{formatDate(wallet.lastWithdrawDate)}</span>
                                         </td>
-                                        <td className="px-6 py-4">
-                                            <div className="flex gap-2">
-                                                <button className="text-blue-600 hover:text-blue-800 text-sm font-medium flex items-center gap-1">
-                                                    <FaHistory className="text-xs" />
-                                                    History
+                                        <td className="px-8 py-5 text-right">
+                                            <div className="flex items-center justify-end gap-2">
+                                                <button className="p-2 hover:bg-gray-100 text-[#6B7280] hover:text-[#FF6A00] rounded-xl transition-all flex items-center gap-2 text-[12px] font-bold uppercase tracking-wider">
+                                                    <FaHistory className="text-sm" />
                                                 </button>
                                                 {wallet.availableWithdraw > 0 && (
-                                                    <button className="text-green-600 hover:text-green-800 text-sm font-medium">
+                                                    <button className="px-4 py-2 bg-emerald-50 text-emerald-600 hover:bg-emerald-100 rounded-xl text-[11px] font-bold uppercase tracking-wider transition-all">
                                                         Pay Out
                                                     </button>
                                                 )}

@@ -82,7 +82,7 @@ export default function FinanceView() {
         }
     };
 
-    const COLORS = ['#3B82F6', '#10B981', '#F59E0B', '#EF4444'];
+    const COLORS = ['#FF6A00', '#111827', '#6B7280', '#9CA3AF'];
     const pieData = [
         { name: 'Card', value: 45 },
         { name: 'Cash', value: 35 },
@@ -91,110 +91,116 @@ export default function FinanceView() {
     ];
 
     return (
-        <div className="p-6">
-            <div className="flex justify-between items-center mb-6">
+        <div className="p-8">
+            <div className="flex justify-between items-center mb-8">
                 <div>
-                    <div className="flex items-center gap-2">
-                        <h2 className="text-lg font-bold text-gray-800">Finance Overview</h2>
-                        <div className="flex items-center gap-1.5 px-2 py-0.5 bg-green-50 rounded-full border border-green-100">
+                    <div className="flex items-center gap-3">
+                        <h2 className="text-[24px] font-semibold text-[#111827] tracking-tight">Finance Overview</h2>
+                        <div className="flex items-center gap-1.5 px-2.5 py-1 bg-green-50 rounded-full border border-green-100">
                             <span className="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse"></span>
-                            <span className="text-[9px] font-bold text-green-600 uppercase tracking-tight">Live</span>
+                            <span className="text-[11px] font-bold text-green-600 uppercase tracking-tight">Live Updates</span>
                         </div>
                     </div>
-                    <p className="text-[10px] text-gray-500 uppercase tracking-wider font-bold">Complete financial management with auto-split commission tracking</p>
+                    <p className="text-[14px] font-normal text-[#6B7280] mt-1">Complete financial management with auto-split commission tracking</p>
                 </div>
-                <div className="flex gap-2">
-                    <button className="flex items-center gap-2 px-3 py-1.5 border border-gray-200 rounded-lg bg-white text-gray-600 hover:bg-gray-50 text-xs">
+                <div className="flex gap-3">
+                    <button className="flex items-center gap-2 px-4 py-2 border border-gray-100 rounded-xl bg-white text-[#6B7280] text-[13px] font-medium uppercase tracking-wider hover:bg-gray-50 transition-all">
                         <FaCalendarAlt /> Date Range
                     </button>
-                    <button className="flex items-center gap-2 px-3 py-1.5 bg-green-500 text-white rounded-lg hover:bg-green-600 shadow-md text-xs font-bold uppercase tracking-wider">
+                    <button className="flex items-center gap-2 px-4 py-2 bg-[#FF6A00] text-white rounded-xl text-[13px] font-medium uppercase tracking-wider hover:bg-[#FF6A00]/90 shadow-lg shadow-[#FF6A00]/20 transition-all">
                         <FaDownload /> Export
                     </button>
                 </div>
             </div>
 
             {/* Main Stats Cards */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-10">
                 {/* Total Revenue */}
-                <div className="bg-blue-600 rounded-xl p-4 text-white shadow-lg shadow-blue-600/20 relative overflow-hidden">
+                <div className="bg-[#111827] rounded-[2rem] p-6 text-white shadow-xl shadow-gray-200 relative overflow-hidden group">
+                    <div className="absolute top-0 right-0 p-8 opacity-10 group-hover:scale-110 transition-transform">
+                        <span className="text-4xl font-bold">Rs.</span>
+                    </div>
                     <div className="relative z-10">
-                        <div className="flex justify-between items-start mb-3">
-                            <div className="bg-white/20 p-1.5 rounded-lg">
-                                <span className="text-base font-bold">Rs.</span>
+                        <div className="flex justify-between items-start mb-6">
+                            <div className="bg-white/10 p-2.5 rounded-2xl backdrop-blur-md">
+                                <span className="text-lg font-bold">Rs.</span>
                             </div>
-                            <span className="text-[10px] font-bold bg-white/20 px-1.5 py-0.5 rounded uppercase">+12.5%</span>
+                            <span className="text-[11px] font-bold bg-green-500/20 text-green-400 px-2 py-1 rounded-full uppercase tracking-wider">+12.5%</span>
                         </div>
-                        <p className="text-blue-100 text-[10px] font-bold uppercase tracking-wider mb-0.5">Total Revenue</p>
-                        <h3 className="text-xl font-bold">Rs. {stats.totalRevenue.toLocaleString()}</h3>
-                        <p className="text-blue-200 text-[9px] font-medium uppercase tracking-tighter">This month</p>
+                        <p className="text-white/60 text-[13px] font-medium uppercase tracking-wider mb-1">Total Revenue</p>
+                        <h3 className="text-[24px] font-bold tracking-tight">Rs. {stats.totalRevenue.toLocaleString()}</h3>
+                        <p className="text-white/40 text-[11px] font-medium uppercase tracking-wider mt-1">Gross Sales Volume</p>
                     </div>
                 </div>
 
                 {/* Platform Commission */}
-                <div className="bg-green-600 rounded-xl p-4 text-white shadow-lg shadow-green-600/20 relative overflow-hidden">
+                <div className="bg-[#FF6A00] rounded-[2rem] p-6 text-white shadow-xl shadow-[#FF6A00]/20 relative overflow-hidden group">
+                    <div className="absolute top-0 right-0 p-8 opacity-10 group-hover:scale-110 transition-transform">
+                        <span className="text-4xl font-bold">↗</span>
+                    </div>
                     <div className="relative z-10">
-                        <div className="flex justify-between items-start mb-3">
-                            <div className="bg-white/20 p-1.5 rounded-lg">
-                                <span className="text-base font-bold">↗</span>
+                        <div className="flex justify-between items-start mb-6">
+                            <div className="bg-white/10 p-2.5 rounded-2xl backdrop-blur-md">
+                                <span className="text-lg font-bold">↗</span>
                             </div>
                         </div>
-                        <p className="text-green-100 text-[10px] font-bold uppercase tracking-wider mb-0.5">Platform Commission</p>
-                        <h3 className="text-xl font-bold">Rs. {stats.platformCommission.toLocaleString()}</h3>
-                        <p className="text-green-200 text-[9px] font-medium uppercase tracking-tighter">This month</p>
+                        <p className="text-white/60 text-[13px] font-medium uppercase tracking-wider mb-1">Platform Earnings</p>
+                        <h3 className="text-[24px] font-bold tracking-tight">Rs. {stats.platformCommission.toLocaleString()}</h3>
+                        <p className="text-white/40 text-[11px] font-medium uppercase tracking-wider mt-1">Net Commission</p>
                     </div>
                 </div>
 
                 {/* Pending Payouts */}
-                <div className="bg-orange-500 rounded-xl p-4 text-white shadow-lg shadow-orange-500/20 relative overflow-hidden">
+                <div className="bg-white rounded-[2rem] p-6 text-[#111827] border border-gray-100 shadow-sm relative overflow-hidden group">
                     <div className="relative z-10">
-                        <div className="flex justify-between items-start mb-3">
-                            <div className="bg-white/20 p-1.5 rounded-lg">
-                                <span className="text-base font-bold">↘</span>
+                        <div className="flex justify-between items-start mb-6">
+                            <div className="bg-orange-50 p-2.5 rounded-2xl text-[#FF6A00]">
+                                <span className="text-lg font-bold">↘</span>
                             </div>
                         </div>
-                        <p className="text-orange-100 text-[10px] font-bold uppercase tracking-wider mb-0.5">Pending Payouts</p>
-                        <h3 className="text-xl font-bold">Rs. {stats.pendingPayouts.toLocaleString()}</h3>
-                        <p className="text-orange-200 text-[9px] font-medium uppercase tracking-tighter">Restaurants & Riders</p>
+                        <p className="text-[#6B7280] text-[13px] font-medium uppercase tracking-wider mb-1">Pending Payouts</p>
+                        <h3 className="text-[24px] font-bold tracking-tight text-[#111827]">Rs. {stats.pendingPayouts.toLocaleString()}</h3>
+                        <p className="text-[#9CA3AF] text-[11px] font-medium uppercase tracking-wider mt-1">Vendors & Riders</p>
                     </div>
                 </div>
 
                 {/* Gateway Fees */}
-                <div className="bg-purple-600 rounded-xl p-4 text-white shadow-lg shadow-purple-600/20 relative overflow-hidden">
+                <div className="bg-white rounded-[2rem] p-6 text-[#111827] border border-gray-100 shadow-sm relative overflow-hidden group">
                     <div className="relative z-10">
-                        <div className="flex justify-between items-start mb-3">
-                            <div className="bg-white/20 p-1.5 rounded-lg">
-                                <span className="text-base font-bold">💳</span>
+                        <div className="flex justify-between items-start mb-6">
+                            <div className="bg-purple-50 p-2.5 rounded-2xl text-purple-600">
+                                <span className="text-lg font-bold">💳</span>
                             </div>
                         </div>
-                        <p className="text-purple-100 text-[10px] font-bold uppercase tracking-wider mb-0.5">Gateway Fees</p>
-                        <h3 className="text-xl font-bold">Rs. {stats.gatewayFees.toLocaleString()}</h3>
-                        <p className="text-purple-200 text-[9px] font-medium uppercase tracking-tighter">Processing fees</p>
+                        <p className="text-[#6B7280] text-[13px] font-medium uppercase tracking-wider mb-1">Gateway Fees</p>
+                        <h3 className="text-[24px] font-bold tracking-tight text-[#111827]">Rs. {stats.gatewayFees.toLocaleString()}</h3>
+                        <p className="text-[#9CA3AF] text-[11px] font-medium uppercase tracking-wider mt-1">Processing Cost</p>
                     </div>
                 </div>
             </div>
 
             {/* Sub Stats Row */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-                <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-100">
-                    <p className="text-gray-500 text-[10px] font-bold uppercase tracking-wider mb-1">Restaurant Earnings</p>
-                    <h3 className="text-xl font-bold text-gray-800">Rs. {stats.restaurantEarnings.toLocaleString()}</h3>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-10">
+                <div className="bg-gray-50/50 p-6 rounded-[2rem] border border-gray-100">
+                    <p className="text-[#6B7280] text-[13px] font-medium uppercase tracking-wider mb-2">Restaurant Earnings</p>
+                    <h3 className="text-[24px] font-bold text-[#111827] tracking-tight">Rs. {stats.restaurantEarnings.toLocaleString()}</h3>
                 </div>
-                <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-100">
-                    <p className="text-gray-500 text-[10px] font-bold uppercase tracking-wider mb-1">Rider Earnings</p>
-                    <h3 className="text-xl font-bold text-gray-800">Rs. {stats.riderEarnings.toLocaleString()}</h3>
+                <div className="bg-gray-50/50 p-6 rounded-[2rem] border border-gray-100">
+                    <p className="text-[#6B7280] text-[13px] font-medium uppercase tracking-wider mb-2">Rider Earnings</p>
+                    <h3 className="text-[24px] font-bold text-[#111827] tracking-tight">Rs. {stats.riderEarnings.toLocaleString()}</h3>
                 </div>
-                <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-100">
-                    <p className="text-green-600 text-[10px] font-bold uppercase tracking-wider mb-1">Platform Net Revenue</p>
-                    <h3 className="text-xl font-bold text-green-700">Rs. {stats.netRevenue.toLocaleString()}</h3>
-                    <p className="text-[9px] text-gray-400 mt-1 uppercase font-bold">Commission - Gateway Fees</p>
+                <div className="bg-green-50/50 p-6 rounded-[2rem] border border-green-100">
+                    <p className="text-green-600 text-[13px] font-medium uppercase tracking-wider mb-2">Platform Net Revenue</p>
+                    <h3 className="text-[24px] font-bold text-green-700 tracking-tight">Rs. {stats.netRevenue.toLocaleString()}</h3>
+                    <p className="text-[11px] text-green-600/60 mt-1 uppercase font-medium tracking-wider">After Processor Fees</p>
                 </div>
             </div>
 
             {/* Charts Section */}
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                <div className="lg:col-span-2 bg-white p-5 rounded-xl shadow-sm border border-gray-100">
-                    <h3 className="text-gray-800 text-xs font-bold uppercase tracking-wider mb-6 flex items-center gap-2">
-                        <div className="w-1 h-3 bg-blue-500 rounded-full"></div>
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                <div className="lg:col-span-2 bg-white p-8 rounded-[2rem] shadow-sm border border-gray-100">
+                    <h3 className="text-[#111827] text-[13px] font-medium uppercase tracking-wider mb-8 flex items-center gap-3">
+                        <div className="w-1.5 h-4 bg-[#FF6A00] rounded-full"></div>
                         Revenue & Commission Trend
                     </h3>
                     <div className="h-72">
@@ -202,36 +208,42 @@ export default function FinanceView() {
                             <AreaChart data={chartData}>
                                 <defs>
                                     <linearGradient id="colorRevenue" x1="0" y1="0" x2="0" y2="1">
-                                        <stop offset="5%" stopColor="#3B82F6" stopOpacity={0.8} />
-                                        <stop offset="95%" stopColor="#3B82F6" stopOpacity={0} />
+                                        <stop offset="5%" stopColor="#FF6A00" stopOpacity={0.2} />
+                                        <stop offset="95%" stopColor="#FF6A00" stopOpacity={0} />
                                     </linearGradient>
                                 </defs>
-                                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#E5E7EB" />
+                                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#F3F4F6" />
                                 <XAxis 
                                     dataKey="name" 
                                     axisLine={false} 
                                     tickLine={false} 
-                                    tick={{ fill: '#6B7280', fontSize: 10, fontWeight: 600 }} 
+                                    tick={{ fill: '#6B7280', fontSize: 11, fontWeight: 500 }} 
                                     dy={10} 
                                 />
                                 <YAxis 
                                     axisLine={false} 
                                     tickLine={false} 
-                                    tick={{ fill: '#6B7280', fontSize: 10, fontWeight: 600 }} 
+                                    tick={{ fill: '#6B7280', fontSize: 11, fontWeight: 500 }} 
                                 />
                                 <Tooltip 
-                                    contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}
-                                    itemStyle={{ fontSize: '11px', fontWeight: 700 }}
+                                    contentStyle={{ 
+                                        borderRadius: '16px', 
+                                        border: 'none', 
+                                        boxShadow: '0 10px 25px -5px rgba(0,0,0,0.1)',
+                                        padding: '12px 16px'
+                                    }}
+                                    itemStyle={{ fontSize: '13px', fontWeight: 600, color: '#111827' }}
+                                    labelStyle={{ fontSize: '11px', fontWeight: 500, color: '#6B7280', marginBottom: '4px', textTransform: 'uppercase' }}
                                 />
-                                <Area type="monotone" dataKey="revenue" stroke="#3B82F6" fillOpacity={1} fill="url(#colorRevenue)" strokeWidth={3} />
+                                <Area type="monotone" dataKey="revenue" stroke="#FF6A00" fillOpacity={1} fill="url(#colorRevenue)" strokeWidth={3} />
                             </AreaChart>
                         </ResponsiveContainer>
                     </div>
                 </div>
 
-                <div className="bg-white p-5 rounded-xl shadow-sm border border-gray-100">
-                    <h3 className="text-gray-800 text-xs font-bold uppercase tracking-wider mb-6 flex items-center gap-2">
-                        <div className="w-1 h-3 bg-orange-500 rounded-full"></div>
+                <div className="bg-white p-8 rounded-[2rem] shadow-sm border border-gray-100">
+                    <h3 className="text-[#111827] text-[13px] font-medium uppercase tracking-wider mb-8 flex items-center gap-3">
+                        <div className="w-1.5 h-4 bg-[#FF6A00] rounded-full"></div>
                         Payment Methods
                     </h3>
                     <div className="h-64 flex justify-center items-center">
@@ -241,24 +253,27 @@ export default function FinanceView() {
                                     data={pieData}
                                     cx="50%"
                                     cy="50%"
-                                    innerRadius={60}
-                                    outerRadius={85}
+                                    innerRadius={70}
+                                    outerRadius={90}
                                     fill="#8884d8"
-                                    paddingAngle={5}
+                                    paddingAngle={8}
                                     dataKey="value"
+                                    stroke="none"
                                 >
                                     {pieData.map((entry, index) => (
                                         <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                                     ))}
                                 </Pie>
-                                <Tooltip />
+                                <Tooltip 
+                                    contentStyle={{ borderRadius: '16px', border: 'none', boxShadow: '0 10px 25px -5px rgba(0,0,0,0.1)' }}
+                                />
                             </PieChart>
                         </ResponsiveContainer>
                     </div>
-                    <div className="flex flex-wrap justify-center gap-x-4 gap-y-2 text-[10px] font-bold uppercase text-gray-500 mt-4">
-                        <div className="flex items-center gap-1.5"><div className="w-2 h-2 rounded-full bg-blue-500"></div>Card 45%</div>
-                        <div className="flex items-center gap-1.5"><div className="w-2 h-2 rounded-full bg-green-500"></div>Cash 35%</div>
-                        <div className="flex items-center gap-1.5"><div className="w-2 h-2 rounded-full bg-yellow-500"></div>Wallet 15%</div>
+                    <div className="flex flex-wrap justify-center gap-x-6 gap-y-3 text-[11px] font-medium uppercase text-[#6B7280] mt-6">
+                        <div className="flex items-center gap-2"><div className="w-2.5 h-2.5 rounded-full bg-[#FF6A00]"></div>Card</div>
+                        <div className="flex items-center gap-2"><div className="w-2.5 h-2.5 rounded-full bg-[#111827]"></div>Cash</div>
+                        <div className="flex items-center gap-2"><div className="w-2.5 h-2.5 rounded-full bg-[#6B7280]"></div>Wallet</div>
                     </div>
                 </div>
             </div>

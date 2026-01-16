@@ -114,64 +114,65 @@ export default function VerificationsView({ initialTab = 'restaurants' }: { init
         <motion.div
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
-            className="bg-white rounded-xl shadow-sm border border-gray-100 p-4 hover:shadow-md transition-shadow"
+            className="bg-white rounded-[2rem] shadow-sm border border-gray-100 p-6 hover:shadow-md transition-shadow group"
         >
-            <div className="flex justify-between items-start mb-3">
+            <div className="flex justify-between items-start mb-4">
                 <div className="flex items-center gap-3">
-                    <div className={`p-2 rounded-lg ${type === 'restaurant' ? 'bg-orange-50 text-orange-500' : 'bg-blue-50 text-blue-500'}`}>
-                        {type === 'restaurant' ? <FaStore className="text-base" /> : <FaMotorcycle className="text-base" />}
+                    <div className={`p-3 rounded-2xl ${type === 'restaurant' ? 'bg-orange-50 text-[#FF6A00]' : 'bg-blue-50 text-blue-600'}`}>
+                        {type === 'restaurant' ? <FaStore className="text-lg" /> : <FaMotorcycle className="text-lg" />}
                     </div>
                     <div>
-                        <h3 className="text-sm font-bold text-gray-900">{item.name || item.fullName}</h3>
-                        <p className="text-[10px] text-gray-500">{item.owner?.email || item.user?.email}</p>
+                        <h3 className="text-[15px] font-bold text-[#111827] tracking-tight">{item.name || item.fullName}</h3>
+                        <p className="text-[12px] text-[#6B7280]">{item.owner?.email || item.user?.email}</p>
                     </div>
                 </div>
-                <span className="px-2 py-0.5 bg-yellow-50 text-yellow-600 rounded-full text-[10px] font-bold uppercase">
+                <span className="px-2.5 py-1 bg-yellow-50 text-yellow-600 rounded-full text-[10px] font-bold uppercase tracking-wider">
                     Pending
                 </span>
             </div>
 
-            <div className="grid grid-cols-2 gap-2 mb-4">
-                <div className="bg-gray-50 p-2 rounded-lg">
-                    <span className="block text-[9px] text-gray-400 uppercase font-bold mb-0.5">Type</span>
-                    <span className="text-[11px] font-bold text-gray-700 capitalize">{item.businessType || 'Rider'}</span>
+            <div className="grid grid-cols-2 gap-3 mb-6">
+                <div className="bg-gray-50/50 p-3 rounded-2xl border border-gray-100">
+                    <span className="block text-[10px] text-[#9CA3AF] uppercase font-bold mb-1 tracking-wider">Type</span>
+                    <span className="text-[13px] font-semibold text-[#111827] capitalize">{item.businessType || 'Rider'}</span>
                 </div>
-                <div className="bg-gray-50 p-2 rounded-lg">
-                    <span className="block text-[9px] text-gray-400 uppercase font-bold mb-0.5">Contact</span>
-                    <span className="text-[11px] font-bold text-gray-700">{item.contact || item.user?.phone}</span>
+                <div className="bg-gray-50/50 p-3 rounded-2xl border border-gray-100">
+                    <span className="block text-[10px] text-[#9CA3AF] uppercase font-bold mb-1 tracking-wider">Contact</span>
+                    <span className="text-[13px] font-semibold text-[#111827]">{item.contact || item.user?.phone}</span>
                 </div>
             </div>
 
             <button
                 onClick={() => setSelectedItem(item)}
-                className="w-full py-2 border-2 border-orange-500 text-orange-500 font-bold rounded-lg hover:bg-orange-50 transition flex items-center justify-center gap-2 text-[11px] uppercase tracking-wider"
+                className="w-full py-3 border-2 border-[#FF6A00] text-[#FF6A00] font-bold rounded-xl hover:bg-[#FF6A00] hover:text-white transition-all duration-300 flex items-center justify-center gap-2 text-[11px] uppercase tracking-wider"
             >
-                <FaEye /> Review Documents
+                <FaEye className="text-sm" /> Review Documents
             </button>
         </motion.div>
     );
 
     return (
-        <div className="p-6">
-            <div className="flex justify-between items-center mb-6">
+        <div className="p-8">
+            <div className="flex justify-between items-center mb-8">
                 <div>
-                    <h2 className="text-lg font-bold text-gray-800">Pending Approvals</h2>
+                    <h2 className="text-[24px] font-semibold text-[#111827] tracking-tight">Verification Queue</h2>
+                    <p className="text-[14px] font-normal text-[#6B7280] mt-1">Review and approve new platform partners</p>
                 </div>
-                <div className="flex gap-1 bg-white p-1 rounded-lg border border-gray-100 shadow-sm">
+                <div className="flex gap-1 bg-gray-100/50 p-1.5 rounded-2xl border border-gray-100">
                     <button
                         onClick={() => setActiveTab('restaurants')}
-                        className={`px-3 py-1.5 rounded-md text-[10px] font-bold transition-all uppercase tracking-wider ${activeTab === 'restaurants'
-                            ? 'bg-orange-500 text-white shadow-md'
-                            : 'text-gray-500 hover:bg-gray-50'
+                        className={`px-4 py-2 rounded-xl text-[11px] font-bold transition-all uppercase tracking-wider ${activeTab === 'restaurants'
+                            ? 'bg-white text-[#FF6A00] shadow-sm border border-gray-100'
+                            : 'text-[#6B7280] hover:bg-white/50'
                             }`}
                     >
                         Restaurants ({restaurants.length})
                     </button>
                     <button
                         onClick={() => setActiveTab('riders')}
-                        className={`px-3 py-1.5 rounded-md text-[10px] font-bold transition-all uppercase tracking-wider ${activeTab === 'riders'
-                            ? 'bg-blue-600 text-white shadow-md'
-                            : 'text-gray-500 hover:bg-gray-50'
+                        className={`px-4 py-2 rounded-xl text-[11px] font-bold transition-all uppercase tracking-wider ${activeTab === 'riders'
+                            ? 'bg-white text-blue-600 shadow-sm border border-gray-100'
+                            : 'text-[#6B7280] hover:bg-white/50'
                             }`}
                     >
                         Riders ({riders.length})
@@ -180,27 +181,34 @@ export default function VerificationsView({ initialTab = 'restaurants' }: { init
             </div>
 
             {loading ? (
-                <div className="flex items-center justify-center h-64">
-                    <FaSpinner className="animate-spin text-3xl text-orange-500" />
+                <div className="flex flex-col items-center justify-center h-96 gap-4">
+                    <div className="w-12 h-12 border-4 border-[#FF6A00]/20 border-t-[#FF6A00] rounded-full animate-spin"></div>
+                    <p className="text-[#6B7280] text-[13px] font-medium animate-pulse uppercase tracking-wider">Loading queue...</p>
                 </div>
             ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
                     {activeTab === 'restaurants' ? (
                         (Array.isArray(restaurants) && restaurants.length > 0) ? (
                             restaurants.map(r => <Card key={r._id} item={r} type="restaurant" />)
                         ) : (
-                            <div className="col-span-full flex flex-col items-center justify-center h-64 text-gray-400">
-                                <FaCheckCircle className="text-4xl mb-3 text-gray-200" />
-                                <p className="text-sm font-medium">No pending restaurant verifications</p>
+                            <div className="col-span-full flex flex-col items-center justify-center h-96 bg-gray-50/50 rounded-[2rem] border-2 border-dashed border-gray-100">
+                                <div className="w-16 h-16 bg-white rounded-full flex items-center justify-center shadow-sm mb-4">
+                                    <FaCheckCircle className="text-2xl text-green-500" />
+                                </div>
+                                <p className="text-[#111827] font-bold text-[15px]">All caught up!</p>
+                                <p className="text-[#6B7280] text-[13px]">No pending restaurant verifications</p>
                             </div>
                         )
                     ) : (
                         (Array.isArray(riders) && riders.length > 0) ? (
                             riders.map(r => <Card key={r._id} item={r} type="rider" />)
                         ) : (
-                            <div className="col-span-full flex flex-col items-center justify-center h-64 text-gray-400">
-                                <FaCheckCircle className="text-4xl mb-3 text-gray-200" />
-                                <p className="text-sm font-medium">No pending rider verifications</p>
+                            <div className="col-span-full flex flex-col items-center justify-center h-96 bg-gray-50/50 rounded-[2rem] border-2 border-dashed border-gray-100">
+                                <div className="w-16 h-16 bg-white rounded-full flex items-center justify-center shadow-sm mb-4">
+                                    <FaCheckCircle className="text-2xl text-green-500" />
+                                </div>
+                                <p className="text-[#111827] font-bold text-[15px]">All caught up!</p>
+                                <p className="text-[#6B7280] text-[13px]">No pending rider verifications</p>
                             </div>
                         )
                     )}
@@ -214,30 +222,33 @@ export default function VerificationsView({ initialTab = 'restaurants' }: { init
                         initial={{ opacity: 0 }}
                         animate={{ opacity: 1 }}
                         exit={{ opacity: 0 }}
-                        className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4 backdrop-blur-sm"
+                        className="fixed inset-0 bg-[#111827]/60 z-50 flex items-center justify-center p-4 backdrop-blur-md"
                         onClick={() => setSelectedItem(null)}
                     >
                         <motion.div
-                            initial={{ scale: 0.95, opacity: 0 }}
-                            animate={{ scale: 1, opacity: 1 }}
-                            exit={{ scale: 0.95, opacity: 0 }}
-                            className="bg-white rounded-3xl max-w-4xl w-full max-h-[90vh] overflow-hidden flex flex-col shadow-2xl"
+                            initial={{ scale: 0.95, opacity: 0, y: 20 }}
+                            animate={{ scale: 1, opacity: 1, y: 0 }}
+                            exit={{ scale: 0.95, opacity: 0, y: 20 }}
+                            className="bg-white rounded-[2.5rem] max-w-5xl w-full max-h-[90vh] overflow-hidden flex flex-col shadow-2xl border border-white/20"
                             onClick={(e) => e.stopPropagation()}
                         >
-                            <div className="p-4 border-b border-gray-100 flex justify-between items-center bg-gray-50">
+                            <div className="p-8 border-b border-gray-100 flex justify-between items-center bg-gray-50/50">
                                 <div>
-                                    <h3 className="text-lg font-bold text-gray-900">{selectedItem.name || selectedItem.fullName}</h3>
-                                    <p className="text-xs text-gray-500">Verification Request</p>
+                                    <div className="flex items-center gap-3">
+                                        <h3 className="text-[20px] font-bold text-[#111827] tracking-tight">{selectedItem.name || selectedItem.fullName}</h3>
+                                        <span className="px-2.5 py-1 bg-[#FF6A00]/10 text-[#FF6A00] rounded-full text-[10px] font-bold uppercase tracking-wider">Verification Request</span>
+                                    </div>
+                                    <p className="text-[13px] text-[#6B7280] mt-0.5">{selectedItem.owner?.email || selectedItem.user?.email}</p>
                                 </div>
-                                <button onClick={() => setSelectedItem(null)} className="p-1.5 hover:bg-gray-200 rounded-full transition text-sm">✕</button>
+                                <button onClick={() => setSelectedItem(null)} className="w-10 h-10 flex items-center justify-center hover:bg-gray-200/50 rounded-2xl transition-all text-[#111827]">✕</button>
                             </div>
 
-                            <div className="flex-1 overflow-y-auto p-6">
+                            <div className="flex-1 overflow-y-auto p-8">
                                 {/* Official Documents */}
-                                <div className="mb-6">
-                                    <h4 className="text-sm font-bold text-gray-800 mb-4 border-b border-gray-100 pb-2 uppercase tracking-wider flex items-center gap-2">
-                                        <div className="w-1.5 h-4 bg-orange-500 rounded-full"></div>
-                                        Official Documents
+                                <div className="mb-10">
+                                    <h4 className="text-[13px] font-bold text-[#111827] mb-6 flex items-center gap-3 uppercase tracking-wider">
+                                        <div className="w-1.5 h-4 bg-[#FF6A00] rounded-full"></div>
+                                        Partner Documentation
                                     </h4>
                                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                                         {(selectedItem.name 
@@ -245,40 +256,29 @@ export default function VerificationsView({ initialTab = 'restaurants' }: { init
                                             : ['cnicFront', 'cnicBack', 'drivingLicense', 'vehicleRegistration', 'profileSelfie']
                                         ).map((docKey) => (
                                             <div key={docKey} className="group relative">
-                                                <p className="text-[10px] font-bold text-gray-400 mb-2 capitalize uppercase tracking-wider">{docKey.replace(/([A-Z])/g, ' $1').trim()}</p>
-                                                <div className="aspect-video bg-gray-100 rounded-xl overflow-hidden border border-gray-200 relative shadow-inner group-hover:border-orange-200 transition-colors">
+                                                <p className="text-[11px] font-bold text-[#6B7280] mb-3 capitalize uppercase tracking-widest">{docKey.replace(/([A-Z])/g, ' $1').trim()}</p>
+                                                <div className="aspect-[4/3] bg-gray-50 rounded-3xl overflow-hidden border border-gray-100 relative shadow-inner group-hover:border-[#FF6A00]/30 transition-all duration-300">
                                                     {selectedItem.documents?.[docKey] ? (
                                                         <>
                                                             <img
                                                                 src={getImageUrl(selectedItem.documents?.[docKey])}
                                                                 alt={docKey}
-                                                                title={getImageUrl(selectedItem.documents?.[docKey])}
-                                                                className="w-full h-full object-contain bg-gray-50 transition-transform duration-500 group-hover:scale-105"
-                                                                onError={(e: any) => {
-                                                                    e.target.style.display = 'none';
-                                                                    const parent = e.target.parentElement;
-                                                                    if (parent && !parent.querySelector('.error-msg')) {
-                                                                        const div = document.createElement('div');
-                                                                        div.className = 'error-msg absolute inset-0 flex flex-col items-center justify-center text-red-400 bg-gray-50 p-4 text-center';
-                                                                        div.innerHTML = `<svg class="w-6 h-6 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg><span class="text-[9px] font-bold">IMAGE NOT FOUND</span>`;
-                                                                        parent.appendChild(div);
-                                                                    }
-                                                                }}
+                                                                className="w-full h-full object-contain bg-gray-50 transition-transform duration-700 group-hover:scale-110"
                                                             />
-                                                            <div className="absolute inset-0 bg-black/0 group-hover:bg-black/5 transition-colors pointer-events-none" />
+                                                            <div className="absolute inset-0 bg-[#111827]/0 group-hover:bg-[#111827]/5 transition-colors pointer-events-none" />
                                                             <a
                                                                 href={getImageUrl(selectedItem.documents?.[docKey])}
                                                                 target="_blank"
                                                                 rel="noreferrer"
-                                                                className="absolute bottom-2 right-2 bg-white/90 px-2 py-1 rounded-lg text-[9px] font-bold shadow-md opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-1 hover:bg-white"
+                                                                className="absolute bottom-4 right-4 bg-white px-4 py-2 rounded-xl text-[11px] font-bold text-[#111827] shadow-xl opacity-0 group-hover:opacity-100 transition-all duration-300 translate-y-2 group-hover:translate-y-0 flex items-center gap-2 hover:bg-[#111827] hover:text-white"
                                                             >
-                                                                <FaEye className="text-[9px]" /> Full View
+                                                                <FaEye className="text-sm" /> Full View
                                                             </a>
                                                         </>
                                                     ) : (
-                                                        <div className="w-full h-full flex flex-col items-center justify-center text-gray-300 bg-gray-50/50">
-                                                            <FaFileAlt className="text-lg mb-2 opacity-20" />
-                                                            <span className="text-[9px] font-bold uppercase tracking-tighter">Not Uploaded</span>
+                                                        <div className="w-full h-full flex flex-col items-center justify-center text-[#9CA3AF] bg-gray-50/50">
+                                                            <FaFileAlt className="text-2xl mb-3 opacity-20" />
+                                                            <span className="text-[11px] font-bold uppercase tracking-widest">Not Provided</span>
                                                         </div>
                                                     )}
                                                 </div>
@@ -287,87 +287,101 @@ export default function VerificationsView({ initialTab = 'restaurants' }: { init
                                     </div>
                                 </div>
 
-                                {/* Storefront Photo */}
-                                {selectedItem.storefrontPhoto && (
-                                    <div className="mb-6">
-                                        <h4 className="text-md font-bold text-gray-800 mb-4 border-b border-gray-100 pb-2">Storefront</h4>
-                                        <div className="aspect-video bg-gray-100 rounded-xl overflow-hidden border border-gray-200 relative max-w-md">
-                                            <img
-                                                src={getImageUrl(selectedItem.storefrontPhoto)}
-                                                alt="Storefront"
-                                                className="w-full h-full object-cover"
-                                                onError={(e: any) => {
-                                                    e.target.src = 'https://via.placeholder.com/400x225?text=Storefront+Not+Found';
-                                                }}
-                                            />
-                                        </div>
-                                    </div>
-                                )}
-
-                                {/* Menu Photos */}
-                                {selectedItem.menuPhotos && selectedItem.menuPhotos.length > 0 && (
-                                    <div className="mb-6">
-                                        <h4 className="text-md font-bold text-gray-800 mb-4 border-b border-gray-100 pb-2">Menu Photos</h4>
-                                        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                                            {selectedItem.menuPhotos.map((photo: string, index: number) => (
-                                                <div key={index} className="aspect-square bg-gray-100 rounded-xl overflow-hidden border border-gray-200 relative group">
+                                {/* Storefront & Menu Section */}
+                                {(selectedItem.storefrontPhoto || (selectedItem.menuPhotos && selectedItem.menuPhotos.length > 0)) && (
+                                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-10">
+                                        {selectedItem.storefrontPhoto && (
+                                            <div>
+                                                <h4 className="text-[13px] font-bold text-[#111827] mb-6 flex items-center gap-3 uppercase tracking-wider">
+                                                    <div className="w-1.5 h-4 bg-[#FF6A00] rounded-full"></div>
+                                                    Storefront View
+                                                </h4>
+                                                <div className="aspect-video bg-gray-50 rounded-[2rem] overflow-hidden border border-gray-100 group relative">
                                                     <img
-                                                        src={getImageUrl(photo)}
-                                                        alt={`Menu ${index + 1}`}
-                                                        className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
-                                                        onError={(e: any) => {
-                                                            e.target.src = 'https://via.placeholder.com/400x400?text=Menu+Not+Found';
-                                                        }}
+                                                        src={getImageUrl(selectedItem.storefrontPhoto)}
+                                                        alt="Storefront"
+                                                        className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
                                                     />
                                                     <a
-                                                        href={getImageUrl(photo)}
+                                                        href={getImageUrl(selectedItem.storefrontPhoto)}
                                                         target="_blank"
                                                         rel="noreferrer"
-                                                        className="absolute bottom-2 right-2 bg-white/90 p-1.5 rounded-lg text-xs font-bold shadow-sm opacity-0 group-hover:opacity-100 transition-opacity"
+                                                        className="absolute inset-0 bg-[#111827]/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
                                                     >
-                                                        <FaEye />
+                                                        <span className="bg-white text-[#111827] px-6 py-2.5 rounded-xl font-bold text-[12px] uppercase tracking-wider">View Original</span>
                                                     </a>
                                                 </div>
-                                            ))}
-                                        </div>
+                                            </div>
+                                        )}
+
+                                        {selectedItem.menuPhotos && selectedItem.menuPhotos.length > 0 && (
+                                            <div>
+                                                <h4 className="text-[13px] font-bold text-[#111827] mb-6 flex items-center gap-3 uppercase tracking-wider">
+                                                    <div className="w-1.5 h-4 bg-[#FF6A00] rounded-full"></div>
+                                                    Menu Items
+                                                </h4>
+                                                <div className="grid grid-cols-2 gap-4">
+                                                    {selectedItem.menuPhotos.slice(0, 4).map((photo: string, index: number) => (
+                                                        <div key={index} className="aspect-square bg-gray-50 rounded-2xl overflow-hidden border border-gray-100 group relative">
+                                                            <img
+                                                                src={getImageUrl(photo)}
+                                                                alt={`Menu ${index + 1}`}
+                                                                className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
+                                                            />
+                                                            <a
+                                                                href={getImageUrl(photo)}
+                                                                target="_blank"
+                                                                rel="noreferrer"
+                                                                className="absolute inset-0 bg-[#111827]/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                                                            >
+                                                                <FaEye className="text-white text-xl" />
+                                                            </a>
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                            </div>
+                                        )}
                                     </div>
                                 )}
 
                                 {!Object.values(selectedItem.documents || {}).some(Boolean) && !selectedItem.storefrontPhoto && (!selectedItem.menuPhotos || selectedItem.menuPhotos.length === 0) && (
-                                    <div className="col-span-full py-12 flex flex-col items-center justify-center bg-gray-50 rounded-2xl border-2 border-dashed border-gray-200">
-                                        <FaFileAlt className="text-4xl text-gray-300 mb-3" />
-                                        <p className="text-gray-500 font-medium">No documents uploaded</p>
+                                    <div className="py-16 flex flex-col items-center justify-center bg-gray-50 rounded-[2.5rem] border-2 border-dashed border-gray-100">
+                                        <div className="w-20 h-20 bg-white rounded-full flex items-center justify-center shadow-sm mb-6">
+                                            <FaFileAlt className="text-3xl text-gray-200" />
+                                        </div>
+                                        <p className="text-[#111827] font-bold text-[15px]">No documents found</p>
+                                        <p className="text-[#6B7280] text-[13px]">This partner hasn't uploaded any verification files yet.</p>
                                     </div>
                                 )}
 
-                                <div className="bg-gray-50 p-4 rounded-xl mb-6">
-                                    <label className="block text-sm font-bold text-gray-700 mb-2">Rejection Reason (Optional)</label>
+                                <div className="mt-10 bg-gray-50/80 p-6 rounded-[2rem] border border-gray-100">
+                                    <label className="block text-[11px] font-bold text-[#6B7280] mb-3 uppercase tracking-widest">Rejection Feedback (Optional)</label>
                                     <textarea
                                         value={rejectionReason}
                                         onChange={(e) => setRejectionReason(e.target.value)}
-                                        className="w-full p-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-orange-500 outline-none text-sm"
-                                        placeholder="If rejecting, please specify why..."
-                                        rows={2}
+                                        className="w-full p-4 bg-white border border-gray-100 rounded-2xl focus:ring-2 focus:ring-[#FF6A00]/20 focus:border-[#FF6A00] outline-none text-[14px] text-[#111827] placeholder:text-[#9CA3AF] transition-all"
+                                        placeholder="Explain why the application is being rejected..."
+                                        rows={3}
                                     />
                                 </div>
                             </div>
 
-                            <div className="p-6 border-t border-gray-100 flex gap-4 bg-white">
+                            <div className="p-8 border-t border-gray-100 flex gap-4 bg-white">
                                 <button
                                     onClick={() => handleAction(selectedItem._id, 'approve', selectedItem.name ? 'restaurant' : 'rider')}
                                     disabled={processing}
-                                    className="flex-1 py-3 bg-green-500 hover:bg-green-600 text-white rounded-xl font-bold shadow-lg shadow-green-500/30 transition flex items-center justify-center gap-2 disabled:opacity-50"
+                                    className="flex-1 py-4 bg-green-500 hover:bg-green-600 text-white rounded-2xl font-bold text-[13px] uppercase tracking-wider shadow-lg shadow-green-500/20 transition-all flex items-center justify-center gap-3 disabled:opacity-50"
                                 >
-                                    {processing ? <FaSpinner className="animate-spin" /> : <FaCheckCircle />}
+                                    {processing ? <FaSpinner className="animate-spin text-lg" /> : <FaCheckCircle className="text-lg" />}
                                     Approve Application
                                 </button>
                                 <button
                                     onClick={() => handleAction(selectedItem._id, 'reject', selectedItem.name ? 'restaurant' : 'rider')}
                                     disabled={processing}
-                                    className="flex-1 py-3 bg-red-100 hover:bg-red-200 text-red-600 rounded-xl font-bold transition flex items-center justify-center gap-2 disabled:opacity-50"
+                                    className="flex-1 py-4 bg-red-50 hover:bg-red-100 text-red-600 rounded-2xl font-bold text-[13px] uppercase tracking-wider transition-all flex items-center justify-center gap-3 disabled:opacity-50"
                                 >
-                                    {processing ? <FaSpinner className="animate-spin" /> : <FaTimesCircle />}
-                                    Reject Application
+                                    {processing ? <FaSpinner className="animate-spin text-lg" /> : <FaTimesCircle className="text-lg" />}
+                                    Reject Partner
                                 </button>
                             </div>
                         </motion.div>

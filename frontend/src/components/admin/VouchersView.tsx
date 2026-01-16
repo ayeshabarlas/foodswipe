@@ -124,17 +124,17 @@ export default function VouchersView() {
     };
 
     return (
-        <div className="p-6">
+        <div className="p-8">
             <div className="flex justify-between items-center mb-8">
                 <div>
-                    <h2 className="text-2xl font-bold text-gray-800">Vouchers & Discounts</h2>
-                    <p className="text-gray-500">Manage platform and restaurant-funded promotions</p>
+                    <h2 className="text-[24px] font-semibold text-[#111827] tracking-tight">Vouchers & Discounts</h2>
+                    <p className="text-[14px] font-normal text-[#6B7280] mt-1">Manage platform and restaurant-funded promotions</p>
                 </div>
                 <button
                     onClick={handleCreate}
-                    className="flex items-center gap-2 px-4 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600 shadow-lg shadow-orange-500/20 font-medium transition"
+                    className="flex items-center gap-2 px-6 py-3 bg-[#FF6A00] text-white rounded-2xl hover:bg-[#e65f00] shadow-lg shadow-[#FF6A00]/20 font-bold text-[13px] uppercase tracking-wider transition-all duration-300"
                 >
-                    <FaPlus /> Create Voucher
+                    <FaPlus className="text-sm" /> Create Voucher
                 </button>
             </div>
 
@@ -146,127 +146,155 @@ export default function VouchersView() {
             />
 
             {/* Top Stats */}
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-                <div className="bg-white p-5 rounded-xl border border-gray-100 shadow-sm">
-                    <p className="text-gray-500 text-sm mb-1">Total Vouchers</p>
-                    <h3 className="text-2xl font-bold text-gray-800">{stats.total}</h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+                <div className="bg-white p-6 rounded-[2rem] border border-gray-100 shadow-sm group hover:shadow-md transition-all duration-300">
+                    <p className="text-[#6B7280] text-[13px] font-medium uppercase tracking-wider mb-2">Total Vouchers</p>
+                    <h3 className="text-[26px] font-bold text-[#111827] tracking-tight">{stats.total}</h3>
                 </div>
-                <div className="bg-white p-5 rounded-xl border border-gray-100 shadow-sm">
-                    <p className="text-gray-500 text-sm mb-1">Active Vouchers</p>
-                    <h3 className="text-2xl font-bold text-green-600">{stats.active}</h3>
+                <div className="bg-white p-6 rounded-[2rem] border border-gray-100 shadow-sm group hover:shadow-md transition-all duration-300">
+                    <p className="text-[#6B7280] text-[13px] font-medium uppercase tracking-wider mb-2">Active Vouchers</p>
+                    <h3 className="text-[26px] font-bold text-green-600 tracking-tight">{stats.active}</h3>
                 </div>
-                <div className="bg-white p-5 rounded-xl border border-gray-100 shadow-sm">
-                    <p className="text-gray-500 text-sm mb-1">Total Usage</p>
-                    <h3 className="text-2xl font-bold text-gray-800">{stats.totalUsage.toLocaleString()}</h3>
+                <div className="bg-white p-6 rounded-[2rem] border border-gray-100 shadow-sm group hover:shadow-md transition-all duration-300">
+                    <p className="text-[#6B7280] text-[13px] font-medium uppercase tracking-wider mb-2">Total Usage</p>
+                    <h3 className="text-[26px] font-bold text-[#111827] tracking-tight">{stats.totalUsage.toLocaleString()}</h3>
                 </div>
-                <div className="bg-white p-5 rounded-xl border border-gray-100 shadow-sm">
-                    <p className="text-gray-500 text-sm mb-1">Total Cost</p>
-                    <h3 className="text-2xl font-bold text-orange-600">Rs. {stats.totalCost.toLocaleString()}</h3>
+                <div className="bg-[#FF6A00] p-6 rounded-[2rem] shadow-xl shadow-[#FF6A00]/20 relative overflow-hidden group">
+                    <div className="relative z-10">
+                        <p className="text-white/70 text-[13px] font-medium uppercase tracking-wider mb-2">Total Cost</p>
+                        <h3 className="text-[26px] font-bold text-white tracking-tight">Rs. {stats.totalCost.toLocaleString()}</h3>
+                    </div>
+                    <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:scale-110 transition-transform duration-500">
+                        <FaTicketAlt className="text-6xl text-white" />
+                    </div>
                 </div>
-                <div className="bg-green-50 p-4 rounded-xl border border-green-100">
-                    <p className="text-xs text-green-600 font-bold uppercase mb-1">Platform Cost</p>
-                    <p className="text-3xl font-bold mb-1">Rs. {vouchers.filter(v => v.fundedBy === 'Platform').reduce((acc, v) => acc + (v.totalCost || 0), 0).toLocaleString()}</p>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+                <div className="bg-orange-50/50 p-6 rounded-[2rem] border border-orange-100 flex items-center justify-between">
+                    <div>
+                        <p className="text-[11px] text-[#FF6A00] font-bold uppercase tracking-widest mb-1">Platform Cost</p>
+                        <p className="text-[24px] font-bold text-[#111827] tracking-tight">Rs. {vouchers.filter(v => v.fundedBy === 'Platform').reduce((acc, v) => acc + (v.totalCost || 0), 0).toLocaleString()}</p>
+                    </div>
+                    <div className="w-12 h-12 bg-white rounded-2xl flex items-center justify-center text-[#FF6A00] shadow-sm">
+                        <FaTicketAlt />
+                    </div>
                 </div>
-                <div className="bg-blue-50 p-4 rounded-xl border border-blue-100">
-                    <p className="text-xs text-blue-600 font-bold uppercase mb-1">Restaurant Cost</p>
-                    <p className="text-3xl font-bold mb-1">Rs. {vouchers.filter(v => v.fundedBy !== 'Platform').reduce((acc, v) => acc + (v.totalCost || 0), 0).toLocaleString()}</p>
+                <div className="bg-blue-50/50 p-6 rounded-[2rem] border border-blue-100 flex items-center justify-between">
+                    <div>
+                        <p className="text-[11px] text-blue-600 font-bold uppercase tracking-widest mb-1">Restaurant Cost</p>
+                        <p className="text-[24px] font-bold text-[#111827] tracking-tight">Rs. {vouchers.filter(v => v.fundedBy !== 'Platform').reduce((acc, v) => acc + (v.totalCost || 0), 0).toLocaleString()}</p>
+                    </div>
+                    <div className="w-12 h-12 bg-white rounded-2xl flex items-center justify-center text-blue-600 shadow-sm">
+                        <FaTicketAlt />
+                    </div>
                 </div>
             </div>
 
             {/* Filters */}
-            <div className="flex flex-col md:flex-row gap-4 mb-6">
-                <div className="relative flex-1 max-w-lg">
-                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                        <FaTicketAlt className="text-gray-400" />
+            <div className="flex flex-col md:flex-row gap-4 mb-8">
+                <div className="relative flex-1">
+                    <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                        <FaTicketAlt className="text-[#9CA3AF] text-sm" />
                     </div>
                     <input
                         type="text"
                         placeholder="Search voucher codes..."
-                        className="w-full pl-10 pr-4 py-2.5 border border-gray-200 rounded-xl outline-none focus:ring-2 focus:ring-orange-500"
+                        className="w-full pl-11 pr-4 py-3.5 bg-white border border-gray-100 rounded-[1.25rem] outline-none focus:ring-2 focus:ring-[#FF6A00]/10 focus:border-[#FF6A00] text-[14px] text-[#111827] placeholder:text-[#9CA3AF] transition-all"
                     />
                 </div>
                 <div className="flex gap-3">
-                    <select className="px-4 py-2.5 border border-gray-200 rounded-xl outline-none bg-white text-gray-600">
+                    <select className="px-6 py-3.5 bg-white border border-gray-100 rounded-[1.25rem] outline-none focus:ring-2 focus:ring-[#FF6A00]/10 focus:border-[#FF6A00] text-[13px] font-bold text-[#111827] cursor-pointer appearance-none min-w-[140px]">
                         <option>All Status</option>
                         <option>Active</option>
                         <option>Expired</option>
                     </select>
-                    <select className="px-4 py-2.5 border border-gray-200 rounded-xl outline-none bg-white text-gray-600">
+                    <select className="px-6 py-3.5 bg-white border border-gray-100 rounded-[1.25rem] outline-none focus:ring-2 focus:ring-[#FF6A00]/10 focus:border-[#FF6A00] text-[13px] font-bold text-[#111827] cursor-pointer appearance-none min-w-[140px]">
                         <option>All Funding</option>
                         <option>Platform</option>
                         <option>Restaurant</option>
                     </select>
-                    <button className="flex items-center gap-2 px-4 py-2.5 border border-gray-200 rounded-xl hover:bg-gray-50 text-gray-600">
-                        <FaFilter /> More Filters
-                    </button>
                 </div>
             </div>
 
             {/* Table */}
-            <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
-                <table className="w-full">
-                    <thead className="bg-gray-50 border-b border-gray-100">
-                        <tr>
-                            <th className="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase">Code</th>
-                            <th className="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase">Discount</th>
-                            <th className="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase">Funded By</th>
-                            <th className="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase">Min Order</th>
-                            <th className="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase">Usage</th>
-                            <th className="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase">Total Cost</th>
-                            <th className="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase">Valid Until</th>
-                            <th className="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase">Status</th>
-                            <th className="px-6 py-4 text-right text-xs font-bold text-gray-500 uppercase">Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody className="divide-y divide-gray-100">
-                        {vouchers.map((voucher) => (
-                            <tr key={voucher._id} className="hover:bg-gray-50 transition">
-                                <td className="px-6 py-4 font-mono font-medium text-gray-700">{voucher.code}</td>
-                                <td className="px-6 py-4">
-                                    <div className="text-sm font-bold text-gray-800">
-                                        {voucher.discountType === 'percentage' ? `${voucher.discountValue}%` : `Rs. ${voucher.discountValue}`}
-                                    </div>
-                                    <div className="text-xs text-gray-500">Max: Rs. {voucher.maxDiscount}</div>
-                                </td>
-                                <td className="px-6 py-4">
-                                    <span className={`px-2 py-1 rounded-lg text-xs font-bold ${voucher.fundedBy === 'Platform' ? 'bg-orange-100 text-orange-700' : 'bg-blue-100 text-blue-700'
-                                        }`}>
-                                        {voucher.fundedBy}
-                                    </span>
-                                </td>
-                                <td className="px-6 py-4 text-sm text-gray-600">Rs. {voucher.minOrder}</td>
-                                <td className="px-6 py-4">
-                                    <div className="text-sm text-gray-800">{voucher.usageCount} / {voucher.usageLimit}</div>
-                                    <div className="w-16 h-1.5 bg-gray-100 rounded-full mt-1">
-                                        <div
-                                            className={`h-full rounded-full ${voucher.usageCount / voucher.usageLimit > 0.8 ? 'bg-red-500' : 'bg-orange-500'}`}
-                                            style={{ width: `${(voucher.usageCount / voucher.usageLimit) * 100}%` }}
-                                        ></div>
-                                    </div>
-                                </td>
-                                <td className="px-6 py-4 text-sm font-medium text-gray-800">Rs. {voucher.totalCost.toLocaleString()}</td>
-                                <td className="px-6 py-4 text-sm text-gray-600">
-                                    <div className="flex items-center gap-1">
-                                        <span className="text-gray-400 text-xs">ðŸ“…</span>
-                                        {voucher.validUntil}
-                                    </div>
-                                </td>
-                                <td className="px-6 py-4">
-                                    <span className={`px-2 py-1 rounded-full text-xs font-bold ${voucher.status === 'Active' ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'
-                                        }`}>
-                                        {voucher.status}
-                                    </span>
-                                </td>
-                                <td className="px-6 py-4 text-right">
-                                    <div className="flex justify-end gap-2 text-gray-400">
-                                        <button onClick={() => handleEdit(voucher)} className="hover:text-orange-500"><FaEdit /></button>
-                                        <button onClick={() => handleDelete(voucher._id)} className="hover:text-red-500"><FaTrash /></button>
-                                    </div>
-                                </td>
+            <div className="bg-white rounded-[2rem] shadow-sm border border-gray-100 overflow-hidden">
+                <div className="overflow-x-auto">
+                    <table className="w-full">
+                        <thead>
+                            <tr className="bg-gray-50/50 border-b border-gray-100">
+                                <th className="px-8 py-5 text-left text-[11px] font-bold text-[#9CA3AF] uppercase tracking-widest">Code</th>
+                                <th className="px-8 py-5 text-left text-[11px] font-bold text-[#9CA3AF] uppercase tracking-widest">Discount</th>
+                                <th className="px-8 py-5 text-left text-[11px] font-bold text-[#9CA3AF] uppercase tracking-widest">Funded By</th>
+                                <th className="px-8 py-5 text-left text-[11px] font-bold text-[#9CA3AF] uppercase tracking-widest">Min Order</th>
+                                <th className="px-8 py-5 text-left text-[11px] font-bold text-[#9CA3AF] uppercase tracking-widest">Usage</th>
+                                <th className="px-8 py-5 text-left text-[11px] font-bold text-[#9CA3AF] uppercase tracking-widest">Total Cost</th>
+                                <th className="px-8 py-5 text-left text-[11px] font-bold text-[#9CA3AF] uppercase tracking-widest">Valid Until</th>
+                                <th className="px-8 py-5 text-left text-[11px] font-bold text-[#9CA3AF] uppercase tracking-widest">Status</th>
+                                <th className="px-8 py-5 text-right text-[11px] font-bold text-[#9CA3AF] uppercase tracking-widest">Actions</th>
                             </tr>
-                        ))}
-                    </tbody>
-                </table>
+                        </thead>
+                        <tbody className="divide-y divide-gray-50">
+                            {vouchers.map((voucher) => (
+                                <tr key={voucher._id} className="hover:bg-gray-50/50 transition-colors group">
+                                    <td className="px-8 py-5">
+                                        <span className="text-[14px] font-bold text-[#111827] font-mono tracking-tight bg-gray-50 px-3 py-1 rounded-lg border border-gray-100">{voucher.code}</span>
+                                    </td>
+                                    <td className="px-8 py-5">
+                                        <div className="text-[14px] font-bold text-[#111827]">
+                                            {voucher.discountType === 'percentage' ? `${voucher.discountValue}%` : `Rs. ${voucher.discountValue}`}
+                                        </div>
+                                        <div className="text-[12px] text-[#9CA3AF]">Max: Rs. {voucher.maxDiscount}</div>
+                                    </td>
+                                    <td className="px-8 py-5">
+                                        <span className={`px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider ${voucher.fundedBy === 'Platform' ? 'bg-orange-50 text-[#FF6A00]' : 'bg-blue-50 text-blue-600'
+                                            }`}>
+                                            {voucher.fundedBy}
+                                        </span>
+                                    </td>
+                                    <td className="px-8 py-5 text-[14px] font-medium text-[#6B7280]">Rs. {voucher.minOrder}</td>
+                                    <td className="px-8 py-5">
+                                        <div className="flex flex-col gap-1.5 min-w-[120px]">
+                                            <div className="flex justify-between items-center">
+                                                <span className="text-[13px] font-bold text-[#111827]">{voucher.usageCount}</span>
+                                                <span className="text-[11px] font-medium text-[#9CA3AF]">/ {voucher.usageLimit}</span>
+                                            </div>
+                                            <div className="w-full h-1.5 bg-gray-100 rounded-full overflow-hidden">
+                                                <div
+                                                    className={`h-full rounded-full transition-all duration-500 ${voucher.usageCount / voucher.usageLimit > 0.8 ? 'bg-red-500' : 'bg-[#FF6A00]'}`}
+                                                    style={{ width: `${Math.min((voucher.usageCount / (voucher.usageLimit || 1)) * 100, 100)}%` }}
+                                                ></div>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td className="px-8 py-5 text-[14px] font-bold text-[#111827]">Rs. {voucher.totalCost.toLocaleString()}</td>
+                                    <td className="px-8 py-5 text-[14px] text-[#6B7280]">
+                                        <div className="flex items-center gap-2">
+                                            <span className="text-[#9CA3AF]">📅</span>
+                                            {voucher.validUntil}
+                                        </div>
+                                    </td>
+                                    <td className="px-8 py-5">
+                                        <span className={`px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider ${voucher.status === 'Active' ? 'bg-green-50 text-green-600' : 'bg-gray-50 text-[#9CA3AF]'
+                                            }`}>
+                                            {voucher.status}
+                                        </span>
+                                    </td>
+                                    <td className="px-8 py-5 text-right">
+                                        <div className="flex justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                                            <button onClick={() => handleEdit(voucher)} className="w-9 h-9 flex items-center justify-center bg-white border border-gray-100 text-[#6B7280] hover:text-[#FF6A00] hover:border-[#FF6A00] rounded-xl shadow-sm transition-all">
+                                                <FaEdit className="text-sm" />
+                                            </button>
+                                            <button onClick={() => handleDelete(voucher._id)} className="w-9 h-9 flex items-center justify-center bg-white border border-gray-100 text-[#6B7280] hover:text-red-500 hover:border-red-500 rounded-xl shadow-sm transition-all">
+                                                <FaTrash className="text-sm" />
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                            ))}
+                        </tbody>
+                    </table>
+                </div>
             </div>
         </div>
     );

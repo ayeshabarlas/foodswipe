@@ -107,32 +107,37 @@ export default function AdminCreateVoucherModal({ isOpen, onClose, onSuccess, in
     return (
         <AnimatePresence>
             {isOpen && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#111827]/60 backdrop-blur-md">
                     <motion.div
-                        initial={{ opacity: 0, scale: 0.95 }}
-                        animate={{ opacity: 1, scale: 1 }}
-                        exit={{ opacity: 0, scale: 0.95 }}
-                        className="bg-white rounded-2xl w-full max-w-md overflow-hidden shadow-xl"
+                        initial={{ opacity: 0, scale: 0.95, y: 20 }}
+                        animate={{ opacity: 1, scale: 1, y: 0 }}
+                        exit={{ opacity: 0, scale: 0.95, y: 20 }}
+                        className="bg-white rounded-[2.5rem] w-full max-w-lg overflow-hidden shadow-2xl border border-white/20"
                     >
                         {/* Header */}
-                        <div className="flex items-center justify-between p-4 border-b border-gray-100 bg-gradient-to-r from-orange-500 to-red-500">
-                            <div className="flex items-center gap-3">
-                                <div className="w-8 h-8 bg-white/20 rounded-lg flex items-center justify-center">
-                                    <FaTicketAlt className="text-base text-white" />
+                        <div className="p-8 border-b border-gray-100 flex justify-between items-center bg-gray-50/50">
+                            <div className="flex items-center gap-4">
+                                <div className="w-12 h-12 bg-[#FF6A00] rounded-2xl flex items-center justify-center shadow-lg shadow-[#FF6A00]/20">
+                                    <FaTicketAlt className="text-xl text-white" />
                                 </div>
                                 <div>
-                                    <h3 className="text-sm font-bold text-white">{initialData ? 'Edit Platform Voucher' : 'Create Platform Voucher'}</h3>
-                                    <p className="text-[9px] text-white/80 font-bold uppercase tracking-wider">Discount & Usage Settings</p>
+                                    <h3 className="text-[20px] font-bold text-[#111827] tracking-tight">
+                                        {initialData ? 'Edit Voucher' : 'Create Voucher'}
+                                    </h3>
+                                    <p className="text-[13px] text-[#6B7280] font-medium">Platform-wide promotion settings</p>
                                 </div>
                             </div>
-                            <button onClick={onClose} className="p-1.5 hover:bg-white/10 rounded-lg transition text-white">
-                                <FaTimes className="text-xs" />
+                            <button 
+                                onClick={onClose} 
+                                className="w-10 h-10 flex items-center justify-center hover:bg-gray-200/50 rounded-2xl transition-all text-[#111827]"
+                            >
+                                <FaTimes />
                             </button>
                         </div>
 
-                        <form onSubmit={handleSubmit} className="p-5 space-y-4">
-                            <div>
-                                <label className="block text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1.5">
+                        <form onSubmit={handleSubmit} className="p-8 space-y-6">
+                            <div className="space-y-2">
+                                <label className="block text-[11px] font-bold text-[#6B7280] uppercase tracking-widest ml-1">
                                     Voucher Code
                                 </label>
                                 <input
@@ -142,13 +147,13 @@ export default function AdminCreateVoucherModal({ isOpen, onClose, onSuccess, in
                                     value={formData.code}
                                     onChange={handleChange}
                                     placeholder="e.g., WELCOME50"
-                                    className="w-full px-4 py-2 text-xs rounded-xl border border-gray-200 focus:border-orange-500 focus:ring-2 focus:ring-orange-200 outline-none transition uppercase font-bold"
+                                    className="w-full px-6 py-4 bg-gray-50 border border-gray-100 rounded-2xl focus:ring-2 focus:ring-[#FF6A00]/10 focus:border-[#FF6A00] outline-none text-[14px] text-[#111827] font-bold tracking-wider placeholder:text-[#9CA3AF] transition-all uppercase"
                                 />
                             </div>
 
-                            <div className="grid grid-cols-2 gap-4">
-                                <div>
-                                    <label className="block text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1.5">
+                            <div className="grid grid-cols-2 gap-6">
+                                <div className="space-y-2">
+                                    <label className="block text-[11px] font-bold text-[#6B7280] uppercase tracking-widest ml-1">
                                         Discount (Rs.)
                                     </label>
                                     <input
@@ -160,11 +165,11 @@ export default function AdminCreateVoucherModal({ isOpen, onClose, onSuccess, in
                                         placeholder="500"
                                         step="0.01"
                                         min="0"
-                                        className="w-full px-4 py-2 text-xs rounded-xl border border-gray-200 focus:border-orange-500 focus:ring-2 focus:ring-orange-200 outline-none transition font-bold"
+                                        className="w-full px-6 py-4 bg-gray-50 border border-gray-100 rounded-2xl focus:ring-2 focus:ring-[#FF6A00]/10 focus:border-[#FF6A00] outline-none text-[14px] text-[#111827] font-bold placeholder:text-[#9CA3AF] transition-all"
                                     />
                                 </div>
-                                <div>
-                                    <label className="block text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1.5">
+                                <div className="space-y-2">
+                                    <label className="block text-[11px] font-bold text-[#6B7280] uppercase tracking-widest ml-1">
                                         Usage Limit
                                     </label>
                                     <input
@@ -174,13 +179,13 @@ export default function AdminCreateVoucherModal({ isOpen, onClose, onSuccess, in
                                         onChange={handleChange}
                                         placeholder="1000"
                                         min="1"
-                                        className="w-full px-4 py-2 text-xs rounded-xl border border-gray-200 focus:border-orange-500 focus:ring-2 focus:ring-orange-200 outline-none transition font-bold"
+                                        className="w-full px-6 py-4 bg-gray-50 border border-gray-100 rounded-2xl focus:ring-2 focus:ring-[#FF6A00]/10 focus:border-[#FF6A00] outline-none text-[14px] text-[#111827] font-bold placeholder:text-[#9CA3AF] transition-all"
                                     />
                                 </div>
                             </div>
 
-                            <div>
-                                <label className="block text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1.5">
+                            <div className="space-y-2">
+                                <label className="block text-[11px] font-bold text-[#6B7280] uppercase tracking-widest ml-1">
                                     Description
                                 </label>
                                 <textarea
@@ -189,14 +194,14 @@ export default function AdminCreateVoucherModal({ isOpen, onClose, onSuccess, in
                                     value={formData.description}
                                     onChange={handleChange}
                                     placeholder="Brief description of the voucher"
-                                    rows={2}
-                                    className="w-full px-4 py-2 text-xs rounded-xl border border-gray-200 focus:border-orange-500 focus:ring-2 focus:ring-orange-200 outline-none transition"
+                                    rows={3}
+                                    className="w-full px-6 py-4 bg-gray-50 border border-gray-100 rounded-2xl focus:ring-2 focus:ring-[#FF6A00]/10 focus:border-[#FF6A00] outline-none text-[14px] text-[#111827] placeholder:text-[#9CA3AF] transition-all resize-none"
                                 />
                             </div>
 
-                            <div className="grid grid-cols-2 gap-4">
-                                <div>
-                                    <label className="block text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1.5">
+                            <div className="grid grid-cols-2 gap-6">
+                                <div className="space-y-2">
+                                    <label className="block text-[11px] font-bold text-[#6B7280] uppercase tracking-widest ml-1">
                                         Min Order (Rs.)
                                     </label>
                                     <input
@@ -207,11 +212,11 @@ export default function AdminCreateVoucherModal({ isOpen, onClose, onSuccess, in
                                         placeholder="0"
                                         step="0.01"
                                         min="0"
-                                        className="w-full px-4 py-2 text-xs rounded-xl border border-gray-200 focus:border-orange-500 focus:ring-2 focus:ring-orange-200 outline-none transition font-bold"
+                                        className="w-full px-6 py-4 bg-gray-50 border border-gray-100 rounded-2xl focus:ring-2 focus:ring-[#FF6A00]/10 focus:border-[#FF6A00] outline-none text-[14px] text-[#111827] font-bold placeholder:text-[#9CA3AF] transition-all"
                                     />
                                 </div>
-                                <div>
-                                    <label className="block text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1.5">
+                                <div className="space-y-2">
+                                    <label className="block text-[11px] font-bold text-[#6B7280] uppercase tracking-widest ml-1">
                                         Expiry Date
                                     </label>
                                     <input
@@ -221,18 +226,34 @@ export default function AdminCreateVoucherModal({ isOpen, onClose, onSuccess, in
                                         value={formData.expiryDate}
                                         onChange={handleChange}
                                         min={new Date().toISOString().split('T')[0]}
-                                        className="w-full px-4 py-2 text-xs rounded-xl border border-gray-200 focus:border-orange-500 focus:ring-2 focus:ring-orange-200 outline-none transition font-bold"
+                                        className="w-full px-6 py-4 bg-gray-50 border border-gray-100 rounded-2xl focus:ring-2 focus:ring-[#FF6A00]/10 focus:border-[#FF6A00] outline-none text-[14px] text-[#111827] font-bold cursor-pointer transition-all"
                                     />
                                 </div>
                             </div>
 
-                            <button
-                                type="submit"
-                                disabled={loading}
-                                className="w-full py-2.5 bg-gradient-to-r from-orange-500 to-red-500 text-white text-xs font-bold rounded-xl hover:shadow-lg transition disabled:opacity-50 disabled:cursor-not-allowed uppercase tracking-wider"
-                            >
-                                {loading ? 'Processing...' : (initialData ? 'Update Voucher' : 'Create Voucher')}
-                            </button>
+                            <div className="pt-4 flex gap-4">
+                                <button
+                                    type="button"
+                                    onClick={onClose}
+                                    className="flex-1 py-4 bg-gray-100 hover:bg-gray-200 text-[#111827] text-[13px] font-bold rounded-2xl transition-all uppercase tracking-wider"
+                                >
+                                    Cancel
+                                </button>
+                                <button
+                                    type="submit"
+                                    disabled={loading}
+                                    className="flex-2 py-4 bg-[#FF6A00] hover:bg-[#e65f00] text-white text-[13px] font-bold rounded-2xl shadow-lg shadow-[#FF6A00]/20 transition-all disabled:opacity-50 disabled:cursor-not-allowed uppercase tracking-wider flex items-center justify-center gap-2"
+                                >
+                                    {loading ? (
+                                        <>
+                                            <div className="w-4 h-4 border-2 border-white/20 border-t-white rounded-full animate-spin"></div>
+                                            Processing...
+                                        </>
+                                    ) : (
+                                        initialData ? 'Update Voucher' : 'Create Voucher'
+                                    )}
+                                </button>
+                            </div>
                         </form>
                     </motion.div>
                 </div>

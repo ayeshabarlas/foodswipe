@@ -79,166 +79,166 @@ export default function EnhancedOrdersView() {
     }) : [];
 
     return (
-        <div className="p-4">
-            <div className="flex justify-between items-center mb-6">
+        <div className="p-8">
+            <div className="flex justify-between items-center mb-8">
                 <div>
-                    <div className="flex items-center gap-2">
-                        <h2 className="text-lg font-bold text-gray-800">All Orders</h2>
-                        <div className="flex items-center gap-1.5 px-2 py-0.5 bg-green-50 rounded-full border border-green-100">
+                    <div className="flex items-center gap-3">
+                        <h2 className="text-[24px] font-semibold text-[#111827] tracking-tight">All Orders</h2>
+                        <div className="flex items-center gap-1.5 px-2.5 py-1 bg-green-50 rounded-full border border-green-100">
                             <span className="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse"></span>
-                            <span className="text-[9px] font-bold text-green-600 uppercase tracking-tight">Live</span>
+                            <span className="text-[11px] font-bold text-green-600 uppercase tracking-tight">Live Updates</span>
                         </div>
                     </div>
-                    <p className="text-[10px] text-gray-400 font-bold uppercase tracking-wider">Complete order history and management</p>
+                    <p className="text-[14px] font-normal text-[#6B7280] mt-1">Complete order history and management</p>
                 </div>
-                <div className="flex gap-2">
-                    <button className="flex items-center gap-2 px-3 py-1.5 border border-gray-100 rounded-lg bg-white text-gray-500 text-xs font-bold uppercase tracking-wider hover:bg-gray-50">
+                <div className="flex gap-3">
+                    <button className="flex items-center gap-2 px-4 py-2 border border-gray-100 rounded-xl bg-white text-[#6B7280] text-[13px] font-medium uppercase tracking-wider hover:bg-gray-50 transition-all">
                         <FaCalendarAlt /> Date Range
                     </button>
-                    <button className="flex items-center gap-2 px-3 py-1.5 bg-green-500 text-white rounded-lg text-xs font-bold uppercase tracking-wider hover:bg-green-600 shadow-sm">
+                    <button className="flex items-center gap-2 px-4 py-2 bg-[#FF6A00] text-white rounded-xl text-[13px] font-medium uppercase tracking-wider hover:bg-[#FF6A00]/90 shadow-lg shadow-[#FF6A00]/20 transition-all">
                         <FaDownload /> Export
                     </button>
                 </div>
             </div>
 
             {/* Stats Cards */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-                <div className="bg-white p-4 rounded-2xl shadow-sm border border-gray-100">
-                    <p className="text-gray-400 text-[10px] mb-1 font-bold uppercase tracking-wider">Total Orders</p>
-                    <h3 className="text-lg font-bold text-gray-800">{stats.totalOrders}</h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-10">
+                <div className="bg-white p-6 rounded-[2rem] shadow-sm border border-gray-100">
+                    <p className="text-[#6B7280] text-[13px] mb-2 font-medium uppercase tracking-wider">Total Orders</p>
+                    <h3 className="text-[24px] font-bold text-[#111827] tracking-tight">{stats.totalOrders}</h3>
                 </div>
-                <div className="bg-white p-4 rounded-2xl shadow-sm border border-gray-100">
-                    <p className="text-gray-400 text-[10px] mb-1 font-bold uppercase tracking-wider">Total Revenue</p>
-                    <h3 className="text-lg font-bold text-gray-800">Rs. {stats.totalRevenue.toLocaleString()}</h3>
+                <div className="bg-white p-6 rounded-[2rem] shadow-sm border border-gray-100">
+                    <p className="text-[#6B7280] text-[13px] mb-2 font-medium uppercase tracking-wider">Total Revenue</p>
+                    <h3 className="text-[24px] font-bold text-[#111827] tracking-tight">Rs. {stats.totalRevenue.toLocaleString()}</h3>
                 </div>
-                <div className="bg-white p-4 rounded-2xl shadow-sm border border-gray-100">
-                    <p className="text-gray-400 text-[10px] mb-1 font-bold uppercase tracking-wider">Platform Commission</p>
-                    <h3 className="text-lg font-bold text-gray-800">Rs. {stats.commission.toLocaleString()}</h3>
+                <div className="bg-white p-6 rounded-[2rem] shadow-sm border border-gray-100">
+                    <p className="text-[#6B7280] text-[13px] mb-2 font-medium uppercase tracking-wider">Platform Commission</p>
+                    <h3 className="text-[24px] font-bold text-[#FF6A00] tracking-tight">Rs. {stats.commission.toLocaleString()}</h3>
                 </div>
-                <div className="bg-white p-4 rounded-2xl shadow-sm border border-gray-100">
-                    <p className="text-gray-400 text-[10px] mb-1 font-bold uppercase tracking-wider">Avg Order Value</p>
-                    <h3 className="text-lg font-bold text-gray-800">Rs. {stats.avgOrderValue.toLocaleString()}</h3>
+                <div className="bg-white p-6 rounded-[2rem] shadow-sm border border-gray-100">
+                    <p className="text-[#6B7280] text-[13px] mb-2 font-medium uppercase tracking-wider">Avg Order Value</p>
+                    <h3 className="text-[24px] font-bold text-[#111827] tracking-tight">Rs. {stats.avgOrderValue.toLocaleString()}</h3>
                 </div>
             </div>
 
             {/* Filters */}
-            <div className="bg-white p-3 rounded-2xl shadow-sm border border-gray-100 mb-6 flex flex-wrap gap-3 items-center">
-                <div className="relative flex-1 min-w-[200px]">
-                    <FaSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-xs" />
+            <div className="bg-white p-4 rounded-[2rem] shadow-sm border border-gray-100 mb-8 flex flex-wrap gap-4 items-center">
+                <div className="relative flex-1 min-w-[300px]">
+                    <FaSearch className="absolute left-4 top-1/2 -translate-y-1/2 text-[#9CA3AF] text-sm" />
                     <input
                         type="text"
                         placeholder="Search by ID, customer or restaurant..."
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
-                        className="w-full pl-9 pr-4 py-2 bg-gray-50 border-none rounded-xl text-xs focus:ring-2 focus:ring-orange-500/20"
+                        className="w-full pl-11 pr-4 py-3 bg-gray-50 border-none rounded-2xl text-[14px] focus:ring-2 focus:ring-[#FF6A00]/20 transition-all placeholder:text-[#9CA3AF]"
                     />
                 </div>
-                <div className="flex items-center gap-2">
-                    <button className="p-2 bg-gray-50 text-gray-400 rounded-lg hover:bg-gray-100">
-                        <FaFilter className="text-xs" />
+                <div className="flex items-center gap-3">
+                    <button className="p-3 bg-gray-50 text-[#6B7280] rounded-xl hover:bg-gray-100 transition-all">
+                        <FaFilter className="text-sm" />
                     </button>
                     <button
                         onClick={() => fetchOrders()}
                         disabled={loading}
-                        className={`p-2 bg-orange-50 text-orange-600 rounded-lg hover:bg-orange-100 transition-all ${loading ? 'animate-spin' : ''}`}
+                        className={`p-3 bg-orange-50 text-[#FF6A00] rounded-xl hover:bg-orange-100 transition-all ${loading ? 'animate-spin' : ''}`}
                     >
-                        <FaSyncAlt className="text-xs" />
+                        <FaSyncAlt className="text-sm" />
                     </button>
                 </div>
-                <div className="flex items-center gap-2 ml-auto">
-                    <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Auto Refresh</span>
+                <div className="flex items-center gap-3 ml-auto pr-2">
+                    <span className="text-[13px] font-medium text-[#6B7280] uppercase tracking-wider">Auto Refresh</span>
                     <button
                         onClick={() => setAutoRefresh(!autoRefresh)}
-                        className={`w-10 h-5 rounded-full transition-colors relative ${autoRefresh ? 'bg-green-500' : 'bg-gray-200'}`}
+                        className={`w-12 h-6 rounded-full transition-all relative ${autoRefresh ? 'bg-green-500' : 'bg-gray-200'}`}
                     >
-                        <div className={`absolute top-1 w-3 h-3 bg-white rounded-full transition-transform ${autoRefresh ? 'translate-x-6' : 'translate-x-1'}`} />
+                        <div className={`absolute top-1 w-4 h-4 bg-white rounded-full transition-transform ${autoRefresh ? 'translate-x-7' : 'translate-x-1'}`} />
                     </button>
                 </div>
             </div>
 
             {/* Orders Table */}
-            <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+            <div className="bg-white rounded-[2rem] shadow-sm border border-gray-100 overflow-hidden">
                 <div className="overflow-x-auto">
                     <table className="w-full text-left border-collapse">
                         <thead>
                             <tr className="bg-gray-50/50 border-b border-gray-100">
-                                <th className="px-4 py-3 text-[10px] font-bold text-gray-400 uppercase tracking-wider">Order Info</th>
-                                <th className="px-4 py-3 text-[10px] font-bold text-gray-400 uppercase tracking-wider">Customer / Restaurant</th>
-                                <th className="px-4 py-3 text-[10px] font-bold text-gray-400 uppercase tracking-wider">Amount</th>
-                                <th className="px-4 py-3 text-[10px] font-bold text-gray-400 uppercase tracking-wider text-center">Commission</th>
-                                <th className="px-4 py-3 text-[10px] font-bold text-gray-400 uppercase tracking-wider text-center">Payouts</th>
-                                <th className="px-4 py-3 text-[10px] font-bold text-gray-400 uppercase tracking-wider text-center">Profit</th>
-                                <th className="px-4 py-3 text-[10px] font-bold text-gray-400 uppercase tracking-wider">Status</th>
-                                <th className="px-4 py-3 text-[10px] font-bold text-gray-400 uppercase tracking-wider text-right">Actions</th>
+                                <th className="px-6 py-5 text-[13px] font-medium text-[#6B7280] uppercase tracking-wider">Order Info</th>
+                                <th className="px-6 py-5 text-[13px] font-medium text-[#6B7280] uppercase tracking-wider">Customer / Restaurant</th>
+                                <th className="px-6 py-5 text-[13px] font-medium text-[#6B7280] uppercase tracking-wider">Amount</th>
+                                <th className="px-6 py-5 text-[13px] font-medium text-[#6B7280] uppercase tracking-wider text-center">Commission</th>
+                                <th className="px-6 py-5 text-[13px] font-medium text-[#6B7280] uppercase tracking-wider text-center">Payouts</th>
+                                <th className="px-6 py-5 text-[13px] font-medium text-[#6B7280] uppercase tracking-wider text-center">Profit</th>
+                                <th className="px-6 py-5 text-[13px] font-medium text-[#6B7280] uppercase tracking-wider">Status</th>
+                                <th className="px-6 py-5 text-[13px] font-medium text-[#6B7280] uppercase tracking-wider text-right">Actions</th>
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-gray-50">
                             {loading ? (
                                 Array(5).fill(0).map((_, i) => (
                                     <tr key={i} className="animate-pulse">
-                                        <td colSpan={6} className="px-4 py-4 h-16 bg-gray-50/20"></td>
+                                        <td colSpan={8} className="px-6 py-6 h-20 bg-gray-50/20"></td>
                                     </tr>
                                 ))
                             ) : filteredOrders.length === 0 ? (
                                 <tr>
-                                    <td colSpan={6} className="px-4 py-12 text-center text-gray-400 text-xs">No orders found matching your search.</td>
+                                    <td colSpan={8} className="px-6 py-16 text-center text-[#9CA3AF] text-[14px]">No orders found matching your search.</td>
                                 </tr>
                             ) : (
                                 filteredOrders.map((order) => (
                                     <tr key={order._id} className="hover:bg-gray-50/50 transition-colors">
-                                        <td className="px-4 py-3">
-                                            <div className="flex items-center gap-3">
-                                                <div className="w-8 h-8 bg-orange-50 rounded-lg flex items-center justify-center text-orange-600">
-                                                    <FaReceipt className="text-xs" />
+                                        <td className="px-6 py-5">
+                                            <div className="flex items-center gap-4">
+                                                <div className="w-10 h-10 bg-orange-50 rounded-2xl flex items-center justify-center text-[#FF6A00]">
+                                                    <FaReceipt className="text-sm" />
                                                 </div>
                                                 <div>
-                                                    <p className="text-xs font-bold text-gray-800">#{order.orderNumber || order._id.slice(-6)}</p>
-                                                    <p className="text-[10px] text-gray-400">{new Date(order.createdAt).toLocaleString([], { dateStyle: 'short', timeStyle: 'short' })}</p>
+                                                    <p className="text-[14px] font-bold text-[#111827]">#{order.orderNumber || order._id.slice(-6)}</p>
+                                                    <p className="text-[12px] text-[#9CA3AF]">{new Date(order.createdAt).toLocaleString([], { dateStyle: 'short', timeStyle: 'short' })}</p>
                                                 </div>
                                             </div>
                                         </td>
-                                        <td className="px-4 py-3">
-                                            <div className="space-y-0.5">
-                                                <p className="text-xs font-bold text-gray-800">{order.user?.name || 'Guest'}</p>
-                                                <p className="text-[10px] text-orange-500 font-medium">@{order.restaurant?.name || 'Restaurant'}</p>
-                                            </div>
-                                        </td>
-                                        <td className="px-4 py-3">
-                                            <p className="text-xs font-bold text-gray-800">Rs. {(order.totalAmount || 0).toLocaleString()}</p>
-                                            <p className="text-[9px] text-gray-400 font-medium">Gross Sales</p>
-                                        </td>
-                                        <td className="px-4 py-3 text-center">
-                                            <div className="inline-block">
-                                                <p className="text-xs font-bold text-red-500">Rs. {(order.commissionAmount || 0).toLocaleString()}</p>
-                                                <p className="text-[9px] text-gray-400 font-medium">{order.commissionPercent || 0}% Fee</p>
-                                            </div>
-                                        </td>
-                                        <td className="px-4 py-3 text-center">
+                                        <td className="px-6 py-5">
                                             <div className="space-y-1">
-                                                <div className="flex items-center justify-center gap-1.5">
-                                                    <span className="text-[9px] text-gray-400 uppercase font-bold tracking-tighter">Rest:</span>
-                                                    <span className="text-[10px] font-bold text-green-600">Rs. {(order.restaurantEarning || 0).toLocaleString()}</span>
+                                                <p className="text-[14px] font-bold text-[#111827]">{order.user?.name || 'Guest'}</p>
+                                                <p className="text-[12px] text-[#FF6A00] font-medium">@{order.restaurant?.name || 'Restaurant'}</p>
+                                            </div>
+                                        </td>
+                                        <td className="px-6 py-5">
+                                            <p className="text-[14px] font-bold text-[#111827]">Rs. {(order.totalAmount || 0).toLocaleString()}</p>
+                                            <p className="text-[11px] text-[#9CA3AF] font-medium uppercase tracking-wider">Gross Sales</p>
+                                        </td>
+                                        <td className="px-6 py-5 text-center">
+                                            <div className="inline-block">
+                                                <p className="text-[14px] font-bold text-red-500">Rs. {(order.commissionAmount || 0).toLocaleString()}</p>
+                                                <p className="text-[11px] text-[#9CA3AF] font-medium uppercase tracking-wider">{order.commissionPercent || 0}% Fee</p>
+                                            </div>
+                                        </td>
+                                        <td className="px-6 py-5 text-center">
+                                            <div className="space-y-1.5">
+                                                <div className="flex items-center justify-center gap-2">
+                                                    <span className="text-[10px] text-[#9CA3AF] uppercase font-bold tracking-tight">Partner:</span>
+                                                    <span className="text-[12px] font-bold text-green-600">Rs. {(order.restaurantEarning || 0).toLocaleString()}</span>
                                                 </div>
-                                                <div className="flex items-center justify-center gap-1.5">
-                                                    <span className="text-[9px] text-gray-400 uppercase font-bold tracking-tighter">Rider:</span>
-                                                    <span className="text-[10px] font-bold text-blue-600">Rs. {(order.riderEarning || 0).toLocaleString()}</span>
+                                                <div className="flex items-center justify-center gap-2">
+                                                    <span className="text-[10px] text-[#9CA3AF] uppercase font-bold tracking-tight">Rider:</span>
+                                                    <span className="text-[12px] font-bold text-blue-600">Rs. {(order.riderEarning || 0).toLocaleString()}</span>
                                                 </div>
                                             </div>
                                         </td>
-                                        <td className="px-4 py-3 text-center">
-                                            <p className="text-xs font-bold text-gray-900">Rs. {(order.adminEarning || 0).toLocaleString()}</p>
-                                            <p className="text-[9px] text-gray-400 font-medium uppercase tracking-tighter">Net Profit</p>
+                                        <td className="px-6 py-5 text-center">
+                                            <p className="text-[14px] font-bold text-[#111827]">Rs. {(order.adminEarning || 0).toLocaleString()}</p>
+                                            <p className="text-[11px] text-[#9CA3AF] font-medium uppercase tracking-wider">Net Profit</p>
                                         </td>
-                                        <td className="px-4 py-3">
-                                            <span className={`px-2 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-widest
+                                        <td className="px-6 py-5">
+                                            <span className={`px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest
                                                 ${order.status.toLowerCase() === 'delivered' ? 'bg-green-50 text-green-600' :
                                                     order.status.toLowerCase() === 'cancelled' ? 'bg-red-50 text-red-600' :
                                                         'bg-blue-50 text-blue-600'}`}>
                                                 {order.status}
                                             </span>
                                         </td>
-                                        <td className="px-4 py-3 text-right">
-                                            <button className="px-3 py-1 bg-gray-50 text-gray-500 text-[10px] font-bold uppercase tracking-widest rounded-lg hover:bg-gray-100 transition-all border border-gray-100">
+                                        <td className="px-6 py-5 text-right">
+                                            <button className="px-4 py-2 bg-gray-50 text-[#6B7280] text-[11px] font-bold uppercase tracking-widest rounded-xl hover:bg-gray-100 transition-all border border-gray-100">
                                                 Details
                                             </button>
                                         </td>

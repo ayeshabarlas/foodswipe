@@ -2,23 +2,23 @@
 
 :root {
   --background: #ffffff;
-  --foreground: #171717;
-  --primary: #FF6B00;
-  --primary-dark: #FF0040;
+  --foreground: #111827;
+  --primary: #FF6A00;
+  --primary-dark: #E65F00;
   --accent: #FFD93D;
-  --orange-start: #FF6B00;
-  --orange-end: #FF0040;
+  --orange-start: #FF6A00;
+  --orange-end: #FF8C33;
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --color-primary: var(--primary);
-  --color-primary-dark: var(--primary-dark);
+  --color-primary-dark: var(--color-primary-dark);
   --color-accent: var(--accent);
   --color-orange-start: var(--orange-start);
   --color-orange-end: var(--orange-end);
-  --font-sans: var(--font-plus-jakarta), var(--font-poppins), var(--font-geist-sans), sans-serif;
+  --font-sans: var(--font-inter), var(--font-plus-jakarta), var(--font-poppins), sans-serif;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -37,7 +37,7 @@ html, body {
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: var(--font-plus-jakarta), var(--font-poppins), sans-serif;
+  font-family: var(--font-inter), var(--font-plus-jakarta), var(--font-poppins), sans-serif;
 }
 
 .bg-gradient-orange-red {

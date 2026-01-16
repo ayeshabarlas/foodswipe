@@ -68,8 +68,12 @@ const userSchema = mongoose.Schema(
         },
         status: {
             type: String,
-            enum: ['active', 'suspended'],
+            enum: ['active', 'suspended', 'flagged'],
             default: 'active',
+        },
+        firebaseUid: {
+            type: String,
+            default: null,
         },
     },
     {

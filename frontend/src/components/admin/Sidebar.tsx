@@ -95,53 +95,53 @@ export default function Sidebar({ activeTab, setActiveTab, onLogout }: SidebarPr
                 />
             )}
 
-            <div className={`w-64 bg-gray-900 text-white min-h-screen overflow-y-auto fixed left-0 top-0 flex flex-col border-r border-gray-100 z-50 font-sans transition-transform duration-300 transform
+            <div className={`w-64 bg-white text-[#111827] min-h-screen overflow-y-auto fixed left-0 top-0 flex flex-col border-r border-gray-100 z-50 font-sans transition-transform duration-300 transform
                   ${isMobileOpen ? 'translate-x-0' : '-translate-x-full'} md:translate-x-0`}>
                 {/* Logo Section */}
-                <div className="p-4 border-b border-gray-50">
-                    <div className="flex items-center gap-2.5">
-                        <div className="w-9 h-9 bg-gradient-to-br from-orange-500 to-red-600 rounded-xl flex items-center justify-center text-white shadow-lg shadow-orange-500/20">
-                            <FaShoppingBag className="text-lg" />
+                <div className="p-6 border-b border-gray-50">
+                    <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 bg-[#FF6A00] rounded-xl flex items-center justify-center text-white shadow-lg shadow-[#FF6A00]/20">
+                            <FaShoppingBag className="text-xl" />
                         </div>
                         <div>
-                            <h1 className="text-sm font-bold text-gray-800 tracking-tight leading-none uppercase">FoodSwipe</h1>
-                            <p className="text-[9px] text-gray-400 font-bold tracking-widest mt-0.5 uppercase">Admin Panel</p>
+                            <h1 className="text-[18px] font-bold text-[#111827] tracking-tight leading-none uppercase">FoodSwipe</h1>
+                            <p className="text-[11px] text-[#FF6A00] font-semibold tracking-wider mt-1 uppercase">Admin Panel</p>
                         </div>
                     </div>
                 </div>
 
                 {/* Menu Section */}
-                <div className="flex-1 overflow-y-auto py-3 px-3 custom-scrollbar">
-                    <nav className="space-y-0.5">
+                <div className="flex-1 overflow-y-auto py-4 px-4 custom-scrollbar">
+                    <nav className="space-y-1">
                         {menuItems.map((item) => (
-                            <div key={item.id} className="space-y-0.5">
+                            <div key={item.id} className="space-y-1">
                                 <button
                                     onClick={() => item.subItems ? toggleMenu(item.id) : setActiveTab(item.id)}
-                                    className={`w-full flex items-center justify-between px-3 py-2 rounded-lg transition-all duration-200 group
+                                    className={`w-full flex items-center justify-between px-4 py-2.5 rounded-xl transition-all duration-200 group
                                         ${(activeTab === item.id || (item.subItems?.some(s => s.id === activeTab)))
-                                            ? 'bg-orange-50 text-orange-600 font-bold'
-                                            : 'text-gray-500 hover:bg-gray-50 hover:text-gray-800'
+                                            ? 'bg-orange-50 text-[#FF6A00] font-semibold'
+                                            : 'text-[#6B7280] hover:bg-gray-50 hover:text-[#111827]'
                                         }`}
                                 >
-                                    <div className="flex items-center gap-2.5">
-                                        <item.icon className={`text-base ${activeTab === item.id || item.subItems?.some(s => s.id === activeTab) ? 'text-orange-600' : 'text-gray-400 group-hover:text-gray-600'}`} />
-                                        <span className="text-xs uppercase tracking-wider font-bold">{item.label}</span>
+                                    <div className="flex items-center gap-3">
+                                        <item.icon className={`text-[20px] ${activeTab === item.id || item.subItems?.some(s => s.id === activeTab) ? 'text-[#FF6A00]' : 'text-[#9CA3AF] group-hover:text-[#6B7280]'}`} />
+                                        <span className="text-[14px] font-semibold">{item.label}</span>
                                     </div>
                                     {item.subItems && (
-                                        expandedMenus.includes(item.id) ? <FaChevronDown className="text-[10px]" /> : <FaChevronRight className="text-[10px]" />
+                                        expandedMenus.includes(item.id) ? <FaChevronDown className="text-[10px] opacity-50" /> : <FaChevronRight className="text-[10px] opacity-50" />
                                     )}
                                 </button>
 
                                 {item.subItems && expandedMenus.includes(item.id) && (
-                                    <div className="ml-8 space-y-0.5 mt-0.5">
+                                    <div className="ml-9 space-y-1 mt-1">
                                         {item.subItems.map(sub => (
                                             <button
                                                 key={sub.id}
                                                 onClick={() => setActiveTab(sub.id)}
-                                                className={`w-full text-left px-3 py-1.5 rounded-lg text-[10px] font-bold uppercase tracking-widest transition-all
+                                                className={`w-full text-left px-4 py-2 rounded-lg text-[13px] font-bold transition-all
                                                     ${activeTab === sub.id
-                                                        ? 'text-orange-600 bg-orange-50/50'
-                                                        : 'text-gray-400 hover:text-gray-700 hover:bg-gray-50'
+                                                        ? 'text-[#FF6A00] bg-orange-50/50'
+                                                        : 'text-[#9CA3AF] hover:text-[#6B7280] hover:bg-gray-50'
                                                     }`}
                                             >
                                                 {sub.label}
@@ -155,12 +155,12 @@ export default function Sidebar({ activeTab, setActiveTab, onLogout }: SidebarPr
                 </div>
 
                 {/* Logout & Support Section */}
-                <div className="p-3 border-t border-gray-50 space-y-1">
-                    <div className="px-3 py-2 bg-gray-50 rounded-xl mb-2">
-                        <p className="text-[8px] text-gray-400 font-bold uppercase tracking-widest mb-1">Support</p>
+                <div className="p-4 border-t border-gray-50 space-y-2">
+                    <div className="px-4 py-3 bg-gray-50 rounded-xl mb-2">
+                        <p className="text-[11px] text-[#9CA3AF] font-semibold uppercase tracking-wider mb-1">Support</p>
                         <a 
                             href="mailto:app.foodswipehelp@gmail.com" 
-                            className="text-[9px] font-bold text-gray-600 hover:text-orange-600 transition-colors truncate block"
+                            className="text-[12px] font-medium text-[#6B7280] hover:text-[#FF6A00] transition-colors truncate block"
                         >
                             app.foodswipehelp@gmail.com
                         </a>
@@ -168,10 +168,10 @@ export default function Sidebar({ activeTab, setActiveTab, onLogout }: SidebarPr
                     
                     <button
                         onClick={onLogout}
-                        className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-red-500 hover:bg-red-50 transition-all duration-200 group"
+                        className="w-full flex items-center gap-3 px-4 py-2.5 rounded-xl text-red-500 hover:bg-red-50 transition-all duration-200 group"
                     >
-                        <FaSignOutAlt className="text-base" />
-                        <span className="text-xs uppercase tracking-wider font-bold">Logout</span>
+                        <FaSignOutAlt className="text-[18px]" />
+                        <span className="text-[14px] font-semibold">Logout</span>
                     </button>
                 </div>
             </div>

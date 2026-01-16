@@ -56,105 +56,119 @@ export default function SupportView() {
     };
 
     return (
-        <div className="p-6">
+        <div className="p-8">
             <div className="mb-8">
-                <h2 className="text-2xl font-bold text-gray-800">Support & Tickets</h2>
-                <p className="text-gray-500">Manage customer support, refunds, and disputes</p>
+                <h2 className="text-[24px] font-semibold text-[#111827] tracking-tight">Support & Tickets</h2>
+                <p className="text-[14px] font-normal text-[#6B7280] mt-1">Manage customer support, refunds, and disputes</p>
             </div>
 
             {/* Stats */}
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-                <div className="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm flex justify-between items-center">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+                <div className="bg-white p-6 rounded-[2rem] border border-gray-100 shadow-sm group hover:shadow-md transition-all duration-300 flex justify-between items-center">
                     <div>
-                        <p className="text-gray-500 text-sm mb-1">Total Tickets</p>
-                        <h3 className="text-2xl font-bold text-gray-800">{stats.total}</h3>
+                        <p className="text-[#6B7280] text-[13px] font-medium uppercase tracking-wider mb-2">Total Tickets</p>
+                        <h3 className="text-[26px] font-bold text-[#111827] tracking-tight">{stats.total}</h3>
                     </div>
-                    <div className="bg-blue-100 p-3 rounded-lg text-blue-600"><FaHeadset /></div>
+                    <div className="w-12 h-12 bg-blue-50 rounded-2xl flex items-center justify-center text-blue-600 shadow-sm group-hover:scale-110 transition-transform"><FaHeadset className="text-xl" /></div>
                 </div>
-                <div className="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm flex justify-between items-center">
+                <div className="bg-white p-6 rounded-[2rem] border border-gray-100 shadow-sm group hover:shadow-md transition-all duration-300 flex justify-between items-center">
                     <div>
-                        <p className="text-gray-500 text-sm mb-1">Open Tickets</p>
-                        <h3 className="text-2xl font-bold text-orange-600">{stats.open}</h3>
+                        <p className="text-[#6B7280] text-[13px] font-medium uppercase tracking-wider mb-2">Open Tickets</p>
+                        <h3 className="text-[26px] font-bold text-[#FF6A00] tracking-tight">{stats.open}</h3>
                     </div>
-                    <div className="bg-orange-100 p-3 rounded-lg text-orange-600"><FaClock /></div>
+                    <div className="w-12 h-12 bg-orange-50 rounded-2xl flex items-center justify-center text-[#FF6A00] shadow-sm group-hover:scale-110 transition-transform"><FaClock className="text-xl" /></div>
                 </div>
-                <div className="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm flex justify-between items-center">
+                <div className="bg-white p-6 rounded-[2rem] border border-gray-100 shadow-sm group hover:shadow-md transition-all duration-300 flex justify-between items-center">
                     <div>
-                        <p className="text-gray-500 text-sm mb-1">Refund Requests</p>
-                        <h3 className="text-2xl font-bold text-red-600">{stats.refunds}</h3>
+                        <p className="text-[#6B7280] text-[13px] font-medium uppercase tracking-wider mb-2">Refund Requests</p>
+                        <h3 className="text-[26px] font-bold text-red-600 tracking-tight">{stats.refunds}</h3>
                     </div>
-                    <div className="bg-red-100 p-3 rounded-lg text-red-600 font-bold">Rs</div>
+                    <div className="w-12 h-12 bg-red-50 rounded-2xl flex items-center justify-center text-red-600 shadow-sm group-hover:scale-110 transition-transform font-bold text-xl">Rs</div>
                 </div>
-                <div className="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm flex justify-between items-center">
-                    <div>
-                        <p className="text-gray-500 text-sm mb-1">Resolved Today</p>
-                        <h3 className="text-2xl font-bold text-green-600">{stats.resolved}</h3>
+                <div className="bg-[#FF6A00] p-6 rounded-[2rem] shadow-xl shadow-[#FF6A00]/20 flex justify-between items-center group overflow-hidden relative">
+                    <div className="relative z-10">
+                        <p className="text-white/70 text-[13px] font-medium uppercase tracking-wider mb-2">Resolved Today</p>
+                        <h3 className="text-[26px] font-bold text-white tracking-tight">{stats.resolved}</h3>
                     </div>
-                    <div className="bg-green-100 p-3 rounded-lg text-green-600"><FaCheck /></div>
+                    <div className="w-12 h-12 bg-white/20 rounded-2xl flex items-center justify-center text-white backdrop-blur-md relative z-10 group-hover:scale-110 transition-transform"><FaCheck className="text-xl" /></div>
+                    <FaHeadset className="absolute -bottom-4 -right-4 text-6xl text-white/10 rotate-12" />
                 </div>
             </div>
 
             {/* Toolbar */}
-            <div className="flex flex-col md:flex-row gap-4 mb-6">
-                <div className="relative flex-1 max-w-lg">
-                    <FaSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+            <div className="flex flex-col md:flex-row gap-4 mb-8">
+                <div className="relative flex-1">
+                    <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                        <FaSearch className="text-[#9CA3AF] text-sm" />
+                    </div>
                     <input
                         type="text"
                         placeholder="Search tickets by ID, customer, or subject..."
-                        className="w-full pl-10 pr-4 py-2.5 border border-gray-200 rounded-xl outline-none focus:ring-2 focus:ring-orange-500"
+                        className="w-full pl-11 pr-4 py-3.5 bg-white border border-gray-100 rounded-[1.25rem] outline-none focus:ring-2 focus:ring-[#FF6A00]/10 focus:border-[#FF6A00] text-[14px] text-[#111827] placeholder:text-[#9CA3AF] transition-all"
                     />
                 </div>
                 <div className="flex gap-3">
-                    <select className="px-4 py-2.5 border border-gray-200 rounded-xl outline-none bg-white text-gray-600">
+                    <select className="px-6 py-3.5 bg-white border border-gray-100 rounded-[1.25rem] outline-none focus:ring-2 focus:ring-[#FF6A00]/10 focus:border-[#FF6A00] text-[13px] font-bold text-[#111827] cursor-pointer appearance-none min-w-[140px]">
                         <option>All Status</option>
                         <option>Open</option>
                         <option>Resolved</option>
                     </select>
-                    <select className="px-4 py-2.5 border border-gray-200 rounded-xl outline-none bg-white text-gray-600">
-                        <option>All Types</option>
-                    </select>
-                    <button className="flex items-center gap-2 px-4 py-2.5 border border-gray-200 rounded-xl hover:bg-gray-50 text-gray-600">
+                    <button className="flex items-center gap-2 px-6 py-3.5 bg-white border border-gray-100 rounded-[1.25rem] hover:bg-gray-50 text-[13px] font-bold text-[#6B7280] transition-all">
                         <FaFilter /> More Filters
                     </button>
                 </div>
             </div>
 
             {/* Tickets List */}
-            <div className="space-y-4">
+            <div className="space-y-6">
                 {tickets.map(ticket => (
-                    <div key={ticket.id} className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm">
-                        <div className="flex justify-between items-start mb-4">
-                            <div className="flex items-center gap-3">
-                                <div className="bg-gray-100 p-3 rounded-xl">
-                                    {ticket.priority === 'HIGH' ? <FaExclamationCircle className="text-red-500 text-xl" /> : <FaExclamationCircle className="text-orange-500 text-xl" />}
+                    <div key={ticket.id} className="bg-white p-8 rounded-[2rem] border border-gray-100 shadow-sm group hover:shadow-md transition-all duration-300">
+                        <div className="flex flex-col lg:flex-row justify-between items-start gap-6">
+                            <div className="flex items-start gap-5 flex-1">
+                                <div className={`p-4 rounded-[1.5rem] shadow-sm ${ticket.priority === 'HIGH' ? 'bg-red-50 text-red-600' : 'bg-orange-50 text-[#FF6A00]'}`}>
+                                    <FaExclamationCircle className="text-2xl" />
                                 </div>
-                                <div>
-                                    <div className="flex items-center gap-2 mb-1">
-                                        <span className="font-mono font-bold text-gray-800">{ticket._id.substring(0, 8)}</span>
-                                        <span className={`text-xs px-2 py-0.5 rounded border ${getPriorityColor(ticket.priority)} font-bold`}>{ticket.priority}</span>
-                                        <span className={`text-xs px-2 py-0.5 rounded font-bold uppercase ${getStatusBadge(ticket.status)}`}>{ticket.status}</span>
+                                <div className="flex-1">
+                                    <div className="flex flex-wrap items-center gap-3 mb-3">
+                                        <span className="font-mono font-bold text-[14px] text-[#111827] bg-gray-50 px-3 py-1 rounded-lg border border-gray-100 tracking-tight">#{ticket._id.substring(0, 8)}</span>
+                                        <span className={`text-[10px] px-2.5 py-1 rounded-full font-bold uppercase tracking-wider border ${getPriorityColor(ticket.priority)}`}>{ticket.priority}</span>
+                                        <span className={`text-[10px] px-2.5 py-1 rounded-full font-bold uppercase tracking-wider ${getStatusBadge(ticket.status)}`}>{ticket.status}</span>
                                     </div>
-                                    <h3 className="font-bold text-gray-800">{ticket.subject}</h3>
-                                    <p className="text-sm text-gray-500">{ticket.description}</p>
+                                    <h3 className="text-[18px] font-bold text-[#111827] tracking-tight mb-2">{ticket.subject}</h3>
+                                    <p className="text-[14px] text-[#6B7280] leading-relaxed mb-4">{ticket.description}</p>
+                                    
+                                    <div className="flex flex-wrap items-center gap-6 py-4 border-y border-gray-50 mb-6">
+                                        <div className="flex flex-col">
+                                            <span className="text-[10px] text-[#9CA3AF] font-bold uppercase tracking-widest mb-1">Customer</span>
+                                            <span className="text-[13px] font-bold text-[#111827]">{ticket.user?.name || ticket.user?.email || 'Unknown'}</span>
+                                        </div>
+                                        {ticket.order && (
+                                            <div className="flex flex-col">
+                                                <span className="text-[10px] text-[#9CA3AF] font-bold uppercase tracking-widest mb-1">Order Ref</span>
+                                                <span className="text-[13px] font-bold text-[#111827]">#{ticket.order}</span>
+                                            </div>
+                                        )}
+                                        <div className="flex flex-col">
+                                            <span className="text-[10px] text-[#9CA3AF] font-bold uppercase tracking-widest mb-1">Assigned To</span>
+                                            <span className="text-[13px] font-bold text-[#111827]">{ticket.assignee?.name || 'Unassigned'}</span>
+                                        </div>
+                                    </div>
+
+                                    <div className="flex flex-wrap gap-3">
+                                        <button className="px-6 py-2.5 bg-blue-50 text-blue-600 hover:bg-blue-600 hover:text-white rounded-xl font-bold text-[12px] uppercase tracking-wider transition-all">View Details</button>
+                                        <button className="px-6 py-2.5 bg-red-50 text-red-600 hover:bg-red-600 hover:text-white rounded-xl font-bold text-[12px] uppercase tracking-wider transition-all">Process Refund</button>
+                                        <button className="px-6 py-2.5 bg-gray-50 text-[#6B7280] hover:bg-[#111827] hover:text-white rounded-xl font-bold text-[12px] uppercase tracking-wider transition-all">Start Investigation</button>
+                                        <button className="px-6 py-2.5 bg-green-50 text-green-600 hover:bg-green-600 hover:text-white rounded-xl font-bold text-[12px] uppercase tracking-wider transition-all">Mark Resolved</button>
+                                    </div>
                                 </div>
                             </div>
-                            <div className="text-right">
-                                <p className="text-gray-400 text-xs">{new Date(ticket.createdAt).toLocaleDateString()}</p>
-                                <p className="text-xs text-gray-500 mt-1">Assigned to: {ticket.assignee?.name || 'Unassigned'}</p>
+                            <div className="flex flex-col items-end gap-2 text-right">
+                                <div className="bg-gray-50 px-4 py-2 rounded-xl border border-gray-100">
+                                    <p className="text-[10px] text-[#9CA3AF] font-bold uppercase tracking-widest mb-0.5">Created On</p>
+                                    <p className="text-[13px] font-bold text-[#111827]">{new Date(ticket.createdAt).toLocaleDateString()}</p>
+                                </div>
+                                <button className="text-[11px] font-bold text-[#FF6A00] hover:underline uppercase tracking-wider p-2">Contact Customer</button>
                             </div>
-                        </div>
-
-                        <div className="ml-14 mb-6 text-sm text-gray-600">
-                            <span className="mr-4">Customer: <span className="font-medium text-gray-800">{ticket.user?.name || ticket.user?.email || 'Unknown'}</span></span>
-                            {ticket.order && <span className="mr-4">Order: <span className="font-medium text-gray-800">#{ticket.order}</span></span>}
-                        </div>
-
-                        <div className="ml-14 flex gap-3">
-                            <button className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium shadow-md shadow-blue-500/20 text-sm">View Details</button>
-                            <button className="px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 font-medium shadow-md shadow-green-500/20 text-sm">Process Refund</button>
-                            <button className="px-4 py-2 border border-gray-200 rounded-lg hover:bg-gray-50 text-gray-600 text-sm">Start Investigation</button>
-                            <button className="px-4 py-2 border border-green-200 text-green-600 rounded-lg hover:bg-green-50 text-sm">Mark Resolved</button>
-                            <button className="px-4 py-2 border border-gray-200 rounded-lg hover:bg-gray-50 text-gray-600 text-sm">Contact Customer</button>
                         </div>
                     </div>
                 ))}
