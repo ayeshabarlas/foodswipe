@@ -384,6 +384,7 @@ export default function VideoFeed() {
     const [showTrackingModal, setShowTrackingModal] = useState(false);
     const [selectedOrderId, setSelectedOrderId] = useState<string | undefined>();
     const [activeOrder, setActiveOrder] = useState<any>(null);
+    const [searchTerm, setSearchTerm] = useState('');
 
     const fetchActiveOrder = async () => {
         try {
@@ -537,6 +538,15 @@ export default function VideoFeed() {
         if (index !== currentVideoIndex) setCurrentVideoIndex(index);
     };
 
+    const filteredDishes = Array.isArray(dishes) ? dishes.filter(dish => {
+        const matchesSearch = 
+            dish.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            dish.restaurant?.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            dish.description?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            dish.ingredients?.some(ing => ing.toLowerCase().includes(searchTerm.toLowerCase()));
+        return matchesSearch;
+    }) : [];
+
     return (
         <div className="relative min-h-screen w-full bg-black">
             <div className="fixed top-4 left-4 right-4 z-[50] flex flex-col gap-3">
@@ -549,7 +559,13 @@ export default function VideoFeed() {
                         </svg>
                     </button>
                     <div className="flex-1 relative">
-                        <input type="text" placeholder="Search restaurants or dishes" className="w-full bg-white/10 backdrop-blur-sm text-white placeholder-gray-400 rounded-lg px-4 py-2.5 pl-10 outline-none focus:bg-white/15 transition text-sm" />
+                        <input 
+                            type="text" 
+                            placeholder="Search restaurants or dishes" 
+                            value={searchTerm}
+                            onChange={(e) => setSearchTerm(e.target.value)}
+                            className="w-full bg-white/10 backdrop-blur-sm text-white placeholder-gray-400 rounded-lg px-4 py-2.5 pl-10 outline-none focus:bg-white/15 transition text-sm" 
+                        />
                         <FaSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={14} />
                     </div>
                     <button onClick={() => { console.log('🛒 Cart clicked!'); setIsCartOpen(true); }} className="p-2 text-white flex-shrink-0 cursor-pointer z-50" type="button">
@@ -564,7 +580,7 @@ export default function VideoFeed() {
             </div>
 
             <div className="h-full w-full overflow-y-scroll snap-y snap-mandatory scroll-smooth no-scrollbar" onScroll={handleScroll}>
-                {Array.isArray(dishes) && dishes.map((dish, index) => {
+                {filteredDishes.map((dish, index) => {
                     let distance: string | undefined;
                     if (userLocation && dish.restaurant?.location?.coordinates) {
                         const [restLng, restLat] = dish.restaurant.location.coordinates;
@@ -572,7 +588,7 @@ export default function VideoFeed() {
                     }
                     return <VideoCard key={dish._id} dish={dish} isActive={index === currentVideoIndex} onOpenDetails={setSelectedDish} onOpenProfile={setSelectedRestaurant} distance={distance} />;
                 })}
-                {dishes.length === 0 && (
+                {filteredDishes.length === 0 && (
                     <div className="h-screen flex flex-col items-center justify-center text-white bg-gray-900">
                         <div className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin mb-4"></div>
                         <p className="text-lg font-medium animate-pulse">Finding delicious food...</p>

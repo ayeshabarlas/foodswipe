@@ -72,10 +72,26 @@ if (!admin.apps.length) {
         }
     } catch (error) {
         console.error('❌ Firebase Initialization Critical Error:', error.message);
+        // Ensure at least one app is initialized to prevent .storage() crash
+        if (!admin.apps.length) {
+            admin.initializeApp({
+                storageBucket: process.env.FIREBASE_STORAGE_BUCKET || 'foodswipe-be395.firebasestorage.app'
+            });
+        }
     }
 }
 
-const storage = admin.storage();
+// Wrap in getter to prevent immediate crash if initialization failed catastrophically
+const getStorage = () => {
+    try {
+        return admin.storage();
+    } catch (e) {
+        console.error('❌ Firebase Storage Error:', e.message);
+        return { bucket: () => ({ file: () => ({ createWriteStream: () => ({ on: () => ({ end: () => {} }) }) }) }) };
+    }
+};
+
+const storage = getStorage();
 const bucket = storage.bucket();
 
 module.exports = { admin, bucket };

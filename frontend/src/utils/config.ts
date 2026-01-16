@@ -1,23 +1,33 @@
 const getApiUrl = () => {
-  // Priority 1: Force localhost if we are on localhost in browser
-  if (typeof window !== 'undefined' && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')) {
+  // Priority 1: Use Environment variable if provided (from .env.local)
+  let url = process.env.NEXT_PUBLIC_API_URL;
+
+  // Priority 2: Force localhost/local IP if we are on a local network in browser
+  if (typeof window !== 'undefined' && (
+    window.location.hostname === 'localhost' || 
+    window.location.hostname === '127.0.0.1' ||
+    window.location.hostname.startsWith('192.168.') ||
+    window.location.hostname.startsWith('10.') ||
+    window.location.hostname.startsWith('172.') ||
+    window.location.hostname.endsWith('.trae.app') // Support Trae preview
+  )) {
+    // If we're on a local network IP, use that IP for the backend too
+    if (window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1' && !window.location.hostname.endsWith('.trae.app')) {
+      return `http://${window.location.hostname}:5000`;
+    }
     return 'http://localhost:5000';
   }
 
-  // Priority 2: Use Render URL as the MAIN production backend
-  // Since Vercel deployment is not working for backend, we force Render
+  // Priority 3: Use Render URL as the MAIN production backend
   const RENDER_URL = 'https://foodswipe-6178.onrender.com';
   
   if (process.env.NODE_ENV === 'production') {
     return RENDER_URL;
   }
 
-  // Priority 3: Use Environment variable if provided
-  let url = process.env.NEXT_PUBLIC_API_URL;
-
-  // Priority 4: Vercel fallback (if not production environment or if needed)
+  // Priority 4: Vercel fallback
   if (!url && typeof window !== 'undefined' && window.location.hostname.includes('vercel.app')) {
-    return RENDER_URL; // Force Render even on Vercel frontend
+    return RENDER_URL;
   }
   
   // Priority 5: Localhost fallback
@@ -46,17 +56,33 @@ const getSocketUrl = () => {
   // Priority 1: Environment variable
   let url = process.env.NEXT_PUBLIC_SOCKET_URL;
   
+  // Priority 2: Force localhost/local IP if we are on a local network in browser
+  if (typeof window !== 'undefined' && (
+    window.location.hostname === 'localhost' || 
+    window.location.hostname === '127.0.0.1' ||
+    window.location.hostname.startsWith('192.168.') ||
+    window.location.hostname.startsWith('10.') ||
+    window.location.hostname.startsWith('172.') ||
+    window.location.hostname.endsWith('.trae.app')
+  )) {
+    // If we're on a local network IP, use that IP for the backend too
+    if (window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1' && !window.location.hostname.endsWith('.trae.app')) {
+      return `http://${window.location.hostname}:5000`;
+    }
+    return 'http://localhost:5000';
+  }
+
   // Override if pointing to old Vercel backend
   if (url && url.includes('vercel.app')) {
     url = 'https://foodswipe-6178.onrender.com';
   }
   
-  // Priority 2: Production fallback (Hardcoded Render URL)
+  // Priority 3: Production fallback (Hardcoded Render URL)
   if (!url && process.env.NODE_ENV === 'production') {
     url = 'https://foodswipe-6178.onrender.com';
   }
 
-  // Priority 3: Localhost fallback
+  // Priority 4: Localhost fallback
   if (!url) {
     url = 'http://localhost:5000';
   }

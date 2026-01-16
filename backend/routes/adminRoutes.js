@@ -31,6 +31,9 @@ router.post('/login', loginAdmin);
 router.use(protect);
 router.use(requireAdmin);
 
+// Admin Info
+router.get('/me', getAdminMe);
+
 // Restaurant management
 router.get('/restaurants/pending', getPendingRestaurants);
 router.get('/restaurants', getAllRestaurants);

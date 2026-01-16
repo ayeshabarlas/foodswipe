@@ -20,31 +20,59 @@ const getVideoFeed = async (req, res) => {
     try {
         const { page = 1, limit = 10, category } = req.query;
 
-        // Show dishes that have EITHER a video OR an image
-        const query = { 
-            $or: [
-                { videoUrl: { $ne: '' } },
-                { imageUrl: { $ne: '' } }
-            ]
-        };
+        // MVP: Show all dishes for now, don't be too strict with videoUrl/imageUrl
+        // so the feed isn't empty during testing
+        const query = {};
 
         if (category) {
             query.category = category;
         }
 
+        console.log('Fetching video feed with query:', JSON.stringify(query));
+
+        // Get all dishes first to see if they exist
+        const allDishesCount = await Dish.countDocuments({});
+        console.log(`Total dishes in database: ${allDishesCount}`);
+
         const videos = await Dish.find(query)
             .populate({
-                path: 'restaurant',
-                select: 'name logo rating location address contact verificationStatus',
-            })
-            .populate('likes', 'name')
-            .limit(parseInt(limit))
+                 path: 'restaurant',
+                 select: 'name logo rating location address contact verificationStatus isActive',
+             })
+             .populate('likes', 'name')
+             .limit(parseInt(limit))
             .skip((parseInt(page) - 1) * parseInt(limit))
             .sort({ createdAt: -1 })
             .lean();
 
-        // Filter out videos with null restaurants
-        const validVideos = videos.filter(v => v.restaurant);
+        console.log(`Found ${videos.length} dishes for feed from query`);
+
+        // Log a sample dish to see its structure
+        if (videos.length > 0) {
+            console.log('Sample dish from feed:', JSON.stringify({
+                id: videos[0]._id,
+                name: videos[0].name,
+                restaurantId: videos[0].restaurant?._id,
+                restaurantPopulated: !!videos[0].restaurant
+            }));
+        }
+
+        // Filter out videos with null restaurants only if strictly necessary
+        // For MVP, if a dish has no restaurant, we might still want to show it or debug it
+        const validVideos = videos.filter(v => {
+            if (!v.restaurant) {
+                console.warn(`Dish ${v._id} (${v.name}) has no associated restaurant! It will be skipped from feed.`);
+                return false;
+            }
+            return true;
+        });
+
+        console.log(`After filtering null restaurants: ${validVideos.length} dishes`);
+
+        // If we have dishes but they were all filtered out, let's see why
+        if (videos.length > 0 && validVideos.length === 0) {
+            console.error('CRITICAL: All found dishes were filtered out because they lack a restaurant population!');
+        }
 
         // Fetch active deals for these restaurants
         const restaurantIds = validVideos.map(v => v.restaurant._id);

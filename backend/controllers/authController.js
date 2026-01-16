@@ -132,12 +132,18 @@ const loginUser = async (req, res) => {
  */
 const getMe = async (req, res) => {
     try {
-        const user = await User.findById(req.user.id);
+        // req.user is already populated by protect middleware
+        if (!req.user) {
+            console.log(`getMe: No user found in request (middleware failed?)`);
+            return res.status(401).json({ message: 'Not authorized' });
+        }
+        
+        // Return fresh data from DB just in case
+        const user = await User.findById(req.user._id);
         if (!user) {
-            console.log(`getMe: User not found for ID ${req.user.id}`);
             return res.status(404).json({ message: 'User not found' });
         }
-        console.log('getMe returning user:', { id: user._id, email: user.email, role: user.role });
+        
         return res.status(200).json(user);
     } catch (err) {
         return res.status(500).json({ message: err.message });
@@ -228,10 +234,30 @@ const verifyOtp = async (req, res) => {
  */
 const verifyPhone = async (req, res) => {
     try {
-        const { phoneNumber } = req.body;
+        const { idToken, phoneNumber } = req.body;
 
-        if (!phoneNumber) {
-            return res.status(400).json({ message: 'Phone number is required' });
+        if (!idToken) {
+            return res.status(400).json({ message: 'Firebase ID token is required' });
+        }
+
+        // 1. Verify the Firebase ID token
+        let decoded;
+        try {
+            decoded = await admin.auth().verifyIdToken(idToken);
+        } catch (verifyError) {
+            console.error('Firebase token verification failed:', verifyError);
+            return res.status(401).json({ message: 'Invalid or expired verification token' });
+        }
+
+        const verifiedPhone = decoded.phone_number;
+        if (!verifiedPhone) {
+            return res.status(400).json({ message: 'Token does not contain a verified phone number' });
+        }
+
+        // 2. Security Check: Ensure the token phone number matches what the client sent
+        // (Optional, but good for consistency)
+        if (phoneNumber && verifiedPhone !== phoneNumber) {
+            console.warn(`Phone mismatch: Token has ${verifiedPhone}, client sent ${phoneNumber}`);
         }
 
         const user = await User.findById(req.user.id);
@@ -239,12 +265,28 @@ const verifyPhone = async (req, res) => {
             return res.status(404).json({ message: 'User not found' });
         }
 
-        // Update user's phone verification status
-        user.phoneNumber = phoneNumber;
-        user.phone = phoneNumber; // Sync both fields
+        // 3. Uniqueness Check: Is this number already verified by another account?
+        const existingUser = await User.findOne({
+            $or: [{ phone: verifiedPhone }, { phoneNumber: verifiedPhone }],
+            phoneVerified: true,
+            _id: { $ne: user._id }
+        });
+
+        if (existingUser) {
+            return res.status(400).json({ 
+                message: 'This phone number is already linked to another account. Please use a different number.' 
+            });
+        }
+
+        // 4. Update user's phone verification status
+        user.phoneNumber = verifiedPhone;
+        user.phone = verifiedPhone; // Sync both fields
         user.phoneVerified = true;
         user.phoneVerifiedAt = new Date();
+        user.firebaseUid = decoded.uid; // Store Firebase UID for consistency
         await user.save();
+
+        console.log(`Phone verified for user ${user._id}: ${verifiedPhone}`);
 
         return res.json({
             success: true,

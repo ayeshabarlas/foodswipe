@@ -17,6 +17,10 @@ const nextConfig = {
             {
                 protocol: 'https',
                 hostname: 'foodswipe-backend.vercel.app',
+            },
+            {
+                protocol: 'https',
+                hostname: 'foodswipe-6178.onrender.com',
             }
         ],
     },

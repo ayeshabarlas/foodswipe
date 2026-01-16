@@ -33,10 +33,10 @@ const connectDB = async () => {
         console.log(`🔌 Attempting to connect to: ${maskedUri}`);
 
         const conn = await mongoose.connect(mongoUri, {
-            serverSelectionTimeoutMS: 10000, // Wait 10s for server selection
-            connectTimeoutMS: 15000,        // Wait 15s for initial connection
-            socketTimeoutMS: 45000,         // Close sockets after 45s of inactivity
-            family: 4                       // Use IPv4, skip trying IPv6
+            serverSelectionTimeoutMS: 30000, // Increase to 30s
+            connectTimeoutMS: 30000,        // Increase to 30s
+            socketTimeoutMS: 60000,         // Increase to 60s
+            family: 4                       // Use IPv4
         });
 
         isConnected = true;

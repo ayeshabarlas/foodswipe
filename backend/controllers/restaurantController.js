@@ -184,10 +184,14 @@ const getMyRestaurant = async (req, res) => {
             .populate('videos');
 
         if (!restaurant) {
-            console.log(`No restaurant found for user ID ${req.user._id}. Checking by email ${req.user.email}...`);
-            // SMART LINKING: Check if a restaurant exists for this email but different owner ID
+            console.log(`No restaurant found for user ID ${req.user._id}. Checking by email ${req.user.email} and phone ${req.user.phone}...`);
+            // SMART LINKING: Check if a restaurant exists for this email or phone but different owner ID
             const otherRests = await Restaurant.find({}).populate('owner');
-            restaurant = otherRests.find(r => r.owner && r.owner.email.toLowerCase() === req.user.email.toLowerCase());
+            restaurant = otherRests.find(r => {
+                const ownerEmailMatch = r.owner && r.owner.email && r.owner.email.toLowerCase() === req.user.email.toLowerCase();
+                const contactMatch = r.contact === req.user.phone || r.contact === req.user.phoneNumber;
+                return ownerEmailMatch || contactMatch;
+            });
             
             if (restaurant) {
                 console.log(`SMART LINKING: Re-linking restaurant ${restaurant._id} to new owner ID ${req.user._id}`);

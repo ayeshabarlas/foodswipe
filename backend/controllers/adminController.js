@@ -331,12 +331,12 @@ const getAllRestaurants = async (req, res) => {
                             totalOrders: { $sum: 1 },
                             revenue: {
                                 $sum: {
-                                    $cond: [{ $nin: ["$status", ["Cancelled"]] }, "$totalPrice", 0]
+                                    $cond: [{ $not: { $in: ["$status", ["Cancelled"]] } }, "$totalPrice", 0]
                                 }
                             },
                             commission: {
                                 $sum: {
-                                    $cond: [{ $nin: ["$status", ["Cancelled"]] }, "$commissionAmount", 0]
+                                    $cond: [{ $not: { $in: ["$status", ["Cancelled"]] } }, "$commissionAmount", 0]
                                 }
                             }
                         }
@@ -414,7 +414,7 @@ const getAllRiders = async (req, res) => {
                                 $expr: {
                                     $and: [
                                         { $eq: ['$rider', '$$riderId'] },
-                                        { $nin: ['$status', ['Cancelled']] }
+                                        { $not: { $in: ['$status', ['Cancelled']] } }
                                     ]
                                 }
                             }

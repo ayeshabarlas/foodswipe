@@ -6,6 +6,8 @@ import { FaTimes, FaPhone, FaLock, FaArrowRight, FaCheckCircle } from 'react-ico
 import axios from 'axios';
 import { API_BASE_URL } from '../utils/config';
 import toast from 'react-hot-toast';
+import { initRecaptcha, sendOTP as firebaseSendOTP, verifyOTP as firebaseVerifyOTP, cleanupRecaptcha } from '../utils/firebase-phone-auth';
+import { ConfirmationResult } from 'firebase/auth';
 
 interface PhoneAuthModalProps {
     isOpen: boolean;
@@ -21,6 +23,24 @@ export default function PhoneAuthModal({ isOpen, onClose, onSuccess }: PhoneAuth
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
     const [countdown, setCountdown] = useState(0);
+    const [confirmationResult, setConfirmationResult] = useState<ConfirmationResult | null>(null);
+
+    // Initialize reCAPTCHA
+    useEffect(() => {
+        if (isOpen && step === 'phone') {
+            const timer = setTimeout(() => {
+                try {
+                    initRecaptcha('recaptcha-container');
+                } catch (err) {
+                    console.error('Failed to init recaptcha:', err);
+                }
+            }, 500);
+            return () => {
+                clearTimeout(timer);
+                cleanupRecaptcha();
+            };
+        }
+    }, [isOpen, step]);
 
     // Countdown timer for resend
     useEffect(() => {
@@ -51,32 +71,31 @@ export default function PhoneAuthModal({ isOpen, onClose, onSuccess }: PhoneAuth
         setLoading(true);
 
         try {
+            // Check if user is logged in
             const userInfoStr = localStorage.getItem('userInfo');
             if (!userInfoStr) {
                 toast.error('Please login first');
                 return;
             }
-            const userInfo = JSON.parse(userInfoStr);
-            const config = {
-                headers: { Authorization: `Bearer ${userInfo.token}` }
-            };
 
-            const { data } = await axios.post(`${API_BASE_URL}/api/users/send-otp`, {
-                phoneNumber: fullNumber
-            }, config);
-
-            toast.success('OTP sent successfully!');
-            if (data.otp) {
-                console.log('🔧 Development OTP:', data.otp);
-                toast(`Development OTP: ${data.otp}`, { icon: '🔧' });
-            }
+            console.log('📱 Sending OTP via Firebase to:', fullNumber);
+            const result = await firebaseSendOTP(fullNumber);
+            setConfirmationResult(result);
             
+            toast.success('OTP sent successfully!');
             setStep('otp');
-            setCountdown(30);
+            setCountdown(60); // Firebase usually allows resend after 60s
         } catch (err: any) {
             console.error('Send OTP error:', err);
-            setError(err.response?.data?.message || 'Failed to send OTP. Please try again.');
-            toast.error(err.response?.data?.message || 'Failed to send OTP');
+            const errorMessage = err.message || 'Failed to send OTP. Please try again.';
+            setError(errorMessage);
+            toast.error(errorMessage);
+            
+            // If reCAPTCHA error, try re-initializing
+            if (err.code === 'auth/captcha-check-failed' || err.code === 'auth/invalid-app-credential') {
+                cleanupRecaptcha();
+                initRecaptcha('recaptcha-container');
+            }
         } finally {
             setLoading(false);
         }
@@ -88,10 +107,22 @@ export default function PhoneAuthModal({ isOpen, onClose, onSuccess }: PhoneAuth
             return;
         }
 
+        if (!confirmationResult) {
+            setError('Session expired. Please request a new OTP.');
+            setStep('phone');
+            return;
+        }
+
         setLoading(true);
         setError('');
 
         try {
+            // 1. Verify OTP with Firebase
+            console.log('🔐 Verifying OTP with Firebase...');
+            const userCredential = await firebaseVerifyOTP(confirmationResult, otp);
+            const idToken = await userCredential.user.getIdToken();
+            
+            // 2. Call backend to link phone and mark as verified
             const userInfoStr = localStorage.getItem('userInfo');
             if (!userInfoStr) return;
             const userInfo = JSON.parse(userInfoStr);
@@ -102,9 +133,10 @@ export default function PhoneAuthModal({ isOpen, onClose, onSuccess }: PhoneAuth
             const formattedPhone = phoneNumber.startsWith('0') ? phoneNumber.substring(1) : phoneNumber;
             const fullNumber = `${countryCode}${formattedPhone}`;
 
-            const { data } = await axios.post(`${API_BASE_URL}/api/users/verify-otp`, {
-                phoneNumber: fullNumber,
-                otp
+            console.log('🔗 Linking phone number in backend...');
+            const { data } = await axios.post(`${API_BASE_URL}/api/auth/verify-phone`, {
+                idToken,
+                phoneNumber: fullNumber
             }, config);
 
             // Update local storage
@@ -119,8 +151,9 @@ export default function PhoneAuthModal({ isOpen, onClose, onSuccess }: PhoneAuth
             onSuccess();
         } catch (err: any) {
             console.error('Verify OTP error:', err);
-            setError(err.response?.data?.message || 'Invalid OTP. Please try again.');
-            toast.error(err.response?.data?.message || 'Invalid OTP');
+            const errorMessage = err.response?.data?.message || err.message || 'Invalid OTP. Please try again.';
+            setError(errorMessage);
+            toast.error(errorMessage);
         } finally {
             setLoading(false);
         }
@@ -186,6 +219,9 @@ export default function PhoneAuthModal({ isOpen, onClose, onSuccess }: PhoneAuth
                                     </div>
                                     <p className="text-xs text-gray-500 mt-2">Example: 3001234567</p>
                                 </div>
+
+                                {/* reCAPTCHA Container */}
+                                <div id="recaptcha-container" className="flex justify-center mb-4"></div>
 
                                 <button
                                     onClick={handleSendOTP}
