@@ -21,7 +21,7 @@ interface Rider {
     cnicNumber?: string;
     dateOfBirth?: string;
     licenseNumber?: string;
-    user: { _id: string; name: string; email: string; phone: string; status: string; createdAt: string };
+    user: { _id: string; name: string; email: string; phone: string; phoneNumber?: string; status: string; createdAt: string };
     vehicleType: string;
     vehicleNumber: string;
     status: string;
@@ -382,7 +382,7 @@ export default function RidersView() {
                                                     <div>
                                                         <p className="font-semibold text-[#111827] text-[14px] group-hover:text-[#FF6A00] transition-colors">{rider.fullName || rider.user?.name}</p>
                                                         <div className="flex items-center gap-2 mt-0.5">
-                                                            <span className="text-[12px] text-[#6B7280] font-medium">{rider.user?.phone}</span>
+                                                            <span className="text-[12px] text-[#6B7280] font-medium">{rider.user?.phone || rider.user?.phoneNumber || 'No phone'}</span>
                                                             <span className="text-[12px] text-[#9CA3AF]">•</span>
                                                             <span className="text-[12px] text-[#9CA3AF] font-medium">#{rider._id.slice(-6).toUpperCase()}</span>
                                                         </div>
@@ -539,7 +539,7 @@ export default function RidersView() {
                                                         <div className="w-8 h-8 rounded-xl bg-gray-50 flex items-center justify-center text-[#9CA3AF] group-hover:text-[#FF6A00] transition-colors">
                                                             <FaPhone size={14} />
                                                         </div>
-                                                        <p className="text-[14px] font-normal text-[#111827]">{selectedRider.user?.phone}</p>
+                                                        <p className="text-[14px] font-normal text-[#111827]">{selectedRider.user?.phone || selectedRider.user?.phoneNumber || 'No phone'}</p>
                                                     </div>
                                                     <div className="flex items-center gap-3 group">
                                                         <div className="w-8 h-8 rounded-xl bg-gray-50 flex items-center justify-center text-[#9CA3AF] group-hover:text-[#FF6A00] transition-colors">
@@ -551,8 +551,16 @@ export default function RidersView() {
                                                         <div className="w-8 h-8 rounded-xl bg-gray-50 flex items-center justify-center text-[#9CA3AF] group-hover:text-[#FF6A00] transition-colors">
                                                             <FaIdCard size={14} />
                                                         </div>
-                                                        <p className="text-[14px] font-normal text-[#111827]">CNIC: {selectedRider.cnicNumber}</p>
+                                                        <p className="text-[14px] font-normal text-[#111827]">CNIC: {selectedRider.cnicNumber || 'N/A'}</p>
                                                     </div>
+                                                    {selectedRider.dateOfBirth && (
+                                                        <div className="flex items-center gap-3 group">
+                                                            <div className="w-8 h-8 rounded-xl bg-gray-50 flex items-center justify-center text-[#9CA3AF] group-hover:text-[#FF6A00] transition-colors">
+                                                                <FaCalendarAlt size={14} />
+                                                            </div>
+                                                            <p className="text-[14px] font-normal text-[#111827]">DOB: {new Date(selectedRider.dateOfBirth).toLocaleDateString()}</p>
+                                                        </div>
+                                                    )}
                                                 </div>
                                             </div>
                                             <div className="space-y-4">
@@ -661,7 +669,7 @@ export default function RidersView() {
                                                 <FaUniversity size={120} />
                                             </div>
                                             <h4 className="text-[13px] font-medium text-white/60 uppercase tracking-wider mb-6 relative">Settlement Account</h4>
-                                            {selectedRider.bankDetails ? (
+                                            {selectedRider.bankDetails && (selectedRider.bankDetails.accountNumber || selectedRider.bankDetails.bankName) ? (
                                                 <div className="space-y-4 relative">
                                                     <div>
                                                         <p className="text-[11px] font-medium text-white/60 uppercase tracking-wider mb-1">Holder Name</p>

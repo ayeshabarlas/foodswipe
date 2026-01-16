@@ -19,27 +19,19 @@ const getApiUrl = () => {
   }
 
   // Priority 3: Use Render URL as the MAIN production backend
-  const RENDER_URL = 'https://foodswipe-6178.onrender.com';
+  const RENDER_URL = process.env.NEXT_PUBLIC_API_URL || 'https://foodswipe-6178.onrender.com';
   
   // Force Render URL for specific Vercel production domains
   if (typeof window !== 'undefined' && (
     window.location.hostname === 'foodswipe-one.vercel.app' ||
-    window.location.hostname.includes('vercel.app')
+    window.location.hostname.includes('vercel.app') ||
+    process.env.NODE_ENV === 'production'
   )) {
-    console.log('🌐 Production Environment: Using Render Backend');
+    console.log('🌐 Production Environment: Using Backend', RENDER_URL);
     return RENDER_URL;
   }
   
-  if (process.env.NODE_ENV === 'production') {
-    return RENDER_URL;
-  }
-
-  // Priority 4: Vercel fallback
-  if (!url && typeof window !== 'undefined' && window.location.hostname.includes('vercel.app')) {
-    return RENDER_URL;
-  }
-  
-  // Priority 5: Localhost fallback
+  // Priority 4: Localhost fallback
   if (!url) {
     url = 'http://localhost:5000';
   }

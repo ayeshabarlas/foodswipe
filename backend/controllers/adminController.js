@@ -434,7 +434,7 @@ const getAllRiders = async (req, res) => {
                     localField: 'user',
                     foreignField: '_id',
                     pipeline: [
-                        { $project: { _id: 1, name: 1, email: 1, phone: 1, status: 1 } }
+                        { $project: { _id: 1, name: 1, email: 1, phone: 1, phoneNumber: 1, status: 1, createdAt: 1 } }
                     ],
                     as: 'userDetails'
                 }
@@ -447,7 +447,7 @@ const getAllRiders = async (req, res) => {
             {
                 $lookup: {
                     from: 'riderwallets',
-                    localField: '_id', // Fix: Use Rider ID, not User ID
+                    localField: '_id',
                     foreignField: 'rider',
                     as: 'walletDetails'
                 }
