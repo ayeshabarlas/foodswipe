@@ -442,7 +442,7 @@ export default function RestaurantDashboard() {
                     </div>
 
                     {/* Navigation */}
-                    <nav className="flex-1 overflow-y-auto px-3 py-3 space-y-0.5 custom-scrollbar">
+                    <nav className="flex-1 overflow-y-auto px-3 py-6 space-y-3 custom-scrollbar">
                         {menuItems.map((item) => (
                             <button
                                 key={item.id}
@@ -451,20 +451,28 @@ export default function RestaurantDashboard() {
                                     setActivePage(item.id);
                                     setIsSidebarOpen(false);
                                 }}
-                                className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-xl transition-all duration-200 group relative
+                                className={`w-full flex items-center gap-4 px-4 py-3.5 rounded-2xl transition-all duration-300 group relative
                                 ${
                                     activePage === item.id
-                                        ? 'bg-gradient-to-r from-orange-500 to-orange-600 text-white shadow-lg shadow-orange-500/30'
+                                        ? 'bg-gradient-to-r from-orange-500 to-red-500 text-white shadow-xl shadow-orange-500/40 scale-[1.02]'
                                         : item.disabled
                                             ? 'text-gray-600 opacity-40 cursor-not-allowed'
-                                            : 'text-gray-400 hover:bg-gray-800 hover:text-white'
+                                            : 'text-gray-400 hover:bg-white/5 hover:text-white'
                                 }`}
                             >
-                                <item.icon className={`text-sm ${activePage === item.id ? 'text-white' : 'text-gray-500 group-hover:text-orange-400'}`} />
-                                <span className="text-[11px] font-bold uppercase tracking-wider">{item.label}</span>
+                                <item.icon className={`text-lg ${activePage === item.id ? 'text-white' : 'text-gray-500 group-hover:text-orange-400'} transition-colors duration-300`} />
+                                <span className="text-[14px] font-medium tracking-wide">{item.label}</span>
+                                
+                                {item.id === 'orders' && stats?.pending > 0 && (
+                                    <span className={`ml-auto w-5 h-5 flex items-center justify-center rounded-full text-[10px] font-bold
+                                        ${activePage === 'orders' ? 'bg-white text-orange-600' : 'bg-orange-500 text-white animate-pulse'}`}>
+                                        {stats.pending}
+                                    </span>
+                                )}
+
                                 {item.disabled && (
                                     <div className="ml-auto">
-                                        <FaTimes className="text-[8px]" />
+                                        <FaTimes className="text-[10px]" />
                                     </div>
                                 )}
                             </button>
@@ -478,7 +486,7 @@ export default function RestaurantDashboard() {
                                 localStorage.removeItem('userInfo');
                                 window.location.reload();
                             }}
-                            className="w-full flex items-center justify-center gap-2 px-4 py-2 text-gray-400 hover:text-white hover:bg-red-500/10 rounded-xl transition-colors text-[10px] font-bold uppercase tracking-widest"
+                            className="w-full flex items-center justify-center gap-2 px-4 py-3 text-gray-400 hover:text-white hover:bg-red-500/10 rounded-xl transition-colors text-[12px] font-medium tracking-wide"
                         >
                             <FaSignOutAlt /> Sign Out
                         </button>
