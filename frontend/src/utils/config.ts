@@ -21,6 +21,15 @@ const getApiUrl = () => {
   // Priority 3: Use Render URL as the MAIN production backend
   const RENDER_URL = 'https://foodswipe-6178.onrender.com';
   
+  // Force Render URL for specific Vercel production domains
+  if (typeof window !== 'undefined' && (
+    window.location.hostname === 'foodswipe-one.vercel.app' ||
+    window.location.hostname.includes('vercel.app')
+  )) {
+    console.log('🌐 Production Environment: Using Render Backend');
+    return RENDER_URL;
+  }
+  
   if (process.env.NODE_ENV === 'production') {
     return RENDER_URL;
   }
