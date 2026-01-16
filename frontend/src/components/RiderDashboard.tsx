@@ -548,13 +548,13 @@ const RiderDashboard = ({
                                             <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Pickup From</p>
                                         </div>
                                         <p className="text-gray-900 font-bold text-sm leading-tight mb-1">{activeOrder.restaurant?.name}</p>
-                                        <p className="text-gray-500 text-[11px] leading-relaxed line-clamp-2">{activeOrder.restaurant?.address}</p>
+                                        <p className="text-gray-500 text-[11px] leading-relaxed line-clamp-2">{activeOrder.restaurant?.address || activeOrder.pickupAddress}</p>
                                     </div>
                                     <div className="flex flex-col items-end gap-2">
-                                        <div className="text-right">
-                                            <p className="text-orange-600 font-bold text-base">Rs. {activeOrder.netRiderEarning || activeOrder.riderEarning || activeOrder.earnings || 120}</p>
-                                            <p className="text-gray-400 text-[9px] font-bold uppercase tracking-widest">Your Pay</p>
-                                        </div>
+                                    <div className="text-right">
+                                        <p className="text-orange-600 font-bold text-base">Rs. {activeOrder.netRiderEarning || activeOrder.riderEarning || activeOrder.earnings || Math.round(60 + ((activeOrder.distanceKm || 4.2) * 20))}</p>
+                                        <p className="text-gray-400 text-[9px] font-bold uppercase tracking-widest">Your Pay</p>
+                                    </div>
                                         {activeOrder.restaurant?.contact && (
                                             <a 
                                                 href={`tel:${activeOrder.restaurant.contact}`}
@@ -576,7 +576,7 @@ const RiderDashboard = ({
                                             <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Deliver To</p>
                                         </div>
                                         <p className="text-gray-900 font-bold text-sm leading-tight mb-1">{activeOrder.user?.name || 'Customer'}</p>
-                                        <p className="text-gray-500 text-[11px] leading-relaxed line-clamp-2">{activeOrder.shippingAddress?.address || activeOrder.deliveryLocation?.address || 'Loading address...'}</p>
+                                        <p className="text-gray-500 text-[11px] leading-relaxed line-clamp-2">{activeOrder.shippingAddress?.address || activeOrder.deliveryAddress || activeOrder.deliveryLocation?.address || 'Loading address...'}</p>
                                     </div>
                                     <div className="flex flex-col items-end gap-2">
                                         <div className="text-right">

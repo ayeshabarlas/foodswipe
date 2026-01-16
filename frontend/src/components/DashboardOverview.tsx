@@ -1,0 +1,205 @@
+'use client';
+
+import React from 'react';
+import { motion } from 'framer-motion';
+import { 
+    FaShoppingBag, FaWallet, FaChartLine, FaClock, 
+    FaCheck, FaPaperPlane, FaArrowUp, FaArrowDown,
+    FaUtensils, FaStar
+} from 'react-icons/fa';
+
+interface DashboardOverviewProps {
+    stats: any;
+    restaurant: any;
+}
+
+export default function DashboardOverview({ stats, restaurant }: DashboardOverviewProps) {
+    const containerVariants = {
+        hidden: { opacity: 0 },
+        visible: {
+            opacity: 1,
+            transition: {
+                staggerChildren: 0.1
+            }
+        }
+    };
+
+    const itemVariants = {
+        hidden: { y: 20, opacity: 0 },
+        visible: {
+            y: 0,
+            opacity: 1
+        }
+    };
+
+    return (
+        <div className="p-6 space-y-8 max-w-7xl mx-auto">
+            {/* Header */}
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                <div>
+                    <h2 className="text-2xl font-bold text-gray-900 tracking-tight">Dashboard Overview</h2>
+                    <p className="text-gray-500 text-sm font-medium">
+                        Welcome back, <span className="text-orange-600">{restaurant?.owner?.name || 'Partner'}</span>! Here's what's happening today.
+                    </p>
+                </div>
+                <div className="flex items-center gap-3">
+                    <div className="bg-white px-4 py-2 rounded-xl border border-gray-100 shadow-sm flex items-center gap-2">
+                        <div className={`w-2 h-2 rounded-full ${stats?.isOnline ? 'bg-green-500 animate-pulse' : 'bg-gray-400'}`}></div>
+                        <span className="text-[11px] font-bold text-gray-700 uppercase tracking-wider">
+                            {stats?.isOnline ? 'Store Online' : 'Store Offline'}
+                        </span>
+                    </div>
+                </div>
+            </div>
+
+            {/* Main Stats Grid */}
+            <motion.div 
+                variants={containerVariants}
+                initial="hidden"
+                animate="visible"
+                className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6"
+            >
+                <motion.div variants={itemVariants} className="bg-white rounded-[32px] p-6 shadow-sm border border-gray-100 hover:shadow-md transition-all group">
+                    <div className="flex justify-between items-start mb-4">
+                        <div className="w-12 h-12 bg-orange-50 rounded-2xl flex items-center justify-center text-orange-500 group-hover:scale-110 transition-transform">
+                            <FaShoppingBag size={20} />
+                        </div>
+                        <span className="text-[10px] font-bold text-orange-600 bg-orange-50 px-2 py-1 rounded-lg uppercase tracking-wider">Today</span>
+                    </div>
+                    <h3 className="text-3xl font-bold text-gray-900 mb-1">{stats?.ordersToday || 0}</h3>
+                    <p className="text-xs font-medium text-gray-400 uppercase tracking-widest">Total Orders</p>
+                </motion.div>
+
+                <motion.div variants={itemVariants} className="bg-white rounded-[32px] p-6 shadow-sm border border-gray-100 hover:shadow-md transition-all group">
+                    <div className="flex justify-between items-start mb-4">
+                        <div className="w-12 h-12 bg-green-50 rounded-2xl flex items-center justify-center text-green-500 group-hover:scale-110 transition-transform">
+                            <FaWallet size={20} />
+                        </div>
+                        <span className="text-[10px] font-bold text-green-600 bg-green-50 px-2 py-1 rounded-lg uppercase tracking-wider">Earnings</span>
+                    </div>
+                    <h3 className="text-3xl font-bold text-gray-900 mb-1">Rs. {Math.round(stats?.netEarningsToday || 0).toLocaleString()}</h3>
+                    <p className="text-xs font-medium text-gray-400 uppercase tracking-widest">Net Revenue</p>
+                </motion.div>
+
+                <motion.div variants={itemVariants} className="bg-white rounded-[32px] p-6 shadow-sm border border-gray-100 hover:shadow-md transition-all group">
+                    <div className="flex justify-between items-start mb-4">
+                        <div className="w-12 h-12 bg-blue-50 rounded-2xl flex items-center justify-center text-blue-500 group-hover:scale-110 transition-transform">
+                            <FaChartLine size={20} />
+                        </div>
+                        <span className="text-[10px] font-bold text-blue-600 bg-blue-50 px-2 py-1 rounded-lg uppercase tracking-wider">Fee</span>
+                    </div>
+                    <h3 className="text-3xl font-bold text-gray-900 mb-1">Rs. {Math.round(stats?.commissionToday || 0).toLocaleString()}</h3>
+                    <p className="text-xs font-medium text-gray-400 uppercase tracking-widest">Commission</p>
+                </motion.div>
+
+                <motion.div variants={itemVariants} className="bg-white rounded-[32px] p-6 shadow-sm border border-gray-100 hover:shadow-md transition-all group">
+                    <div className="flex justify-between items-start mb-4">
+                        <div className="w-12 h-12 bg-yellow-50 rounded-2xl flex items-center justify-center text-yellow-500 group-hover:scale-110 transition-transform">
+                            <FaStar size={20} />
+                        </div>
+                        <span className="text-[10px] font-bold text-yellow-600 bg-yellow-50 px-2 py-1 rounded-lg uppercase tracking-wider">Rating</span>
+                    </div>
+                    <h3 className="text-3xl font-bold text-gray-900 mb-1">{restaurant?.rating || '4.8'}</h3>
+                    <p className="text-xs font-medium text-gray-400 uppercase tracking-widest">Avg Review</p>
+                </motion.div>
+            </motion.div>
+
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                {/* Order Status Summary */}
+                <motion.div 
+                    variants={itemVariants}
+                    initial="hidden"
+                    animate="visible"
+                    className="lg:col-span-2 bg-white rounded-[40px] p-8 shadow-sm border border-gray-100"
+                >
+                    <div className="flex items-center justify-between mb-8">
+                        <div>
+                            <h3 className="text-xl font-bold text-gray-900">Current Order Status</h3>
+                            <p className="text-sm text-gray-500">Real-time status of active orders</p>
+                        </div>
+                        <div className="flex bg-gray-50 p-1.5 rounded-2xl border border-gray-100">
+                            <div className="px-4 py-2 bg-white rounded-xl shadow-sm text-[10px] font-bold text-orange-600 uppercase tracking-wider">Live</div>
+                        </div>
+                    </div>
+
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-6">
+                        {[
+                            { label: 'Pending', count: stats?.pending || 0, color: 'orange', icon: FaClock },
+                            { label: 'Preparing', count: stats?.preparing || 0, color: 'blue', icon: FaUtensils },
+                            { label: 'Ready', count: stats?.ready || 0, color: 'green', icon: FaCheck },
+                            { label: 'On Way', count: stats?.outForDelivery || 0, color: 'purple', icon: FaPaperPlane },
+                        ].map((status, idx) => (
+                            <div key={idx} className="flex flex-col items-center">
+                                <div className={`w-16 h-16 bg-${status.color}-50 rounded-3xl flex items-center justify-center text-${status.color}-500 mb-4 border border-${status.color}-100/50 shadow-sm`}>
+                                    <status.icon size={24} />
+                                </div>
+                                <h4 className="text-2xl font-bold text-gray-900 mb-1">{status.count}</h4>
+                                <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">{status.label}</p>
+                            </div>
+                        ))}
+                    </div>
+
+                    <div className="mt-12 p-6 bg-gradient-to-r from-gray-50 to-white rounded-[32px] border border-gray-100 flex items-center justify-between">
+                        <div className="flex items-center gap-4">
+                            <div className="w-10 h-10 bg-orange-100 rounded-2xl flex items-center justify-center text-orange-600">
+                                <FaChartLine size={18} />
+                            </div>
+                            <div>
+                                <p className="text-sm font-bold text-gray-900">Weekly Performance</p>
+                                <p className="text-xs text-gray-500">Your store is doing 15% better than last week</p>
+                            </div>
+                        </div>
+                        <div className="flex items-center gap-1 text-green-500 font-bold text-sm">
+                            <FaArrowUp /> 15%
+                        </div>
+                    </div>
+                </motion.div>
+
+                {/* Top Selling Items */}
+                <motion.div 
+                    variants={itemVariants}
+                    initial="hidden"
+                    animate="visible"
+                    className="bg-white rounded-[40px] p-8 shadow-sm border border-gray-100"
+                >
+                    <div className="mb-8">
+                        <h3 className="text-xl font-bold text-gray-900">Top Selling Items</h3>
+                        <p className="text-sm text-gray-500">Most popular dishes this week</p>
+                    </div>
+
+                    <div className="space-y-6">
+                        {stats?.topItems && stats.topItems.length > 0 ? (
+                            stats.topItems.map((item: any, idx: number) => (
+                                <div key={idx} className="flex items-center justify-between group">
+                                    <div className="flex items-center gap-4">
+                                        <div className="w-12 h-12 bg-gray-50 rounded-2xl flex items-center justify-center text-gray-400 font-bold text-lg group-hover:bg-orange-50 group-hover:text-orange-500 transition-colors">
+                                            {idx + 1}
+                                        </div>
+                                        <div>
+                                            <p className="text-sm font-bold text-gray-900 group-hover:text-orange-600 transition-colors">{item.name}</p>
+                                            <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">{item.count} Orders</p>
+                                        </div>
+                                    </div>
+                                    <div className="text-right">
+                                        <p className="text-sm font-bold text-gray-900">Rs. {item.revenue?.toLocaleString()}</p>
+                                    </div>
+                                </div>
+                            ))
+                        ) : (
+                            <div className="text-center py-10">
+                                <div className="w-16 h-16 bg-gray-50 rounded-full flex items-center justify-center text-gray-300 mx-auto mb-4">
+                                    <FaUtensils size={24} />
+                                </div>
+                                <p className="text-sm font-medium text-gray-400">No data available yet</p>
+                            </div>
+                        )}
+                    </div>
+
+                    <button className="w-full mt-8 py-4 bg-gray-50 hover:bg-gray-100 text-gray-600 rounded-2xl text-[10px] font-bold uppercase tracking-widest transition-colors">
+                        View Detailed Report
+                    </button>
+                </motion.div>
+            </div>
+        </div>
+    );
+}

@@ -248,6 +248,7 @@ const getAvailableOrders = async (req, res) => {
             ]
         })
             .populate('restaurant', 'name address location')
+            .populate('user', 'name phone')
             .limit(10);
 
         if (orders.length === 0) {
@@ -279,6 +280,13 @@ const getAvailableOrders = async (req, res) => {
                     address: order.restaurant?.address || 'Restaurant Address',
                     location: order.restaurant?.location
                 },
+                shippingAddress: {
+                    address: order.shippingAddress?.address || 'Delivery Address'
+                },
+                user: order.user ? {
+                    name: order.user.name,
+                    phone: order.user.phone
+                } : null,
                 deliveryAddress: order.shippingAddress?.address || 'Delivery Address',
                 distance: distance,
                 distanceKm: distance,
@@ -304,18 +312,31 @@ const acceptOrder = async (req, res) => {
         const { orderId } = req.body;
 
         const order = await Order.findById(orderId)
-            .populate('restaurant', 'name address')
+            .populate('restaurant', 'name address location')
             .populate('user', 'name phone');
 
         if (!order) {
             return res.status(404).json({ message: 'Order not found' });
         }
 
+        // Calculate rider earnings if not already set
+        if (!order.netRiderEarning || order.netRiderEarning === 0) {
+            let distance = order.distanceKm || 0;
+            if (distance === 0 && order.restaurant?.location?.coordinates && order.deliveryLocation?.lat) {
+                const [restLng, restLat] = order.restaurant.location.coordinates;
+                distance = calculateDistance(restLat, restLng, order.deliveryLocation.lat, order.deliveryLocation.lng);
+            }
+            if (distance === 0) distance = 4.2;
+            
+            const earnings = calculateRiderEarning(distance);
+            order.distanceKm = distance;
+            order.netRiderEarning = earnings.netEarning;
+            order.grossRiderEarning = earnings.grossEarning;
+            order.riderEarning = earnings.netEarning; // Legacy field
+        }
+
         order.rider = req.params.id;
         order.riderAcceptedAt = new Date();
-        // If order was Ready, we can keep it Ready but with a rider assigned
-        // or move it to OnTheWay if that's the desired flow.
-        // For now, let's just save the rider assignment.
         await order.save();
 
         const rider = await Rider.findById(req.params.id).populate('user', 'name phone');
@@ -340,6 +361,11 @@ const acceptOrder = async (req, res) => {
         });
 
         triggerEvent(`restaurant-${order.restaurant._id}`, 'orderStatusUpdate', updatedOrder);
+
+        // Notify customer about order status update
+        if (order.user) {
+            triggerEvent(`user-${order.user._id}`, 'orderStatusUpdate', updatedOrder);
+        }
 
         // Create Notification for Rider
         const notification = await createNotification(
@@ -553,6 +579,13 @@ const getRiderOrders = async (req, res) => {
                     location: order.restaurant?.location
                 },
                 deliveryAddress: order.shippingAddress?.address || 'Delivery Address',
+                shippingAddress: {
+                    address: order.shippingAddress?.address || 'Delivery Address'
+                },
+                user: order.user ? {
+                    name: order.user.name,
+                    phone: order.user.phone
+                } : null,
                 customer: order.user ? {
                     name: order.user.name,
                     phone: order.user.phone
@@ -656,25 +689,35 @@ const markPickedUp = async (req, res) => {
         // But we can emit a specific event for pickup
         await order.save();
 
+        // Get fully populated order to emit
+        const updatedOrder = await Order.findById(order._id)
+            .populate('user', 'name email phone')
+            .populate('restaurant', 'name address contact location')
+            .populate({
+                path: 'rider',
+                populate: { path: 'user', select: 'name phone' }
+            });
+
         // Trigger Pusher events
         if (order.restaurant) {
             triggerEvent(`restaurant-${order.restaurant._id}`, 'riderPickedUp', {
                 orderId: order._id,
                 status: 'Picked Up',
-                pickedUpAt: order.pickedUpAt
+                pickedUpAt: order.pickedUpAt,
+                order: updatedOrder
             });
+            triggerEvent(`restaurant-${order.restaurant._id}`, 'orderStatusUpdate', updatedOrder);
         }
 
         // Notify customer
         if (order.user) {
-            triggerEvent(`user-${order.user._id}`, 'orderStatusUpdate', {
-                orderId: order._id,
-                status: 'Picked Up',
-                pickedUpAt: order.pickedUpAt
-            });
+            triggerEvent(`user-${order.user._id}`, 'orderStatusUpdate', updatedOrder);
         }
 
-        res.json(order);
+        // Notify rider as well to keep their UI updated
+        triggerEvent(`rider-${req.params.id}`, 'orderStatusUpdate', updatedOrder);
+
+        res.json(updatedOrder);
     } catch (error) {
         console.error('Mark picked up error:', error);
         res.status(500).json({ message: 'Server error', error: error.message });

@@ -15,6 +15,10 @@ interface OrderNotificationProps {
         distance: number;
         earnings: number;
         estimatedTime: number;
+        user?: {
+            name: string;
+            phone: string;
+        };
     };
     onAccept: () => void;
     onReject: () => void;
@@ -115,8 +119,11 @@ export default function OrderNotificationModal({ order, onAccept, onReject, onCl
                                 </div>
                                 <div className="flex-1">
                                     <p className="text-[#00D97E] text-[8px] font-bold uppercase tracking-[1.5px] mb-0.5">Dropoff Location</p>
-                                    <p className="text-white font-bold text-[13px] leading-tight">Customer Address</p>
+                                    <p className="text-white font-bold text-[13px] leading-tight">{order.user?.name || 'Customer'}</p>
                                     <p className="text-white/40 text-[10px] mt-0.5 line-clamp-1">{order.deliveryAddress}</p>
+                                    {order.user?.phone && (
+                                        <p className="text-[#00D97E] text-[10px] font-bold mt-1">📞 {order.user.phone}</p>
+                                    )}
                                 </div>
                             </div>
                         </div>

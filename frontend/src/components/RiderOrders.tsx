@@ -463,7 +463,7 @@ export default function RiderOrders({ riderId, setShowNotifications, unreadCount
                                                             <div>
                                                                 <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-widest">Deliver to</p>
                                                                 <p className="font-semibold text-gray-900 text-sm line-clamp-1">{activeDelivery.user?.name || 'Customer'}</p>
-                                                                <p className="text-[11px] text-gray-500 line-clamp-1">{activeDelivery.user?.address || 'Customer Address'}</p>
+                                                                <p className="text-[11px] text-gray-500 line-clamp-1">{activeDelivery.shippingAddress?.address || activeDelivery.deliveryAddress || 'Customer Address'}</p>
                                                                 {activeDelivery.user?.phone && (
                                                                     <p className="text-[11px] font-bold text-orange-500 mt-1 flex items-center gap-1.5 bg-orange-50 w-fit px-2 py-0.5 rounded-md">
                                                                         <FaPhone size={10} /> {activeDelivery.user.phone}
@@ -476,11 +476,11 @@ export default function RiderOrders({ riderId, setShowNotifications, unreadCount
 
                                                 <div className="pt-4 border-t border-gray-50 space-y-3">
                                                     <div className="flex justify-between items-center">
-                                                        <div className="flex items-center gap-2 text-gray-400 font-semibold text-xs">
-                                                            <span>Rs.</span> Total Earning
+                                                            <div className="flex items-center gap-2 text-gray-400 font-semibold text-xs">
+                                                                <span>Rs.</span> Total Earning
+                                                            </div>
+                                                            <span className="text-[#FF4D00] font-semibold text-lg">Rs. {activeDelivery.netRiderEarning || activeDelivery.riderEarning || activeDelivery.earnings || Math.round(60 + ((activeDelivery.distanceKm || 4.2) * 20))}</span>
                                                         </div>
-                                                        <span className="text-[#FF4D00] font-semibold text-lg">Rs. {activeDelivery.netRiderEarning || Math.round(60 + ((activeDelivery.distanceKm || 4.2) * 20))}</span>
-                                                    </div>
                                                     
                                                     {/* MVP Earnings Breakdown */}
                                                     <div className="bg-gray-50/80 rounded-2xl p-3 space-y-2">
@@ -519,10 +519,10 @@ export default function RiderOrders({ riderId, setShowNotifications, unreadCount
                                         <div className="flex justify-between items-start mb-6">
                                             <div>
                                                 <h2 className="text-lg font-semibold tracking-tight text-gray-900">
-                                                    {activeDelivery.status === 'OnTheWay' || activeDelivery.status === 'Arrived' ? 'Pickup' : 'Delivery'} In Progress
+                                                    {['Arrived', 'Ready'].includes(activeDelivery.status) ? 'Pickup' : 'Delivery'} In Progress
                                                 </h2>
                                                 <p className="text-[10px] font-medium text-gray-400 uppercase tracking-widest">
-                                                    {activeDelivery.status === 'OnTheWay' || activeDelivery.status === 'Arrived' ? 'Restaurant' : 'Customer'}: {activeDelivery.status === 'OnTheWay' || activeDelivery.status === 'Arrived' ? activeDelivery.restaurant?.name : activeDelivery.user?.name}
+                                                    {['Arrived', 'Ready'].includes(activeDelivery.status) ? 'Restaurant' : 'Customer'}: {['Arrived', 'Ready'].includes(activeDelivery.status) ? activeDelivery.restaurant?.name : activeDelivery.user?.name}
                                                 </p>
                                             </div>
                                             <div className="text-right">
@@ -537,7 +537,7 @@ export default function RiderOrders({ riderId, setShowNotifications, unreadCount
                                                 className="absolute left-6 h-1 bg-gradient-to-r from-orange-500 to-red-500 top-[14px] z-0 transition-all duration-1000" 
                                                 style={{ 
                                                     width: activeDelivery.status === 'Delivered' ? '100%' : 
-                                                           activeDelivery.status === 'Picked Up' || activeDelivery.status === 'ArrivedAtCustomer' ? '66.6%' : 
+                                                           ['Picked Up', 'OnTheWay', 'ArrivedAtCustomer'].includes(activeDelivery.status) ? '66.6%' : 
                                                            activeDelivery.status === 'Arrived' ? '33.3%' : '0%' 
                                                 }}
                                             />
@@ -585,7 +585,7 @@ export default function RiderOrders({ riderId, setShowNotifications, unreadCount
                                                 <div>
                                                     <p className="text-[9px] font-bold text-gray-400 uppercase tracking-wider">Deliver to</p>
                                                     <p className="font-semibold text-gray-900 text-xs">{activeDelivery.user?.name || 'Customer'}</p>
-                                                    <p className="text-[10px] text-gray-500 line-clamp-1">{activeDelivery.user?.address}</p>
+                                                    <p className="text-[10px] text-gray-500 line-clamp-1">{activeDelivery.shippingAddress?.address || activeDelivery.deliveryAddress || 'No address provided'}</p>
                                                     {activeDelivery.user?.phone && (
                                                         <p className="text-[10px] font-bold text-orange-500 mt-1 flex items-center gap-1.5">
                                                             <FaPhone size={8} /> {activeDelivery.user.phone}
@@ -798,8 +798,8 @@ export default function RiderOrders({ riderId, setShowNotifications, unreadCount
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                                 <div className="bg-orange-50/50 p-5 rounded-3xl border border-orange-100/50">
                                     <h4 className="text-[10px] font-medium text-orange-400 uppercase tracking-widest mb-2">Customer</h4>
-                                    <p className="font-semibold text-gray-900 text-lg mb-1">{selectedOrder.customer?.name || 'Guest User'}</p>
-                                    <p className="text-xs font-semibold text-orange-600/70">{selectedOrder.customer?.phone || 'No phone provided'}</p>
+                                    <p className="font-semibold text-gray-900 text-lg mb-1">{selectedOrder.user?.name || selectedOrder.customer?.name || 'Guest User'}</p>
+                                    <p className="text-xs font-semibold text-orange-600/70">{selectedOrder.user?.phone || selectedOrder.customer?.phone || 'No phone provided'}</p>
                                 </div>
                                 <div className="bg-blue-50/50 p-5 rounded-3xl border border-blue-100/50">
                                     <h4 className="text-[10px] font-medium text-blue-400 uppercase tracking-widest mb-2">Payment</h4>
@@ -811,7 +811,7 @@ export default function RiderOrders({ riderId, setShowNotifications, unreadCount
                             {/* Delivery Address */}
                             <div className="bg-gray-50 p-5 rounded-3xl border border-gray-100">
                                 <h4 className="text-[10px] font-medium text-gray-400 uppercase tracking-widest mb-2">Delivery Address</h4>
-                                <p className="font-semibold text-gray-900 leading-relaxed">{selectedOrder.deliveryAddress || 'No address provided'}</p>
+                                <p className="font-semibold text-gray-900 leading-relaxed">{selectedOrder.deliveryAddress || selectedOrder.shippingAddress?.address || 'No address provided'}</p>
                             </div>
                         </div>
 
@@ -912,7 +912,7 @@ function OrderCard({
                         <div className="flex items-center gap-2">
                             <h3 className="text-base font-medium text-gray-900">{order.restaurant?.name || 'Restaurant'}</h3>
                             <div className="flex flex-col items-end">
-                                <span className="text-green-600 font-medium text-sm">Rs. {order.netRiderEarning || Math.round(60 + ((order.distanceKm || 4.2) * 20))}</span>
+                                <span className="text-green-600 font-medium text-sm">Rs. {order.netRiderEarning || order.earnings || Math.round(60 + ((order.distanceKm || 4.2) * 20))}</span>
                                 <span className="text-[9px] text-gray-400 font-medium">(60 + {order.distanceKm || 4.2}km)</span>
                             </div>
                         </div>
@@ -956,6 +956,14 @@ function OrderCard({
                         <div className="flex-1">
                             <p className="text-[10px] font-medium text-gray-400 uppercase tracking-widest leading-none mb-1">Delivery</p>
                             <p className="text-[12px] font-medium text-gray-900 leading-tight">{order.deliveryAddress || order.shippingAddress?.address || 'Delivery Address'}</p>
+                            {order.user?.name && (
+                                <div className="flex items-center justify-between mt-1">
+                                    <p className="text-[10px] text-blue-600 font-bold">👤 {order.user.name}</p>
+                                    {order.user?.phone && (
+                                        <p className="text-[9px] text-gray-500 font-medium">📞 {order.user.phone}</p>
+                                    )}
+                                </div>
+                            )}
                         </div>
                     </div>
                 </div>

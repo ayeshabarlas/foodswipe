@@ -619,6 +619,77 @@ const getWeeklyOrderHistory = async (req, res) => {
     }
 };
 
+/**
+ * @desc    Get restaurant earnings statistics for dashboard
+ * @route   GET /api/restaurants/earnings/stats
+ * @access  Private (Owner only)
+ */
+const getRestaurantEarningsStats = async (req, res) => {
+    try {
+        const restaurant = await Restaurant.findOne({ owner: req.user._id });
+        if (!restaurant) {
+            return res.status(404).json({ message: 'Restaurant not found' });
+        }
+
+        const now = new Date();
+        const firstDayOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+        
+        // 1. Get all completed/delivered orders
+        const completedOrders = await Order.find({
+            restaurant: restaurant._id,
+            status: { $in: ['Delivered', 'Completed'] }
+        });
+
+        // 2. Aggregate Stats
+        const totalEarned = completedOrders.reduce((sum, order) => sum + (order.restaurantEarning || 0), 0);
+        const commissionPaid = completedOrders.reduce((sum, order) => sum + (order.commissionAmount || 0), 0);
+        const monthlyOrders = completedOrders.filter(order => order.createdAt >= firstDayOfMonth).length;
+
+        // 3. Last Month Comparison for Growth
+        const firstDayOfLastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+        const lastDayOfLastMonth = new Date(now.getFullYear(), now.getMonth(), 0);
+        const lastMonthOrders = completedOrders.filter(order => order.createdAt >= firstDayOfLastMonth && order.createdAt <= lastDayOfLastMonth);
+        const lastMonthEarnings = lastMonthOrders.reduce((sum, order) => sum + (order.restaurantEarning || 0), 0);
+        
+        let growth = 0;
+        if (lastMonthEarnings > 0) {
+            growth = ((totalEarned - lastMonthEarnings) / lastMonthEarnings) * 100;
+        } else if (totalEarned > 0) {
+            growth = 100;
+        }
+
+        // 4. Weekly History Breakdown (Last 4 weeks)
+        const weeklyHistory = [];
+        for (let i = 0; i < 4; i++) {
+            const end = new Date();
+            end.setDate(end.getDate() - (i * 7));
+            const start = new Date();
+            start.setDate(start.getDate() - ((i + 1) * 7));
+
+            const weekOrders = completedOrders.filter(order => order.createdAt >= start && order.createdAt <= end);
+            const weekRevenue = weekOrders.reduce((sum, order) => sum + (order.restaurantEarning || 0), 0);
+            
+            weeklyHistory.push({
+                week: 4 - i,
+                revenue: weekRevenue,
+                orders: weekOrders.length,
+                status: 'Delivered'
+            });
+        }
+
+        res.json({
+            totalEarned,
+            commissionPaid,
+            monthlyOrders,
+            growth: Math.round(growth * 10) / 10,
+            weeklyHistory: weeklyHistory.reverse()
+        });
+    } catch (error) {
+        console.error('Get earnings stats error:', error);
+        res.status(500).json({ message: 'Failed to fetch earnings stats', error: error.message });
+    }
+};
+
 module.exports = {
     createRestaurant,
     getRestaurantById,
@@ -633,5 +704,6 @@ module.exports = {
     submitVerification,
     getRestaurantMenu,
     getWeeklyOrderHistory,
+    getRestaurantEarningsStats
 };
 

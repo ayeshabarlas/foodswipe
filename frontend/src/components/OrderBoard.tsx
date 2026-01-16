@@ -58,6 +58,7 @@ export default function OrderBoard({ restaurant, onUpdate }: OrderBoardProps) {
     const [trackingOrder, setTrackingOrder] = useState<Order | null>(null);
     const [activeChat, setActiveChat] = useState<Order | null>(null);
     const [prepTimes, setPrepTimes] = useState<Record<string, number>>({});
+    const [activeTab, setActiveTab] = useState<'active' | 'history'>('active');
     
     const [userInfo, setUserInfo] = useState<any>(null);
 
@@ -222,13 +223,21 @@ export default function OrderBoard({ restaurant, onUpdate }: OrderBoardProps) {
     const pendingOrders = ordersArray.filter(o => o.status === 'Pending');
     const preparingOrders = ordersArray.filter(o => ['Accepted', 'Preparing'].includes(o.status));
     const readyOrders = ordersArray.filter(o => o.status === 'Ready');
-    const completedOrders = ordersArray.filter(o => ['OnTheWay', 'Picked Up', 'Arrived', 'ArrivedAtCustomer', 'Delivered'].includes(o.status));
+    const outForDeliveryOrders = ordersArray.filter(o => ['OnTheWay', 'Picked Up', 'Arrived', 'ArrivedAtCustomer'].includes(o.status));
+    const deliveredOrders = ordersArray.filter(o => o.status === 'Delivered');
+    const cancelledOrders = ordersArray.filter(o => o.status === 'Cancelled');
+
+    const filteredOrders = activeTab === 'active' 
+        ? ordersArray.filter(o => !['Delivered', 'Cancelled'].includes(o.status))
+        : ordersArray.filter(o => ['Delivered', 'Cancelled'].includes(o.status));
 
     console.log('Filtered counts:', {
         pending: pendingOrders.length,
         preparing: preparingOrders.length,
         ready: readyOrders.length,
-        completed: completedOrders.length
+        out: outForDeliveryOrders.length,
+        delivered: deliveredOrders.length,
+        cancelled: cancelledOrders.length
     });
 
     const renderOrderCard = (order: Order) => {
@@ -520,8 +529,18 @@ export default function OrderBoard({ restaurant, onUpdate }: OrderBoardProps) {
                     </button>
                     
                     <div className="flex bg-gray-100 p-1 rounded-xl">
-                        <button className="px-4 py-1.5 rounded-lg text-sm font-bold bg-white text-blue-600 shadow-sm">ACTIVE</button>
-                        <button className="px-4 py-1.5 rounded-lg text-sm font-bold text-gray-500 hover:text-gray-700">HISTORY</button>
+                        <button 
+                            onClick={() => setActiveTab('active')}
+                            className={`px-4 py-1.5 rounded-lg text-sm font-bold transition-all ${activeTab === 'active' ? 'bg-white text-blue-600 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
+                        >
+                            ACTIVE
+                        </button>
+                        <button 
+                            onClick={() => setActiveTab('history')}
+                            className={`px-4 py-1.5 rounded-lg text-sm font-bold transition-all ${activeTab === 'history' ? 'bg-white text-blue-600 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
+                        >
+                            HISTORY
+                        </button>
                     </div>
                 </div>
             </div>
@@ -593,7 +612,7 @@ export default function OrderBoard({ restaurant, onUpdate }: OrderBoardProps) {
                         </div>
                         <div className="flex items-end justify-between">
                             <div>
-                                <h2 className="text-3xl font-medium text-gray-900 mb-0.5">{completedOrders.length}</h2>
+                                <h2 className="text-3xl font-medium text-gray-900 mb-0.5">{outForDeliveryOrders.length}</h2>
                                 <p className="text-[11px] font-light text-gray-400">Out for Delivery</p>
                             </div>
                         </div>
@@ -801,98 +820,150 @@ export default function OrderBoard({ restaurant, onUpdate }: OrderBoardProps) {
             </AnimatePresence>
 
             {/* Order Grid - Fixed Scrollability */}
-            <div className="flex-1 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 overflow-hidden h-full pb-4">
-                {/* Pending Column */}
-                <div className="flex flex-col h-full bg-gray-50/50 rounded-2xl p-3 border border-gray-100">
-                    <h3 className="font-bold text-gray-800 mb-3 flex items-center justify-between text-[11px] uppercase tracking-wider">
-                        <span className="flex items-center gap-2">
-                            <div className="w-2 h-2 rounded-full bg-orange-500 shadow-[0_0_8px_rgba(249,115,22,0.5)]"></div>
-                            New Orders
-                        </span>
-                        <span className="bg-orange-100 text-orange-600 px-2 py-0.5 rounded-lg font-bold">
-                            {pendingOrders.length}
-                        </span>
-                    </h3>
-                    <div className="flex-1 overflow-y-auto space-y-3 pr-1 custom-scrollbar">
-                        {pendingOrders.length === 0 ? (
-                            <div className="h-full flex flex-col items-center justify-center opacity-30 grayscale py-10">
-                                <FaShoppingBag size={24} className="mb-2 text-gray-400" />
-                                <p className="text-[10px] font-bold uppercase tracking-widest">Empty</p>
+            <div className="flex-1 overflow-hidden h-full pb-4">
+                {activeTab === 'active' ? (
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 h-full">
+                        {/* Pending Column */}
+                        <div className="flex flex-col h-full bg-gray-50/50 rounded-2xl p-3 border border-gray-100">
+                            <h3 className="font-bold text-gray-800 mb-3 flex items-center justify-between text-[11px] uppercase tracking-wider">
+                                <span className="flex items-center gap-2">
+                                    <div className="w-2 h-2 rounded-full bg-orange-500 shadow-[0_0_8px_rgba(249,115,22,0.5)]"></div>
+                                    New Orders
+                                </span>
+                                <span className="bg-orange-100 text-orange-600 px-2 py-0.5 rounded-lg font-bold">
+                                    {pendingOrders.length}
+                                </span>
+                            </h3>
+                            <div className="flex-1 overflow-y-auto space-y-3 pr-1 custom-scrollbar">
+                                {pendingOrders.length === 0 ? (
+                                    <div className="h-full flex flex-col items-center justify-center opacity-30 grayscale py-10">
+                                        <FaShoppingBag size={24} className="mb-2 text-gray-400" />
+                                        <p className="text-[10px] font-bold uppercase tracking-widest">Empty</p>
+                                    </div>
+                                ) : (
+                                    pendingOrders.map(renderOrderCard)
+                                )}
                             </div>
-                        ) : (
-                            pendingOrders.map(renderOrderCard)
-                        )}
-                    </div>
-                </div>
+                        </div>
 
-                {/* Preparing Column */}
-                <div className="flex flex-col h-full bg-gray-50/50 rounded-2xl p-3 border border-gray-100">
-                    <h3 className="font-bold text-gray-800 mb-3 flex items-center justify-between text-[11px] uppercase tracking-wider">
-                        <span className="flex items-center gap-2">
-                            <div className="w-2 h-2 rounded-full bg-blue-500 shadow-[0_0_8px_rgba(59,130,246,0.5)] animate-pulse"></div>
-                            Preparing
-                        </span>
-                        <span className="bg-blue-100 text-blue-600 px-2 py-0.5 rounded-lg font-bold">
-                            {preparingOrders.length}
-                        </span>
-                    </h3>
-                    <div className="flex-1 overflow-y-auto space-y-3 pr-1 custom-scrollbar">
-                        {preparingOrders.length === 0 ? (
-                            <div className="h-full flex flex-col items-center justify-center opacity-30 grayscale py-10">
-                                <FaClock size={24} className="mb-2 text-gray-400" />
-                                <p className="text-[10px] font-bold uppercase tracking-widest">Empty</p>
+                        {/* Preparing Column */}
+                        <div className="flex flex-col h-full bg-gray-50/50 rounded-2xl p-3 border border-gray-100">
+                            <h3 className="font-bold text-gray-800 mb-3 flex items-center justify-between text-[11px] uppercase tracking-wider">
+                                <span className="flex items-center gap-2">
+                                    <div className="w-2 h-2 rounded-full bg-blue-500 shadow-[0_0_8px_rgba(59,130,246,0.5)] animate-pulse"></div>
+                                    Preparing
+                                </span>
+                                <span className="bg-blue-100 text-blue-600 px-2 py-0.5 rounded-lg font-bold">
+                                    {preparingOrders.length}
+                                </span>
+                            </h3>
+                            <div className="flex-1 overflow-y-auto space-y-3 pr-1 custom-scrollbar">
+                                {preparingOrders.length === 0 ? (
+                                    <div className="h-full flex flex-col items-center justify-center opacity-30 grayscale py-10">
+                                        <FaClock size={24} className="mb-2 text-gray-400" />
+                                        <p className="text-[10px] font-bold uppercase tracking-widest">Empty</p>
+                                    </div>
+                                ) : (
+                                    preparingOrders.map(renderOrderCard)
+                                )}
                             </div>
-                        ) : (
-                            preparingOrders.map(renderOrderCard)
-                        )}
-                    </div>
-                </div>
+                        </div>
 
-                {/* Ready Column */}
-                <div className="flex flex-col h-full bg-gray-50/50 rounded-2xl p-3 border border-gray-100">
-                    <h3 className="font-bold text-gray-800 mb-3 flex items-center justify-between text-[11px] uppercase tracking-wider">
-                        <span className="flex items-center gap-2">
-                            <div className="w-2 h-2 rounded-full bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.5)]"></div>
-                            Ready
-                        </span>
-                        <span className="bg-green-100 text-green-600 px-2 py-0.5 rounded-lg font-bold">
-                            {readyOrders.length}
-                        </span>
-                    </h3>
-                    <div className="flex-1 overflow-y-auto space-y-3 pr-1 custom-scrollbar">
-                        {readyOrders.length === 0 ? (
-                            <div className="h-full flex flex-col items-center justify-center opacity-30 grayscale py-10">
-                                <FaCheck size={24} className="mb-2 text-gray-400" />
-                                <p className="text-[10px] font-bold uppercase tracking-widest">Empty</p>
+                        {/* Ready Column */}
+                        <div className="flex flex-col h-full bg-gray-50/50 rounded-2xl p-3 border border-gray-100">
+                            <h3 className="font-bold text-gray-800 mb-3 flex items-center justify-between text-[11px] uppercase tracking-wider">
+                                <span className="flex items-center gap-2">
+                                    <div className="w-2 h-2 rounded-full bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.5)]"></div>
+                                    Ready
+                                </span>
+                                <span className="bg-green-100 text-green-600 px-2 py-0.5 rounded-lg font-bold">
+                                    {readyOrders.length}
+                                </span>
+                            </h3>
+                            <div className="flex-1 overflow-y-auto space-y-3 pr-1 custom-scrollbar">
+                                {readyOrders.length === 0 ? (
+                                    <div className="h-full flex flex-col items-center justify-center opacity-30 grayscale py-10">
+                                        <FaCheck size={24} className="mb-2 text-gray-400" />
+                                        <p className="text-[10px] font-bold uppercase tracking-widest">Empty</p>
+                                    </div>
+                                ) : (
+                                    readyOrders.map(renderOrderCard)
+                                )}
                             </div>
-                        ) : (
-                            readyOrders.map(renderOrderCard)
-                        )}
-                    </div>
-                </div>
+                        </div>
 
-                {/* Completed Column */}
-                <div className="flex flex-col h-full bg-gray-50/50 rounded-2xl p-3 border border-gray-100">
-                    <h3 className="font-bold text-gray-800 mb-3 flex items-center justify-between text-[11px] uppercase tracking-wider">
-                        <span className="flex items-center gap-2">
-                            <div className="w-2 h-2 rounded-full bg-purple-500 shadow-[0_0_8px_rgba(168,85,247,0.5)]"></div>
-                            Active
-                        </span>
-                        <span className="bg-purple-100 text-purple-600 px-2 py-0.5 rounded-lg font-bold">
-                            {completedOrders.length}
-                        </span>
-                    </h3>
-                    <div className="flex-1 overflow-y-auto space-y-3 pr-1 custom-scrollbar">
-                        {completedOrders.length === 0 ? (
-                            <div className="h-full flex flex-col items-center justify-center opacity-30 grayscale py-10">
-                                <FaMotorcycle size={24} className="mb-2 text-gray-400" />
-                                <p className="text-[10px] font-bold uppercase tracking-widest">Empty</p>
+                        {/* Out for Delivery Column */}
+                        <div className="flex flex-col h-full bg-gray-50/50 rounded-2xl p-3 border border-gray-100">
+                            <h3 className="font-bold text-gray-800 mb-3 flex items-center justify-between text-[11px] uppercase tracking-wider">
+                                <span className="flex items-center gap-2">
+                                    <div className="w-2 h-2 rounded-full bg-purple-500 shadow-[0_0_8px_rgba(168,85,247,0.5)]"></div>
+                                    Out for Delivery
+                                </span>
+                                <span className="bg-purple-100 text-purple-600 px-2 py-0.5 rounded-lg font-bold">
+                                    {outForDeliveryOrders.length}
+                                </span>
+                            </h3>
+                            <div className="flex-1 overflow-y-auto space-y-3 pr-1 custom-scrollbar">
+                                {outForDeliveryOrders.length === 0 ? (
+                                    <div className="h-full flex flex-col items-center justify-center opacity-30 grayscale py-10">
+                                        <FaMotorcycle size={24} className="mb-2 text-gray-400" />
+                                        <p className="text-[10px] font-bold uppercase tracking-widest">Empty</p>
+                                    </div>
+                                ) : (
+                                    outForDeliveryOrders.map(renderOrderCard)
+                                )}
                             </div>
-                        ) : (
-                            completedOrders.map(renderOrderCard)
-                        )}
+                        </div>
                     </div>
-                </div>
+                ) : (
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 h-full">
+                        {/* Delivered Column */}
+                        <div className="flex flex-col h-full bg-gray-50/50 rounded-2xl p-3 border border-gray-100">
+                            <h3 className="font-bold text-gray-800 mb-3 flex items-center justify-between text-[11px] uppercase tracking-wider">
+                                <span className="flex items-center gap-2">
+                                    <div className="w-2 h-2 rounded-full bg-gray-500"></div>
+                                    Delivered
+                                </span>
+                                <span className="bg-gray-100 text-gray-600 px-2 py-0.5 rounded-lg font-bold">
+                                    {deliveredOrders.length}
+                                </span>
+                            </h3>
+                            <div className="flex-1 overflow-y-auto space-y-3 pr-1 custom-scrollbar">
+                                {deliveredOrders.length === 0 ? (
+                                    <div className="h-full flex flex-col items-center justify-center opacity-30 grayscale py-10">
+                                        <FaCheck size={24} className="mb-2 text-gray-400" />
+                                        <p className="text-[10px] font-bold uppercase tracking-widest">Empty</p>
+                                    </div>
+                                ) : (
+                                    deliveredOrders.map(renderOrderCard)
+                                )}
+                            </div>
+                        </div>
+
+                        {/* Cancelled Column */}
+                        <div className="flex flex-col h-full bg-gray-50/50 rounded-2xl p-3 border border-gray-100">
+                            <h3 className="font-bold text-gray-800 mb-3 flex items-center justify-between text-[11px] uppercase tracking-wider">
+                                <span className="flex items-center gap-2">
+                                    <div className="w-2 h-2 rounded-full bg-red-500"></div>
+                                    Cancelled
+                                </span>
+                                <span className="bg-red-100 text-red-600 px-2 py-0.5 rounded-lg font-bold">
+                                    {cancelledOrders.length}
+                                </span>
+                            </h3>
+                            <div className="flex-1 overflow-y-auto space-y-3 pr-1 custom-scrollbar">
+                                {cancelledOrders.length === 0 ? (
+                                    <div className="h-full flex flex-col items-center justify-center opacity-30 grayscale py-10">
+                                        <FaTimes size={24} className="mb-2 text-gray-400" />
+                                        <p className="text-[10px] font-bold uppercase tracking-widest">Empty</p>
+                                    </div>
+                                ) : (
+                                    cancelledOrders.map(renderOrderCard)
+                                )}
+                            </div>
+                        </div>
+                    </div>
+                )}
             </div>
 
             {/* Order Chat */}

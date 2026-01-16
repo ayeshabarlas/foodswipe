@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { FaMoneyBillWave, FaHistory, FaFileInvoiceDollar, FaCheckCircle, FaClock, FaExclamationCircle, FaUpload, FaEye, FaDownload, FaCalendarAlt, FaPercent, FaReceipt, FaUniversity, FaShoppingBag } from 'react-icons/fa';
+import { FaMoneyBillWave, FaHistory, FaFileInvoiceDollar, FaCheckCircle, FaClock, FaExclamationCircle, FaUpload, FaEye, FaDownload, FaCalendarAlt, FaPercent, FaReceipt, FaUniversity, FaShoppingBag, FaChartLine } from 'react-icons/fa';
 import axios from 'axios';
 import { io } from 'socket.io-client';
 import PaymentProofModal from './PaymentProofModal';
@@ -43,7 +43,8 @@ export default function PaymentHistory({ restaurant: initialRestaurant }: { rest
         totalEarned: 0,
         commissionPaid: 0,
         monthlyOrders: 0,
-        growth: 0
+        growth: 0,
+        weeklyHistory: [] as any[]
     });
 
     const fetchPaymentData = async () => {
@@ -51,11 +52,12 @@ export default function PaymentHistory({ restaurant: initialRestaurant }: { rest
             const token = JSON.parse(localStorage.getItem('userInfo') || '{}').token;
             const headers = { Authorization: `Bearer ${token}` };
 
-            const [currentRes, historyRes, restaurantRes, ordersRes] = await Promise.all([
+            const [currentRes, historyRes, restaurantRes, ordersRes, statsRes] = await Promise.all([
                 axios.get(`${API_BASE_URL}/api/payouts/current`, { headers }),
                 axios.get(`${API_BASE_URL}/api/payouts/history`, { headers }),
                 !initialRestaurant ? axios.get(`${API_BASE_URL}/api/restaurants/my-restaurant`, { headers }) : Promise.resolve({ data: initialRestaurant }),
-                axios.get(`${API_BASE_URL}/api/restaurants/orders/history/weekly`, { headers }).catch(() => ({ data: [] }))
+                axios.get(`${API_BASE_URL}/api/restaurants/orders/history/weekly`, { headers }).catch(() => ({ data: [] })),
+                axios.get(`${API_BASE_URL}/api/restaurants/earnings/stats`, { headers }).catch(() => ({ data: null }))
             ]);
 
             setCurrentPayout(currentRes.data);
@@ -63,17 +65,20 @@ export default function PaymentHistory({ restaurant: initialRestaurant }: { rest
             setWeeklyOrders(ordersRes.data);
             if (restaurantRes.data) setRestaurant(restaurantRes.data);
 
-            // Calculate aggregate stats from history
-            const totalEarned = historyRes.data.reduce((acc: number, p: Payout) => acc + p.netPayable, 0);
-            const commissionPaid = historyRes.data.reduce((acc: number, p: Payout) => acc + p.totalCommission, 0);
-            
-            // This month's orders (simulated for UI)
-            setStats({
-                totalEarned,
-                commissionPaid,
-                monthlyOrders: 163, // Placeholder
-                growth: 12.5
-            });
+            if (statsRes.data) {
+                setStats(statsRes.data);
+            } else {
+                // Fallback to basic calculation if stats endpoint fails
+                const totalEarned = historyRes.data.reduce((acc: number, p: Payout) => acc + p.netPayable, 0);
+                const commissionPaid = historyRes.data.reduce((acc: number, p: Payout) => acc + p.totalCommission, 0);
+                setStats({
+                    totalEarned,
+                    commissionPaid,
+                    monthlyOrders: 0,
+                    growth: 0,
+                    weeklyHistory: []
+                });
+            }
         } catch (error) {
             console.error('Error fetching payment data:', error);
         } finally {
@@ -264,7 +269,7 @@ export default function PaymentHistory({ restaurant: initialRestaurant }: { rest
                                                 <td className="px-6 py-5 text-xs text-gray-500 font-medium">
                                                     {new Date(payout.weekStart).toLocaleDateString()}
                                                 </td>
-                                                <td className="px-6 py-5 text-xs text-gray-900 font-bold">28</td> {/* Placeholder count */}
+                                                <td className="px-6 py-5 text-xs text-gray-900 font-bold">{payout.ordersCount || 28}</td> {/* Show actual orders count if available */}
                                                 <td className="px-6 py-5 text-xs text-gray-900 font-bold">Rs. {payout.totalSales.toLocaleString()}</td>
                                                 <td className="px-6 py-5 text-xs text-red-500 font-bold">-Rs. {payout.totalCommission.toLocaleString()}</td>
                                                 <td className="px-6 py-5 text-xs text-red-400 font-bold">-Rs. {(payout.totalSales * 0.02).toLocaleString()}</td>
@@ -438,17 +443,29 @@ export default function PaymentHistory({ restaurant: initialRestaurant }: { rest
                 </div>
                 
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                    {/* Placeholder for weekly history cards */}
-                    {[1, 2, 3, 4].map((i) => (
-                        <div key={i} className="bg-white p-5 rounded-[20px] border border-gray-100 shadow-sm hover:shadow-md transition-shadow cursor-pointer">
-                            <div className="flex justify-between items-start mb-3">
-                                <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Week {i}</span>
-                                <span className="text-[10px] font-bold text-green-500 uppercase">Delivered</span>
+                    {stats.weeklyHistory.length > 0 ? (
+                        stats.weeklyHistory.map((week, idx) => (
+                            <div key={idx} className="bg-white p-5 rounded-[20px] border border-gray-100 shadow-sm hover:shadow-md transition-shadow cursor-pointer">
+                                <div className="flex justify-between items-start mb-3">
+                                    <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Week {week.week}</span>
+                                    <span className="text-[10px] font-bold text-green-500 uppercase">{week.status}</span>
+                                </div>
+                                <h4 className="text-sm font-bold text-gray-900">Rs. {week.revenue.toLocaleString()}</h4>
+                                <p className="text-[10px] text-gray-500 mt-1 font-medium">{week.orders} Orders Processed</p>
                             </div>
-                            <h4 className="text-sm font-bold text-gray-900">Rs. {(Math.random() * 15000 + 5000).toLocaleString()}</h4>
-                            <p className="text-[10px] text-gray-500 mt-1 font-medium">42 Orders Processed</p>
-                        </div>
-                    ))}
+                        ))
+                    ) : (
+                        [1, 2, 3, 4].map((i) => (
+                            <div key={i} className="bg-white p-5 rounded-[20px] border border-gray-100 shadow-sm opacity-50">
+                                <div className="flex justify-between items-start mb-3">
+                                    <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Week {i}</span>
+                                    <span className="text-[10px] font-bold text-gray-300 uppercase">No Data</span>
+                                </div>
+                                <h4 className="text-sm font-bold text-gray-300">Rs. 0</h4>
+                                <p className="text-[10px] text-gray-400 mt-1 font-medium">0 Orders Processed</p>
+                            </div>
+                        ))
+                    )}
                 </div>
             </div>
 

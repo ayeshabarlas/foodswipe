@@ -303,6 +303,10 @@ const updateOrderStatus = async (req, res) => {
                 shippingAddress: {
                     address: updatedOrder.shippingAddress.address
                 },
+                user: updatedOrder.user ? {
+                    name: updatedOrder.user.name,
+                    phone: updatedOrder.user.phone
+                } : null,
                 totalPrice: updatedOrder.totalPrice,
                 orderItems: updatedOrder.orderItems,
                 createdAt: updatedOrder.createdAt,
@@ -650,6 +654,15 @@ const completeOrder = async (req, res) => {
         order.deliveredAt = new Date();
         await order.save();
 
+        // Get fully populated order to emit
+        const updatedOrder = await Order.findById(order._id)
+            .populate('user', 'name email phone')
+            .populate('restaurant', 'name address contact location')
+            .populate({
+                path: 'rider',
+                populate: { path: 'user', select: 'name phone' }
+            });
+
         // Notify user
         const notification = await createNotification(
             order.user,
@@ -659,10 +672,22 @@ const completeOrder = async (req, res) => {
             { orderId: order._id }
         );
         
-        triggerEvent(`user-${order.user}`, 'notification', notification);
-        triggerEvent(`order-${order._id}`, 'statusUpdate', { status: 'Delivered' });
+        if (order.user) {
+            triggerEvent(`user-${order.user}`, 'notification', notification);
+            triggerEvent(`user-${order.user}`, 'orderStatusUpdate', updatedOrder);
+        }
 
-        res.json({ message: 'Order marked as delivered', order });
+        if (order.restaurant) {
+            triggerEvent(`restaurant-${order.restaurant}`, 'orderStatusUpdate', updatedOrder);
+        }
+
+        if (order.rider) {
+            triggerEvent(`rider-${order.rider}`, 'orderStatusUpdate', updatedOrder);
+        }
+
+        triggerEvent(`order-${order._id}`, 'statusUpdate', { status: 'Delivered', order: updatedOrder });
+
+        res.json({ message: 'Order marked as delivered', order: updatedOrder });
     } catch (error) {
         console.error('Complete order error:', error);
         res.status(error.message.includes('not found') || error.message.includes('No rider assigned') ? 400 : 500).json({ 

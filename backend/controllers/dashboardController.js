@@ -25,23 +25,36 @@ const getDashboardStats = async (req, res) => {
             status: { $ne: 'Cancelled' }
         });
 
-        // 2. Revenue Today
+        // 2. Revenue & Earnings Today
         const revenueResult = await Order.aggregate([
             {
                 $match: {
                     restaurant: restaurant._id,
                     createdAt: { $gte: today },
-                    status: { $in: ['Pending', 'Preparing', 'Ready', 'Out for Delivery', 'Delivered', 'Completed'] }
+                    status: { $in: ['Pending', 'Preparing', 'Ready', 'OnTheWay', 'Picked Up', 'Arrived', 'ArrivedAtCustomer', 'Delivered', 'Completed'] }
                 }
             },
             {
                 $group: {
                     _id: null,
-                    totalRevenue: { $sum: '$totalPrice' }
+                    totalRevenue: { $sum: '$totalPrice' },
+                    totalNetEarnings: { $sum: { $ifNull: ['$restaurantEarning', 0] } },
+                    totalCommission: { $sum: { $ifNull: ['$commissionAmount', 0] } }
                 }
             }
         ]);
+        
         const revenueToday = revenueResult.length > 0 ? revenueResult[0].totalRevenue : 0;
+        const netEarningsToday = revenueResult.length > 0 ? revenueResult[0].totalNetEarnings : 0;
+        const commissionToday = revenueResult.length > 0 ? revenueResult[0].totalCommission : 0;
+
+        // If netEarningsToday is 0 but revenue is not, it means orders are not completed yet.
+        // We can show an estimate based on restaurant's commission rate
+        let estimatedNetEarnings = netEarningsToday;
+        if (netEarningsToday === 0 && revenueToday > 0) {
+            const commissionPercent = restaurant.commissionRate || (restaurant.businessType === 'home-chef' ? 10 : 15);
+            estimatedNetEarnings = revenueToday * (1 - commissionPercent / 100);
+        }
 
         // 3. Status-based Order Counts
         const pendingCount = await Order.countDocuments({
@@ -84,6 +97,8 @@ const getDashboardStats = async (req, res) => {
         res.json({
             ordersToday,
             revenueToday,
+            netEarningsToday: netEarningsToday || estimatedNetEarnings,
+            commissionToday,
             pending: pendingCount,
             preparing: preparingCount,
             ready: readyCount,

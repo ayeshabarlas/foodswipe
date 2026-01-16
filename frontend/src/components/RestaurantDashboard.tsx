@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { FaShoppingBag, FaUtensils, FaStore, FaChartLine, FaWallet, FaStar, FaBullhorn, FaHeadset, FaConciergeBell, FaBell, FaClock, FaBox, FaCheck, FaPaperPlane, FaSignOutAlt, FaBars, FaTimes, FaBan } from 'react-icons/fa';
+import { FaShoppingBag, FaUtensils, FaStore, FaChartLine, FaWallet, FaStar, FaBullhorn, FaHeadset, FaConciergeBell, FaBell, FaClock, FaBox, FaCheck, FaPaperPlane, FaSignOutAlt, FaBars, FaTimes, FaBan, FaThLarge } from 'react-icons/fa';
 import { motion, AnimatePresence } from 'framer-motion';
 import axios from 'axios';
 import CreateRestaurant from './CreateRestaurant';
@@ -14,6 +14,7 @@ import PaymentHistory from './PaymentHistory';
 import KitchenDisplay from './KitchenDisplay';
 import DashboardPromotions from './DashboardPromotions';
 import DashboardSettings from './DashboardSettings';
+import DashboardOverview from './DashboardOverview';
 import DashboardSupport from './DashboardSupport';
 import { getImageUrl, getImageFallback } from '../utils/imageUtils';
 import { API_BASE_URL } from '../utils/config';
@@ -24,7 +25,7 @@ export default function RestaurantDashboard() {
     const [restaurant, setRestaurant] = useState<any>(null);
     const [loading, setLoading] = useState(true);
     const [uploadingLogo, setUploadingLogo] = useState(false);
-    const [activePage, setActivePage] = useState('orders');
+    const [activePage, setActivePage] = useState('overview');
     const [isSidebarOpen, setIsSidebarOpen] = useState(false);
     const [notifications, setNotifications] = useState<any[]>([]);
     const [showNotifications, setShowNotifications] = useState(false);
@@ -36,6 +37,10 @@ export default function RestaurantDashboard() {
         outForDelivery: 0,
         revenueToday: 0,
         ordersToday: 0,
+        netEarningsToday: 0,
+        commissionToday: 0,
+        topItems: [],
+        isOnline: false
     });
 
     // Socket state
@@ -320,6 +325,7 @@ export default function RestaurantDashboard() {
     const isPending = displayRestaurant.verificationStatus === 'pending' || displayRestaurant.verificationStatus === 'not_started';
 
     const menuItems = [
+        { id: 'overview', label: 'Overview', icon: FaThLarge },
         { id: 'orders', label: 'Orders Board', icon: FaShoppingBag },
         { id: 'menu', label: 'Menu Items', icon: FaUtensils },
         { id: 'store', label: 'Store Profile', icon: FaStore },
@@ -342,6 +348,7 @@ export default function RestaurantDashboard() {
         }
 
         switch (activePage) {
+            case 'overview': return <DashboardOverview stats={stats} restaurant={displayRestaurant} />;
             case 'orders': return <OrderBoard restaurant={displayRestaurant} onUpdate={fetchDashboardData} />;
             case 'menu': return <DashboardMenu restaurant={displayRestaurant} />;
             case 'store': return <DashboardStore restaurant={displayRestaurant} onUpdate={fetchDashboardData} />;
@@ -424,11 +431,11 @@ export default function RestaurantDashboard() {
                             <div className="grid grid-cols-2 gap-2">
                                 <div className="bg-gray-800/50 rounded-lg p-2 text-center border border-gray-700/30">
                                     <p className="text-[8px] text-gray-500 mb-0.5 font-bold uppercase tracking-wider">Earnings</p>
-                                    <p className="font-bold text-green-400 text-[10px]">Rs. {stats?.revenueToday?.toLocaleString() || 0}</p>
+                                    <p className="font-bold text-green-400 text-[10px]">Rs. {stats?.netEarningsToday?.toLocaleString() || 0}</p>
                                 </div>
                                 <div className="bg-gray-800/50 rounded-lg p-2 text-center border border-gray-700/30">
                                     <p className="text-[8px] text-gray-500 mb-0.5 font-bold uppercase tracking-wider">Today</p>
-                                    <p className="font-bold text-orange-400 text-[10px]">{(stats?.ready || 0) + (stats?.outForDelivery || 0)} Orders</p>
+                                    <p className="font-bold text-orange-400 text-[10px]">{stats?.ordersToday || 0} Orders</p>
                                 </div>
                             </div>
                         )}
