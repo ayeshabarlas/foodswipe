@@ -102,7 +102,7 @@ export default function LoginPage() {
     };
 
     return (
-        <div className="min-h-screen bg-gradient-to-br from-orange-500 via-red-500 to-pink-500 flex items-center justify-center p-4 overflow-y-auto">
+        <div className="min-h-screen bg-gradient-orange-red flex items-center justify-center p-4 overflow-y-auto">
             <div className="w-full max-w-md bg-white/95 backdrop-blur-sm rounded-3xl shadow-2xl overflow-hidden">
                 {/* Header Image/Logo Placeholder */}
                 <div className="bg-gradient-orange-red h-32 flex items-center justify-center relative overflow-hidden">
