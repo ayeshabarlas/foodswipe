@@ -192,6 +192,5 @@ export default function SupportView() {
                 ))}
             </div>
         </div>
-        </div>
     );
 }
