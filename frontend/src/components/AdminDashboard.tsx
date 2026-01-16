@@ -242,10 +242,18 @@ export default function AdminDashboard() {
     };
 
     return (
-        <div className="min-h-screen bg-gray-100 flex overflow-x-hidden">
+        <div className="min-h-screen bg-[#F8FAFC] flex overflow-x-hidden relative">
             <Toaster />
+            
+            {/* Background Decorative Gradients */}
+            <div className="fixed inset-0 overflow-hidden pointer-events-none z-0">
+                <div className="absolute top-[-10%] right-[-10%] w-[40%] h-[40%] bg-gradient-to-br from-orange-500/5 to-pink-500/10 blur-[100px] rounded-full"></div>
+                <div className="absolute bottom-[-10%] left-[20%] w-[30%] h-[30%] bg-gradient-to-tr from-orange-500/5 to-pink-500/5 blur-[80px] rounded-full"></div>
+            </div>
+
             <Sidebar activeTab={activeTab} setActiveTab={handleTabChange} onLogout={handleLogout} />
-            <div className="flex-1 w-full md:ml-64 pt-16 md:pt-0 min-h-screen overflow-y-auto">
+            
+            <div className="flex-1 w-full md:ml-64 pt-16 md:pt-0 min-h-screen overflow-y-auto relative z-10">
                 {renderView()}
             </div>
         </div>

@@ -100,12 +100,12 @@ export default function Sidebar({ activeTab, setActiveTab, onLogout }: SidebarPr
                 {/* Logo Section */}
                 <div className="p-6 border-b border-gray-50">
                     <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 bg-[#FF6A00] rounded-xl flex items-center justify-center text-white shadow-lg shadow-[#FF6A00]/20">
+                        <div className="w-10 h-10 bg-gradient-to-br from-orange-500 to-pink-500 rounded-xl flex items-center justify-center text-white shadow-lg shadow-orange-500/20">
                             <FaShoppingBag className="text-xl" />
                         </div>
                         <div>
                             <h1 className="text-[18px] font-bold text-[#111827] tracking-tight leading-none uppercase">FoodSwipe</h1>
-                            <p className="text-[11px] text-[#FF6A00] font-semibold tracking-wider mt-1 uppercase">Admin Panel</p>
+                            <p className="text-[11px] text-gradient-orange-red font-semibold tracking-wider mt-1 uppercase">Admin Panel</p>
                         </div>
                     </div>
                 </div>
@@ -117,30 +117,46 @@ export default function Sidebar({ activeTab, setActiveTab, onLogout }: SidebarPr
                             <div key={item.id} className="space-y-1">
                                 <button
                                     onClick={() => item.subItems ? toggleMenu(item.id) : setActiveTab(item.id)}
-                                    className={`w-full flex items-center justify-between px-4 py-2.5 rounded-xl transition-all duration-200 group
+                                    className={`w-full flex items-center justify-between px-4 py-3 rounded-2xl transition-all duration-300 group
                                         ${(activeTab === item.id || (item.subItems?.some(s => s.id === activeTab)))
-                                            ? 'bg-orange-50 text-[#FF6A00] font-semibold'
+                                            ? 'bg-gradient-to-r from-orange-500/10 to-pink-500/10 text-[#FF6A00] shadow-sm shadow-orange-500/5'
                                             : 'text-[#6B7280] hover:bg-gray-50 hover:text-[#111827]'
                                         }`}
                                 >
                                     <div className="flex items-center gap-3">
-                                        <item.icon className={`text-[20px] ${activeTab === item.id || item.subItems?.some(s => s.id === activeTab) ? 'text-[#FF6A00]' : 'text-[#9CA3AF] group-hover:text-[#6B7280]'}`} />
-                                        <span className="text-[14px] font-semibold">{item.label}</span>
+                                        <div className={`w-10 h-10 rounded-xl flex items-center justify-center transition-all duration-300 ${
+                                            (activeTab === item.id || (item.subItems?.some(s => s.id === activeTab)))
+                                                ? 'bg-gradient-to-br from-orange-500 to-pink-500 text-white shadow-md shadow-orange-500/20 scale-110'
+                                                : 'bg-gray-50 text-[#9CA3AF] group-hover:bg-gray-100 group-hover:text-[#6B7280]'
+                                        }`}>
+                                            <item.icon className="text-[18px]" />
+                                        </div>
+                                        <span className={`text-[14px] font-bold tracking-tight ${
+                                            (activeTab === item.id || (item.subItems?.some(s => s.id === activeTab)))
+                                                ? 'text-[#111827]'
+                                                : 'text-[#6B7280]'
+                                        }`}>{item.label}</span>
                                     </div>
                                     {item.subItems && (
-                                        expandedMenus.includes(item.id) ? <FaChevronDown className="text-[10px] opacity-50" /> : <FaChevronRight className="text-[10px] opacity-50" />
+                                        <div className={`transition-transform duration-300 ${expandedMenus.includes(item.id) ? 'rotate-180' : ''}`}>
+                                            <FaChevronDown className={`text-[10px] ${
+                                                (activeTab === item.id || (item.subItems?.some(s => s.id === activeTab)))
+                                                    ? 'text-[#FF6A00]'
+                                                    : 'opacity-40'
+                                            }`} />
+                                        </div>
                                     )}
                                 </button>
 
                                 {item.subItems && expandedMenus.includes(item.id) && (
-                                    <div className="ml-9 space-y-1 mt-1">
+                                    <div className="ml-12 space-y-1 mt-1 border-l-2 border-orange-100/50 pl-2">
                                         {item.subItems.map(sub => (
                                             <button
                                                 key={sub.id}
                                                 onClick={() => setActiveTab(sub.id)}
-                                                className={`w-full text-left px-4 py-2 rounded-lg text-[13px] font-bold transition-all
+                                                className={`w-full text-left px-4 py-2.5 rounded-xl text-[13px] font-bold transition-all duration-200
                                                     ${activeTab === sub.id
-                                                        ? 'text-[#FF6A00] bg-orange-50/50'
+                                                        ? 'text-[#FF6A00] bg-orange-50/50 shadow-sm shadow-orange-500/5'
                                                         : 'text-[#9CA3AF] hover:text-[#6B7280] hover:bg-gray-50'
                                                     }`}
                                             >

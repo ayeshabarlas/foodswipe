@@ -117,7 +117,7 @@ export default function AdminCreateVoucherModal({ isOpen, onClose, onSuccess, in
                         {/* Header */}
                         <div className="p-8 border-b border-gray-100 flex justify-between items-center bg-gray-50/50">
                             <div className="flex items-center gap-4">
-                                <div className="w-12 h-12 bg-[#FF6A00] rounded-2xl flex items-center justify-center shadow-lg shadow-[#FF6A00]/20">
+                                <div className="w-12 h-12 bg-gradient-to-br from-orange-500 to-pink-500 rounded-2xl flex items-center justify-center shadow-lg shadow-orange-500/20">
                                     <FaTicketAlt className="text-xl text-white" />
                                 </div>
                                 <div>
@@ -129,7 +129,7 @@ export default function AdminCreateVoucherModal({ isOpen, onClose, onSuccess, in
                             </div>
                             <button 
                                 onClick={onClose} 
-                                className="w-10 h-10 flex items-center justify-center hover:bg-gray-200/50 rounded-2xl transition-all text-[#111827]"
+                                className="w-10 h-10 flex items-center justify-center hover:bg-gray-200/50 rounded-2xl transition-all text-[#111827] active:scale-90"
                             >
                                 <FaTimes />
                             </button>
@@ -235,14 +235,14 @@ export default function AdminCreateVoucherModal({ isOpen, onClose, onSuccess, in
                                 <button
                                     type="button"
                                     onClick={onClose}
-                                    className="flex-1 py-4 bg-gray-100 hover:bg-gray-200 text-[#111827] text-[13px] font-bold rounded-2xl transition-all uppercase tracking-wider"
+                                    className="flex-1 py-4 bg-gray-100 hover:bg-gray-200 text-[#111827] text-[13px] font-bold rounded-2xl transition-all uppercase tracking-wider active:scale-95"
                                 >
                                     Cancel
                                 </button>
                                 <button
                                     type="submit"
                                     disabled={loading}
-                                    className="flex-2 py-4 bg-[#FF6A00] hover:bg-[#e65f00] text-white text-[13px] font-bold rounded-2xl shadow-lg shadow-[#FF6A00]/20 transition-all disabled:opacity-50 disabled:cursor-not-allowed uppercase tracking-wider flex items-center justify-center gap-2"
+                                    className="flex-2 py-4 bg-gradient-to-r from-orange-500 to-pink-500 text-white text-[13px] font-bold rounded-2xl shadow-lg shadow-orange-500/20 hover:shadow-xl hover:shadow-orange-500/30 transition-all disabled:opacity-50 disabled:cursor-not-allowed uppercase tracking-wider flex items-center justify-center gap-2 active:scale-95"
                                 >
                                     {loading ? (
                                         <>

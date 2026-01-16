@@ -84,26 +84,26 @@ export default function OrdersView() {
         <div className="p-6 max-w-[1600px] mx-auto">
             <div className="flex justify-between items-center mb-8">
                 <div>
-                    <h2 className="text-[24px] font-semibold text-[#111827] tracking-tight">Live Orders</h2>
-                    <p className="text-[14px] font-normal text-[#6B7280] mt-1">Real-time order tracking and management</p>
+                    <h2 className="text-[28px] font-bold text-[#111827] tracking-tight">Live Orders</h2>
+                    <p className="text-[14px] font-medium text-[#6B7280] mt-1">Real-time order tracking and management</p>
                 </div>
                 <div className="flex items-center gap-4">
-                    <label className="flex items-center gap-2 text-[13px] font-medium text-[#6B7280] cursor-pointer">
+                    <label className="flex items-center gap-3 px-4 py-2.5 bg-white border border-gray-100 rounded-xl text-[13px] font-bold text-[#6B7280] cursor-pointer hover:bg-gray-50 transition-all shadow-sm">
                         <input
                             type="checkbox"
                             checked={autoRefresh}
                             onChange={(e) => setAutoRefresh(e.target.checked)}
-                            className="w-4 h-4 text-[#FF6A00] rounded border-gray-300 focus:ring-[#FF6A00]"
+                            className="w-4 h-4 text-[#FF6A00] rounded border-gray-300 focus:ring-[#FF6A00] transition-all"
                         />
                         Auto Refresh
                     </label>
                     <button
                         onClick={fetchOrders}
-                        className="flex items-center gap-2 px-5 py-2.5 bg-white border border-gray-100 rounded-xl hover:shadow-md text-[#6B7280] transition-all text-[14px] font-medium"
+                        className="flex items-center gap-2 px-6 py-3 bg-white border border-gray-100 rounded-xl hover:shadow-lg text-[#6B7280] transition-all text-[13px] font-bold hover:text-orange-500 hover:border-orange-500 shadow-sm active:scale-95 uppercase tracking-widest"
                     >
                         <FaSyncAlt className={loading ? 'animate-spin' : ''} /> Refresh
                     </button>
-                    <button className="px-5 py-2.5 bg-[#FF6A00]/10 text-[#FF6A00] border border-[#FF6A00]/20 rounded-xl text-[14px] font-medium hover:bg-[#FF6A00]/20 transition-all">
+                    <button className="px-8 py-3 bg-gradient-to-r from-orange-500 to-pink-500 text-white rounded-xl text-[13px] font-bold hover:shadow-xl hover:shadow-orange-500/30 transition-all shadow-lg active:scale-95 uppercase tracking-widest">
                         View All Orders
                     </button>
                 </div>
@@ -112,22 +112,21 @@ export default function OrdersView() {
             {/* Stats Cards */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-10">
                 {[
-                    { label: 'Live Orders', value: stats.live, icon: FaClock, color: 'orange' },
-                    { label: 'Preparing', value: stats.preparing, icon: FaStore, color: 'yellow' },
-                    { label: 'Out for Delivery', value: stats.outForDelivery, icon: FaMotorcycle, color: 'green' },
-                    { label: 'Total Value', value: `Rs. ${stats.totalValue.toLocaleString()}`, icon: 'Rs', color: 'purple' }
+                    { label: 'Live Orders', value: stats.live, icon: FaClock, gradient: 'from-orange-500 to-pink-500' },
+                    { label: 'Preparing', value: stats.preparing, icon: FaStore, gradient: 'from-blue-500 to-indigo-600' },
+                    { label: 'Out for Delivery', value: stats.outForDelivery, icon: FaMotorcycle, gradient: 'from-emerald-500 to-teal-600' },
+                    { label: 'Total Value', value: `Rs. ${stats.totalValue.toLocaleString()}`, icon: FaShoppingBag, gradient: 'from-purple-500 to-indigo-600' }
                 ].map((stat, i) => (
-                    <div key={i} className="bg-white p-5 rounded-2xl shadow-sm border border-gray-100 flex justify-between items-center hover:shadow-md transition-shadow">
-                        <div>
-                            <p className="text-[#6B7280] text-[13px] font-medium mb-1 uppercase tracking-wider">{stat.label}</p>
-                            <h3 className="text-[24px] font-bold text-[#111827] tracking-tight">{stat.value}</h3>
+                    <div key={i} className={`bg-gradient-to-br ${stat.gradient} p-8 rounded-[2rem] shadow-xl relative overflow-hidden group active:scale-[0.98] transition-all cursor-default text-white`}>
+                        {/* Decorative background elements */}
+                        <div className="absolute top-[-10%] right-[-10%] w-32 h-32 bg-white/10 rounded-full blur-2xl group-hover:bg-white/20 transition-all"></div>
+                        
+                        <div className="relative z-10">
+                            <p className="text-white/70 text-[11px] font-bold uppercase tracking-[0.15em] mb-2">{stat.label}</p>
+                            <h3 className="text-[32px] font-bold text-white tracking-tight leading-none mb-4">{stat.value}</h3>
                         </div>
-                        <div className={`p-3 rounded-2xl ${
-                            stat.color === 'orange' ? 'bg-orange-50 text-orange-500' :
-                            stat.color === 'yellow' ? 'bg-yellow-50 text-yellow-500' :
-                            stat.color === 'green' ? 'bg-green-50 text-green-500' :
-                            'bg-purple-50 text-purple-500'
-                        }`}>
+
+                        <div className="relative z-10 mt-2 bg-white/20 w-14 h-14 rounded-2xl flex items-center justify-center text-white backdrop-blur-md border border-white/10 group-hover:scale-110 transition-transform">
                             {typeof stat.icon === 'string' ? <span className="text-lg font-bold">{stat.icon}</span> : <stat.icon className="text-xl" />}
                         </div>
                     </div>
@@ -198,13 +197,13 @@ export default function OrdersView() {
                             </div>
 
                             <div className="mt-5 flex gap-3">
-                                <button className="flex-1 bg-[#FF6A00] hover:bg-[#e65f00] text-white text-[14px] font-semibold py-2.5 rounded-xl transition-all shadow-lg shadow-[#FF6A00]/20">
+                                <button className="flex-1 bg-gradient-to-r from-orange-500 to-pink-500 hover:shadow-lg hover:shadow-orange-500/30 text-white text-[14px] font-bold py-3 rounded-xl transition-all shadow-md active:scale-95 uppercase tracking-widest">
                                     View Details
                                 </button>
-                                <a href={`tel:${order.user?.phone}`} className="px-3 py-2.5 border border-gray-200 rounded-xl hover:bg-gray-50 text-[#6B7280] transition-all">
+                                <a href={`tel:${order.user?.phone}`} className="px-4 py-3 border border-gray-100 rounded-xl hover:bg-gray-50 text-[#6B7280] transition-all shadow-sm active:scale-95 flex items-center justify-center">
                                     <FaPhone className="text-[14px]" />
                                 </a>
-                                <a href={`tel:${order.rider?.phone}`} className="px-3 py-2.5 border border-gray-200 rounded-xl hover:bg-gray-50 text-[#6B7280] transition-all">
+                                <a href={`tel:${order.rider?.phone}`} className="px-4 py-3 border border-gray-100 rounded-xl hover:bg-gray-50 text-[#6B7280] transition-all shadow-sm active:scale-95 flex items-center justify-center">
                                     <FaMotorcycle className="text-[14px]" />
                                 </a>
                             </div>

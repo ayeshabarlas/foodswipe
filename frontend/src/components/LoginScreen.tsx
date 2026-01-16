@@ -156,9 +156,10 @@ export default function LoginScreen({ onLogin }: LoginScreenProps) {
                 <img
                     src="https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=1920&q=80"
                     alt="Food background"
-                    className="absolute inset-0 w-full h-full object-cover blur-sm scale-105"
+                    className="absolute inset-0 w-full h-full object-cover blur-[2px] scale-105 opacity-80"
                 />
-                <div className="absolute inset-0 bg-black/40 backdrop-blur-[2px]" />
+                <div className="absolute inset-0 bg-gradient-to-br from-orange-500/60 via-red-500/40 to-pink-500/60 backdrop-blur-[1px]" />
+                <div className="absolute inset-0 bg-black/20" />
             </div>
 
             <motion.div
@@ -228,12 +229,12 @@ export default function LoginScreen({ onLogin }: LoginScreenProps) {
                                             type="button"
                                             onClick={() => setSelectedRole("customer")}
                                             className={`flex-1 flex flex-col items-center gap-2 py-4 px-3 border-2 rounded-2xl transition-all ${selectedRole === "customer"
-                                                ? "border-orange-500 bg-orange-50"
-                                                : "border-gray-200 bg-white hover:border-gray-300"
+                                                ? "border-transparent bg-gradient-to-br from-orange-500/10 to-pink-500/10 ring-2 ring-orange-500"
+                                                : "border-gray-100 bg-white hover:border-gray-200"
                                                 }`}
                                         >
                                             <FaUser className={`text-2xl ${selectedRole === "customer" ? "text-orange-500" : "text-gray-400"}`} />
-                                            <span className={`text-xs font-medium ${selectedRole === "customer" ? "text-orange-500" : "text-gray-600"}`}>
+                                            <span className={`text-xs font-bold ${selectedRole === "customer" ? "text-orange-600" : "text-gray-500"}`}>
                                                 Customer
                                             </span>
                                         </button>
@@ -241,12 +242,12 @@ export default function LoginScreen({ onLogin }: LoginScreenProps) {
                                             type="button"
                                             onClick={() => setSelectedRole("restaurant")}
                                             className={`flex-1 flex flex-col items-center gap-2 py-4 px-3 border-2 rounded-2xl transition-all ${selectedRole === "restaurant"
-                                                ? "border-orange-500 bg-orange-50"
-                                                : "border-gray-200 bg-white hover:border-gray-300"
+                                                ? "border-transparent bg-gradient-to-br from-orange-500/10 to-pink-500/10 ring-2 ring-orange-500"
+                                                : "border-gray-100 bg-white hover:border-gray-200"
                                                 }`}
                                         >
                                             <FaStore className={`text-2xl ${selectedRole === "restaurant" ? "text-orange-500" : "text-gray-400"}`} />
-                                            <span className={`text-xs font-medium ${selectedRole === "restaurant" ? "text-orange-500" : "text-gray-600"}`}>
+                                            <span className={`text-xs font-bold ${selectedRole === "restaurant" ? "text-orange-600" : "text-gray-500"}`}>
                                                 Restaurant
                                             </span>
                                         </button>
@@ -254,12 +255,12 @@ export default function LoginScreen({ onLogin }: LoginScreenProps) {
                                             type="button"
                                             onClick={() => setSelectedRole("rider")}
                                             className={`flex-1 flex flex-col items-center gap-2 py-4 px-3 border-2 rounded-2xl transition-all ${selectedRole === "rider"
-                                                ? "border-orange-500 bg-orange-50"
-                                                : "border-gray-200 bg-white hover:border-gray-300"
+                                                ? "border-transparent bg-gradient-to-br from-orange-500/10 to-pink-500/10 ring-2 ring-orange-500"
+                                                : "border-gray-100 bg-white hover:border-gray-200"
                                                 }`}
                                         >
                                             <FaMotorcycle className={`text-2xl ${selectedRole === "rider" ? "text-orange-500" : "text-gray-400"}`} />
-                                            <span className={`text-xs font-medium ${selectedRole === "rider" ? "text-orange-500" : "text-gray-600"}`}>
+                                            <span className={`text-xs font-bold ${selectedRole === "rider" ? "text-orange-600" : "text-gray-500"}`}>
                                                 Rider
                                             </span>
                                         </button>

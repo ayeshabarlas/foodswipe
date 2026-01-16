@@ -247,10 +247,10 @@ export default function RidersView() {
                     <p className="text-[14px] font-normal text-[#6B7280] mt-1">Delivery Partner Management</p>
                 </div>
                 <div className="flex gap-3">
-                    <button className="bg-white border border-gray-100 text-gray-600 px-5 py-2.5 rounded-xl font-medium transition-all shadow-sm hover:shadow-md flex items-center gap-2 text-[14px]">
+                    <button className="bg-white border border-gray-100 text-gray-600 px-5 py-2.5 rounded-xl font-medium transition-all shadow-sm hover:shadow-md flex items-center gap-2 text-[14px] hover:border-blue-500 hover:text-blue-500">
                         <FaMapMarkerAlt className="text-blue-500" /> Live Track Map
                     </button>
-                    <button className="bg-[#FF6A00] hover:bg-[#e65f00] text-white px-5 py-2.5 rounded-xl font-medium transition-all shadow-lg shadow-[#FF6A00]/20 flex items-center gap-2 text-[14px]">
+                    <button className="bg-gradient-to-r from-orange-500 to-pink-500 hover:from-orange-600 hover:to-pink-600 text-white px-5 py-2.5 rounded-xl font-bold transition-all shadow-lg shadow-orange-500/25 flex items-center gap-2 text-[14px] active:scale-95">
                         <FaPlus /> Add New Rider
                     </button>
                 </div>
@@ -259,35 +259,35 @@ export default function RidersView() {
             {/* Stats Cards */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-10">
                 {[
-                    { label: 'Total Partners', value: stats.total, icon: FaUser, color: 'blue' },
-                    { label: 'Online Now', value: stats.online, icon: FaMotorcycle, color: 'green', pulse: true },
-                    { label: 'Pending Review', value: stats.pending, icon: FaClock, color: 'orange' },
-                    { label: 'Total Deliveries', value: stats.totalDeliveries, icon: FaCheckCircle, color: 'pink' }
+                    { label: 'Total Partners', value: stats.total, icon: FaUser, gradient: 'from-blue-500 to-indigo-600', shadow: 'shadow-blue-500/20' },
+                    { label: 'Online Now', value: stats.online, icon: FaMotorcycle, gradient: 'from-emerald-500 to-teal-600', shadow: 'shadow-emerald-500/20', pulse: true },
+                    { label: 'Pending Review', value: stats.pending, icon: FaClock, gradient: 'from-orange-500 to-pink-500', shadow: 'shadow-orange-500/20' },
+                    { label: 'Total Deliveries', value: stats.totalDeliveries, icon: FaCheckCircle, gradient: 'from-purple-500 to-violet-600', shadow: 'shadow-purple-500/20' }
                 ].map((stat, i) => (
                     <motion.div 
                         key={i}
                         initial={{ opacity: 0, y: 20 }}
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ delay: i * 0.1 }}
-                        className="bg-white p-5 rounded-2xl shadow-sm border border-gray-100 flex justify-between items-center hover:shadow-md transition-shadow"
+                        className={`bg-gradient-to-br ${stat.gradient} p-6 rounded-[2rem] shadow-xl ${stat.shadow} text-white relative overflow-hidden group hover:scale-[1.02] transition-all duration-300`}
                     >
-                        <div>
-                            <p className="text-[#6B7280] text-[13px] font-medium mb-1">{stat.label}</p>
-                            <h3 className="text-[24px] font-bold text-[#111827] tracking-tight">{stat.value}</h3>
-                            {stat.pulse && (
-                                <div className="flex items-center gap-1 mt-1">
-                                    <div className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse"></div>
-                                    <span className="text-[12px] text-[#6B7280] font-medium">Live Status</span>
+                        <div className="absolute top-[-10%] right-[-10%] w-32 h-32 bg-white/10 rounded-full blur-3xl group-hover:bg-white/20 transition-all duration-500"></div>
+                        
+                        <div className="relative z-10">
+                            <div className="flex justify-between items-start mb-6">
+                                <div className="bg-white/20 p-3 rounded-2xl backdrop-blur-md border border-white/10 group-hover:scale-110 transition-transform duration-300">
+                                    <stat.icon className="text-xl" />
                                 </div>
-                            )}
-                        </div>
-                        <div className={`p-3 rounded-2xl ${
-                            stat.color === 'blue' ? 'bg-blue-50 text-blue-500' :
-                            stat.color === 'green' ? 'bg-green-50 text-green-500' :
-                            stat.color === 'orange' ? 'bg-orange-50 text-orange-500' :
-                            'bg-[#FF6A00]/10 text-[#FF6A00]'
-                        }`}>
-                            <stat.icon className="text-xl" />
+                                {stat.pulse && (
+                                    <div className="bg-white/20 backdrop-blur-md px-3 py-1 rounded-lg border border-white/10 flex items-center gap-2">
+                                        <div className="w-2 h-2 rounded-full bg-white animate-pulse"></div>
+                                        <span className="text-[10px] font-bold uppercase tracking-wider">Live</span>
+                                    </div>
+                                )}
+                            </div>
+                            
+                            <p className="text-white/70 text-[13px] font-bold uppercase tracking-wider mb-1">{stat.label}</p>
+                            <h3 className="text-[28px] font-bold tracking-tight">{stat.value}</h3>
                         </div>
                     </motion.div>
                 ))}
@@ -300,10 +300,10 @@ export default function RidersView() {
                         <button
                             key={f}
                             onClick={() => setFilter(f as any)}
-                            className={`px-4 py-2 rounded-xl text-[13px] font-medium transition-all border ${
+                            className={`px-6 py-2.5 rounded-xl text-[13px] font-bold transition-all border ${
                                 filter === f 
-                                ? 'bg-[#FF6A00] border-[#FF6A00] text-white shadow-lg shadow-[#FF6A00]/20' 
-                                : 'bg-white border-gray-200 text-[#6B7280] hover:border-[#FF6A00] hover:text-[#FF6A00]'
+                                ? 'bg-gradient-to-r from-orange-500 to-pink-500 border-transparent text-white shadow-lg shadow-orange-500/20' 
+                                : 'bg-white border-gray-200 text-[#6B7280] hover:border-orange-500 hover:text-orange-500'
                             } capitalize`}
                         >
                             {f}
@@ -492,32 +492,37 @@ export default function RidersView() {
                             onClick={(e) => e.stopPropagation()}
                         >
                             {/* Modal Header */}
-                            <div className="relative h-48 bg-gray-100 shrink-0">
-                                <div className="absolute inset-0 bg-gradient-to-r from-[#FF6A00] to-[#FF8C33] opacity-90"></div>
+                            <div className="relative h-48 shrink-0">
+                                <div className="absolute inset-0 bg-gradient-to-r from-orange-500 to-pink-500 opacity-90"></div>
+                                <div className="absolute inset-0 overflow-hidden">
+                                    <div className="absolute top-[-20%] right-[-10%] w-64 h-64 bg-white/10 rounded-full blur-3xl"></div>
+                                    <div className="absolute bottom-[-20%] left-[-10%] w-48 h-48 bg-white/5 rounded-full blur-2xl"></div>
+                                </div>
                                 <button 
                                     onClick={() => setSelectedRider(null)}
-                                    className="absolute top-6 right-6 p-3 bg-white/20 hover:bg-white/40 text-white rounded-2xl transition-all z-10 backdrop-blur-md"
+                                    className="absolute top-6 right-6 p-3 bg-white/20 hover:bg-white/40 text-white rounded-2xl transition-all z-10 backdrop-blur-md border border-white/10 active:scale-90"
                                 >
                                     <FaTimesCircle className="text-xl" />
                                 </button>
                                 
                                 <div className="absolute -bottom-12 left-10 flex items-end gap-6">
                                     <div className="relative">
-                                        <div className="w-32 h-32 rounded-[2rem] bg-white flex items-center justify-center text-[#FF6A00] text-4xl font-bold border-4 border-white shadow-xl">
-                                            {selectedRider.fullName?.charAt(0) || selectedRider.user?.name?.charAt(0)}
+                                        <div className="w-32 h-32 rounded-[2rem] bg-white flex items-center justify-center text-orange-500 text-4xl font-bold border-4 border-white shadow-2xl group overflow-hidden">
+                                            <div className="absolute inset-0 bg-orange-50 group-hover:bg-orange-100 transition-colors"></div>
+                                            <span className="relative z-10">{selectedRider.fullName?.charAt(0) || selectedRider.user?.name?.charAt(0)}</span>
                                         </div>
-                                        <div className={`absolute bottom-2 right-2 w-6 h-6 rounded-full border-4 border-white shadow-sm ${
+                                        <div className={`absolute bottom-2 right-2 w-7 h-7 rounded-full border-4 border-white shadow-lg ${
                                             selectedRider.isOnline ? 'bg-green-500' : 'bg-gray-300'
                                         }`}></div>
                                     </div>
                                     <div className="mb-4">
-                                        <h3 className="text-[24px] font-semibold text-white tracking-tight">{selectedRider.fullName || selectedRider.user?.name}</h3>
+                                        <h3 className="text-[28px] font-bold text-white tracking-tight drop-shadow-sm">{selectedRider.fullName || selectedRider.user?.name}</h3>
                                         <div className="flex items-center gap-3 mt-1">
-                                            <span className="bg-white/20 backdrop-blur-md text-white px-3 py-1 rounded-full text-[11px] font-medium uppercase tracking-wider border border-white/20">
+                                            <span className="bg-white/20 backdrop-blur-md text-white px-3 py-1 rounded-full text-[11px] font-bold uppercase tracking-wider border border-white/20">
                                                 {selectedRider.vehicleType} Partner
                                             </span>
-                                            <div className="flex items-center gap-1 text-white/90 text-[13px] font-medium">
-                                                <FaStar className="text-yellow-300" />
+                                            <div className="flex items-center gap-1.5 text-white bg-white/10 backdrop-blur-md px-3 py-1 rounded-full text-[13px] font-bold border border-white/10">
+                                                <FaStar className="text-yellow-400" />
                                                 {selectedRider.stats?.rating?.toFixed(1) || '0.0'}
                                             </div>
                                         </div>
@@ -702,13 +707,13 @@ export default function RidersView() {
                                         <>
                                             <button
                                                 onClick={(e) => handleApprove(selectedRider._id, e)}
-                                                className="flex-1 flex items-center justify-center gap-3 bg-green-600 hover:bg-green-700 text-white px-8 py-4 rounded-2xl font-bold text-[14px] transition-all shadow-lg shadow-green-600/20 active:scale-[0.98]"
+                                                className="flex-1 flex items-center justify-center gap-3 bg-gradient-to-r from-emerald-500 to-teal-600 text-white px-8 py-4 rounded-2xl font-bold text-[14px] transition-all shadow-lg shadow-emerald-500/20 active:scale-95"
                                             >
                                                 <FaCheckCircle /> Approve Rider
                                             </button>
                                             <button
                                                 onClick={(e) => handleReject(selectedRider._id, e)}
-                                                className="flex-1 flex items-center justify-center gap-3 bg-red-50 hover:bg-red-100 text-red-600 px-8 py-4 rounded-2xl font-bold text-[14px] transition-all active:scale-[0.98]"
+                                                className="flex-1 flex items-center justify-center gap-3 bg-white border-2 border-red-100 text-red-500 hover:bg-red-50 px-8 py-4 rounded-2xl font-bold text-[14px] transition-all active:scale-95"
                                             >
                                                 <FaTimesCircle /> Reject Application
                                             </button>
@@ -718,21 +723,21 @@ export default function RidersView() {
                                             {selectedRider.user?.status === 'suspended' ? (
                                                 <button
                                                     onClick={(e) => handleUnsuspend(selectedRider.user?._id, e)}
-                                                    className="flex-1 bg-green-600 hover:bg-green-700 text-white px-8 py-4 rounded-2xl font-bold text-[14px] transition-all shadow-lg shadow-green-600/20 active:scale-[0.98]"
+                                                    className="flex-1 bg-gradient-to-r from-emerald-500 to-teal-600 text-white px-8 py-4 rounded-2xl font-bold text-[14px] transition-all shadow-lg shadow-emerald-500/20 active:scale-95"
                                                 >
                                                     Unsuspend Partner
                                                 </button>
                                             ) : (
                                                 <button
                                                     onClick={(e) => handleSuspend(selectedRider.user?._id, e)}
-                                                    className="flex-1 bg-yellow-500 hover:bg-yellow-600 text-white px-8 py-4 rounded-2xl font-bold text-[14px] transition-all shadow-lg shadow-yellow-500/20 active:scale-[0.98]"
+                                                    className="flex-1 bg-gradient-to-r from-orange-500 to-amber-600 text-white px-8 py-4 rounded-2xl font-bold text-[14px] transition-all shadow-lg shadow-orange-500/20 active:scale-95"
                                                 >
                                                     Suspend Partner
                                                 </button>
                                             )}
                                             <button
                                                 onClick={(e) => handleDeleteUser(selectedRider.user?._id, e)}
-                                                className="flex-1 bg-red-50 text-red-600 hover:bg-red-600 hover:text-white px-8 py-4 rounded-2xl font-bold text-[14px] transition-all active:scale-[0.98]"
+                                                className="flex-1 bg-white border-2 border-red-100 text-red-500 hover:bg-red-600 hover:text-white hover:border-transparent px-8 py-4 rounded-2xl font-bold text-[14px] transition-all active:scale-95"
                                             >
                                                 Permanently Delete
                                             </button>

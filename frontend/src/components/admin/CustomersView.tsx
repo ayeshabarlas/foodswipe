@@ -181,7 +181,7 @@ export default function CustomersView() {
                 <button 
                     onClick={handleSync}
                     disabled={syncing}
-                    className={`flex items-center gap-2 px-6 py-3 bg-[#FF6A00] text-white rounded-xl text-[13px] font-bold hover:bg-[#e65f00] transition-all shadow-lg shadow-[#FF6A00]/20 uppercase tracking-wider ${syncing ? 'opacity-50 cursor-not-allowed' : 'active:scale-95'}`}
+                    className={`flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-orange-500 to-pink-500 text-white rounded-xl text-[13px] font-bold hover:from-orange-600 hover:to-pink-600 transition-all shadow-lg shadow-orange-500/20 uppercase tracking-wider ${syncing ? 'opacity-50 cursor-not-allowed' : 'active:scale-95'}`}
                 >
                     <FaSync className={syncing ? 'animate-spin' : ''} />
                     {syncing ? 'Syncing...' : 'Sync with Firebase'}
@@ -191,10 +191,10 @@ export default function CustomersView() {
             {/* Stats Cards */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
                 {[
-                    { label: 'Total Customers', value: stats.total, icon: FaUser, color: 'text-[#FF6A00]', bg: 'bg-orange-50' },
-                    { label: 'Active Now', value: stats.active, icon: FaCheckCircle, color: 'text-green-500', bg: 'bg-green-50', pulse: true },
-                    { label: 'Total Orders', value: stats.totalOrders, icon: FaShoppingBag, color: 'text-blue-500', bg: 'bg-blue-50' },
-                    { label: 'Flagged Users', value: stats.flagged, icon: FaFlag, color: 'text-red-500', bg: 'bg-red-50' }
+                    { label: 'Total Customers', value: stats.total, icon: FaUser, gradient: 'from-orange-500 to-pink-500' },
+                    { label: 'Active Now', value: stats.active, icon: FaCheckCircle, gradient: 'from-emerald-500 to-teal-600', pulse: true },
+                    { label: 'Total Orders', value: stats.totalOrders, icon: FaShoppingBag, gradient: 'from-blue-500 to-indigo-600' },
+                    { label: 'Flagged Users', value: stats.flagged, icon: FaFlag, gradient: 'from-red-500 to-rose-600' }
                 ].map((stat, i) => (
                     <motion.div 
                         key={i}
@@ -213,7 +213,7 @@ export default function CustomersView() {
                                 </div>
                             )}
                         </div>
-                        <div className={`w-14 h-14 ${stat.bg} rounded-2xl flex items-center justify-center ${stat.color} shadow-sm group-hover:scale-110 transition-transform`}>
+                        <div className={`w-14 h-14 bg-gradient-to-br ${stat.gradient} rounded-2xl flex items-center justify-center text-white shadow-lg group-hover:scale-110 transition-transform`}>
                             <stat.icon className="text-2xl" />
                         </div>
                     </motion.div>
@@ -229,7 +229,7 @@ export default function CustomersView() {
                         placeholder="Search by name, email or phone..." 
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
-                        className="w-full pl-12 pr-6 py-3.5 bg-gray-50/50 border border-gray-100 rounded-2xl text-[14px] text-[#111827] font-medium focus:ring-2 focus:ring-[#FF6A00]/10 focus:bg-white focus:border-[#FF6A00]/30 transition-all outline-none placeholder:text-[#9CA3AF]"
+                        className="w-full pl-12 pr-6 py-3.5 bg-gray-50/50 border border-gray-100 rounded-2xl text-[14px] text-[#111827] font-medium focus:ring-2 focus:ring-orange-500/10 focus:bg-white focus:border-orange-500/30 transition-all outline-none placeholder:text-[#9CA3AF]"
                     />
                 </div>
                 <div className="flex items-center gap-2 overflow-x-auto w-full md:w-auto pb-2 md:pb-0">
@@ -238,9 +238,9 @@ export default function CustomersView() {
                         <button
                             key={f}
                             onClick={() => setFilter(f)}
-                            className={`px-5 py-2.5 rounded-xl text-[12px] font-bold transition-all whitespace-nowrap uppercase tracking-wider ${
+                            className={`px-6 py-2.5 rounded-xl text-[12px] font-bold transition-all whitespace-nowrap uppercase tracking-wider ${
                                 filter === f 
-                                ? 'bg-[#FF6A00] text-white shadow-lg shadow-[#FF6A00]/20' 
+                                ? 'bg-gradient-to-r from-orange-500 to-pink-500 text-white shadow-lg shadow-orange-500/20' 
                                 : 'bg-gray-50 text-[#6B7280] hover:bg-gray-100 border border-gray-100'
                             }`}
                         >

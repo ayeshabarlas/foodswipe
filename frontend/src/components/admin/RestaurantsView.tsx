@@ -228,7 +228,7 @@ export default function RestaurantsView() {
                     <p className="text-[14px] font-normal text-[#6B7280] mt-1">Vendor & Storefront Management</p>
                 </div>
                 <div className="flex gap-3">
-                    <button className="bg-[#FF6A00] hover:bg-[#e65f00] text-white px-5 py-2.5 rounded-xl font-medium transition-all shadow-lg shadow-[#FF6A00]/20 flex items-center gap-2 text-[14px]">
+                    <button className="bg-gradient-to-r from-orange-500 to-pink-500 hover:from-orange-600 hover:to-pink-600 text-white px-6 py-3 rounded-2xl font-bold transition-all shadow-lg shadow-orange-500/25 flex items-center gap-2 text-[14px] active:scale-95">
                         <FaStore /> Add New Partner
                     </button>
                 </div>
@@ -237,29 +237,24 @@ export default function RestaurantsView() {
             {/* Stats Cards */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-10">
                 {[
-                    { label: 'Total Partners', value: stats.total, icon: FaStore, color: 'blue' },
-                    { label: 'Active Stores', value: stats.online, icon: FaCheckCircle, color: 'green' },
-                    { label: 'Pending Review', value: stats.pending, icon: FaClock, color: 'orange' },
-                    { label: 'Total Commission', value: `Rs. ${stats.commission.toLocaleString()}`, icon: FaMoneyBillWave, color: 'accent' }
+                    { label: 'Total Partners', value: stats.total, icon: FaStore, color: 'blue', gradient: 'from-blue-500 to-indigo-600' },
+                    { label: 'Active Stores', value: stats.online, icon: FaCheckCircle, color: 'green', gradient: 'from-emerald-500 to-teal-600' },
+                    { label: 'Pending Review', value: stats.pending, icon: FaClock, color: 'orange', gradient: 'from-amber-500 to-orange-600' },
+                    { label: 'Total Commission', value: `Rs. ${stats.commission.toLocaleString()}`, icon: FaMoneyBillWave, color: 'brand', gradient: 'from-orange-500 to-pink-500' }
                 ].map((stat, i) => (
                     <motion.div 
                         key={i}
                         initial={{ opacity: 0, y: 20 }}
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ delay: i * 0.1 }}
-                        className="bg-white p-5 rounded-2xl shadow-sm border border-gray-100 flex justify-between items-center hover:shadow-md transition-shadow"
+                        className="bg-white p-6 rounded-3xl shadow-sm border border-gray-100 flex justify-between items-center hover:shadow-xl hover:shadow-gray-200/50 transition-all duration-300 group"
                     >
                         <div>
-                            <p className="text-[#6B7280] text-[13px] font-medium mb-1">{stat.label}</p>
-                            <h3 className="text-[24px] font-bold text-[#111827] tracking-tight">{stat.value}</h3>
+                            <p className="text-[#6B7280] text-[13px] font-semibold mb-1 uppercase tracking-wider">{stat.label}</p>
+                            <h3 className="text-[28px] font-bold text-[#111827] tracking-tight">{stat.value}</h3>
                         </div>
-                        <div className={`p-3 rounded-2xl ${
-                            stat.color === 'blue' ? 'bg-blue-50 text-blue-500' :
-                            stat.color === 'green' ? 'bg-green-50 text-green-500' :
-                            stat.color === 'orange' ? 'bg-orange-50 text-orange-500' :
-                            'bg-orange-50 text-[#FF6A00]'
-                        }`}>
-                            <stat.icon className="text-xl" />
+                        <div className={`p-4 rounded-2xl bg-gradient-to-br ${stat.gradient} text-white shadow-lg transform group-hover:scale-110 transition-transform duration-300`}>
+                            <stat.icon className="text-2xl" />
                         </div>
                     </motion.div>
                 ))}
@@ -272,10 +267,10 @@ export default function RestaurantsView() {
                         <button
                             key={f}
                             onClick={() => setFilter(f as any)}
-                            className={`px-4 py-2 rounded-xl text-[13px] font-medium transition-all border ${
+                            className={`px-6 py-2.5 rounded-2xl text-[13px] font-bold transition-all border ${
                                 filter === f 
-                                ? 'bg-[#FF6A00] border-[#FF6A00] text-white shadow-lg shadow-[#FF6A00]/20' 
-                                : 'bg-white border-gray-200 text-gray-500 hover:border-[#FF6A00] hover:text-[#FF6A00]'
+                                ? 'bg-gradient-to-r from-orange-500 to-pink-500 border-transparent text-white shadow-lg shadow-orange-500/20' 
+                                : 'bg-white border-gray-100 text-gray-500 hover:border-orange-500 hover:text-orange-500'
                             } capitalize`}
                         >
                             {f}

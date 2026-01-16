@@ -59,48 +59,52 @@ export default function DashboardOverview({ stats, restaurant }: DashboardOvervi
                 animate="visible"
                 className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6"
             >
-                <motion.div variants={itemVariants} className="bg-white rounded-[32px] p-6 shadow-sm border border-gray-100 hover:shadow-md transition-all group">
-                    <div className="flex justify-between items-start mb-4">
-                        <div className="w-12 h-12 bg-orange-50 rounded-2xl flex items-center justify-center text-orange-500 group-hover:scale-110 transition-transform">
+                <motion.div variants={itemVariants} className="bg-gradient-to-br from-orange-500 to-pink-500 rounded-[32px] p-6 shadow-lg shadow-orange-500/20 text-white hover:shadow-xl hover:shadow-orange-500/30 transition-all group relative overflow-hidden">
+                    <div className="absolute top-[-10%] right-[-10%] w-24 h-24 bg-white/10 rounded-full blur-2xl group-hover:bg-white/20 transition-all"></div>
+                    <div className="flex justify-between items-start mb-4 relative z-10">
+                        <div className="w-12 h-12 bg-white/20 rounded-2xl flex items-center justify-center text-white backdrop-blur-md group-hover:scale-110 transition-transform">
                             <FaShoppingBag size={20} />
                         </div>
-                        <span className="text-[10px] font-bold text-orange-600 bg-orange-50 px-2 py-1 rounded-lg uppercase tracking-wider">Today</span>
+                        <span className="text-[10px] font-bold text-white bg-white/20 px-2 py-1 rounded-lg uppercase tracking-wider backdrop-blur-md">Today</span>
                     </div>
-                    <h3 className="text-3xl font-bold text-gray-900 mb-1">{stats?.ordersToday || 0}</h3>
-                    <p className="text-xs font-medium text-gray-400 uppercase tracking-widest">Total Orders</p>
+                    <h3 className="text-3xl font-bold text-white mb-1 relative z-10">{stats?.ordersToday || 0}</h3>
+                    <p className="text-xs font-bold text-white/80 uppercase tracking-widest relative z-10">Total Orders</p>
                 </motion.div>
 
-                <motion.div variants={itemVariants} className="bg-white rounded-[32px] p-6 shadow-sm border border-gray-100 hover:shadow-md transition-all group">
-                    <div className="flex justify-between items-start mb-4">
-                        <div className="w-12 h-12 bg-green-50 rounded-2xl flex items-center justify-center text-green-500 group-hover:scale-110 transition-transform">
+                <motion.div variants={itemVariants} className="bg-gradient-to-br from-emerald-500 to-teal-600 rounded-[32px] p-6 shadow-lg shadow-emerald-500/20 text-white hover:shadow-xl hover:shadow-emerald-500/30 transition-all group relative overflow-hidden">
+                    <div className="absolute top-[-10%] right-[-10%] w-24 h-24 bg-white/10 rounded-full blur-2xl group-hover:bg-white/20 transition-all"></div>
+                    <div className="flex justify-between items-start mb-4 relative z-10">
+                        <div className="w-12 h-12 bg-white/20 rounded-2xl flex items-center justify-center text-white backdrop-blur-md group-hover:scale-110 transition-transform">
                             <FaWallet size={20} />
                         </div>
-                        <span className="text-[10px] font-bold text-green-600 bg-green-50 px-2 py-1 rounded-lg uppercase tracking-wider">Earnings</span>
+                        <span className="text-[10px] font-bold text-white bg-white/20 px-2 py-1 rounded-lg uppercase tracking-wider backdrop-blur-md">Earnings</span>
                     </div>
-                    <h3 className="text-3xl font-bold text-gray-900 mb-1">Rs. {Math.round(stats?.netEarningsToday || 0).toLocaleString()}</h3>
-                    <p className="text-xs font-medium text-gray-400 uppercase tracking-widest">Net Revenue</p>
+                    <h3 className="text-3xl font-bold text-white mb-1 relative z-10">Rs. {Math.round(stats?.netEarningsToday || 0).toLocaleString()}</h3>
+                    <p className="text-xs font-bold text-white/80 uppercase tracking-widest relative z-10">Net Revenue</p>
                 </motion.div>
 
-                <motion.div variants={itemVariants} className="bg-white rounded-[32px] p-6 shadow-sm border border-gray-100 hover:shadow-md transition-all group">
-                    <div className="flex justify-between items-start mb-4">
-                        <div className="w-12 h-12 bg-blue-50 rounded-2xl flex items-center justify-center text-blue-500 group-hover:scale-110 transition-transform">
+                <motion.div variants={itemVariants} className="bg-gradient-to-br from-blue-500 to-indigo-600 rounded-[32px] p-6 shadow-lg shadow-blue-500/20 text-white hover:shadow-xl hover:shadow-blue-500/30 transition-all group relative overflow-hidden">
+                    <div className="absolute top-[-10%] right-[-10%] w-24 h-24 bg-white/10 rounded-full blur-2xl group-hover:bg-white/20 transition-all"></div>
+                    <div className="flex justify-between items-start mb-4 relative z-10">
+                        <div className="w-12 h-12 bg-white/20 rounded-2xl flex items-center justify-center text-white backdrop-blur-md group-hover:scale-110 transition-transform">
                             <FaChartLine size={20} />
                         </div>
-                        <span className="text-[10px] font-bold text-blue-600 bg-blue-50 px-2 py-1 rounded-lg uppercase tracking-wider">Fee</span>
+                        <span className="text-[10px] font-bold text-white bg-white/20 px-2 py-1 rounded-lg uppercase tracking-wider backdrop-blur-md">Fee</span>
                     </div>
-                    <h3 className="text-3xl font-bold text-gray-900 mb-1">Rs. {Math.round(stats?.commissionToday || 0).toLocaleString()}</h3>
-                    <p className="text-xs font-medium text-gray-400 uppercase tracking-widest">Commission</p>
+                    <h3 className="text-3xl font-bold text-white mb-1 relative z-10">Rs. {Math.round(stats?.commissionToday || 0).toLocaleString()}</h3>
+                    <p className="text-xs font-bold text-white/80 uppercase tracking-widest relative z-10">Commission</p>
                 </motion.div>
 
-                <motion.div variants={itemVariants} className="bg-white rounded-[32px] p-6 shadow-sm border border-gray-100 hover:shadow-md transition-all group">
-                    <div className="flex justify-between items-start mb-4">
-                        <div className="w-12 h-12 bg-yellow-50 rounded-2xl flex items-center justify-center text-yellow-500 group-hover:scale-110 transition-transform">
+                <motion.div variants={itemVariants} className="bg-gradient-to-br from-amber-500 to-orange-600 rounded-[32px] p-6 shadow-lg shadow-amber-500/20 text-white hover:shadow-xl hover:shadow-amber-500/30 transition-all group relative overflow-hidden">
+                    <div className="absolute top-[-10%] right-[-10%] w-24 h-24 bg-white/10 rounded-full blur-2xl group-hover:bg-white/20 transition-all"></div>
+                    <div className="flex justify-between items-start mb-4 relative z-10">
+                        <div className="w-12 h-12 bg-white/20 rounded-2xl flex items-center justify-center text-white backdrop-blur-md group-hover:scale-110 transition-transform">
                             <FaStar size={20} />
                         </div>
-                        <span className="text-[10px] font-bold text-yellow-600 bg-yellow-50 px-2 py-1 rounded-lg uppercase tracking-wider">Rating</span>
+                        <span className="text-[10px] font-bold text-white bg-white/20 px-2 py-1 rounded-lg uppercase tracking-wider backdrop-blur-md">Rating</span>
                     </div>
-                    <h3 className="text-3xl font-bold text-gray-900 mb-1">{restaurant?.rating || '4.8'}</h3>
-                    <p className="text-xs font-medium text-gray-400 uppercase tracking-widest">Avg Review</p>
+                    <h3 className="text-3xl font-bold text-white mb-1 relative z-10">{restaurant?.rating || '4.8'}</h3>
+                    <p className="text-xs font-bold text-white/80 uppercase tracking-widest relative z-10">Avg Review</p>
                 </motion.div>
             </motion.div>
 

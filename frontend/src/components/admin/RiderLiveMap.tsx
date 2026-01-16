@@ -132,25 +132,39 @@ export default function RiderLiveMap() {
                 <LiveMapContent riders={riders} />
 
                 {/* Overlay Stats */}
-                <div className="absolute top-6 right-6 bg-white/90 backdrop-blur-md p-6 rounded-[2rem] shadow-2xl border border-white/20 z-[400] w-72">
-                    <h3 className="font-bold text-[#111827] text-[14px] mb-4 flex items-center gap-3 uppercase tracking-wider">
-                        <div className="w-10 h-10 bg-orange-50 rounded-xl flex items-center justify-center text-[#FF6A00]">
-                            <FaMotorcycle className="text-lg" />
+                <div className="absolute top-6 right-6 bg-white/90 backdrop-blur-md p-8 rounded-[2.5rem] shadow-2xl border border-white/20 z-[400] w-80">
+                    <h3 className="font-bold text-[#111827] text-[13px] mb-6 flex items-center gap-4 uppercase tracking-[0.15em]">
+                        <div className="w-12 h-12 bg-gradient-to-br from-orange-500 to-pink-500 rounded-2xl flex items-center justify-center text-white shadow-lg shadow-orange-500/20">
+                            <FaMotorcycle className="text-xl" />
                         </div>
                         Rider Status
                     </h3>
                     <div className="space-y-4">
-                        <div className="flex justify-between items-center p-3 bg-emerald-50/50 rounded-2xl border border-emerald-100/50">
-                            <span className="text-[12px] font-bold text-emerald-700 uppercase tracking-wider">Online Now</span>
-                            <span className="text-[18px] font-bold text-emerald-600">{onlineCount}</span>
+                        <div className="flex justify-between items-center p-4 bg-emerald-50/50 rounded-2xl border border-emerald-100/50 group hover:bg-emerald-50 transition-all cursor-default">
+                            <div className="flex flex-col">
+                                <span className="text-[10px] font-bold text-emerald-700 uppercase tracking-widest mb-1">Online Now</span>
+                                <span className="text-[20px] font-bold text-emerald-600">{onlineCount} Riders</span>
+                            </div>
+                            <div className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse"></div>
                         </div>
-                        <div className="flex justify-between items-center p-3 bg-blue-50/50 rounded-2xl border border-blue-100/50">
-                            <span className="text-[12px] font-bold text-blue-700 uppercase tracking-wider">Busy / Enroute</span>
-                            <span className="text-[18px] font-bold text-blue-600">{riders.filter(r => r.status === 'busy').length}</span>
+                        <div className="flex justify-between items-center p-4 bg-blue-50/50 rounded-2xl border border-blue-100/50 group hover:bg-blue-50 transition-all cursor-default">
+                            <div className="flex flex-col">
+                                <span className="text-[10px] font-bold text-blue-700 uppercase tracking-widest mb-1">Busy / Enroute</span>
+                                <span className="text-[20px] font-bold text-blue-600">{riders.filter(r => r.status === 'busy').length} Riders</span>
+                            </div>
+                            <div className="w-2 h-2 bg-blue-500 rounded-full animate-pulse"></div>
                         </div>
-                        <div className="flex justify-between items-center pt-2 border-t border-gray-100">
-                            <span className="text-[10px] text-[#9CA3AF] uppercase font-bold tracking-widest">Last update</span>
-                            <span className="text-[11px] font-mono font-bold text-[#6B7280]">{lastUpdate.toLocaleTimeString()}</span>
+                        <div className="flex items-center justify-between pt-4 border-t border-gray-100">
+                            <div className="flex flex-col">
+                                <span className="text-[10px] text-[#9CA3AF] uppercase font-bold tracking-[0.15em] mb-1">Last update</span>
+                                <span className="text-[12px] font-bold text-[#6B7280]">{lastUpdate.toLocaleTimeString()}</span>
+                            </div>
+                            <button 
+                                onClick={fetchRiders}
+                                className="w-10 h-10 bg-gray-50 rounded-xl flex items-center justify-center text-[#6B7280] hover:bg-orange-50 hover:text-orange-500 transition-all active:scale-90 border border-gray-100"
+                            >
+                                <FaSyncAlt className={loading ? 'animate-spin' : ''} />
+                            </button>
                         </div>
                     </div>
                 </div>

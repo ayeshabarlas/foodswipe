@@ -132,7 +132,7 @@ export default function VouchersView() {
                 </div>
                 <button
                     onClick={handleCreate}
-                    className="flex items-center gap-2 px-6 py-3 bg-[#FF6A00] text-white rounded-2xl hover:bg-[#e65f00] shadow-lg shadow-[#FF6A00]/20 font-bold text-[13px] uppercase tracking-wider transition-all duration-300"
+                    className="flex items-center gap-2 px-8 py-3.5 bg-gradient-to-r from-orange-500 to-pink-500 text-white rounded-2xl hover:shadow-lg hover:shadow-orange-500/20 font-bold text-[13px] uppercase tracking-widest transition-all duration-300 active:scale-95"
                 >
                     <FaPlus className="text-sm" /> Create Voucher
                 </button>
@@ -147,46 +147,47 @@ export default function VouchersView() {
 
             {/* Top Stats */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-                <div className="bg-white p-6 rounded-[2rem] border border-gray-100 shadow-sm group hover:shadow-md transition-all duration-300">
-                    <p className="text-[#6B7280] text-[13px] font-medium uppercase tracking-wider mb-2">Total Vouchers</p>
-                    <h3 className="text-[26px] font-bold text-[#111827] tracking-tight">{stats.total}</h3>
+                <div className="bg-white p-8 rounded-[2rem] border border-gray-100 shadow-sm group hover:shadow-lg hover:shadow-orange-500/5 transition-all duration-300 active:scale-[0.98]">
+                    <p className="text-gray-400 text-[11px] font-bold uppercase tracking-widest mb-2">Total Vouchers</p>
+                    <h3 className="text-[32px] font-bold text-[#111827] tracking-tight">{stats.total}</h3>
                 </div>
-                <div className="bg-white p-6 rounded-[2rem] border border-gray-100 shadow-sm group hover:shadow-md transition-all duration-300">
-                    <p className="text-[#6B7280] text-[13px] font-medium uppercase tracking-wider mb-2">Active Vouchers</p>
-                    <h3 className="text-[26px] font-bold text-green-600 tracking-tight">{stats.active}</h3>
+                <div className="bg-white p-8 rounded-[2rem] border border-gray-100 shadow-sm group hover:shadow-lg hover:shadow-green-500/5 transition-all duration-300 active:scale-[0.98]">
+                    <p className="text-gray-400 text-[11px] font-bold uppercase tracking-widest mb-2">Active Vouchers</p>
+                    <h3 className="text-[32px] font-bold text-green-600 tracking-tight">{stats.active}</h3>
                 </div>
-                <div className="bg-white p-6 rounded-[2rem] border border-gray-100 shadow-sm group hover:shadow-md transition-all duration-300">
-                    <p className="text-[#6B7280] text-[13px] font-medium uppercase tracking-wider mb-2">Total Usage</p>
-                    <h3 className="text-[26px] font-bold text-[#111827] tracking-tight">{stats.totalUsage.toLocaleString()}</h3>
+                <div className="bg-white p-8 rounded-[2rem] border border-gray-100 shadow-sm group hover:shadow-lg hover:shadow-blue-500/5 transition-all duration-300 active:scale-[0.98]">
+                    <p className="text-gray-400 text-[11px] font-bold uppercase tracking-widest mb-2">Total Usage</p>
+                    <h3 className="text-[32px] font-bold text-[#111827] tracking-tight">{stats.totalUsage.toLocaleString()}</h3>
                 </div>
-                <div className="bg-[#FF6A00] p-6 rounded-[2rem] shadow-xl shadow-[#FF6A00]/20 relative overflow-hidden group">
+                <div className="bg-gradient-to-br from-orange-500 to-pink-500 p-8 rounded-[2rem] shadow-xl shadow-orange-500/10 relative overflow-hidden group active:scale-[0.98] transition-all text-white">
+                    <div className="absolute top-[-10%] right-[-10%] w-32 h-32 bg-white/10 rounded-full blur-2xl group-hover:bg-white/20 transition-all"></div>
                     <div className="relative z-10">
-                        <p className="text-white/70 text-[13px] font-medium uppercase tracking-wider mb-2">Total Cost</p>
-                        <h3 className="text-[26px] font-bold text-white tracking-tight">Rs. {stats.totalCost.toLocaleString()}</h3>
+                        <p className="text-white/70 text-[11px] font-bold uppercase tracking-widest mb-2">Total Cost</p>
+                        <h3 className="text-[32px] font-bold text-white tracking-tight">Rs. {stats.totalCost.toLocaleString()}</h3>
                     </div>
-                    <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:scale-110 transition-transform duration-500">
-                        <FaTicketAlt className="text-6xl text-white" />
+                    <div className="absolute top-0 right-0 p-6 opacity-10 group-hover:scale-110 transition-transform duration-500">
+                        <FaTicketAlt className="text-7xl text-white" />
                     </div>
                 </div>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-                <div className="bg-orange-50/50 p-6 rounded-[2rem] border border-orange-100 flex items-center justify-between">
+                <div className="bg-gradient-to-br from-orange-50 to-orange-100/50 p-8 rounded-[2rem] border border-orange-100 flex items-center justify-between group hover:shadow-lg hover:shadow-orange-500/5 transition-all active:scale-[0.98]">
                     <div>
-                        <p className="text-[11px] text-[#FF6A00] font-bold uppercase tracking-widest mb-1">Platform Cost</p>
-                        <p className="text-[24px] font-bold text-[#111827] tracking-tight">Rs. {vouchers.filter(v => v.fundedBy === 'Platform').reduce((acc, v) => acc + (v.totalCost || 0), 0).toLocaleString()}</p>
+                        <p className="text-[11px] text-orange-500 font-bold uppercase tracking-widest mb-2">Platform Cost</p>
+                        <p className="text-[28px] font-bold text-[#111827] tracking-tight">Rs. {vouchers.filter(v => v.fundedBy === 'Platform').reduce((acc, v) => acc + (v.totalCost || 0), 0).toLocaleString()}</p>
                     </div>
-                    <div className="w-12 h-12 bg-white rounded-2xl flex items-center justify-center text-[#FF6A00] shadow-sm">
-                        <FaTicketAlt />
+                    <div className="w-16 h-16 bg-white rounded-2xl flex items-center justify-center text-orange-500 shadow-sm group-hover:scale-110 transition-transform duration-300 border border-orange-50">
+                        <FaTicketAlt className="text-2xl" />
                     </div>
                 </div>
-                <div className="bg-blue-50/50 p-6 rounded-[2rem] border border-blue-100 flex items-center justify-between">
+                <div className="bg-gradient-to-br from-blue-50 to-blue-100/50 p-8 rounded-[2rem] border border-blue-100 flex items-center justify-between group hover:shadow-lg hover:shadow-blue-500/5 transition-all active:scale-[0.98]">
                     <div>
-                        <p className="text-[11px] text-blue-600 font-bold uppercase tracking-widest mb-1">Restaurant Cost</p>
-                        <p className="text-[24px] font-bold text-[#111827] tracking-tight">Rs. {vouchers.filter(v => v.fundedBy !== 'Platform').reduce((acc, v) => acc + (v.totalCost || 0), 0).toLocaleString()}</p>
+                        <p className="text-[11px] text-blue-600 font-bold uppercase tracking-widest mb-2">Restaurant Cost</p>
+                        <p className="text-[28px] font-bold text-[#111827] tracking-tight">Rs. {vouchers.filter(v => v.fundedBy !== 'Platform').reduce((acc, v) => acc + (v.totalCost || 0), 0).toLocaleString()}</p>
                     </div>
-                    <div className="w-12 h-12 bg-white rounded-2xl flex items-center justify-center text-blue-600 shadow-sm">
-                        <FaTicketAlt />
+                    <div className="w-16 h-16 bg-white rounded-2xl flex items-center justify-center text-blue-600 shadow-sm group-hover:scale-110 transition-transform duration-300 border border-blue-50">
+                        <FaTicketAlt className="text-2xl" />
                     </div>
                 </div>
             </div>

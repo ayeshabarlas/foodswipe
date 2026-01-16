@@ -103,7 +103,7 @@ export default function DashboardHome({ stats, refreshStats }: DashboardHomeProp
             subValue: `Rs. ${(displayStats.totalRevenue || 0).toLocaleString()}`,
             subLabel: 'Lifetime',
             icon: FaMoneyBillWave,
-            color: 'bg-emerald-50 text-emerald-600',
+            color: 'bg-gradient-to-br from-emerald-500 to-teal-600 text-white shadow-lg shadow-emerald-500/20',
             trend: '+12.5%',
             trendColor: 'text-emerald-500'
         },
@@ -113,7 +113,7 @@ export default function DashboardHome({ stats, refreshStats }: DashboardHomeProp
             subValue: `Rs. ${(displayStats.totalPendingPayouts || 0).toLocaleString()}`,
             subLabel: 'Pending Payouts',
             icon: FaWallet,
-            color: 'bg-orange-50 text-[#FF6A00]',
+            color: 'bg-gradient-to-br from-orange-500 to-pink-500 text-white shadow-lg shadow-orange-500/20',
             trend: 'Live',
             trendColor: 'text-[#FF6A00]'
         },
@@ -122,7 +122,7 @@ export default function DashboardHome({ stats, refreshStats }: DashboardHomeProp
             value: displayStats.totalOrders.toLocaleString(),
             subValue: `${displayStats.todayOrders} new today`,
             icon: FaShoppingBag,
-            color: 'bg-blue-50 text-blue-600',
+            color: 'bg-gradient-to-br from-blue-500 to-indigo-600 text-white shadow-lg shadow-blue-500/20',
             trend: 'Orders',
             trendColor: 'text-blue-500'
         },
@@ -131,7 +131,7 @@ export default function DashboardHome({ stats, refreshStats }: DashboardHomeProp
             value: (displayStats.totalRestaurants + displayStats.totalRiders).toLocaleString(),
             subValue: `${displayStats.onlineRiders || 0} riders online`,
             icon: FaMotorcycle,
-            color: 'bg-indigo-50 text-indigo-600',
+            color: 'bg-gradient-to-br from-indigo-500 to-purple-600 text-white shadow-lg shadow-indigo-500/20',
             trend: 'Partners',
             trendColor: 'text-indigo-500'
         }
@@ -159,12 +159,12 @@ export default function DashboardHome({ stats, refreshStats }: DashboardHomeProp
                 <div className="flex gap-3">
                     <button
                         onClick={handleCleanupMock}
-                        className="flex items-center gap-2 px-4 py-2 bg-red-50 text-red-600 rounded-xl text-[13px] font-bold hover:bg-red-100 transition-all uppercase tracking-wider shadow-sm"
+                        className="flex items-center gap-2 px-6 py-2.5 bg-white text-red-600 rounded-xl text-[13px] font-bold hover:bg-red-50 transition-all uppercase tracking-widest shadow-sm active:scale-95 border border-red-100"
                     >
-                        <FaTrashAlt /> Clean Data
+                        <FaTrashAlt className="text-sm" /> Clean Data
                     </button>
-                    <button className="flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 rounded-xl text-[13px] font-bold text-[#111827] hover:bg-gray-50 transition-all shadow-sm">
-                        Export Report
+                    <button className="flex items-center gap-2 px-8 py-3 bg-gradient-to-r from-orange-500 to-pink-500 text-white rounded-xl text-[13px] font-bold hover:shadow-xl hover:shadow-orange-500/30 transition-all shadow-lg active:scale-95 uppercase tracking-widest">
+                        <FaChartLine className="text-sm" /> Export Report
                     </button>
                 </div>
             </div>
@@ -176,18 +176,32 @@ export default function DashboardHome({ stats, refreshStats }: DashboardHomeProp
                         initial={{ opacity: 0, y: 10 }}
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ delay: i * 0.1 }}
-                        className="bg-white p-6 rounded-[2rem] shadow-sm border border-gray-100 flex items-center justify-between hover:shadow-md transition-all group"
+                        className={`${w.color} p-8 rounded-[2rem] shadow-xl relative overflow-hidden group active:scale-[0.98] transition-all cursor-default`}
                     >
-                        <div>
-                            <p className="text-[13px] font-bold text-[#6B7280] mb-2 uppercase tracking-wider">{w.label}</p>
-                            <h3 className="text-[26px] font-bold text-[#111827] tracking-tight">{w.value}</h3>
-                            <div className="flex items-center gap-2 mt-2">
-                                <span className="text-[12px] font-medium text-[#9CA3AF] uppercase tracking-wide">{w.subLabel}:</span>
-                                <span className="text-[12px] font-bold text-[#111827]">{w.subValue}</span>
+                        {/* Decorative background elements */}
+                        <div className="absolute top-[-10%] right-[-10%] w-32 h-32 bg-white/10 rounded-full blur-2xl group-hover:bg-white/20 transition-all"></div>
+                        <div className="absolute bottom-[-10%] left-[-10%] w-24 h-24 bg-black/5 rounded-full blur-xl group-hover:bg-black/10 transition-all"></div>
+
+                        <div className="relative z-10 flex flex-col h-full justify-between">
+                            <div>
+                                <p className="text-white/70 text-[11px] font-bold uppercase tracking-[0.15em] mb-2">{w.label}</p>
+                                <h3 className="text-[28px] font-bold text-white tracking-tight leading-none mb-4">{w.value}</h3>
+                                <div className="flex items-center gap-2">
+                                    <div className="px-2 py-0.5 bg-white/20 backdrop-blur-md rounded-lg border border-white/10">
+                                        <span className="text-[10px] font-bold text-white uppercase tracking-wider">{w.subLabel}</span>
+                                    </div>
+                                    <span className="text-[12px] font-bold text-white/90">{w.subValue}</span>
+                                </div>
                             </div>
-                        </div>
-                        <div className={`w-14 h-14 ${w.color} rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform`}>
-                            <w.icon className="text-2xl" />
+
+                            <div className="mt-6 flex items-center justify-between">
+                                <div className="bg-white/20 w-12 h-12 rounded-xl flex items-center justify-center text-white backdrop-blur-md border border-white/10 group-hover:scale-110 transition-transform">
+                                    <w.icon className="text-xl" />
+                                </div>
+                                <div className="px-3 py-1 bg-black/10 rounded-full backdrop-blur-sm">
+                                    <span className="text-[11px] font-bold text-white/80">{w.trend}</span>
+                                </div>
+                            </div>
                         </div>
                     </motion.div>
                 ))}

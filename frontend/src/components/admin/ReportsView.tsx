@@ -77,7 +77,7 @@ export default function AnalyticsView() {
                     <p className="text-[14px] font-normal text-[#6B7280] mt-1">Real-time business insights and platform performance metrics</p>
                 </div>
                 <div className="flex gap-2">
-                    <button className="px-4 py-2 bg-white border border-gray-200 rounded-xl text-[12px] font-bold text-[#6B7280] hover:bg-gray-50 transition-all uppercase tracking-wider">
+                    <button className="px-6 py-2.5 bg-gradient-to-r from-orange-500 to-pink-500 text-white rounded-xl text-[12px] font-bold shadow-lg shadow-orange-500/20 hover:shadow-xl transition-all uppercase tracking-wider active:scale-95">
                         Download Report
                     </button>
                 </div>
@@ -86,88 +86,88 @@ export default function AnalyticsView() {
             {/* Key Metrics Grid */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-10">
                 {/* Revenue Card */}
-                <div className="bg-white p-6 rounded-[2rem] border border-gray-100 shadow-sm hover:shadow-md transition-all group relative overflow-hidden">
-                    <div className="absolute top-0 right-0 w-32 h-32 bg-[#FF6A00]/5 rounded-full -mr-16 -mt-16 transition-transform group-hover:scale-110"></div>
-                    <div className="flex justify-between items-start mb-4">
-                        <div className="w-12 h-12 bg-orange-50 rounded-2xl flex items-center justify-center text-[#FF6A00]">
-                            <FaMoneyBillWave className="text-xl" />
+                <div className="bg-gradient-to-br from-orange-500 to-pink-500 p-8 rounded-[2rem] text-white shadow-xl shadow-orange-500/10 relative overflow-hidden group">
+                    <div className="absolute top-[-10%] right-[-10%] w-32 h-32 bg-white/10 rounded-full blur-2xl group-hover:bg-white/20 transition-all"></div>
+                    <div className="flex justify-between items-start mb-6">
+                        <div className="w-14 h-14 bg-white/20 backdrop-blur-md rounded-2xl flex items-center justify-center border border-white/10 group-hover:scale-110 transition-transform">
+                            <FaMoneyBillWave className="text-2xl text-white" />
                         </div>
                         <div className="text-right">
-                            <p className="text-[#6B7280] text-[13px] font-bold uppercase tracking-wider mb-1">Total Revenue</p>
-                            <h3 className="text-[26px] font-bold text-[#111827] tracking-tight">{formatCurrency(analytics.totalRevenue)}</h3>
+                            <p className="text-white/70 text-[11px] font-bold uppercase tracking-widest mb-1">Total Revenue</p>
+                            <h3 className="text-[32px] font-bold tracking-tight">{formatCurrency(analytics.totalRevenue)}</h3>
                         </div>
                     </div>
-                    <div className="flex items-center justify-between mt-6 pt-4 border-t border-gray-50">
-                        <span className="text-[12px] text-[#9CA3AF] font-medium uppercase tracking-wider">Today's Revenue</span>
-                        <span className="text-[14px] font-bold text-emerald-500">{formatCurrency(analytics.todayRevenue)}</span>
+                    <div className="flex items-center justify-between mt-8 pt-6 border-t border-white/10">
+                        <span className="text-[11px] text-white/70 font-bold uppercase tracking-widest">Today's Revenue</span>
+                        <span className="text-[15px] font-bold text-white bg-white/20 px-3 py-1 rounded-lg backdrop-blur-md border border-white/10">{formatCurrency(analytics.todayRevenue)}</span>
                     </div>
                 </div>
 
                 {/* Orders Card */}
-                <div className="bg-white p-6 rounded-[2rem] border border-gray-100 shadow-sm hover:shadow-md transition-all group relative overflow-hidden">
-                    <div className="absolute top-0 right-0 w-32 h-32 bg-blue-500/5 rounded-full -mr-16 -mt-16 transition-transform group-hover:scale-110"></div>
-                    <div className="flex justify-between items-start mb-4">
-                        <div className="w-12 h-12 bg-blue-50 rounded-2xl flex items-center justify-center text-blue-500">
-                            <FaShoppingBag className="text-xl" />
+                <div className="bg-gradient-to-br from-blue-500 to-indigo-600 p-8 rounded-[2rem] text-white shadow-xl shadow-blue-500/10 relative overflow-hidden group">
+                    <div className="absolute top-[-10%] right-[-10%] w-32 h-32 bg-white/10 rounded-full blur-2xl group-hover:bg-white/20 transition-all"></div>
+                    <div className="flex justify-between items-start mb-6">
+                        <div className="w-14 h-14 bg-white/20 backdrop-blur-md rounded-2xl flex items-center justify-center border border-white/10 group-hover:scale-110 transition-transform">
+                            <FaShoppingBag className="text-2xl text-white" />
                         </div>
                         <div className="text-right">
-                            <p className="text-[#6B7280] text-[13px] font-bold uppercase tracking-wider mb-1">Total Orders</p>
-                            <h3 className="text-[26px] font-bold text-[#111827] tracking-tight">{analytics.totalOrders}</h3>
+                            <p className="text-white/70 text-[11px] font-bold uppercase tracking-widest mb-1">Total Orders</p>
+                            <h3 className="text-[32px] font-bold tracking-tight">{analytics.totalOrders}</h3>
                         </div>
                     </div>
-                    <div className="flex items-center justify-between mt-6 pt-4 border-t border-gray-50">
-                        <span className="text-[12px] text-[#9CA3AF] font-medium uppercase tracking-wider">Today's Orders</span>
-                        <span className="text-[14px] font-bold text-blue-500">{analytics.todayOrders} Orders</span>
+                    <div className="flex items-center justify-between mt-8 pt-6 border-t border-white/10">
+                        <span className="text-[11px] text-white/70 font-bold uppercase tracking-widest">Today's Orders</span>
+                        <span className="text-[15px] font-bold text-white bg-white/20 px-3 py-1 rounded-lg backdrop-blur-md border border-white/10">{analytics.todayOrders} Orders</span>
                     </div>
                 </div>
 
                 {/* AOV Card */}
-                <div className="bg-white p-6 rounded-[2rem] border border-gray-100 shadow-sm hover:shadow-md transition-all group relative overflow-hidden">
-                    <div className="absolute top-0 right-0 w-32 h-32 bg-purple-500/5 rounded-full -mr-16 -mt-16 transition-transform group-hover:scale-110"></div>
-                    <div className="flex justify-between items-start mb-4">
-                        <div className="w-12 h-12 bg-purple-50 rounded-2xl flex items-center justify-center text-purple-600">
-                            <FaChartLine className="text-xl" />
+                <div className="bg-gradient-to-br from-emerald-500 to-teal-600 p-8 rounded-[2rem] text-white shadow-xl shadow-emerald-500/10 relative overflow-hidden group">
+                    <div className="absolute top-[-10%] right-[-10%] w-32 h-32 bg-white/10 rounded-full blur-2xl group-hover:bg-white/20 transition-all"></div>
+                    <div className="flex justify-between items-start mb-6">
+                        <div className="w-14 h-14 bg-white/20 backdrop-blur-md rounded-2xl flex items-center justify-center border border-white/10 group-hover:scale-110 transition-transform">
+                            <FaChartLine className="text-2xl text-white" />
                         </div>
                         <div className="text-right">
-                            <p className="text-[#6B7280] text-[13px] font-bold uppercase tracking-wider mb-1">Avg Order Value</p>
-                            <h3 className="text-[26px] font-bold text-[#111827] tracking-tight">{formatCurrency(analytics.avgOrderValue)}</h3>
+                            <p className="text-white/70 text-[11px] font-bold uppercase tracking-widest mb-1">Avg Order Value</p>
+                            <h3 className="text-[32px] font-bold tracking-tight">{formatCurrency(analytics.avgOrderValue)}</h3>
                         </div>
                     </div>
-                    <div className="flex items-center justify-between mt-6 pt-4 border-t border-gray-50">
-                        <span className="text-[12px] text-[#9CA3AF] font-medium uppercase tracking-wider">Per Order Avg</span>
-                        <span className="text-[14px] font-bold text-purple-600">Stable</span>
+                    <div className="flex items-center justify-between mt-8 pt-6 border-t border-white/10">
+                        <span className="text-[11px] text-white/70 font-bold uppercase tracking-widest">Per Order Avg</span>
+                        <span className="text-[15px] font-bold text-white bg-white/20 px-3 py-1 rounded-lg backdrop-blur-md border border-white/10">Stable</span>
                     </div>
                 </div>
             </div>
 
             {/* Platform Stats Row */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
-                <div className="bg-white p-6 rounded-[2rem] border border-gray-100 shadow-sm flex items-center justify-between hover:shadow-md transition-all group">
+                <div className="bg-white p-6 rounded-[2rem] border border-gray-100 shadow-sm flex items-center justify-between hover:shadow-lg hover:shadow-orange-500/5 transition-all group active:scale-[0.98]">
                     <div>
-                        <p className="text-[#6B7280] text-[13px] uppercase font-bold mb-2 tracking-wider">Total Customers</p>
-                        <h3 className="text-[26px] font-bold text-[#111827] tracking-tight">{analytics.totalCustomers}</h3>
+                        <p className="text-gray-400 text-[11px] uppercase font-bold mb-1 tracking-widest">Total Customers</p>
+                        <h3 className="text-[28px] font-bold text-[#111827] tracking-tight">{analytics.totalCustomers}</h3>
                     </div>
-                    <div className="bg-orange-50 w-14 h-14 rounded-2xl flex items-center justify-center text-[#FF6A00] group-hover:scale-110 transition-transform">
+                    <div className="bg-orange-50 w-14 h-14 rounded-2xl flex items-center justify-center text-orange-500 group-hover:scale-110 group-hover:bg-orange-500 group-hover:text-white transition-all duration-300 shadow-sm group-hover:shadow-lg group-hover:shadow-orange-500/20">
                         <FaUsers className="text-2xl" />
                     </div>
                 </div>
 
-                <div className="bg-white p-6 rounded-[2rem] border border-gray-100 shadow-sm flex items-center justify-between hover:shadow-md transition-all group">
+                <div className="bg-white p-6 rounded-[2rem] border border-gray-100 shadow-sm flex items-center justify-between hover:shadow-lg hover:shadow-blue-500/5 transition-all group active:scale-[0.98]">
                     <div>
-                        <p className="text-[#6B7280] text-[13px] uppercase font-bold mb-2 tracking-wider">Total Restaurants</p>
-                        <h3 className="text-[26px] font-bold text-[#111827] tracking-tight">{analytics.totalRestaurants}</h3>
+                        <p className="text-gray-400 text-[11px] uppercase font-bold mb-1 tracking-widest">Total Restaurants</p>
+                        <h3 className="text-[28px] font-bold text-[#111827] tracking-tight">{analytics.totalRestaurants}</h3>
                     </div>
-                    <div className="bg-blue-50 w-14 h-14 rounded-2xl flex items-center justify-center text-blue-500 group-hover:scale-110 transition-transform">
+                    <div className="bg-blue-50 w-14 h-14 rounded-2xl flex items-center justify-center text-blue-500 group-hover:scale-110 group-hover:bg-blue-500 group-hover:text-white transition-all duration-300 shadow-sm group-hover:shadow-lg group-hover:shadow-blue-500/20">
                         <FaStore className="text-2xl" />
                     </div>
                 </div>
 
-                <div className="bg-white p-6 rounded-[2rem] border border-gray-100 shadow-sm flex items-center justify-between hover:shadow-md transition-all group">
+                <div className="bg-white p-6 rounded-[2rem] border border-gray-100 shadow-sm flex items-center justify-between hover:shadow-lg hover:shadow-purple-500/5 transition-all group active:scale-[0.98]">
                     <div>
-                        <p className="text-[#6B7280] text-[13px] uppercase font-bold mb-2 tracking-wider">Total Riders</p>
-                        <h3 className="text-[26px] font-bold text-[#111827] tracking-tight">{analytics.totalRiders}</h3>
+                        <p className="text-gray-400 text-[11px] uppercase font-bold mb-1 tracking-widest">Total Riders</p>
+                        <h3 className="text-[28px] font-bold text-[#111827] tracking-tight">{analytics.totalRiders}</h3>
                     </div>
-                    <div className="bg-purple-50 w-14 h-14 rounded-2xl flex items-center justify-center text-purple-600 group-hover:scale-110 transition-transform">
+                    <div className="bg-purple-50 w-14 h-14 rounded-2xl flex items-center justify-center text-purple-600 group-hover:scale-110 group-hover:bg-purple-600 group-hover:text-white transition-all duration-300 shadow-sm group-hover:shadow-lg group-hover:shadow-purple-500/20">
                         <FaMotorcycle className="text-2xl" />
                     </div>
                 </div>

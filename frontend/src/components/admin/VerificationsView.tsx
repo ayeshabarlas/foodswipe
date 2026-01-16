@@ -144,7 +144,10 @@ export default function VerificationsView({ initialTab = 'restaurants' }: { init
 
             <button
                 onClick={() => setSelectedItem(item)}
-                className="w-full py-3 border-2 border-[#FF6A00] text-[#FF6A00] font-bold rounded-xl hover:bg-[#FF6A00] hover:text-white transition-all duration-300 flex items-center justify-center gap-2 text-[11px] uppercase tracking-wider"
+                className={`w-full py-3.5 border-2 rounded-2xl font-bold transition-all duration-300 flex items-center justify-center gap-2 text-[11px] uppercase tracking-wider active:scale-95 shadow-sm
+                    ${type === 'restaurant' 
+                        ? 'border-orange-500 text-orange-600 hover:bg-gradient-to-r hover:from-orange-500 hover:to-pink-500 hover:text-white hover:border-transparent hover:shadow-orange-500/20' 
+                        : 'border-blue-500 text-blue-600 hover:bg-gradient-to-r hover:from-blue-500 hover:to-indigo-600 hover:text-white hover:border-transparent hover:shadow-blue-500/20'}`}
             >
                 <FaEye className="text-sm" /> Review Documents
             </button>
@@ -162,7 +165,7 @@ export default function VerificationsView({ initialTab = 'restaurants' }: { init
                     <button
                         onClick={() => setActiveTab('restaurants')}
                         className={`px-4 py-2 rounded-xl text-[11px] font-bold transition-all uppercase tracking-wider ${activeTab === 'restaurants'
-                            ? 'bg-white text-[#FF6A00] shadow-sm border border-gray-100'
+                            ? 'bg-gradient-to-r from-orange-500 to-pink-500 text-white shadow-lg shadow-orange-500/20'
                             : 'text-[#6B7280] hover:bg-white/50'
                             }`}
                     >
@@ -171,7 +174,7 @@ export default function VerificationsView({ initialTab = 'restaurants' }: { init
                     <button
                         onClick={() => setActiveTab('riders')}
                         className={`px-4 py-2 rounded-xl text-[11px] font-bold transition-all uppercase tracking-wider ${activeTab === 'riders'
-                            ? 'bg-white text-blue-600 shadow-sm border border-gray-100'
+                            ? 'bg-gradient-to-r from-blue-500 to-indigo-600 text-white shadow-lg shadow-blue-500/20'
                             : 'text-[#6B7280] hover:bg-white/50'
                             }`}
                     >

@@ -104,10 +104,10 @@ export default function FinanceView() {
                     <p className="text-[14px] font-normal text-[#6B7280] mt-1">Complete financial management with auto-split commission tracking</p>
                 </div>
                 <div className="flex gap-3">
-                    <button className="flex items-center gap-2 px-4 py-2 border border-gray-100 rounded-xl bg-white text-[#6B7280] text-[13px] font-medium uppercase tracking-wider hover:bg-gray-50 transition-all">
+                    <button className="flex items-center gap-2 px-5 py-2.5 border border-gray-100 rounded-xl bg-white text-[#6B7280] text-[13px] font-bold uppercase tracking-wider hover:border-orange-500 hover:text-orange-500 transition-all shadow-sm active:scale-95">
                         <FaCalendarAlt /> Date Range
                     </button>
-                    <button className="flex items-center gap-2 px-4 py-2 bg-[#FF6A00] text-white rounded-xl text-[13px] font-medium uppercase tracking-wider hover:bg-[#FF6A00]/90 shadow-lg shadow-[#FF6A00]/20 transition-all">
+                    <button className="flex items-center gap-2 px-6 py-2.5 bg-gradient-to-r from-orange-500 to-pink-500 text-white rounded-xl text-[13px] font-bold uppercase tracking-wider hover:from-orange-600 hover:to-pink-600 shadow-lg shadow-orange-500/20 transition-all active:scale-95">
                         <FaDownload /> Export
                     </button>
                 </div>
@@ -116,65 +116,63 @@ export default function FinanceView() {
             {/* Main Stats Cards */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-10">
                 {/* Total Revenue */}
-                <div className="bg-[#111827] rounded-[2rem] p-6 text-white shadow-xl shadow-gray-200 relative overflow-hidden group">
-                    <div className="absolute top-0 right-0 p-8 opacity-10 group-hover:scale-110 transition-transform">
-                        <span className="text-4xl font-bold">Rs.</span>
-                    </div>
+                <div className="bg-gradient-to-br from-gray-900 to-gray-800 rounded-[2rem] p-6 text-white shadow-xl shadow-gray-200 relative overflow-hidden group">
+                    <div className="absolute top-[-10%] right-[-10%] w-32 h-32 bg-white/5 rounded-full blur-3xl group-hover:bg-white/10 transition-all duration-500"></div>
                     <div className="relative z-10">
                         <div className="flex justify-between items-start mb-6">
-                            <div className="bg-white/10 p-2.5 rounded-2xl backdrop-blur-md">
+                            <div className="bg-white/10 p-2.5 rounded-2xl backdrop-blur-md border border-white/10 group-hover:scale-110 transition-transform duration-300">
                                 <span className="text-lg font-bold">Rs.</span>
                             </div>
-                            <span className="text-[11px] font-bold bg-green-500/20 text-green-400 px-2 py-1 rounded-full uppercase tracking-wider">+12.5%</span>
+                            <span className="text-[11px] font-bold bg-green-500/20 text-green-400 px-2.5 py-1 rounded-full uppercase tracking-wider border border-green-500/20 shadow-sm shadow-green-500/10">+12.5%</span>
                         </div>
-                        <p className="text-white/60 text-[13px] font-medium uppercase tracking-wider mb-1">Total Revenue</p>
-                        <h3 className="text-[24px] font-bold tracking-tight">Rs. {stats.totalRevenue.toLocaleString()}</h3>
+                        <p className="text-white/60 text-[13px] font-bold uppercase tracking-wider mb-1">Total Revenue</p>
+                        <h3 className="text-[28px] font-bold tracking-tight">Rs. {stats.totalRevenue.toLocaleString()}</h3>
                         <p className="text-white/40 text-[11px] font-medium uppercase tracking-wider mt-1">Gross Sales Volume</p>
                     </div>
                 </div>
 
                 {/* Platform Commission */}
-                <div className="bg-[#FF6A00] rounded-[2rem] p-6 text-white shadow-xl shadow-[#FF6A00]/20 relative overflow-hidden group">
-                    <div className="absolute top-0 right-0 p-8 opacity-10 group-hover:scale-110 transition-transform">
-                        <span className="text-4xl font-bold">↗</span>
-                    </div>
+                <div className="bg-gradient-to-br from-orange-500 to-pink-500 rounded-[2rem] p-6 text-white shadow-xl shadow-orange-500/20 relative overflow-hidden group">
+                    <div className="absolute top-[-10%] right-[-10%] w-32 h-32 bg-white/10 rounded-full blur-3xl group-hover:bg-white/20 transition-all duration-500"></div>
                     <div className="relative z-10">
                         <div className="flex justify-between items-start mb-6">
-                            <div className="bg-white/10 p-2.5 rounded-2xl backdrop-blur-md">
+                            <div className="bg-white/10 p-2.5 rounded-2xl backdrop-blur-md border border-white/10 group-hover:scale-110 transition-transform duration-300">
                                 <span className="text-lg font-bold">↗</span>
                             </div>
                         </div>
-                        <p className="text-white/60 text-[13px] font-medium uppercase tracking-wider mb-1">Platform Earnings</p>
-                        <h3 className="text-[24px] font-bold tracking-tight">Rs. {stats.platformCommission.toLocaleString()}</h3>
+                        <p className="text-white/60 text-[13px] font-bold uppercase tracking-wider mb-1">Platform Earnings</p>
+                        <h3 className="text-[28px] font-bold tracking-tight">Rs. {stats.platformCommission.toLocaleString()}</h3>
                         <p className="text-white/40 text-[11px] font-medium uppercase tracking-wider mt-1">Net Commission</p>
                     </div>
                 </div>
 
                 {/* Pending Payouts */}
-                <div className="bg-white rounded-[2rem] p-6 text-[#111827] border border-gray-100 shadow-sm relative overflow-hidden group">
+                <div className="bg-gradient-to-br from-blue-500 to-indigo-600 rounded-[2rem] p-6 text-white shadow-xl shadow-blue-500/20 relative overflow-hidden group">
+                    <div className="absolute top-[-10%] right-[-10%] w-32 h-32 bg-white/10 rounded-full blur-3xl group-hover:bg-white/20 transition-all duration-500"></div>
                     <div className="relative z-10">
                         <div className="flex justify-between items-start mb-6">
-                            <div className="bg-orange-50 p-2.5 rounded-2xl text-[#FF6A00]">
+                            <div className="bg-white/10 p-2.5 rounded-2xl backdrop-blur-md border border-white/10 group-hover:scale-110 transition-transform duration-300 text-white">
                                 <span className="text-lg font-bold">↘</span>
                             </div>
                         </div>
-                        <p className="text-[#6B7280] text-[13px] font-medium uppercase tracking-wider mb-1">Pending Payouts</p>
-                        <h3 className="text-[24px] font-bold tracking-tight text-[#111827]">Rs. {stats.pendingPayouts.toLocaleString()}</h3>
-                        <p className="text-[#9CA3AF] text-[11px] font-medium uppercase tracking-wider mt-1">Vendors & Riders</p>
+                        <p className="text-white/60 text-[13px] font-bold uppercase tracking-wider mb-1">Pending Payouts</p>
+                        <h3 className="text-[28px] font-bold tracking-tight text-white">Rs. {stats.pendingPayouts.toLocaleString()}</h3>
+                        <p className="text-white/40 text-[11px] font-medium uppercase tracking-wider mt-1">Vendors & Riders</p>
                     </div>
                 </div>
 
                 {/* Gateway Fees */}
-                <div className="bg-white rounded-[2rem] p-6 text-[#111827] border border-gray-100 shadow-sm relative overflow-hidden group">
+                <div className="bg-gradient-to-br from-purple-500 to-violet-600 rounded-[2rem] p-6 text-white shadow-xl shadow-purple-500/20 relative overflow-hidden group">
+                    <div className="absolute top-[-10%] right-[-10%] w-32 h-32 bg-white/10 rounded-full blur-3xl group-hover:bg-white/20 transition-all duration-500"></div>
                     <div className="relative z-10">
                         <div className="flex justify-between items-start mb-6">
-                            <div className="bg-purple-50 p-2.5 rounded-2xl text-purple-600">
+                            <div className="bg-white/10 p-2.5 rounded-2xl backdrop-blur-md border border-white/10 group-hover:scale-110 transition-transform duration-300 text-white">
                                 <span className="text-lg font-bold">💳</span>
                             </div>
                         </div>
-                        <p className="text-[#6B7280] text-[13px] font-medium uppercase tracking-wider mb-1">Gateway Fees</p>
-                        <h3 className="text-[24px] font-bold tracking-tight text-[#111827]">Rs. {stats.gatewayFees.toLocaleString()}</h3>
-                        <p className="text-[#9CA3AF] text-[11px] font-medium uppercase tracking-wider mt-1">Processing Cost</p>
+                        <p className="text-white/60 text-[13px] font-bold uppercase tracking-wider mb-1">Gateway Fees</p>
+                        <h3 className="text-[28px] font-bold tracking-tight text-white">Rs. {stats.gatewayFees.toLocaleString()}</h3>
+                        <p className="text-white/40 text-[11px] font-medium uppercase tracking-wider mt-1">Processing Cost</p>
                     </div>
                 </div>
             </div>

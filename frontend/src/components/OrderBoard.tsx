@@ -395,25 +395,25 @@ export default function OrderBoard({ restaurant, onUpdate }: OrderBoardProps) {
                         <div className="flex gap-2.5">
                             <button
                                 onClick={() => handleAcceptOrder(order._id)}
-                                className="flex-1 bg-[#22C55E] hover:bg-[#16A34A] text-white py-3 rounded-2xl font-medium text-[11px] transition shadow-sm"
+                                className="flex-1 bg-gradient-to-r from-emerald-500 to-teal-600 text-white py-3 rounded-2xl font-bold text-[11px] transition-all shadow-lg shadow-emerald-500/20 active:scale-95 uppercase tracking-wider"
                             >
                                 ACCEPT
                             </button>
                             <button
                                 onClick={() => setRejectingOrder(order._id)}
-                                className="flex-1 bg-[#EF4444] hover:bg-[#DC2626] text-white py-3 rounded-2xl font-medium text-[11px] transition shadow-sm"
+                                className="flex-1 bg-gradient-to-r from-red-500 to-pink-600 text-white py-3 rounded-2xl font-bold text-[11px] transition-all shadow-lg shadow-red-500/20 active:scale-95 uppercase tracking-wider"
                             >
                                 REJECT
                             </button>
                             <button
                                 onClick={() => setActiveChat(order)}
-                                className="w-11 h-11 flex items-center justify-center rounded-2xl bg-gray-50 text-gray-400 hover:bg-gray-100 transition border border-gray-100/50 shadow-sm"
+                                className="w-11 h-11 flex items-center justify-center rounded-2xl bg-white text-gray-400 hover:text-orange-500 hover:border-orange-500 transition-all border border-gray-100 shadow-sm active:scale-90"
                             >
                                 <FaCommentDots size={16} />
                             </button>
                             <button
                                 onClick={() => setCancellingOrderId(order._id)}
-                                className="w-11 h-11 flex items-center justify-center rounded-2xl bg-red-50/50 text-red-400 hover:bg-red-50 transition border border-red-100/30"
+                                className="w-11 h-11 flex items-center justify-center rounded-2xl bg-red-50 text-red-400 hover:bg-red-500 hover:text-white transition-all border border-red-100 shadow-sm active:scale-90"
                             >
                                 <FaBan size={14} />
                             </button>
@@ -424,13 +424,13 @@ export default function OrderBoard({ restaurant, onUpdate }: OrderBoardProps) {
                         <div className="flex gap-2.5">
                             <button
                                 onClick={() => updateStatus(order._id, 'Preparing', { prepTime: prepTimes[order._id] || 20 })}
-                                className="flex-1 bg-blue-500 text-white py-3 rounded-2xl font-medium text-[11px] hover:bg-blue-600 transition shadow-sm"
+                                className="flex-1 bg-gradient-to-r from-blue-500 to-indigo-600 text-white py-3 rounded-2xl font-bold text-[11px] transition-all shadow-lg shadow-blue-500/20 active:scale-95 uppercase tracking-wider"
                             >
                                 START PREPARING
                             </button>
                             <button
                                 onClick={() => setActiveChat(order)}
-                                className="w-11 h-11 flex items-center justify-center rounded-2xl bg-gray-50 text-gray-400 hover:bg-gray-100 transition border border-gray-100/50 shadow-sm"
+                                className="w-11 h-11 flex items-center justify-center rounded-2xl bg-white text-gray-400 hover:text-orange-500 hover:border-orange-500 transition-all border border-gray-100 shadow-sm active:scale-90"
                             >
                                 <FaCommentDots size={16} />
                             </button>
@@ -441,18 +441,18 @@ export default function OrderBoard({ restaurant, onUpdate }: OrderBoardProps) {
                         <div className="flex gap-2.5">
                             <button
                                 onClick={() => updateStatus(order._id, 'Ready')}
-                                className="flex-1 bg-[#22C55E] text-white py-3 rounded-2xl font-medium text-[11px] hover:bg-[#16A34A] transition shadow-sm"
+                                className="flex-1 bg-gradient-to-r from-emerald-500 to-teal-600 text-white py-3 rounded-2xl font-bold text-[11px] transition-all shadow-lg shadow-emerald-500/20 active:scale-95 uppercase tracking-wider"
                             >
                                 MARK READY
                             </button>
                             <button
-                                className="flex-1 bg-[#F59E0B] text-white py-3 rounded-2xl font-medium text-[11px] hover:bg-[#D97706] transition shadow-sm"
+                                className="flex-1 bg-gradient-to-r from-amber-400 to-orange-500 text-white py-3 rounded-2xl font-bold text-[11px] transition-all shadow-lg shadow-amber-500/20 active:scale-95 uppercase tracking-wider"
                             >
                                 DELAY
                             </button>
                             <button
                                 onClick={() => setActiveChat(order)}
-                                className="w-11 h-11 flex items-center justify-center rounded-2xl bg-gray-50 text-gray-400 hover:bg-gray-100 transition border border-gray-100/50 shadow-sm"
+                                className="w-11 h-11 flex items-center justify-center rounded-2xl bg-white text-gray-400 hover:text-orange-500 hover:border-orange-500 transition-all border border-gray-100 shadow-sm active:scale-90"
                             >
                                 <FaCommentDots size={16} />
                             </button>
@@ -463,13 +463,13 @@ export default function OrderBoard({ restaurant, onUpdate }: OrderBoardProps) {
                         <div className="flex gap-2.5">
                             <button
                                 onClick={() => updateStatus(order._id, 'OnTheWay')}
-                                className="flex-1 bg-purple-500 text-white py-3 rounded-2xl font-medium text-[11px] hover:bg-purple-600 transition shadow-sm"
+                                className="flex-1 bg-gradient-to-r from-purple-500 to-indigo-600 text-white py-3 rounded-2xl font-bold text-[11px] transition-all shadow-lg shadow-purple-500/20 active:scale-95 uppercase tracking-wider"
                             >
                                 HAND TO RIDER
                             </button>
                             <button
                                 onClick={() => setActiveChat(order)}
-                                className="w-11 h-11 flex items-center justify-center rounded-2xl bg-gray-50 text-gray-400 hover:bg-gray-100 transition border border-gray-100/50 shadow-sm"
+                                className="w-11 h-11 flex items-center justify-center rounded-2xl bg-white text-gray-400 hover:text-orange-500 hover:border-orange-500 transition-all border border-gray-100 shadow-sm active:scale-90"
                             >
                                 <FaCommentDots size={16} />
                             </button>
@@ -481,7 +481,7 @@ export default function OrderBoard({ restaurant, onUpdate }: OrderBoardProps) {
                             {canTrack && (
                                 <button
                                     onClick={() => setTrackingOrder(order)}
-                                    className="flex-1 flex items-center justify-center gap-2 py-3 rounded-2xl bg-blue-50/50 text-blue-500 font-medium text-[11px] hover:bg-blue-50 transition border border-blue-100/30"
+                                    className="flex-1 flex items-center justify-center gap-2 py-3 rounded-2xl bg-gradient-to-r from-blue-500 to-indigo-600 text-white font-bold text-[11px] transition-all shadow-lg shadow-blue-500/20 active:scale-95 uppercase tracking-wider"
                                 >
                                     <FaMotorcycle size={14} />
                                     TRACK RIDER
@@ -489,10 +489,10 @@ export default function OrderBoard({ restaurant, onUpdate }: OrderBoardProps) {
                             )}
                             <button
                                 onClick={() => setActiveChat(order)}
-                                className={`${canTrack ? 'w-11' : 'flex-1'} h-11 flex items-center justify-center rounded-2xl bg-gray-50 text-gray-400 hover:bg-gray-100 transition border border-gray-100/50 shadow-sm`}
+                                className={`${canTrack ? 'w-11' : 'flex-1'} h-11 flex items-center justify-center rounded-2xl bg-white text-gray-400 hover:text-orange-500 hover:border-orange-500 transition-all border border-gray-100 shadow-sm active:scale-90`}
                             >
                                 <FaCommentDots size={16} />
-                                {!canTrack && <span className="ml-2 text-[11px]">CHAT WITH CUSTOMER</span>}
+                                {!canTrack && <span className="ml-2 text-[11px] font-bold uppercase tracking-wider">CHAT WITH CUSTOMER</span>}
                             </button>
                         </div>
                     )}
@@ -517,105 +517,99 @@ export default function OrderBoard({ restaurant, onUpdate }: OrderBoardProps) {
                     </p>
                 </div>
                 
-                <div className="flex items-center gap-3">
+                <div className="flex items-center gap-4">
                     <button 
                         onClick={() => fetchOrders()}
-                        className="flex items-center gap-2 bg-white border border-gray-200 text-gray-700 px-4 py-2 rounded-xl text-sm font-bold hover:bg-gray-50 transition shadow-sm"
+                        className="flex items-center gap-2 bg-white border border-gray-100 text-gray-600 px-5 py-2.5 rounded-xl text-[13px] font-bold hover:text-orange-500 hover:border-orange-500 transition-all shadow-sm active:scale-95 uppercase tracking-wider"
                     >
-                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-                        </svg>
-                        REFRESH
+                        <FaClock className="text-orange-500" />
+                        Refresh
                     </button>
                     
-                    <div className="flex bg-gray-100 p-1 rounded-xl">
+                    <div className="flex bg-gray-100/80 p-1 rounded-xl backdrop-blur-md border border-gray-200/50">
                         <button 
                             onClick={() => setActiveTab('active')}
-                            className={`px-4 py-1.5 rounded-lg text-sm font-bold transition-all ${activeTab === 'active' ? 'bg-white text-blue-600 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
+                            className={`px-6 py-2 rounded-lg text-[11px] font-bold transition-all duration-300 uppercase tracking-widest ${
+                                activeTab === 'active' 
+                                    ? 'bg-gradient-to-r from-orange-500 to-pink-500 text-white shadow-lg shadow-orange-500/20' 
+                                    : 'text-gray-500 hover:text-gray-700 hover:bg-white/50'
+                            }`}
                         >
-                            ACTIVE
+                            Active
                         </button>
                         <button 
                             onClick={() => setActiveTab('history')}
-                            className={`px-4 py-1.5 rounded-lg text-sm font-bold transition-all ${activeTab === 'history' ? 'bg-white text-blue-600 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
+                            className={`px-6 py-2 rounded-lg text-[11px] font-bold transition-all duration-300 uppercase tracking-widest ${
+                                activeTab === 'history' 
+                                    ? 'bg-gradient-to-r from-orange-500 to-pink-500 text-white shadow-lg shadow-orange-500/20' 
+                                    : 'text-gray-500 hover:text-gray-700 hover:bg-white/50'
+                            }`}
                         >
-                            HISTORY
+                            History
                         </button>
                     </div>
                 </div>
             </div>
 
-            {/* Top Status Cards - New as per Screenshot 2 */}
-            <div className="p-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 shrink-0">
+            {/* Top Status Cards */}
+            <div className="p-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 shrink-0">
                 {/* Pending Card */}
-                <div className="bg-white rounded-3xl p-5 shadow-sm border border-gray-100 relative overflow-hidden group">
+                <div className="bg-gradient-to-br from-orange-500 to-pink-500 rounded-[2rem] p-6 text-white shadow-xl shadow-orange-500/20 relative overflow-hidden group">
+                    <div className="absolute top-[-10%] right-[-10%] w-24 h-24 bg-white/10 rounded-full blur-2xl group-hover:bg-white/20 transition-all"></div>
                     <div className="relative z-10">
-                        <div className="flex justify-between items-start mb-4">
-                            <div className="w-10 h-10 bg-orange-50 rounded-2xl flex items-center justify-center">
-                                <FaClock className="text-orange-500 text-lg" />
+                        <div className="flex justify-between items-start mb-6">
+                            <div className="bg-white/20 p-2.5 rounded-2xl backdrop-blur-md border border-white/10 group-hover:scale-110 transition-transform">
+                                <FaClock size={20} />
                             </div>
-                            <span className="text-[9px] font-medium text-orange-500 uppercase tracking-widest bg-orange-50 px-2 py-0.5 rounded-full">New</span>
+                            <span className="text-[10px] font-bold text-white bg-white/20 px-2.5 py-1 rounded-lg uppercase tracking-wider backdrop-blur-md">New</span>
                         </div>
-                        <div className="flex items-end justify-between">
-                            <div>
-                                <h2 className="text-3xl font-medium text-gray-900 mb-0.5">{pendingOrders.length}</h2>
-                                <p className="text-[11px] font-light text-gray-400">Pending Orders</p>
-                            </div>
-                        </div>
+                        <h2 className="text-3xl font-bold mb-1">{pendingOrders.length}</h2>
+                        <p className="text-[11px] font-bold text-white/70 uppercase tracking-widest">Pending Orders</p>
                     </div>
                 </div>
 
                 {/* Preparing Card */}
-                <div className="bg-white rounded-3xl p-5 shadow-sm border border-gray-100 relative overflow-hidden group">
+                <div className="bg-gradient-to-br from-blue-500 to-indigo-600 rounded-[2rem] p-6 text-white shadow-xl shadow-blue-500/20 relative overflow-hidden group">
+                    <div className="absolute top-[-10%] right-[-10%] w-24 h-24 bg-white/10 rounded-full blur-2xl group-hover:bg-white/20 transition-all"></div>
                     <div className="relative z-10">
-                        <div className="flex justify-between items-start mb-4">
-                            <div className="w-10 h-10 bg-blue-50 rounded-2xl flex items-center justify-center">
-                                <FaShoppingBag className="text-blue-500 text-lg" />
+                        <div className="flex justify-between items-start mb-6">
+                            <div className="bg-white/20 p-2.5 rounded-2xl backdrop-blur-md border border-white/10 group-hover:scale-110 transition-transform">
+                                <FaShoppingBag size={20} />
                             </div>
-                            <span className="text-[9px] font-medium text-blue-500 uppercase tracking-widest bg-blue-50 px-2 py-0.5 rounded-full">Preparing</span>
+                            <span className="text-[10px] font-bold text-white bg-white/20 px-2.5 py-1 rounded-lg uppercase tracking-wider backdrop-blur-md">Preparing</span>
                         </div>
-                        <div className="flex items-end justify-between">
-                            <div>
-                                <h2 className="text-3xl font-medium text-gray-900 mb-0.5">{preparingOrders.length}</h2>
-                                <p className="text-[11px] font-light text-gray-400">In Kitchen</p>
-                            </div>
-                        </div>
+                        <h2 className="text-3xl font-bold mb-1">{preparingOrders.length}</h2>
+                        <p className="text-[11px] font-bold text-white/70 uppercase tracking-widest">In Kitchen</p>
                     </div>
                 </div>
 
                 {/* Ready Card */}
-                <div className="bg-white rounded-3xl p-5 shadow-sm border border-gray-100 relative overflow-hidden group">
+                <div className="bg-gradient-to-br from-emerald-500 to-teal-600 rounded-[2rem] p-6 text-white shadow-xl shadow-emerald-500/20 relative overflow-hidden group">
+                    <div className="absolute top-[-10%] right-[-10%] w-24 h-24 bg-white/10 rounded-full blur-2xl group-hover:bg-white/20 transition-all"></div>
                     <div className="relative z-10">
-                        <div className="flex justify-between items-start mb-4">
-                            <div className="w-10 h-10 bg-green-50 rounded-2xl flex items-center justify-center">
-                                <FaCheck className="text-green-500 text-lg" />
+                        <div className="flex justify-between items-start mb-6">
+                            <div className="bg-white/20 p-2.5 rounded-2xl backdrop-blur-md border border-white/10 group-hover:scale-110 transition-transform">
+                                <FaCheck size={20} />
                             </div>
-                            <span className="text-[9px] font-medium text-green-500 uppercase tracking-widest bg-green-50 px-2 py-0.5 rounded-full">Ready</span>
+                            <span className="text-[10px] font-bold text-white bg-white/20 px-2.5 py-1 rounded-lg uppercase tracking-wider backdrop-blur-md">Ready</span>
                         </div>
-                        <div className="flex items-end justify-between">
-                            <div>
-                                <h2 className="text-3xl font-medium text-gray-900 mb-0.5">{readyOrders.length}</h2>
-                                <p className="text-[11px] font-light text-gray-400">For Pickup</p>
-                            </div>
-                        </div>
+                        <h2 className="text-3xl font-bold mb-1">{readyOrders.length}</h2>
+                        <p className="text-[11px] font-bold text-white/70 uppercase tracking-widest">For Pickup</p>
                     </div>
                 </div>
 
                 {/* Out for Delivery Card */}
-                <div className="bg-white rounded-3xl p-5 shadow-sm border border-gray-100 relative overflow-hidden group">
+                <div className="bg-gradient-to-br from-purple-500 to-violet-600 rounded-[2rem] p-6 text-white shadow-xl shadow-purple-500/20 relative overflow-hidden group">
+                    <div className="absolute top-[-10%] right-[-10%] w-24 h-24 bg-white/10 rounded-full blur-2xl group-hover:bg-white/20 transition-all"></div>
                     <div className="relative z-10">
-                        <div className="flex justify-between items-start mb-4">
-                            <div className="w-10 h-10 bg-purple-50 rounded-2xl flex items-center justify-center">
-                                <FaPaperPlane className="text-purple-500 text-lg" />
+                        <div className="flex justify-between items-start mb-6">
+                            <div className="bg-white/20 p-2.5 rounded-2xl backdrop-blur-md border border-white/10 group-hover:scale-110 transition-transform">
+                                <FaPaperPlane size={20} />
                             </div>
-                            <span className="text-[9px] font-medium text-purple-500 uppercase tracking-widest bg-purple-50 px-2 py-0.5 rounded-full">Out</span>
+                            <span className="text-[10px] font-bold text-white bg-white/20 px-2.5 py-1 rounded-lg uppercase tracking-wider backdrop-blur-md">Out</span>
                         </div>
-                        <div className="flex items-end justify-between">
-                            <div>
-                                <h2 className="text-3xl font-medium text-gray-900 mb-0.5">{outForDeliveryOrders.length}</h2>
-                                <p className="text-[11px] font-light text-gray-400">Out for Delivery</p>
-                            </div>
-                        </div>
+                        <h2 className="text-3xl font-bold mb-1">{outForDeliveryOrders.length}</h2>
+                        <p className="text-[11px] font-bold text-white/70 uppercase tracking-widest">Out for Delivery</p>
                     </div>
                 </div>
             </div>
@@ -635,13 +629,13 @@ export default function OrderBoard({ restaurant, onUpdate }: OrderBoardProps) {
                             animate={{ scale: 1, y: 0 }}
                             exit={{ scale: 0.9, y: 20 }}
                             onClick={(e) => e.stopPropagation()}
-                            className="bg-white rounded-3xl p-6 max-w-4xl w-full shadow-2xl max-h-[90vh] overflow-y-auto"
+                            className="bg-white rounded-[2.5rem] p-8 max-w-4xl w-full shadow-2xl max-h-[90vh] overflow-y-auto border border-gray-100"
                         >
-                            <div className="flex justify-between items-center mb-4">
-                                <h2 className="text-2xl font-bold">Live Tracking</h2>
+                            <div className="flex justify-between items-center mb-6">
+                                <h2 className="text-2xl font-bold text-gray-800">Live Tracking</h2>
                                 <button
                                     onClick={() => setTrackingOrder(null)}
-                                    className="p-2 hover:bg-gray-100 rounded-full"
+                                    className="w-10 h-10 flex items-center justify-center bg-gray-50 text-gray-400 hover:bg-red-50 hover:text-red-500 transition-all rounded-xl active:scale-90"
                                 >
                                     <FaTimes />
                                 </button>
@@ -672,11 +666,11 @@ export default function OrderBoard({ restaurant, onUpdate }: OrderBoardProps) {
                             {/* Header - Screenshot 1 */}
                             <div className="flex items-center justify-between mb-8">
                                 <div className="flex items-center gap-4">
-                                    <div className="w-14 h-14 bg-gradient-to-br from-[#FF4D00] to-[#FF8C00] rounded-full flex items-center justify-center shadow-lg shadow-orange-500/30">
+                                    <div className="w-14 h-14 bg-gradient-to-br from-orange-500 to-pink-500 rounded-2xl flex items-center justify-center shadow-lg shadow-orange-500/30">
                                         <FaClock className="text-white text-2xl" />
                                     </div>
                                     <div>
-                                         <h2 className="text-xl font-bold text-[#FF4D00]">New Order Arrived!</h2>
+                                         <h2 className="text-xl font-bold bg-gradient-to-r from-orange-500 to-pink-500 bg-clip-text text-transparent">New Order Arrived!</h2>
                                          <p className="text-sm text-gray-400 font-bold tracking-tight">Order #{newOrderPopup._id.slice(-4)}</p>
                                      </div>
                                 </div>
@@ -740,7 +734,7 @@ export default function OrderBoard({ restaurant, onUpdate }: OrderBoardProps) {
                                  </div>
                                  <div className="border-t-2 border-dashed border-gray-100 pt-6 mt-6 px-2 flex justify-between items-end">
                                      <span className="text-gray-400 font-bold text-sm uppercase tracking-widest">Total</span>
-                                     <span className="text-[#FF4D00] text-3xl font-bold">Rs. {newOrderPopup.totalPrice.toFixed(0)}</span>
+                                     <span className="text-orange-500 text-3xl font-bold">Rs. {newOrderPopup.totalPrice.toFixed(0)}</span>
                                  </div>
                              </div>
 
@@ -751,13 +745,13 @@ export default function OrderBoard({ restaurant, onUpdate }: OrderBoardProps) {
                                          setRejectingOrder(newOrderPopup._id);
                                          setNewOrderPopup(null);
                                      }}
-                                     className="flex-1 bg-gradient-to-r from-[#FF416C] to-[#FF4B2B] hover:shadow-xl hover:shadow-red-500/30 text-white px-6 py-4.5 rounded-[24px] font-bold text-sm transition-all active:scale-95"
+                                     className="flex-1 bg-gradient-to-r from-red-500 to-pink-600 shadow-lg shadow-red-500/20 text-white px-6 py-4.5 rounded-[24px] font-bold text-sm transition-all active:scale-95 uppercase tracking-wider"
                                  >
                                      Reject
                                  </button>
                                  <button
                                      onClick={() => handleAcceptOrder(newOrderPopup._id)}
-                                     className="flex-1 bg-gradient-to-r from-[#00b09b] to-[#96c93d] hover:shadow-xl hover:shadow-green-500/30 text-white px-6 py-4.5 rounded-[24px] font-bold text-sm transition-all active:scale-95"
+                                     className="flex-1 bg-gradient-to-r from-emerald-500 to-teal-600 shadow-lg shadow-emerald-500/20 text-white px-6 py-4.5 rounded-[24px] font-bold text-sm transition-all active:scale-95 uppercase tracking-wider"
                                  >
                                      Accept Order
                                  </button>
@@ -778,38 +772,39 @@ export default function OrderBoard({ restaurant, onUpdate }: OrderBoardProps) {
                         onClick={() => setRejectingOrder(null)}
                     >
                         <motion.div
-                            initial={{ scale: 0.9 }}
-                            animate={{ scale: 1 }}
+                            initial={{ scale: 0.9, y: 20 }}
+                            animate={{ scale: 1, y: 0 }}
+                            exit={{ scale: 0.9, y: 20 }}
                             onClick={(e) => e.stopPropagation()}
-                            className="bg-white rounded-2xl p-6 max-w-md w-full"
+                            className="bg-white rounded-[2.5rem] p-8 max-w-md w-full shadow-2xl border border-gray-100"
                         >
-                            <h3 className="text-xl font-bold mb-4">Reject Order</h3>
-                            <p className="text-gray-600 mb-4">Please select a reason:</p>
-                            <div className="space-y-2 mb-6">
+                            <h3 className="text-2xl font-bold mb-2 text-gray-800">Reject Order</h3>
+                            <p className="text-gray-500 font-medium mb-6">Please select a reason:</p>
+                            <div className="space-y-2.5 mb-8">
                                 {['Out of Stock', 'Kitchen Overload', 'Staff Unavailable', 'Closing Soon', 'Other'].map(reason => (
                                     <button
                                         key={reason}
                                         onClick={() => setCancellationReason(reason)}
-                                        className={`w-full text-left px-4 py-3 rounded-xl border transition ${cancellationReason === reason
-                                            ? 'border-orange-500 bg-orange-50 text-orange-700'
-                                            : 'border-gray-200 hover:border-gray-300'
+                                        className={`w-full text-left px-5 py-4 rounded-2xl border-2 transition-all font-bold text-sm ${cancellationReason === reason
+                                            ? 'border-orange-500 bg-orange-50/50 text-orange-600 shadow-sm'
+                                            : 'border-gray-100 hover:border-gray-200 text-gray-500 hover:bg-gray-50'
                                             }`}
                                     >
                                         {reason}
                                     </button>
                                 ))}
                             </div>
-                            <div className="flex gap-3">
+                            <div className="flex gap-4">
                                 <button
                                     onClick={() => setRejectingOrder(null)}
-                                    className="flex-1 px-4 py-3 bg-gray-100 rounded-xl font-semibold"
+                                    className="flex-1 px-6 py-4 bg-gray-100 hover:bg-gray-200 text-gray-600 rounded-2xl font-bold transition-all active:scale-95 uppercase tracking-wider text-xs"
                                 >
                                     Cancel
                                 </button>
                                 <button
                                     onClick={() => updateStatus(rejectingOrder, 'Cancelled', { cancellationReason })}
                                     disabled={!cancellationReason}
-                                    className="flex-1 px-4 py-3 bg-red-500 text-white rounded-xl font-semibold disabled:opacity-50"
+                                    className="flex-1 px-6 py-4 bg-gradient-to-r from-red-500 to-pink-600 text-white rounded-2xl font-bold shadow-lg shadow-red-500/20 disabled:opacity-50 disabled:shadow-none transition-all active:scale-95 uppercase tracking-wider text-xs"
                                 >
                                     Reject Order
                                 </button>

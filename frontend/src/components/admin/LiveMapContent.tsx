@@ -77,48 +77,61 @@ export default function LiveMapContent({ riders, center = [31.5204, 74.3587] }: 
                 return (
                     <Marker key={rider._id} position={position} icon={iconRider}>
                         <Popup>
-                            <div className="min-w-[240px] p-2">
-                                <h3 className="text-[16px] font-bold text-[#111827] tracking-tight mb-2">{rider.user.name}</h3>
-                                <div className="flex items-center gap-2 mb-4">
-                                    <span className={`px-2.5 py-1 rounded-lg text-[10px] font-bold uppercase tracking-wider ${
-                                        rider.status === 'online' ? 'bg-emerald-50 text-emerald-600' :
-                                        rider.status === 'busy' ? 'bg-orange-50 text-[#FF6A00]' : 
-                                        'bg-gray-50 text-[#9CA3AF]'
-                                    }`}>
-                                        {rider.status}
-                                    </span>
-                                    <span className="flex items-center gap-1.5 text-[10px] font-bold text-amber-600 bg-amber-50 px-2.5 py-1 rounded-lg uppercase tracking-wider">
-                                        <FaStar className="text-[10px]" /> {rider.rating || 4.5}
-                                    </span>
-                                </div>
-                                <div className="space-y-2.5">
-                                    <div className="flex items-center gap-3 text-[#6B7280]">
-                                        <div className="w-8 h-8 rounded-lg bg-gray-50 flex items-center justify-center text-[#9CA3AF]">
-                                            <FaMotorcycle className="text-sm" />
-                                        </div>
-                                        <div>
-                                            <p className="text-[10px] font-bold uppercase tracking-widest text-[#9CA3AF]">Deliveries</p>
-                                            <p className="text-[13px] font-bold text-[#111827]">{rider.totalDeliveries} Completed</p>
-                                        </div>
+                            <div className="min-w-[280px] p-4 font-sans">
+                                <div className="flex items-center gap-4 mb-4">
+                                    <div className="w-12 h-12 bg-gradient-to-br from-orange-500 to-pink-500 rounded-2xl flex items-center justify-center text-white shadow-lg shadow-orange-500/20">
+                                        <FaMotorcycle className="text-xl" />
                                     </div>
-                                    <div className="flex items-center gap-3 text-[#6B7280]">
-                                        <div className="w-8 h-8 rounded-lg bg-gray-50 flex items-center justify-center text-[#9CA3AF]">
-                                            <FaPhone className="text-sm" />
-                                        </div>
-                                        <div>
-                                            <p className="text-[10px] font-bold uppercase tracking-widest text-[#9CA3AF]">Contact</p>
-                                            <p className="text-[13px] font-bold text-[#111827]">{rider.phone}</p>
+                                    <div>
+                                        <h3 className="text-[16px] font-bold text-[#111827] tracking-tight leading-none mb-1">{rider.user.name}</h3>
+                                        <div className="flex items-center gap-2">
+                                            <span className={`px-2 py-0.5 rounded-lg text-[9px] font-bold uppercase tracking-wider ${
+                                                rider.status === 'online' ? 'bg-emerald-50 text-emerald-600' :
+                                                rider.status === 'busy' ? 'bg-orange-50 text-[#FF6A00]' : 
+                                                'bg-gray-50 text-[#9CA3AF]'
+                                            }`}>
+                                                {rider.status}
+                                            </span>
+                                            <span className="flex items-center gap-1 text-[9px] font-bold text-amber-600 bg-amber-50 px-2 py-0.5 rounded-lg uppercase tracking-wider">
+                                                <FaStar size={8} /> {rider.rating || 4.5}
+                                            </span>
                                         </div>
                                     </div>
                                 </div>
+
+                                <div className="grid grid-cols-2 gap-3 mb-4">
+                                    <div className="p-3 bg-gray-50 rounded-2xl border border-gray-100/50">
+                                        <p className="text-[9px] font-bold uppercase tracking-widest text-[#9CA3AF] mb-1">Deliveries</p>
+                                        <p className="text-[14px] font-bold text-[#111827]">{rider.totalDeliveries}</p>
+                                    </div>
+                                    <div className="p-3 bg-gray-50 rounded-2xl border border-gray-100/50">
+                                        <p className="text-[9px] font-bold uppercase tracking-widest text-[#9CA3AF] mb-1">Contact</p>
+                                        <p className="text-[14px] font-bold text-[#111827] truncate">{rider.phone}</p>
+                                    </div>
+                                </div>
+
                                 {rider.currentOrder && (
-                                    <div className="mt-4 pt-4 border-t border-gray-100">
-                                        <div className="bg-orange-50/50 p-3 rounded-xl border border-orange-100/50">
-                                            <p className="text-[10px] font-bold text-[#FF6A00] mb-1 uppercase tracking-widest">Active Delivery</p>
-                                            <p className="text-[13px] font-bold text-[#111827]">Order #{rider.currentOrder.orderNumber}</p>
+                                    <div className="pt-4 border-t border-gray-100">
+                                        <div className="bg-gradient-to-r from-orange-500/5 to-pink-500/5 p-4 rounded-2xl border border-orange-100/50 relative overflow-hidden group">
+                                            <div className="relative z-10">
+                                                <p className="text-[9px] font-bold text-[#FF6A00] mb-1 uppercase tracking-[0.15em]">Active Delivery</p>
+                                                <p className="text-[14px] font-bold text-[#111827]">Order #{rider.currentOrder.orderNumber}</p>
+                                            </div>
+                                            <div className="absolute top-[-20%] right-[-10%] opacity-10 group-hover:scale-110 transition-transform">
+                                                <FaMotorcycle size={40} className="text-orange-500" />
+                                            </div>
                                         </div>
                                     </div>
                                 )}
+                                
+                                <div className="mt-4 flex gap-2">
+                                    <a 
+                                        href={`tel:${rider.phone}`}
+                                        className="flex-1 py-2.5 bg-gradient-to-r from-orange-500 to-pink-500 text-white text-[11px] font-bold rounded-xl text-center shadow-md hover:shadow-lg transition-all active:scale-95 uppercase tracking-widest no-underline"
+                                    >
+                                        Call Rider
+                                    </a>
+                                </div>
                             </div>
                         </Popup>
                     </Marker>
