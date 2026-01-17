@@ -21,13 +21,19 @@ const getApiUrl = () => {
   // Priority 3: Use Render URL as the MAIN production backend
   const RENDER_URL = process.env.NEXT_PUBLIC_API_URL || 'https://foodswipe-6178.onrender.com';
   
-  // Force Render URL for specific Vercel production domains
-  if (typeof window !== 'undefined' && (
-    window.location.hostname === 'foodswipe-one.vercel.app' ||
-    window.location.hostname.includes('vercel.app') ||
-    process.env.NODE_ENV === 'production'
-  )) {
-    console.log('🌐 Production Environment: Using Backend', RENDER_URL);
+  // Force Render URL for specific Vercel production domains or if not on localhost
+  if (typeof window !== 'undefined') {
+    const isLocal = window.location.hostname === 'localhost' || 
+                   window.location.hostname === '127.0.0.1' ||
+                   window.location.hostname.startsWith('192.168.');
+                   
+    if (!isLocal || window.location.hostname.includes('vercel.app')) {
+      console.log('🌐 Remote Environment: Using Backend', RENDER_URL);
+      return RENDER_URL;
+    }
+  }
+  
+  if (process.env.NODE_ENV === 'production') {
     return RENDER_URL;
   }
   

@@ -63,14 +63,16 @@ export default function DashboardHome({ stats, refreshStats }: DashboardHomeProp
         
         try {
             const userInfo = JSON.parse(localStorage.getItem('userInfo') || '{}');
+            if (!userInfo.token) return;
+            
             await axios.post(`${API_BASE_URL}/api/admin/cleanup-mock`, {}, {
                 headers: { Authorization: `Bearer ${userInfo.token}` }
             });
             alert('Mock data cleanup successful! The panel will refresh.');
             if (refreshStats) refreshStats();
-        } catch (error) {
+        } catch (error: any) {
             console.error('Cleanup failed:', error);
-            alert('Cleanup failed. Please check console for details.');
+            alert(`Cleanup failed: ${error.response?.data?.message || error.message}`);
         }
     };
 

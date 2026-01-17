@@ -166,7 +166,10 @@ export default function AdminDashboard() {
         } catch (error: any) {
             console.error('Error fetching admin stats:', error);
             if (!error.response) {
-                toast.error('Cannot connect to backend server. Is it running?');
+                // Network error - silence after first toast to avoid spam
+                if (loading) {
+                    toast.error('Cannot connect to backend server. Is it running?', { id: 'backend-conn-error' });
+                }
             } else if (error.response.status === 401) {
                 toast.error('Session expired. Please login again.');
                 handleLogout();
@@ -255,8 +258,9 @@ export default function AdminDashboard() {
             
             {/* Background Decorative Gradients */}
             <div className="fixed inset-0 overflow-hidden pointer-events-none z-0">
-                <div className="absolute top-[-10%] right-[-10%] w-[40%] h-[40%] bg-gradient-to-br from-orange-500/5 to-pink-500/10 blur-[100px] rounded-full"></div>
-                <div className="absolute bottom-[-10%] left-[20%] w-[30%] h-[30%] bg-gradient-to-tr from-orange-500/5 to-pink-500/5 blur-[80px] rounded-full"></div>
+                <div className="absolute top-[-10%] right-[-10%] w-[40%] h-[40%] bg-gradient-to-br from-orange-500/10 to-pink-500/20 blur-[100px] rounded-full"></div>
+                <div className="absolute bottom-[-10%] left-[20%] w-[30%] h-[30%] bg-gradient-to-tr from-orange-500/10 to-pink-500/10 blur-[80px] rounded-full"></div>
+                <div className="absolute top-[20%] left-[-5%] w-[25%] h-[25%] bg-gradient-to-br from-orange-500/5 to-pink-500/5 blur-[60px] rounded-full"></div>
             </div>
 
             <Sidebar activeTab={activeTab} setActiveTab={handleTabChange} onLogout={handleLogout} />

@@ -156,10 +156,10 @@ export default function LoginScreen({ onLogin }: LoginScreenProps) {
                 <img
                     src="https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=1920&q=80"
                     alt="Food background"
-                    className="absolute inset-0 w-full h-full object-cover blur-[2px] scale-105 opacity-80"
+                    className="absolute inset-0 w-full h-full object-cover blur-[2px] scale-110 opacity-60"
                 />
-                <div className="absolute inset-0 bg-gradient-to-br from-orange-500/60 via-red-500/40 to-pink-500/60 backdrop-blur-[1px]" />
-                <div className="absolute inset-0 bg-black/20" />
+                <div className="absolute inset-0 bg-gradient-to-br from-orange-500/90 via-red-500/90 to-pink-500/90" />
+                <div className="absolute inset-0 bg-black/10" />
             </div>
 
             <motion.div

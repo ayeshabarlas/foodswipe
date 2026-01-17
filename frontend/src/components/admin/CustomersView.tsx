@@ -1,5 +1,6 @@
 'use client';
 import { useState, useEffect } from 'react';
+import axios from 'axios';
 import { getSocket } from '../../utils/socket';
 import { API_BASE_URL } from '../../utils/config';
 import toast from 'react-hot-toast';

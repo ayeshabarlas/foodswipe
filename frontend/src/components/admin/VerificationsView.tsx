@@ -1,6 +1,6 @@
 'use client';
-
 import React, { useState, useEffect } from 'react';
+import axios from 'axios';
 import { motion, AnimatePresence } from 'framer-motion';
 import { getSocket } from '../../utils/socket';
 import { API_BASE_URL } from '../../utils/config';
