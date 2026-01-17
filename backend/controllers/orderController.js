@@ -93,12 +93,13 @@ const createOrder = async (req, res) => {
         if (deliveryLocation && restaurantExists.location?.coordinates) {
             const [restLng, restLat] = restaurantExists.location.coordinates;
             distanceKm = calculateDistance(restLat, restLng, deliveryLocation.lat, deliveryLocation.lng);
-            // If distance is extremely small or zero, use fallback
-            if (distanceKm < 0.1) distanceKm = 4.2;
+            // If distance is extremely small, use a minimum of 0.5km instead of 4.2km fallback
+            if (distanceKm < 0.1) distanceKm = 0.5;
             finalDeliveryFee = calculateDeliveryFee(distanceKm);
         } else {
-            // Fallback distance if location data is missing
-            distanceKm = 4.2;
+            // Fallback distance if location data is missing - use a more reasonable 2.0km default
+            // instead of 4.2km which was overcharging customers
+            distanceKm = 2.0;
             finalDeliveryFee = calculateDeliveryFee(distanceKm);
         }
 
@@ -308,6 +309,9 @@ const updateOrderStatus = async (req, res) => {
                     phone: updatedOrder.user.phone
                 } : null,
                 totalPrice: updatedOrder.totalPrice,
+                subtotal: updatedOrder.subtotal,
+                deliveryFee: updatedOrder.deliveryFee,
+                paymentMethod: updatedOrder.paymentMethod,
                 orderItems: updatedOrder.orderItems,
                 createdAt: updatedOrder.createdAt,
                 distance: distance,

@@ -608,11 +608,18 @@ const getWeeklyOrderHistory = async (req, res) => {
 
         const orders = await Order.find({
             restaurant: restaurant._id,
-            status: 'Delivered',
+            status: { $in: ['Delivered', 'Completed'] },
             createdAt: { $gte: sevenDaysAgo }
         }).sort({ createdAt: -1 });
 
-        res.json(orders);
+        // Transform for frontend
+        const transformedOrders = orders.map(order => ({
+            ...order.toObject(),
+            totalAmount: order.totalPrice,
+            items: order.orderItems // frontend uses .items in some places
+        }));
+
+        res.json(transformedOrders);
     } catch (error) {
         console.error('Get weekly history error:', error);
         res.status(500).json({ message: 'Failed to fetch weekly history', error: error.message });

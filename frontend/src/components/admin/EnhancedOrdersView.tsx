@@ -3,23 +3,26 @@ import { useState, useEffect } from 'react';
 import axios from 'axios';
 import { getSocket } from '../../utils/socket';
 import { API_BASE_URL } from '../../utils/config';
-import { FaSearch, FaFilter, FaCalendarAlt, FaDownload, FaReceipt, FaSyncAlt } from 'react-icons/fa';
+import { FaSearch, FaFilter, FaCalendarAlt, FaDownload, FaReceipt, FaSyncAlt, FaUser, FaStore, FaMotorcycle, FaMapMarkerAlt, FaTimes } from 'react-icons/fa';
+import { motion, AnimatePresence } from 'framer-motion';
 
 interface Order {
     _id: string;
     orderNumber: string;
     createdAt: string;
-    user: { name: string };
-    restaurant: { name: string };
-    rider: { user: { name: string } };
-    items: any[];
-    totalAmount: number;
+    user: { name: string; email?: string; phone?: string };
+    restaurant: { name: string; address?: string };
+    rider: { user: { name: string } } | null;
+    orderItems: any[];
+    totalPrice: number;
     status: string;
     commissionPercent?: number;
     commissionAmount?: number;
     restaurantEarning?: number;
     riderEarning?: number;
     adminEarning?: number;
+    shippingAddress?: { address: string };
+    paymentMethod?: string;
 }
 
 export default function EnhancedOrdersView() {
@@ -27,6 +30,10 @@ export default function EnhancedOrdersView() {
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
     const [autoRefresh, setAutoRefresh] = useState(true);
+    const [dateRange, setDateRange] = useState({ start: '', end: '' });
+    const [showDatePicker, setShowDatePicker] = useState(false);
+    const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
+    const [showDetailsModal, setShowDetailsModal] = useState(false);
 
     useEffect(() => {
         fetchOrders();
@@ -65,24 +72,56 @@ export default function EnhancedOrdersView() {
             setOrders(Array.isArray(res.data) ? res.data : (res.data?.orders || []));
         } catch (error: any) {
             console.error('Error fetching orders:', error);
-            // Silence but log
         } finally {
             setLoading(false);
         }
     };
 
+    const handleExport = () => {
+        if (filteredOrders.length === 0) return;
+
+        const headers = ['Order Number', 'Date', 'Customer', 'Restaurant', 'Total Price', 'Commission', 'Status'];
+        const csvData = filteredOrders.map(o => [
+            o.orderNumber || o._id,
+            new Date(o.createdAt).toLocaleString(),
+            o.user?.name || 'Guest',
+            o.restaurant?.name || 'Restaurant',
+            o.totalPrice,
+            o.adminEarning || o.commissionAmount,
+            o.status
+        ]);
+
+        const csvContent = [headers, ...csvData].map(e => e.join(",")).join("\n");
+        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+        const link = document.createElement("a");
+        const url = URL.createObjectURL(blob);
+        link.setAttribute("href", url);
+        link.setAttribute("download", `orders_export_${new Date().toISOString().split('T')[0]}.csv`);
+        link.style.visibility = 'hidden';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    };
+
     const stats = {
         totalOrders: orders?.length || 0,
-        totalRevenue: Array.isArray(orders) ? orders.reduce((acc, curr) => acc + (curr.totalAmount || 0), 0) : 0,
-        commission: Array.isArray(orders) ? orders.reduce((acc, curr) => acc + (curr.adminEarning || curr.commissionAmount || Math.round((curr.totalAmount || 0) * 0.1)), 0) : 0,
-        avgOrderValue: (Array.isArray(orders) && orders.length > 0) ? Math.round(orders.reduce((acc, curr) => acc + (curr.totalAmount || 0), 0) / orders.length) : 0
+        totalRevenue: Array.isArray(orders) ? orders.reduce((acc, curr) => acc + (curr.totalPrice || 0), 0) : 0,
+        commission: Array.isArray(orders) ? orders.reduce((acc, curr) => acc + (curr.adminEarning || curr.commissionAmount || Math.round((curr.totalPrice || 0) * 0.1)), 0) : 0,
+        avgOrderValue: (Array.isArray(orders) && orders.length > 0) ? Math.round(orders.reduce((acc, curr) => acc + (curr.totalPrice || 0), 0) / orders.length) : 0
     };
 
     const filteredOrders = Array.isArray(orders) ? orders.filter(o => {
         const term = searchTerm.toLowerCase();
-        return (o._id && o._id.toLowerCase().includes(term)) ||
+        const matchesSearch = (o._id && o._id.toLowerCase().includes(term)) ||
+            (o.orderNumber && o.orderNumber.toLowerCase().includes(term)) ||
             (o.user?.name && o.user.name.toLowerCase().includes(term)) ||
             (o.restaurant?.name && o.restaurant.name.toLowerCase().includes(term));
+
+        const orderDate = new Date(o.createdAt);
+        const matchesDate = (!dateRange.start || orderDate >= new Date(dateRange.start)) &&
+            (!dateRange.end || orderDate <= new Date(dateRange.end + 'T23:59:59'));
+
+        return matchesSearch && matchesDate;
     }) : [];
 
     return (
@@ -98,11 +137,51 @@ export default function EnhancedOrdersView() {
                     </div>
                     <p className="text-[14px] font-normal text-[#6B7280] mt-1">Complete order history and management</p>
                 </div>
-                <div className="flex gap-3">
-                    <button className="flex items-center gap-2 px-6 py-2.5 border border-gray-100 rounded-xl bg-white text-[#6B7280] text-[13px] font-bold uppercase tracking-wider hover:text-orange-500 hover:border-orange-500 transition-all shadow-sm active:scale-95">
-                        <FaCalendarAlt /> Date Range
+                <div className="flex gap-3 relative">
+                    <button 
+                        onClick={() => setShowDatePicker(!showDatePicker)}
+                        className={`flex items-center gap-2 px-6 py-2.5 border rounded-xl text-[13px] font-bold uppercase tracking-wider transition-all shadow-sm active:scale-95 ${showDatePicker || dateRange.start || dateRange.end ? 'border-orange-500 text-orange-500 bg-orange-50' : 'border-gray-100 bg-white text-[#6B7280] hover:text-orange-500 hover:border-orange-500'}`}>
+                        <FaCalendarAlt /> {dateRange.start ? `${dateRange.start} to ${dateRange.end || '...'}` : 'Date Range'}
                     </button>
-                    <button className="flex items-center gap-2 px-6 py-2.5 bg-gradient-to-r from-orange-500 to-pink-500 text-white rounded-xl text-[13px] font-bold uppercase tracking-wider hover:shadow-lg hover:shadow-orange-500/20 transition-all active:scale-95">
+                    
+                    {showDatePicker && (
+                        <div className="absolute top-full mt-2 right-[120px] bg-white p-4 rounded-2xl shadow-xl border border-gray-100 z-50 min-w-[300px]">
+                            <div className="space-y-3">
+                                <div>
+                                    <label className="text-[10px] font-bold text-gray-400 uppercase mb-1 block">Start Date</label>
+                                    <input 
+                                        type="date" 
+                                        value={dateRange.start}
+                                        onChange={(e) => setDateRange(prev => ({ ...prev, start: e.target.value }))}
+                                        className="w-full p-2 bg-gray-50 border border-gray-100 rounded-lg text-sm outline-none focus:border-orange-500"
+                                    />
+                                </div>
+                                <div>
+                                    <label className="text-[10px] font-bold text-gray-400 uppercase mb-1 block">End Date</label>
+                                    <input 
+                                        type="date" 
+                                        value={dateRange.end}
+                                        onChange={(e) => setDateRange(prev => ({ ...prev, end: e.target.value }))}
+                                        className="w-full p-2 bg-gray-50 border border-gray-100 rounded-lg text-sm outline-none focus:border-orange-500"
+                                    />
+                                </div>
+                                <div className="flex gap-2 pt-2">
+                                    <button 
+                                        onClick={() => { setDateRange({ start: '', end: '' }); setShowDatePicker(false); }}
+                                        className="flex-1 py-2 text-[11px] font-bold uppercase text-gray-400 hover:text-gray-600"
+                                    >Clear</button>
+                                    <button 
+                                        onClick={() => setShowDatePicker(false)}
+                                        className="flex-1 py-2 bg-orange-500 text-white rounded-lg text-[11px] font-bold uppercase hover:bg-orange-600"
+                                    >Apply</button>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+
+                    <button 
+                        onClick={handleExport}
+                        className="flex items-center gap-2 px-6 py-2.5 bg-gradient-to-r from-orange-500 to-pink-500 text-white rounded-xl text-[13px] font-bold uppercase tracking-wider hover:shadow-lg hover:shadow-orange-500/20 transition-all active:scale-95">
                         <FaDownload /> Export
                     </button>
                 </div>
@@ -223,7 +302,7 @@ export default function EnhancedOrdersView() {
                                             </div>
                                         </td>
                                         <td className="px-6 py-5">
-                                            <p className="text-[14px] font-bold text-[#111827]">Rs. {(order.totalAmount || 0).toLocaleString()}</p>
+                                            <p className="text-[14px] font-bold text-[#111827]">Rs. {(order.totalPrice || 0).toLocaleString()}</p>
                                             <p className="text-[11px] text-gray-400 font-bold uppercase tracking-widest">Gross Sales</p>
                                         </td>
                                         <td className="px-6 py-5 text-center">
@@ -257,7 +336,12 @@ export default function EnhancedOrdersView() {
                                             </span>
                                         </td>
                                         <td className="px-6 py-5 text-right">
-                                            <button className="px-5 py-2.5 bg-white text-gray-500 text-[11px] font-bold uppercase tracking-widest rounded-xl hover:text-orange-500 hover:border-orange-500 transition-all border border-gray-100 shadow-sm active:scale-95">
+                                            <button 
+                                                onClick={() => {
+                                                    setSelectedOrder(order);
+                                                    setShowDetailsModal(true);
+                                                }}
+                                                className="px-5 py-2.5 bg-white text-gray-500 text-[11px] font-bold uppercase tracking-widest rounded-xl hover:text-orange-500 hover:border-orange-500 transition-all border border-gray-100 shadow-sm active:scale-95">
                                                 Details
                                             </button>
                                         </td>
@@ -268,6 +352,138 @@ export default function EnhancedOrdersView() {
                     </table>
                 </div>
             </div>
+
+            {/* Order Details Modal */}
+            <AnimatePresence>
+                {showDetailsModal && selectedOrder && (
+                    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[100] flex items-center justify-center p-4">
+                        <motion.div 
+                            initial={{ opacity: 0, scale: 0.95 }}
+                            animate={{ opacity: 1, scale: 1 }}
+                            exit={{ opacity: 0, scale: 0.95 }}
+                            className="bg-white rounded-[32px] p-8 max-w-2xl w-full shadow-2xl relative max-h-[90vh] overflow-y-auto no-scrollbar"
+                        >
+                            <button 
+                                onClick={() => setShowDetailsModal(false)}
+                                className="absolute top-6 right-6 p-2 hover:bg-gray-100 rounded-full transition-colors"
+                            >
+                                <FaTimes className="text-gray-400" />
+                            </button>
+
+                            <div className="flex items-center gap-4 mb-8">
+                                <div className="w-14 h-14 bg-orange-50 rounded-2xl flex items-center justify-center text-orange-500">
+                                    <FaReceipt size={24} />
+                                </div>
+                                <div>
+                                    <h2 className="text-2xl font-bold text-gray-900">Order Details</h2>
+                                    <p className="text-gray-500 font-medium">#{selectedOrder.orderNumber || selectedOrder._id}</p>
+                                </div>
+                                <div className="ml-auto mr-8">
+                                    <span className={`px-4 py-1.5 rounded-xl text-[10px] font-bold uppercase tracking-widest border
+                                        ${selectedOrder.status.toLowerCase() === 'delivered' ? 'bg-green-50 text-green-600 border-green-100' :
+                                            selectedOrder.status.toLowerCase() === 'cancelled' ? 'bg-red-50 text-red-600 border-red-100' :
+                                                'bg-blue-50 text-blue-600 border-blue-100'}`}>
+                                        {selectedOrder.status}
+                                    </span>
+                                </div>
+                            </div>
+
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
+                                <div className="space-y-6">
+                                    <div>
+                                        <p className="text-[11px] font-bold text-gray-400 uppercase tracking-widest mb-3">Customer Info</p>
+                                        <div className="flex items-start gap-3">
+                                            <div className="p-2.5 bg-gray-50 rounded-xl text-gray-400">
+                                                <FaUser size={14} />
+                                            </div>
+                                            <div>
+                                                <p className="font-bold text-gray-900">{selectedOrder.user?.name}</p>
+                                                <p className="text-sm text-gray-500">{selectedOrder.user?.email || 'No email'}</p>
+                                                <p className="text-sm text-gray-500">{selectedOrder.user?.phone || 'No phone'}</p>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div>
+                                        <p className="text-[11px] font-bold text-gray-400 uppercase tracking-widest mb-3">Restaurant Info</p>
+                                        <div className="flex items-start gap-3">
+                                            <div className="p-2.5 bg-gray-50 rounded-xl text-gray-400">
+                                                <FaStore size={14} />
+                                            </div>
+                                            <div>
+                                                <p className="font-bold text-gray-900">{selectedOrder.restaurant?.name}</p>
+                                                <p className="text-sm text-gray-500">{selectedOrder.restaurant?.address || 'No address'}</p>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div>
+                                        <p className="text-[11px] font-bold text-gray-400 uppercase tracking-widest mb-3">Delivery Address</p>
+                                        <div className="flex items-start gap-3">
+                                            <div className="p-2.5 bg-gray-50 rounded-xl text-gray-400">
+                                                <FaMapMarkerAlt size={14} />
+                                            </div>
+                                            <p className="text-sm text-gray-600 leading-relaxed">
+                                                {selectedOrder.shippingAddress?.address || 'No address provided'}
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div className="space-y-6">
+                                    <div>
+                                        <p className="text-[11px] font-bold text-gray-400 uppercase tracking-widest mb-3">Rider Info</p>
+                                        <div className="flex items-start gap-3">
+                                            <div className="p-2.5 bg-gray-50 rounded-xl text-gray-400">
+                                                <FaMotorcycle size={14} />
+                                            </div>
+                                            <div>
+                                                <p className="font-bold text-gray-900">{selectedOrder.rider?.user?.name || 'Not Assigned'}</p>
+                                                <p className="text-sm text-gray-500">Rider Partner</p>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div className="bg-gray-50 rounded-3xl p-6">
+                                        <p className="text-[11px] font-bold text-gray-400 uppercase tracking-widest mb-4">Payment Summary</p>
+                                        <div className="space-y-3">
+                                            <div className="flex justify-between text-sm">
+                                                <span className="text-gray-500">Total Price</span>
+                                                <span className="font-bold text-gray-900">Rs. {selectedOrder.totalPrice?.toLocaleString()}</span>
+                                            </div>
+                                            <div className="flex justify-between text-sm">
+                                                <span className="text-gray-500">Commission ({selectedOrder.commissionPercent}%)</span>
+                                                <span className="font-bold text-red-500">- Rs. {selectedOrder.commissionAmount?.toLocaleString()}</span>
+                                            </div>
+                                            <div className="border-t border-gray-200 pt-3 flex justify-between">
+                                                <span className="text-sm font-bold text-gray-900">Net Profit</span>
+                                                <span className="font-bold text-emerald-600">Rs. {selectedOrder.adminEarning?.toLocaleString()}</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div>
+                                <p className="text-[11px] font-bold text-gray-400 uppercase tracking-widest mb-4">Order Items</p>
+                                <div className="space-y-3">
+                                    {selectedOrder.orderItems?.map((item, idx) => (
+                                        <div key={idx} className="flex justify-between items-center p-4 bg-gray-50 rounded-2xl">
+                                            <div className="flex items-center gap-3">
+                                                <div className="w-8 h-8 bg-white rounded-lg flex items-center justify-center text-[12px] font-bold text-orange-500 border border-gray-100">
+                                                    {item.qty}x
+                                                </div>
+                                                <p className="text-sm font-bold text-gray-900">{item.name}</p>
+                                            </div>
+                                            <p className="text-sm font-bold text-gray-900">Rs. {(item.price * item.qty).toLocaleString()}</p>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        </motion.div>
+                    </div>
+                )}
+            </AnimatePresence>
         </div>
     );
 }

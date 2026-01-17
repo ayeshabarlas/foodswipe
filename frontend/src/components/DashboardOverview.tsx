@@ -77,7 +77,7 @@ export default function DashboardOverview({ stats, restaurant }: DashboardOvervi
                         <div className="w-12 h-12 bg-white/20 rounded-2xl flex items-center justify-center text-white backdrop-blur-md group-hover:scale-110 transition-transform">
                             <FaWallet size={20} />
                         </div>
-                        <span className="text-[10px] font-bold text-white bg-white/20 px-2 py-1 rounded-lg uppercase tracking-wider backdrop-blur-md">Earnings</span>
+                        <span className="text-[10px] font-bold text-white bg-white/20 px-2 py-1 rounded-lg uppercase tracking-wider backdrop-blur-md">Today</span>
                     </div>
                     <h3 className="text-3xl font-bold text-white mb-1 relative z-10">Rs. {Math.round(stats?.netEarningsToday || 0).toLocaleString()}</h3>
                     <p className="text-xs font-bold text-white/80 uppercase tracking-widest relative z-10">Net Revenue</p>
@@ -89,7 +89,7 @@ export default function DashboardOverview({ stats, restaurant }: DashboardOvervi
                         <div className="w-12 h-12 bg-white/20 rounded-2xl flex items-center justify-center text-white backdrop-blur-md group-hover:scale-110 transition-transform">
                             <FaChartLine size={20} />
                         </div>
-                        <span className="text-[10px] font-bold text-white bg-white/20 px-2 py-1 rounded-lg uppercase tracking-wider backdrop-blur-md">Fee</span>
+                        <span className="text-[10px] font-bold text-white bg-white/20 px-2 py-1 rounded-lg uppercase tracking-wider backdrop-blur-md">Today</span>
                     </div>
                     <h3 className="text-3xl font-bold text-white mb-1 relative z-10">Rs. {Math.round(stats?.commissionToday || 0).toLocaleString()}</h3>
                     <p className="text-xs font-bold text-white/80 uppercase tracking-widest relative z-10">Commission</p>
@@ -107,6 +107,40 @@ export default function DashboardOverview({ stats, restaurant }: DashboardOvervi
                     <p className="text-xs font-bold text-white/80 uppercase tracking-widest relative z-10">Avg Review</p>
                 </motion.div>
             </motion.div>
+
+            {/* Weekly Performance Quick View */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="bg-white p-6 rounded-[32px] border border-gray-100 shadow-sm flex items-center justify-between">
+                    <div className="flex items-center gap-4">
+                        <div className="w-12 h-12 bg-orange-50 text-orange-500 rounded-2xl flex items-center justify-center">
+                            <FaChartLine size={20} />
+                        </div>
+                        <div>
+                            <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Weekly Revenue</p>
+                            <h4 className="text-xl font-bold text-gray-900">Rs. {(stats?.weeklyRevenue || 0).toLocaleString()}</h4>
+                        </div>
+                    </div>
+                    <div className="text-right">
+                        <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">This Week</p>
+                        <p className="text-xs font-bold text-green-500">{(stats?.weeklyOrders || 0)} Orders</p>
+                    </div>
+                </div>
+                <div className="bg-white p-6 rounded-[32px] border border-gray-100 shadow-sm flex items-center justify-between">
+                    <div className="flex items-center gap-4">
+                        <div className="w-12 h-12 bg-emerald-50 text-emerald-500 rounded-2xl flex items-center justify-center">
+                            <FaWallet size={20} />
+                        </div>
+                        <div>
+                            <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Weekly Net Payout</p>
+                            <h4 className="text-xl font-bold text-emerald-600">Rs. {(stats?.weeklyNetEarnings || 0).toLocaleString()}</h4>
+                        </div>
+                    </div>
+                    <div className="text-right">
+                        <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Est. Payout</p>
+                        <p className="text-xs font-bold text-gray-500">Next Friday</p>
+                    </div>
+                </div>
+            </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
                 {/* Order Status Summary */}

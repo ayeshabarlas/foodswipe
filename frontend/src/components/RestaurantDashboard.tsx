@@ -377,7 +377,7 @@ export default function RestaurantDashboard() {
             case 'menu': return <DashboardMenu restaurant={displayRestaurant} />;
             case 'store': return <DashboardStore restaurant={displayRestaurant} onUpdate={fetchDashboardData} />;
             case 'analytics': return <DashboardAnalytics restaurantId={displayRestaurant._id} />;
-            case 'payments': return <PaymentHistory restaurant={displayRestaurant} />;
+            case 'payments': return <PaymentHistory restaurant={displayRestaurant} onSwitchTab={setActivePage} />;
             case 'reviews': return <DashboardReviews restaurant={displayRestaurant} />;
             case 'promotions': return <DashboardPromotions restaurant={displayRestaurant} />;
             case 'support': return <DashboardSupport />;

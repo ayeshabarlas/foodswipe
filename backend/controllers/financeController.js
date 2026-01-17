@@ -70,7 +70,7 @@ const getFinanceOverview = async (req, res) => {
         // Today's orders
         const todayOrders = await Order.find({
             createdAt: { $gte: today },
-            status: { $ne: 'Cancelled' },
+            status: { $in: ['Delivered', 'Completed'] },
         });
 
         // Calculate today's stats
@@ -79,7 +79,7 @@ const getFinanceOverview = async (req, res) => {
         const todayGatewayFees = todayOrders.reduce((sum, order) => sum + (order.gatewayFee || 0), 0);
 
         // All-time stats
-        const allOrders = await Order.find({ status: { $ne: 'Cancelled' } });
+        const allOrders = await Order.find({ status: { $in: ['Delivered', 'Completed'] } });
         const totalRevenue = allOrders.reduce((sum, order) => sum + (order.totalPrice || 0), 0);
         const totalCommission = allOrders.reduce((sum, order) => sum + (order.commissionAmount || 0), 0);
         const totalGatewayFees = allOrders.reduce((sum, order) => sum + (order.gatewayFee || 0), 0);

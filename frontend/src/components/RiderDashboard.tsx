@@ -6,7 +6,7 @@ import {
     FaHome, FaShoppingBag, FaBox, FaWallet, FaUser,
     FaStar, FaClock, FaMapMarkerAlt, FaChevronRight,
     FaBell, FaCheckCircle, FaExclamationCircle, FaTimes,
-    FaMotorcycle, FaArrowRight, FaLocationArrow
+    FaMotorcycle, FaArrowRight, FaLocationArrow, FaStore, FaMoneyBillWave
 } from 'react-icons/fa';
 import axios from 'axios';
 import toast from 'react-hot-toast';
@@ -555,7 +555,7 @@ const RiderDashboard = ({
                                     </div>
                                     <div className="flex flex-col items-end gap-2">
                                     <div className="text-right">
-                                        <p className="text-orange-600 font-bold text-base">Rs. {activeOrder.netRiderEarning || activeOrder.riderEarning || activeOrder.earnings || Math.round(60 + ((activeOrder.distanceKm || 4.2) * 20))}</p>
+                                        <p className="text-orange-600 font-bold text-base">Rs. {activeOrder.netRiderEarning || activeOrder.riderEarning || activeOrder.earnings || Math.round(60 + ((activeOrder.distanceKm || 1.5) * 20))}</p>
                                         <p className="text-gray-700 text-[9px] font-bold uppercase tracking-widest">Your Pay</p>
                                     </div>
                                         {activeOrder.restaurant?.contact && (
@@ -914,30 +914,93 @@ function ActionItem({ icon, label, sublabel, onClick }: any) {
                                 </div>
                             </div>
 
-                            <div className="space-y-6">
-                                <div className="bg-gray-50/50 p-6 rounded-3xl border border-gray-100/50 flex items-center justify-between">
+                            <div className="space-y-4">
+                                <div className="bg-gray-50/50 p-5 rounded-3xl border border-gray-100/50 flex items-center justify-between">
                                     <div className="flex items-center gap-4">
-                                        <div className="w-12 h-12 bg-white rounded-2xl flex items-center justify-center text-orange-500 shadow-sm">
-                                            <FaWallet size={20} />
+                                        <div className="w-10 h-10 bg-white rounded-xl flex items-center justify-center text-orange-500 shadow-sm">
+                                            <FaWallet size={18} />
                                         </div>
                                         <div>
-                                            <p className="text-gray-400 text-[10px] font-light uppercase tracking-widest mb-0.5">Estimated Pay</p>
-                                            <p className="font-semibold text-gray-900">Rs. {newOrderPopup.riderEarning || 180}</p>
+                                            <p className="text-gray-400 text-[9px] font-bold uppercase tracking-widest mb-0.5">Estimated Pay</p>
+                                            <p className="font-bold text-gray-900 text-lg">Rs. {newOrderPopup.netRiderEarning || newOrderPopup.earnings || newOrderPopup.riderEarning || Math.round(60 + ((newOrderPopup.distanceKm || 1.5) * 20))}</p>
                                         </div>
                                     </div>
                                     <div className="flex flex-col items-end">
-                                        <p className="text-gray-400 text-[10px] font-light uppercase tracking-widest mb-0.5">Expires in</p>
-                                        <p className="font-semibold text-orange-500">{timer}s</p>
+                                        <p className="text-gray-400 text-[9px] font-bold uppercase tracking-widest mb-0.5">Expires in</p>
+                                        <p className="font-bold text-orange-500">{timer}s</p>
                                     </div>
                                 </div>
 
-                                <div className="flex gap-4">
+                                <div className="space-y-3">
+                                    <div className="flex items-start gap-3 p-1">
+                                        <div className="w-8 h-8 rounded-lg bg-orange-50 flex items-center justify-center text-orange-500 shrink-0 mt-0.5">
+                                            <FaStore size={14} />
+                                        </div>
+                                        <div>
+                                            <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-0.5">Pickup Restaurant</p>
+                                            <p className="text-[13px] font-bold text-gray-900 leading-tight">{newOrderPopup.restaurant?.name || 'Restaurant'}</p>
+                                            <p className="text-[11px] text-gray-500 line-clamp-1">{newOrderPopup.restaurant?.address || 'Restaurant Address'}</p>
+                                        </div>
+                                    </div>
+
+                                    <div className="flex items-start gap-3 p-1">
+                                        <div className="w-8 h-8 rounded-lg bg-blue-50 flex items-center justify-center text-blue-500 shrink-0 mt-0.5">
+                                            <FaMapMarkerAlt size={14} />
+                                        </div>
+                                        <div>
+                                            <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-0.5">Delivery Address</p>
+                                            <p className="text-[11px] font-bold text-gray-900 leading-tight line-clamp-2">{newOrderPopup.shippingAddress?.address || 'Customer Address'}</p>
+                                            <div className="flex items-center gap-2 mt-1">
+                                                <span className="px-2 py-0.5 bg-gray-100 rounded-md text-[9px] font-bold text-gray-600">
+                                                    Distance: {newOrderPopup.distanceKm || newOrderPopup.distance ? `${newOrderPopup.distanceKm || newOrderPopup.distance} km` : 'Calculating...'}
+                                                </span>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div className="flex items-start gap-3 p-1 border-t border-gray-50 pt-3">
+                                        <div className="w-8 h-8 rounded-lg bg-purple-50 flex items-center justify-center text-purple-500 shrink-0 mt-0.5">
+                                            <FaMoneyBillWave size={14} />
+                                        </div>
+                                        <div>
+                                            <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-0.5">Payment Details</p>
+                                            <p className="text-[11px] font-bold text-gray-900 leading-tight">
+                                                {newOrderPopup.paymentMethod === 'COD' ? 'Cash on Delivery' : 'Paid Online'}
+                                            </p>
+                                            {newOrderPopup.paymentMethod === 'COD' && (
+                                                <p className="text-[10px] font-bold text-red-500 mt-1">
+                                                    Collect: Rs. {newOrderPopup.totalPrice}
+                                                </p>
+                                            )}
+                                        </div>
+                                    </div>
+
+                                    {newOrderPopup.orderItems && (
+                                        <div className="flex items-start gap-3 p-1 border-t border-gray-50 pt-3">
+                                            <div className="w-8 h-8 rounded-lg bg-green-50 flex items-center justify-center text-green-500 shrink-0 mt-0.5">
+                                                <FaShoppingBag size={14} />
+                                            </div>
+                                            <div>
+                                                <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1">Order Items</p>
+                                                <div className="flex flex-wrap gap-1.5">
+                                                    {newOrderPopup.orderItems.map((item: any, idx: number) => (
+                                                        <span key={idx} className="text-[11px] font-medium text-gray-700 bg-gray-50 px-2 py-0.5 rounded-lg border border-gray-100">
+                                                            {item.qty}x {item.name}
+                                                        </span>
+                                                    ))}
+                                                </div>
+                                            </div>
+                                        </div>
+                                    )}
+                                </div>
+
+                                <div className="flex gap-3 pt-2">
                                     <button 
                                         onClick={() => {
                                             setNewOrderPopup(null);
                                             setTimer(30);
                                         }}
-                                        className="flex-1 py-4 rounded-2xl bg-gray-100 text-gray-500 font-semibold text-xs uppercase tracking-widest hover:bg-gray-200 transition-all"
+                                        className="flex-1 py-4 rounded-2xl bg-gray-100 text-gray-500 font-bold text-[11px] uppercase tracking-widest hover:bg-gray-200 transition-all active:scale-95"
                                     >
                                         Decline
                                     </button>
@@ -947,7 +1010,7 @@ function ActionItem({ icon, label, sublabel, onClick }: any) {
                                             setNewOrderPopup(null);
                                             setTimer(30);
                                         }}
-                                        className="flex-[2] py-4 rounded-2xl bg-gradient-to-r from-orange-500 to-red-500 text-white font-semibold text-xs uppercase tracking-widest hover:from-orange-600 hover:to-red-600 shadow-lg shadow-orange-100 transition-all active:scale-95"
+                                        className="flex-[2] py-4 rounded-2xl bg-gradient-to-r from-orange-500 to-red-500 text-white font-bold text-[11px] uppercase tracking-widest hover:shadow-lg hover:shadow-orange-500/30 transition-all active:scale-95"
                                     >
                                         Accept Order
                                     </button>

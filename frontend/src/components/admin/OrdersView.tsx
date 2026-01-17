@@ -9,21 +9,31 @@ import { FaClock, FaMotorcycle, FaStore, FaUser, FaPhone, FaMapMarkerAlt, FaSync
 interface Order {
     _id: string;
     orderNumber: string;
-    user: { name: string; phone: string };
+    user: { name: string; phone: string; email?: string };
     restaurant: { name: string; address: string };
-    rider?: { user: { name: string }; phone?: string };
-    items: any[];
-    totalAmount: number;
+    rider?: { user: { name: string; phone?: string }; phone?: string };
+    orderItems: any[];
+    totalPrice: number;
     status: string;
     createdAt: string;
-    commission?: number;
+    commissionPercent?: number;
+    commissionAmount?: number;
     deliveryFee?: number;
+    shippingAddress?: {
+        address: string;
+        city: string;
+        postalCode: string;
+        country: string;
+    };
+    adminEarning?: number;
 }
 
 export default function OrdersView() {
     const [orders, setOrders] = useState<Order[]>([]);
     const [loading, setLoading] = useState(true);
     const [autoRefresh, setAutoRefresh] = useState(true);
+    const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
+    const [showDetailsModal, setShowDetailsModal] = useState(false);
 
     useEffect(() => {
         fetchOrders();
@@ -57,7 +67,7 @@ export default function OrdersView() {
             // Filter only live orders
             const data = Array.isArray(res.data) ? res.data : (res.data?.orders || []);
             const live = data.filter((o: any) =>
-                ['Pending', 'Confirmed', 'Preparing', 'Ready', 'Picked Up', 'On the Way'].includes(o.status)
+                ['Pending', 'Accepted', 'Confirmed', 'Preparing', 'Ready', 'OnTheWay', 'Arrived', 'Picked Up', 'ArrivedAtCustomer'].includes(o.status)
             );
             setOrders(live);
             setLoading(false);
@@ -71,14 +81,20 @@ export default function OrdersView() {
         live: orders?.length || 0,
         preparing: Array.isArray(orders) ? orders.filter(o => ['Confirmed', 'Accepted', 'Preparing', 'Ready'].includes(o.status)).length : 0,
         outForDelivery: Array.isArray(orders) ? orders.filter(o => ['OnTheWay', 'Picked Up', 'Arrived', 'ArrivedAtCustomer'].includes(o.status)).length : 0,
-        totalValue: Array.isArray(orders) ? orders.reduce((acc, curr) => acc + (curr.totalAmount || 0), 0) : 0
+        totalValue: Array.isArray(orders) ? orders.reduce((acc, curr) => acc + (curr.totalPrice || 0), 0) : 0
     };
 
     const getStatusColor = (status: string) => {
         switch (status) {
-            case 'Preparing': return 'bg-orange-100 text-orange-600 border-orange-200';
-            case 'On the Way': return 'bg-blue-100 text-blue-600 border-blue-200';
             case 'Pending': return 'bg-yellow-100 text-yellow-600 border-yellow-200';
+            case 'Accepted':
+            case 'Confirmed': return 'bg-blue-100 text-blue-600 border-blue-200';
+            case 'Preparing': return 'bg-orange-100 text-orange-600 border-orange-200';
+            case 'Ready': return 'bg-green-100 text-green-600 border-green-200';
+            case 'OnTheWay':
+            case 'Picked Up': return 'bg-purple-100 text-purple-600 border-purple-200';
+            case 'Arrived':
+            case 'ArrivedAtCustomer': return 'bg-emerald-100 text-emerald-600 border-emerald-200';
             default: return 'bg-gray-100 text-gray-600 border-gray-200';
         }
     };
@@ -166,7 +182,7 @@ export default function OrdersView() {
                                     </div>
                                     <p className="text-[13px] text-[#6B7280] ml-5 font-normal">{order.user?.phone || 'No phone'}</p>
                                     <div className="flex items-center gap-2 mt-1.5 ml-5 text-[12px] text-[#9CA3AF] font-normal">
-                                        <FaMapMarkerAlt className="text-[10px]" /> {order.restaurant.address ? 'Delivery Address' : 'Karachi, Pakistan'}
+                                        <FaMapMarkerAlt className="text-[10px]" /> {order.shippingAddress?.address || 'Address not provided'}
                                     </div>
                                 </div>
                                 <div>
@@ -189,24 +205,29 @@ export default function OrdersView() {
 
                             <div className="border-t border-gray-100 pt-4 flex justify-between items-center text-[13px]">
                                 <div>
-                                    <span className="text-[#6B7280] font-medium">{order.items?.length || 0} items</span>
+                                    <span className="text-[#6B7280] font-medium">{order.orderItems?.length || 0} items</span>
                                     <span className="mx-2 text-gray-200">|</span>
                                     <span className="text-[#6B7280] font-medium">Delivery: Rs. {order.deliveryFee || 0}</span>
                                 </div>
                                 <div className="text-right">
-                                    <p className="text-[16px] font-bold text-[#111827] leading-tight">Rs. {(order.totalAmount || 0).toLocaleString()}</p>
-                                    <p className="text-[12px] font-semibold text-green-600 mt-0.5">Comm: Rs. {Math.round((order.totalAmount || 0) * 0.1)}</p>
+                                    <p className="text-[16px] font-bold text-[#111827] leading-tight">Rs. {(order.totalPrice || 0).toLocaleString()}</p>
+                                    <p className="text-[12px] font-semibold text-green-600 mt-0.5">Comm: Rs. {(order.commissionAmount || Math.round((order.totalPrice || 0) * 0.1)).toLocaleString()}</p>
                                 </div>
                             </div>
 
                             <div className="mt-5 flex gap-3">
-                                <button className="flex-1 bg-gradient-to-r from-orange-500 to-pink-500 hover:shadow-lg hover:shadow-orange-500/30 text-white text-[14px] font-bold py-3 rounded-xl transition-all shadow-md active:scale-95 uppercase tracking-widest">
+                                <button 
+                                    onClick={() => {
+                                        setSelectedOrder(order);
+                                        setShowDetailsModal(true);
+                                    }}
+                                    className="flex-1 bg-gradient-to-r from-orange-500 to-pink-500 hover:shadow-lg hover:shadow-orange-500/30 text-white text-[14px] font-bold py-3 rounded-xl transition-all shadow-md active:scale-95 uppercase tracking-widest">
                                     View Details
                                 </button>
                                 <a href={`tel:${order.user?.phone}`} className="px-4 py-3 border border-gray-100 rounded-xl hover:bg-gray-50 text-[#6B7280] transition-all shadow-sm active:scale-95 flex items-center justify-center">
                                     <FaPhone className="text-[14px]" />
                                 </a>
-                                <a href={`tel:${order.rider?.phone}`} className="px-4 py-3 border border-gray-100 rounded-xl hover:bg-gray-50 text-[#6B7280] transition-all shadow-sm active:scale-95 flex items-center justify-center">
+                                <a href={`tel:${order.rider?.user?.phone || order.rider?.phone}`} className="px-4 py-3 border border-gray-100 rounded-xl hover:bg-gray-50 text-[#6B7280] transition-all shadow-sm active:scale-95 flex items-center justify-center">
                                     <FaMotorcycle className="text-[14px]" />
                                 </a>
                             </div>
@@ -221,6 +242,142 @@ export default function OrdersView() {
                     </div>
                 )}
             </div>
+
+            {/* Order Details Modal */}
+            <AnimatePresence>
+                {showDetailsModal && selectedOrder && (
+                    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[100] flex items-center justify-center p-4">
+                        <motion.div 
+                            initial={{ opacity: 0, scale: 0.95 }}
+                            animate={{ opacity: 1, scale: 1 }}
+                            exit={{ opacity: 0, scale: 0.95 }}
+                            className="bg-white rounded-[32px] p-8 max-w-2xl w-full shadow-2xl relative max-h-[90vh] overflow-y-auto no-scrollbar"
+                        >
+                            <button 
+                                onClick={() => setShowDetailsModal(false)}
+                                className="absolute top-6 right-6 p-2 hover:bg-gray-100 rounded-full transition-colors"
+                            >
+                                <FaClock className="text-gray-400 rotate-45" />
+                            </button>
+
+                            <div className="flex items-center gap-4 mb-8">
+                                <div className="w-14 h-14 bg-orange-50 rounded-2xl flex items-center justify-center text-orange-500">
+                                    <FaReceipt size={24} />
+                                </div>
+                                <div>
+                                    <h2 className="text-2xl font-bold text-gray-900">Live Order Details</h2>
+                                    <p className="text-gray-500 font-medium">#{selectedOrder.orderNumber || selectedOrder._id}</p>
+                                </div>
+                                <div className="ml-auto mr-8">
+                                    <span className={`px-4 py-1.5 rounded-xl text-[10px] font-bold uppercase tracking-widest border ${getStatusColor(selectedOrder.status)}`}>
+                                        {selectedOrder.status}
+                                    </span>
+                                </div>
+                            </div>
+
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
+                                <div className="space-y-6">
+                                    <div>
+                                        <p className="text-[11px] font-bold text-gray-400 uppercase tracking-widest mb-3">Customer Info</p>
+                                        <div className="flex items-start gap-3">
+                                            <div className="p-2.5 bg-gray-50 rounded-xl text-gray-400">
+                                                <FaUser size={14} />
+                                            </div>
+                                            <div>
+                                                <p className="font-bold text-gray-900">{selectedOrder.user?.name}</p>
+                                                <p className="text-sm text-gray-500">{selectedOrder.user?.email || 'No email'}</p>
+                                                <p className="text-sm text-gray-500">{selectedOrder.user?.phone || 'No phone'}</p>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div>
+                                        <p className="text-[11px] font-bold text-gray-400 uppercase tracking-widest mb-3">Restaurant Info</p>
+                                        <div className="flex items-start gap-3">
+                                            <div className="p-2.5 bg-gray-50 rounded-xl text-gray-400">
+                                                <FaStore size={14} />
+                                            </div>
+                                            <div>
+                                                <p className="font-bold text-gray-900">{selectedOrder.restaurant?.name}</p>
+                                                <p className="text-sm text-gray-500">{selectedOrder.restaurant?.address || 'No address'}</p>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div>
+                                        <p className="text-[11px] font-bold text-gray-400 uppercase tracking-widest mb-3">Delivery Address</p>
+                                        <div className="flex items-start gap-3">
+                                            <div className="p-2.5 bg-gray-50 rounded-xl text-gray-400">
+                                                <FaMapMarkerAlt size={14} />
+                                            </div>
+                                            <p className="text-sm text-gray-600 leading-relaxed">
+                                                {selectedOrder.shippingAddress?.address || 'No address provided'}
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div className="space-y-6">
+                                    <div>
+                                        <p className="text-[11px] font-bold text-gray-400 uppercase tracking-widest mb-3">Rider Info</p>
+                                        <div className="flex items-start gap-3">
+                                            <div className="p-2.5 bg-gray-50 rounded-xl text-gray-400">
+                                                <FaMotorcycle size={14} />
+                                            </div>
+                                            <div>
+                                                <p className="font-bold text-gray-900">{selectedOrder.rider?.user?.name || 'Not Assigned'}</p>
+                                                <p className="text-sm text-gray-500">{selectedOrder.rider?.user?.phone || 'Rider Partner'}</p>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div className="bg-gray-50 rounded-3xl p-6">
+                                        <p className="text-[11px] font-bold text-gray-400 uppercase tracking-widest mb-4">Payment Summary</p>
+                                        <div className="space-y-3">
+                                            <div className="flex justify-between text-sm">
+                                                <span className="text-gray-500">Subtotal</span>
+                                                <span className="font-bold text-gray-900">Rs. {(selectedOrder.totalPrice - (selectedOrder.deliveryFee || 0)).toLocaleString()}</span>
+                                            </div>
+                                            <div className="flex justify-between text-sm">
+                                                <span className="text-gray-500">Delivery Fee</span>
+                                                <span className="font-bold text-gray-900">Rs. {selectedOrder.deliveryFee?.toLocaleString()}</span>
+                                            </div>
+                                            <div className="border-t border-gray-200 pt-3 flex justify-between">
+                                                <span className="text-sm font-bold text-gray-900">Total Price</span>
+                                                <span className="font-bold text-orange-600 text-lg">Rs. {selectedOrder.totalPrice?.toLocaleString()}</span>
+                                            </div>
+                                            <div className="flex justify-between text-[12px] pt-1">
+                                                <span className="text-gray-400 italic">Platform Commission</span>
+                                                <span className="font-bold text-green-600">Rs. {(selectedOrder.commissionAmount || Math.round((selectedOrder.totalPrice || 0) * 0.1)).toLocaleString()}</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div>
+                                <p className="text-[11px] font-bold text-gray-400 uppercase tracking-widest mb-4">Order Items</p>
+                                <div className="space-y-3">
+                                    {selectedOrder.orderItems?.map((item, idx) => (
+                                        <div key={idx} className="flex justify-between items-center p-4 bg-gray-50 rounded-2xl">
+                                            <div className="flex items-center gap-3">
+                                                <div className="w-8 h-8 bg-white rounded-lg flex items-center justify-center text-[12px] font-bold text-orange-500 border border-gray-100">
+                                                    {item.qty}x
+                                                </div>
+                                                <p className="text-sm font-bold text-gray-900">{item.name}</p>
+                                            </div>
+                                            <p className="text-sm font-bold text-gray-900">Rs. {(item.price * item.qty).toLocaleString()}</p>
+                                        </div>
+                                    ))}
+                                    {(!selectedOrder.orderItems || selectedOrder.orderItems.length === 0) && (
+                                        <p className="text-center text-gray-400 text-sm py-4">No items data available</p>
+                                    )}
+                                </div>
+                            </div>
+                        </motion.div>
+                    </div>
+                )}
+            </AnimatePresence>
         </div>
     );
 }

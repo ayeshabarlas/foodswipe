@@ -175,7 +175,7 @@ export default function RiderOrders({ riderId, setShowNotifications, unreadCount
             const earnings = o.netRiderEarning || o.earnings || o.riderEarning || 0;
             // Fallback calculation if earnings are 0
             if (earnings === 0) {
-                const dist = o.distanceKm || o.distance || 4.2;
+                const dist = o.distanceKm || o.distance || 1.5;
                 return sum + Math.round(60 + (dist * 20));
             }
             return sum + earnings;
@@ -277,7 +277,7 @@ export default function RiderOrders({ riderId, setShowNotifications, unreadCount
             // We'll set the completion data for the summary modal
             const BASE_PAY = 60;
             const PER_KM_RATE = 20;
-            const finalDist = dist || 4.2; // Match backend fallback for UI preview
+            const finalDist = dist || 1.5; // Match backend fallback for UI preview
             const gross = BASE_PAY + (finalDist * PER_KM_RATE);
             const net = gross;
 

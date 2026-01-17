@@ -265,8 +265,8 @@ const getAvailableOrders = async (req, res) => {
                 distance = calculateDistance(restLat, restLng, order.deliveryLocation.lat, order.deliveryLocation.lng);
             }
             
-            // Fallback if still 0
-            if (distance === 0) distance = 4.2;
+            // Fallback if still 0 - reduced from 4.2 to 1.5 for fairness
+            if (distance === 0) distance = 1.5;
 
             const earnings = calculateRiderEarning(distance);
             
@@ -326,7 +326,7 @@ const acceptOrder = async (req, res) => {
                 const [restLng, restLat] = order.restaurant.location.coordinates;
                 distance = calculateDistance(restLat, restLng, order.deliveryLocation.lat, order.deliveryLocation.lng);
             }
-            if (distance === 0) distance = 4.2;
+            if (distance === 0) distance = 1.5; // Reduced from 4.2 to 1.5 for fairness
             
             const earnings = calculateRiderEarning(distance);
             order.distanceKm = distance;
@@ -565,7 +565,7 @@ const getRiderOrders = async (req, res) => {
             }
             
             // Fallback if still 0
-            if (distance === 0) distance = 4.2;
+            if (distance === 0) distance = 1.5; // Reduced from 4.2 to 1.5 for fairness
 
             const earnings = calculateRiderEarning(distance);
             

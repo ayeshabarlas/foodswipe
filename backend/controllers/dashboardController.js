@@ -18,25 +18,37 @@ const getDashboardStats = async (req, res) => {
         const today = new Date();
         today.setHours(0, 0, 0, 0);
 
-        // 1. Orders Today
+        const lastWeek = new Date();
+        lastWeek.setDate(lastWeek.getDate() - 7);
+        lastWeek.setHours(0, 0, 0, 0);
+
+        // 1. Orders Today & Weekly
         const ordersToday = await Order.countDocuments({
             restaurant: restaurant._id,
             createdAt: { $gte: today },
-            status: { $ne: 'Cancelled' }
+            status: { $in: ['Delivered', 'Completed'] }
         });
 
-        // 2. Revenue & Earnings Today
-        const revenueResult = await Order.aggregate([
+        const weeklyOrders = await Order.countDocuments({
+            restaurant: restaurant._id,
+            createdAt: { $gte: lastWeek },
+            status: { $in: ['Delivered', 'Completed'] }
+        });
+
+        // 2. Revenue & Earnings Today & Weekly
+        const statsResult = await Order.aggregate([
             {
                 $match: {
                     restaurant: restaurant._id,
-                    createdAt: { $gte: today },
-                    status: { $in: ['Pending', 'Preparing', 'Ready', 'OnTheWay', 'Picked Up', 'Arrived', 'ArrivedAtCustomer', 'Delivered', 'Completed'] }
+                    createdAt: { $gte: lastWeek },
+                    status: { $in: ['Delivered', 'Completed'] }
                 }
             },
             {
                 $group: {
-                    _id: null,
+                    _id: {
+                        $cond: [{ $gte: ['$createdAt', today] }, 'today', 'weekly']
+                    },
                     totalRevenue: { $sum: '$totalPrice' },
                     totalNetEarnings: { $sum: { $ifNull: ['$restaurantEarning', 0] } },
                     totalCommission: { $sum: { $ifNull: ['$commissionAmount', 0] } }
@@ -44,9 +56,23 @@ const getDashboardStats = async (req, res) => {
             }
         ]);
         
-        const revenueToday = revenueResult.length > 0 ? revenueResult[0].totalRevenue : 0;
-        const netEarningsToday = revenueResult.length > 0 ? revenueResult[0].totalNetEarnings : 0;
-        const commissionToday = revenueResult.length > 0 ? revenueResult[0].totalCommission : 0;
+        // Process stats
+        let revenueToday = 0;
+        let netEarningsToday = 0;
+        let commissionToday = 0;
+        let weeklyRevenue = 0;
+        let weeklyNetEarnings = 0;
+
+        statsResult.forEach(stat => {
+            if (stat._id === 'today') {
+                revenueToday = stat.totalRevenue;
+                netEarningsToday = stat.totalNetEarnings;
+                commissionToday = stat.totalCommission;
+            }
+            // Weekly includes today
+            weeklyRevenue += stat.totalRevenue;
+            weeklyNetEarnings += stat.totalNetEarnings;
+        });
 
         // If netEarningsToday is 0 but revenue is not, it means orders are not completed yet.
         // We can show an estimate based on restaurant's commission rate
@@ -99,6 +125,9 @@ const getDashboardStats = async (req, res) => {
             revenueToday,
             netEarningsToday: netEarningsToday || estimatedNetEarnings,
             commissionToday,
+            weeklyOrders,
+            weeklyRevenue,
+            weeklyNetEarnings,
             pending: pendingCount,
             preparing: preparingCount,
             ready: readyCount,

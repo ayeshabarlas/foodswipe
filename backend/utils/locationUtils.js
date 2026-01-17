@@ -11,7 +11,7 @@
  * @returns {number} - Distance in kilometers rounded to 1 decimal place
  */
 const calculateDistance = (lat1, lon1, lat2, lon2) => {
-    if (!lat1 || !lon1 || !lat2 || !lon2) return 4.2; // Default fallback
+    if (!lat1 || !lon1 || !lat2 || !lon2) return 2.0; // Default fallback reduced from 4.2 to 2.0
 
     const R = 6371; // Radius of the earth in km
     const dLat = deg2rad(lat2 - lat1);

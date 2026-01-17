@@ -133,10 +133,14 @@ const rejectRider = async (req, res) => {
 const getAllOrders = async (req, res) => {
     try {
         const orders = await Order.find({})
-            .populate('user', 'name email')
-            .populate('restaurant', 'name')
+            .populate('user', 'name email phone')
+            .populate('restaurant', 'name address')
+            .populate({
+                path: 'rider',
+                populate: { path: 'user', select: 'name phone' }
+            })
             .sort({ createdAt: -1 })
-            .limit(50);
+            .limit(100);
 
         res.json(orders);
     } catch (error) {
@@ -164,7 +168,7 @@ const getDashboardStats = async (req, res) => {
 
         // Calculate Revenue & Commission (Total & Today)
         const totalStatsResult = await Order.aggregate([
-            { $match: { status: { $nin: ['Cancelled'] } } },
+            { $match: { status: { $in: ['Delivered', 'Completed'] } } },
             {
                 $group: {
                     _id: null,
@@ -260,7 +264,7 @@ const getDashboardStats = async (req, res) => {
 
         // Top Performing Restaurants (by Revenue)
         const topRestaurants = await Order.aggregate([
-            { $match: { status: { $nin: ['Cancelled'] } } },
+            { $match: { status: { $in: ['Delivered', 'Completed'] } } },
             {
                 $group: {
                     _id: "$restaurant",
@@ -372,21 +376,16 @@ const getAllRestaurants = async (req, res) => {
         const enrichedRestaurants = await Promise.all(restaurants.map(async (restaurant) => {
             try {
                 const stats = await Order.aggregate([
-                    { $match: { restaurant: new mongoose.Types.ObjectId(restaurant._id) } },
+                    { $match: { 
+                        restaurant: new mongoose.Types.ObjectId(restaurant._id),
+                        status: { $in: ['Delivered', 'Completed'] }
+                    } },
                     {
                         $group: {
                             _id: null,
                             totalOrders: { $sum: 1 },
-                            revenue: {
-                                $sum: {
-                                    $cond: [{ $not: { $in: ["$status", ["Cancelled"]] } }, "$totalPrice", 0]
-                                }
-                            },
-                            commission: {
-                                $sum: {
-                                    $cond: [{ $not: { $in: ["$status", ["Cancelled"]] } }, "$commissionAmount", 0]
-                                }
-                            }
+                            revenue: { $sum: "$totalPrice" },
+                            commission: { $sum: "$commissionAmount" }
                         }
                     }
                 ]);
@@ -513,7 +512,7 @@ const getAllRiders = async (req, res) => {
 const getRestaurantSales = async (req, res) => {
     try {
         const sales = await Order.aggregate([
-            { $match: { status: { $in: ['Pending', 'Preparing', 'Ready', 'Out for Delivery', 'Delivered', 'Completed'] } } },
+            { $match: { status: { $in: ['Delivered', 'Completed'] } } },
             {
                 $group: {
                     _id: '$restaurant',
