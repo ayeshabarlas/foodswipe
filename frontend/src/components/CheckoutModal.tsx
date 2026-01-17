@@ -724,7 +724,7 @@ export default function CheckoutModal({ isOpen, onClose, cart, total, subtotal, 
                                                                     </div>
                                                                 );
                                                             })}
-                                                        <>
+                                                        </>
                                                     ) : deliveryAddress.length > 2 ? (
                                                         <div className="p-4 text-center text-gray-600 text-sm">
                                                             <p className="font-semibold">No suggestions found</p>
