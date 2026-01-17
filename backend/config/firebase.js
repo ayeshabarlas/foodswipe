@@ -32,14 +32,12 @@ if (!admin.apps.length) {
                 let bucketName = process.env.FIREBASE_STORAGE_BUCKET;
                 
                 if (!bucketName && serviceAccount.project_id) {
-                    // Try to determine if it's a newer or older project
-                    // Newer ones use .firebasestorage.app, older ones use .appspot.com
-                    // We'll log the project_id to help troubleshooting
                     console.log(`ℹ️ Project ID from service account: ${serviceAccount.project_id}`);
                     
-                    // The user reported 404 with .firebasestorage.app, let's use .appspot.com
-                    bucketName = `${serviceAccount.project_id}.appspot.com`;
-                    console.log(`ℹ️ Trying bucket name: ${bucketName}`);
+                    // Priority: 1. .firebasestorage.app (Modern Firebase)
+                    //           2. .appspot.com (Legacy Firebase)
+                    bucketName = `${serviceAccount.project_id}.firebasestorage.app`;
+                    console.log(`ℹ️ Trying modern bucket name: ${bucketName}`);
                 }
                 
                 const options = {
@@ -56,7 +54,7 @@ if (!admin.apps.length) {
                 console.error('❌ Firebase Service Account Parse Error:', parseErr.message);
                 console.warn('⚠️ Firebase initialized without credentials (limited functionality)');
                 // Fallback
-                const fallbackBucket = process.env.FIREBASE_STORAGE_BUCKET || 'foodswipe-be395.appspot.com';
+                const fallbackBucket = process.env.FIREBASE_STORAGE_BUCKET || 'foodswipe-be395.firebasestorage.app';
                 admin.initializeApp({
                     storageBucket: fallbackBucket
                 });
@@ -64,7 +62,7 @@ if (!admin.apps.length) {
             }
         } else {
             console.warn('⚠️ FIREBASE_SERVICE_ACCOUNT_JSON is missing. Using default initialization.');
-            const fallbackBucket = process.env.FIREBASE_STORAGE_BUCKET || 'foodswipe-be395.appspot.com';
+            const fallbackBucket = process.env.FIREBASE_STORAGE_BUCKET || 'foodswipe-be395.firebasestorage.app';
             admin.initializeApp({
                 storageBucket: fallbackBucket
             });
