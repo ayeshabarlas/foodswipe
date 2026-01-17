@@ -172,10 +172,10 @@ const getDashboardStats = async (req, res) => {
             {
                 $group: {
                     _id: null,
-                    totalRevenue: { $sum: '$totalPrice' },
-                    totalCommission: { $sum: '$commissionAmount' },
-                    totalRiderEarnings: { $sum: '$riderEarning' },
-                    totalRestaurantEarnings: { $sum: '$restaurantEarning' }
+                    totalRevenue: { $sum: { $ifNull: ['$subtotal', '$totalPrice'] } },
+                    totalCommission: { $sum: { $ifNull: ['$commissionAmount', { $multiply: [{ $ifNull: ['$subtotal', '$totalPrice'] }, 0.15] }] } },
+                    totalRiderEarnings: { $sum: { $ifNull: ['$riderEarning', 0] } },
+                    totalRestaurantEarnings: { $sum: { $ifNull: ['$restaurantEarning', { $multiply: [{ $ifNull: ['$subtotal', '$totalPrice'] }, 0.85] }] } }
                 }
             }
         ]);
@@ -192,7 +192,7 @@ const getDashboardStats = async (req, res) => {
                     createdAt: { $gte: todayStart }
                 }
             },
-            { $group: { _id: null, total: { $sum: '$totalPrice' } } }
+            { $group: { _id: null, total: { $sum: { $ifNull: ['$subtotal', '$totalPrice'] } } } }
         ]);
         const todayRevenue = todayRevenueResult[0]?.total || 0;
 
@@ -220,8 +220,8 @@ const getDashboardStats = async (req, res) => {
             {
                 $group: {
                     _id: { $dateToString: { format: "%Y-%m-%d", date: "$createdAt" } },
-                    revenue: { $sum: "$totalPrice" },
-                    commission: { $sum: "$commissionAmount" }
+                    revenue: { $sum: { $ifNull: ["$subtotal", "$totalPrice"] } },
+                    commission: { $sum: { $ifNull: ["$commissionAmount", { $multiply: [{ $ifNull: ["$subtotal", "$totalPrice"] }, 0.15] }] } }
                 }
             },
             { $sort: { _id: 1 } }
@@ -268,7 +268,7 @@ const getDashboardStats = async (req, res) => {
             {
                 $group: {
                     _id: "$restaurant",
-                    revenue: { $sum: "$totalPrice" },
+                    revenue: { $sum: { $ifNull: ["$subtotal", "$totalPrice"] } },
                     orders: { $sum: 1 }
                 }
             },
@@ -384,8 +384,8 @@ const getAllRestaurants = async (req, res) => {
                         $group: {
                             _id: null,
                             totalOrders: { $sum: 1 },
-                            revenue: { $sum: "$totalPrice" },
-                            commission: { $sum: "$commissionAmount" }
+                            revenue: { $sum: { $ifNull: ["$subtotal", "$totalPrice"] } },
+                            commission: { $sum: { $ifNull: ["$commissionAmount", { $multiply: [{ $ifNull: ["$subtotal", "$totalPrice"] }, 0.15] }] } }
                         }
                     }
                 ]);
@@ -516,10 +516,10 @@ const getRestaurantSales = async (req, res) => {
             {
                 $group: {
                     _id: '$restaurant',
-                    totalSales: { $sum: '$totalPrice' },
+                    totalSales: { $sum: { $ifNull: ['$subtotal', '$totalPrice'] } },
                     orderCount: { $sum: 1 },
-                    commission: { $sum: { $ifNull: ['$commissionAmount', { $multiply: ['$totalPrice', 0.15] }] } },
-                    netPayable: { $sum: { $ifNull: ['$restaurantEarning', { $multiply: ['$totalPrice', 0.85] }] } }
+                    commission: { $sum: { $ifNull: ['$commissionAmount', { $multiply: [{ $ifNull: ['$subtotal', '$totalPrice'] }, 0.15] }] } },
+                    netPayable: { $sum: { $ifNull: ['$restaurantEarning', { $multiply: [{ $ifNull: ['$subtotal', '$totalPrice'] }, 0.85] }] } }
                 }
             },
             {

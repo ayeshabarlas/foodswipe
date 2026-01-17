@@ -502,6 +502,9 @@ const processOrderCompletion = async (order, distanceKm, req = null) => {
         restaurantWallet.totalCommissionCollected = (restaurantWallet.totalCommissionCollected || 0) + commissionAmount;
         await restaurantWallet.save();
 
+        // Notify admin about restaurant wallet/stats update
+        triggerEvent('admin', 'restaurant_updated', { _id: order.restaurant });
+
         // Transaction for Restaurant
         await Transaction.create({
             entityType: 'restaurant',
@@ -688,6 +691,10 @@ const completeOrder = async (req, res) => {
         if (order.rider) {
             triggerEvent(`rider-${order.rider}`, 'orderStatusUpdate', updatedOrder);
         }
+
+        // Notify admin to refresh stats
+        triggerEvent('admin', 'order_updated', updatedOrder);
+        triggerEvent('admin', 'stats_updated', { type: 'order_delivered', orderId: updatedOrder._id });
 
         triggerEvent(`order-${order._id}`, 'statusUpdate', { status: 'Delivered', order: updatedOrder });
 

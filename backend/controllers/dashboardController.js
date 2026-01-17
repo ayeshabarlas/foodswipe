@@ -49,9 +49,9 @@ const getDashboardStats = async (req, res) => {
                     _id: {
                         $cond: [{ $gte: ['$createdAt', today] }, 'today', 'weekly']
                     },
-                    totalRevenue: { $sum: '$totalPrice' },
-                    totalNetEarnings: { $sum: { $ifNull: ['$restaurantEarning', 0] } },
-                    totalCommission: { $sum: { $ifNull: ['$commissionAmount', 0] } }
+                    totalRevenue: { $sum: { $ifNull: ['$subtotal', '$totalPrice'] } },
+                    totalNetEarnings: { $sum: { $ifNull: ['$restaurantEarning', { $multiply: [{ $ifNull: ['$subtotal', '$totalPrice'] }, 0.85] }] } },
+                    totalCommission: { $sum: { $ifNull: ['$commissionAmount', { $multiply: [{ $ifNull: ['$subtotal', '$totalPrice'] }, 0.15] }] } }
                 }
             }
         ]);
