@@ -20,7 +20,8 @@ const allowedOrigins = [
     'http://localhost:3000',
     'http://localhost:3001',
     'https://foodswipe-one.vercel.app',
-    'https://foodswipe-6178.onrender.com'
+    'https://foodswipe-6178.onrender.com',
+    'https://foodswipeadmin.vercel.app'
 ];
 
 app.use(cors({
@@ -40,7 +41,9 @@ app.use(cors({
             return callback(new Error(msg), false);
         }
     },
-    credentials: true
+    credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept', 'Origin']
 }));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
