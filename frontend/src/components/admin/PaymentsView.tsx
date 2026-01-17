@@ -1,8 +1,8 @@
 'use client';
 import { useState, useEffect } from 'react';
 import axios from 'axios';
-import { io } from 'socket.io-client';
-import { API_BASE_URL, SOCKET_URL } from '../../utils/config';
+import { getSocket } from '../../utils/socket';
+import { API_BASE_URL } from '../../utils/config';
 import { FaCheckCircle } from 'react-icons/fa';
 
 export default function PaymentsView() {
@@ -12,25 +12,31 @@ export default function PaymentsView() {
     useEffect(() => {
         fetchPayouts();
 
-        const socket = io(SOCKET_URL);
-        socket.on('order_updated', fetchPayouts); // Orders affect payouts
-        socket.on('stats_updated', fetchPayouts); // Global stats update affects payouts
-        
-        return () => {
-            socket.disconnect();
-        };
+        const socket = getSocket();
+        if (socket) {
+            socket.on('order_updated', fetchPayouts); // Orders affect payouts
+            socket.on('stats_updated', fetchPayouts); // Global stats update affects payouts
+            
+            return () => {
+                socket.off('order_updated', fetchPayouts);
+                socket.off('stats_updated', fetchPayouts);
+            };
+        }
     }, []);
 
     const fetchPayouts = async () => {
         try {
             const userInfo = JSON.parse(localStorage.getItem('userInfo') || '{}');
+            if (!userInfo.token) return;
+            
             const config = {
                 headers: { Authorization: `Bearer ${userInfo.token}` }
             };
             const { data } = await axios.get(`${API_BASE_URL}/api/payouts/all`, config);
             setPayouts(data);
-        } catch (error) {
+        } catch (error: any) {
             console.error('Error fetching payouts:', error);
+            // Silence but log
         } finally {
             setLoading(false);
         }

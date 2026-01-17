@@ -135,7 +135,7 @@ export default function NotificationPanel({ onClose, riderId, onReadUpdate }: No
                     <FaTimes />
                 </button>
                 <h2 className="text-2xl font-bold mb-1">Notifications</h2>
-                <p className="text-white/80 text-sm font-bold">
+                <p className="text-white text-sm font-bold">
                     {notifications.length === 0 ? 'All caught up!' : `${notifications.filter(n => !n.read).length} new updates`}
                 </p>
             </div>
@@ -152,7 +152,7 @@ export default function NotificationPanel({ onClose, riderId, onReadUpdate }: No
                             <FaBell size={40} />
                         </div>
                         <h3 className="text-lg font-bold text-gray-800">No notifications yet</h3>
-                        <p className="text-gray-400 text-sm mt-1">We'll notify you when something important happens.</p>
+                        <p className="text-gray-600 text-sm mt-1 font-bold">We'll notify you when something important happens.</p>
                     </div>
                 ) : (
                     <div className="divide-y divide-gray-50">
@@ -170,9 +170,9 @@ export default function NotificationPanel({ onClose, riderId, onReadUpdate }: No
                                         <h4 className="font-bold text-gray-900 text-sm">{notification.title}</h4>
                                         {!notification.read && <div className="w-2 h-2 bg-[#FF4D00] rounded-full"></div>}
                                     </div>
-                                    <p className="text-gray-500 text-xs font-medium leading-relaxed mb-2">{notification.message}</p>
+                                    <p className="text-gray-700 text-xs font-medium leading-relaxed mb-2">{notification.message}</p>
                                     <div className="flex items-center gap-2">
-                                        <span className="text-[10px] text-gray-400 font-bold uppercase tracking-wider">{getTimeAgo(notification.createdAt)}</span>
+                                        <span className="text-[10px] text-gray-600 font-bold uppercase tracking-wider">{getTimeAgo(notification.createdAt)}</span>
                                         {notification.read && <FaCheckCircle className="text-green-500" size={12} />}
                                     </div>
                                 </div>

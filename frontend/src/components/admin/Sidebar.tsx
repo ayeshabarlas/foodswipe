@@ -95,7 +95,7 @@ export default function Sidebar({ activeTab, setActiveTab, onLogout }: SidebarPr
                 />
             )}
 
-            <div className={`w-64 bg-white text-[#111827] min-h-screen overflow-y-auto fixed left-0 top-0 flex flex-col border-r border-gray-100 z-50 font-sans transition-transform duration-300 transform
+            <div className={`w-64 bg-white text-[#111827] h-[100vh] max-h-screen fixed left-0 top-0 flex flex-col border-r border-gray-100 z-50 font-sans transition-transform duration-300 transform overflow-hidden
                   ${isMobileOpen ? 'translate-x-0' : '-translate-x-full'} md:translate-x-0`}>
                 {/* Logo Section */}
                 <div className="p-6 border-b border-gray-50">
@@ -111,7 +111,7 @@ export default function Sidebar({ activeTab, setActiveTab, onLogout }: SidebarPr
                 </div>
 
                 {/* Menu Section */}
-                <div className="flex-1 overflow-y-auto py-4 px-4 custom-scrollbar">
+                <div className="flex-1 overflow-y-auto py-4 px-4 min-h-0 custom-scrollbar">
                     <nav className="space-y-1">
                         {menuItems.map((item) => (
                             <div key={item.id} className="space-y-1">

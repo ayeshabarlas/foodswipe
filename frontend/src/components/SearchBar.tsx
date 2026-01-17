@@ -100,7 +100,7 @@ export default function SearchBar({ onSearch }: SearchBarProps) {
                 }}
                 className="relative"
             >
-                <div className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400">
+                <div className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-600">
                     <FaSearch size={20} />
                 </div>
                 <input
@@ -117,12 +117,12 @@ export default function SearchBar({ onSearch }: SearchBarProps) {
                         }
                     }}
                     placeholder="Search for dishes or restaurants..."
-                    className="w-full pl-12 pr-12 py-4 bg-white/10 backdrop-blur-md border-2 border-white/20 rounded-full text-white placeholder-gray-400 outline-none focus:border-primary transition-all"
+                    className="w-full pl-12 pr-12 py-4 bg-white border-2 border-gray-200 rounded-full text-gray-900 placeholder-gray-500 font-medium outline-none focus:border-primary transition-all shadow-sm"
                 />
                 {query && (
                     <button
                         onClick={clearSearch}
-                        className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-white transition"
+                        className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-600 hover:text-gray-900 transition"
                     >
                         <FaTimes size={20} />
                     </button>

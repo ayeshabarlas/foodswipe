@@ -108,12 +108,11 @@ export default function RidersView() {
 
     const fetchRiders = async () => {
         try {
-            const userInfo = localStorage.getItem('userInfo');
-            const token = userInfo ? JSON.parse(userInfo).token : null;
-            if (!token) return;
+            const userInfo = JSON.parse(localStorage.getItem('userInfo') || '{}');
+            if (!userInfo.token) return;
 
             const res = await axios.get(`${API_BASE_URL}/api/admin/riders`, {
-                headers: { Authorization: `Bearer ${token}` }
+                headers: { Authorization: `Bearer ${userInfo.token}` }
             });
             const data = res.data;
             const ridersList = Array.isArray(data) ? data : (Array.isArray(data.riders) ? data.riders : []);
@@ -123,9 +122,11 @@ export default function RidersView() {
                 const updated = ridersList.find((r: Rider) => r._id === selectedRider._id);
                 if (updated) setSelectedRider(updated);
             }
-        } catch (error) {
+        } catch (error: any) {
             console.error('Error fetching riders:', error);
-            toast.error('Failed to fetch riders');
+            if (error.response?.status !== 401) {
+                toast.error('Failed to fetch riders');
+            }
         } finally {
             setLoading(false);
         }
@@ -135,18 +136,20 @@ export default function RidersView() {
         e.stopPropagation();
         if (!window.confirm('Approve this rider?')) return;
         try {
-            const token = JSON.parse(localStorage.getItem('userInfo') || '{}').token;
+            const userInfo = JSON.parse(localStorage.getItem('userInfo') || '{}');
+            if (!userInfo.token) return;
+
             await axios.put(`${API_BASE_URL}/api/admin/riders/${id}/approve`, {}, {
-                headers: { Authorization: `Bearer ${token}` }
+                headers: { Authorization: `Bearer ${userInfo.token}` }
             });
             toast.success('Rider approved');
             fetchRiders();
             if (selectedRider?._id === id) {
                 setSelectedRider(prev => prev ? { ...prev, verificationStatus: 'approved' } : null);
             }
-        } catch (error) {
+        } catch (error: any) {
             console.error('Error approving rider:', error);
-            toast.error('Failed to approve rider');
+            toast.error(error.response?.data?.message || 'Failed to approve rider');
         }
     };
 
@@ -155,18 +158,20 @@ export default function RidersView() {
         const reason = prompt('Enter rejection reason:');
         if (!reason) return;
         try {
-            const token = JSON.parse(localStorage.getItem('userInfo') || '{}').token;
+            const userInfo = JSON.parse(localStorage.getItem('userInfo') || '{}');
+            if (!userInfo.token) return;
+
             await axios.put(`${API_BASE_URL}/api/admin/riders/${id}/reject`, { reason }, {
-                headers: { Authorization: `Bearer ${token}` }
+                headers: { Authorization: `Bearer ${userInfo.token}` }
             });
             toast.success('Rider application rejected');
             fetchRiders();
             if (selectedRider?._id === id) {
                 setSelectedRider(prev => prev ? { ...prev, verificationStatus: 'rejected' } : null);
             }
-        } catch (error) {
+        } catch (error: any) {
             console.error('Error rejecting rider:', error);
-            toast.error('Failed to reject rider');
+            toast.error(error.response?.data?.message || 'Failed to reject rider');
         }
     };
 
@@ -174,30 +179,34 @@ export default function RidersView() {
         e.stopPropagation();
         if (!window.confirm('Suspend this rider?')) return;
         try {
-            const token = JSON.parse(localStorage.getItem('userInfo') || '{}').token;
+            const userInfo = JSON.parse(localStorage.getItem('userInfo') || '{}');
+            if (!userInfo.token) return;
+
             await axios.put(`${API_BASE_URL}/api/admin/users/${id}/suspend`, {}, {
-                headers: { Authorization: `Bearer ${token}` }
+                headers: { Authorization: `Bearer ${userInfo.token}` }
             });
             toast.success('Rider suspended');
             fetchRiders();
-        } catch (error) {
+        } catch (error: any) {
             console.error('Error suspending rider:', error);
-            toast.error('Failed to suspend rider');
+            toast.error(error.response?.data?.message || 'Failed to suspend rider');
         }
     };
 
     const handleUnsuspend = async (id: string, e: React.MouseEvent) => {
         e.stopPropagation();
         try {
-            const token = JSON.parse(localStorage.getItem('userInfo') || '{}').token;
+            const userInfo = JSON.parse(localStorage.getItem('userInfo') || '{}');
+            if (!userInfo.token) return;
+
             await axios.put(`${API_BASE_URL}/api/admin/users/${id}/unsuspend`, {}, {
-                headers: { Authorization: `Bearer ${token}` }
+                headers: { Authorization: `Bearer ${userInfo.token}` }
             });
             toast.success('Rider unsuspended');
             fetchRiders();
-        } catch (error) {
+        } catch (error: any) {
             console.error('Error unsuspending rider:', error);
-            toast.error('Failed to unsuspend rider');
+            toast.error(error.response?.data?.message || 'Failed to unsuspend rider');
         }
     };
 
@@ -205,16 +214,18 @@ export default function RidersView() {
         e.stopPropagation();
         if (!window.confirm('DANGER: Permanently delete this rider account?')) return;
         try {
-            const token = JSON.parse(localStorage.getItem('userInfo') || '{}').token;
+            const userInfo = JSON.parse(localStorage.getItem('userInfo') || '{}');
+            if (!userInfo.token) return;
+
             await axios.delete(`${API_BASE_URL}/api/admin/users/${id}`, {
-                headers: { Authorization: `Bearer ${token}` }
+                headers: { Authorization: `Bearer ${userInfo.token}` }
             });
             toast.success('Rider deleted');
             if (selectedRider?.user?._id === id) setSelectedRider(null);
             fetchRiders();
-        } catch (error) {
+        } catch (error: any) {
             console.error('Error deleting rider:', error);
-            toast.error('Failed to delete rider');
+            toast.error(error.response?.data?.message || 'Failed to delete rider');
         }
     };
 

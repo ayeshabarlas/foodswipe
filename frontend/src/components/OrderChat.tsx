@@ -174,13 +174,13 @@ export default function OrderChat({ orderId, isOpen, onClose, userRole, userName
                                 </div>
                                 <div>
                                     <h3 className="font-bold text-gray-900 text-lg">Order Chat</h3>
-                                    <p className="text-[10px] text-gray-400 uppercase tracking-[0.2em] font-bold">
+                                    <p className="text-[10px] text-gray-700 uppercase tracking-[0.2em] font-bold">
                                         Active • Status: {orderStatus || 'Processing'}
                                     </p>
                                 </div>
                             </div>
                             <button onClick={onClose} className="p-2 hover:bg-gray-100 rounded-full transition-colors">
-                                <FaTimes className="text-gray-400" />
+                                <FaTimes className="text-gray-700" />
                             </button>
                         </div>
 
@@ -206,18 +206,18 @@ export default function OrderChat({ orderId, isOpen, onClose, userRole, userName
                                                 <p className="leading-relaxed">{msg.text}</p>
                                             </div>
                                             <div className="flex items-center gap-2 mt-2 px-1">
-                                                <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">
+                                                <span className="text-[10px] font-bold text-gray-700 uppercase tracking-widest">
                                                     {msg.senderId === userId ? 'YOU' : msg.senderName.toUpperCase()}
                                                 </span>
-                                                <span className="text-[10px] text-gray-300">•</span>
-                                                <span className="text-[10px] font-bold text-gray-400">{msg.timestamp}</span>
+                                                <span className="text-[10px] text-gray-500">•</span>
+                                                <span className="text-[10px] font-bold text-gray-700">{msg.timestamp}</span>
                                             </div>
                                         </div>
                                     ))}
                                     <div ref={messagesEndRef} />
                                     {messages.length === 0 && !loading && (
-                                        <div className="h-full flex flex-col items-center justify-center text-gray-300 space-y-4">
-                                            <div className="w-20 h-20 bg-white rounded-[2rem] shadow-sm flex items-center justify-center text-gray-100">
+                                        <div className="h-full flex flex-col items-center justify-center text-gray-500 space-y-4">
+                                            <div className="w-20 h-20 bg-white rounded-[2rem] shadow-sm flex items-center justify-center text-gray-300">
                                                 <FaCommentDots size={40} />
                                             </div>
                                             <p className="text-[10px] font-bold uppercase tracking-[0.2em]">No messages yet</p>
@@ -231,7 +231,7 @@ export default function OrderChat({ orderId, isOpen, onClose, userRole, userName
                         <div className="p-6 bg-white border-t border-gray-100">
                             {isChatDisabled ? (
                                 <div className="bg-gray-50 rounded-2xl p-4 text-center">
-                                    <p className="text-xs font-bold text-gray-400 uppercase tracking-widest">
+                                    <p className="text-xs font-bold text-gray-700 uppercase tracking-widest">
                                         Chat disabled - Order {orderStatus}
                                     </p>
                                 </div>
@@ -243,7 +243,7 @@ export default function OrderChat({ orderId, isOpen, onClose, userRole, userName
                                         onChange={(e) => setCurrentMessage(e.target.value)}
                                         onKeyPress={(e) => e.key === 'Enter' && handleSendMessage()}
                                         placeholder="Type your message..."
-                                        className="flex-1 bg-transparent border-none py-4 text-sm font-bold focus:outline-none placeholder:text-gray-300"
+                                        className="flex-1 bg-transparent border-none py-4 text-sm font-bold focus:outline-none placeholder:text-gray-400"
                                     />
                                     <button
                                         onClick={handleSendMessage}

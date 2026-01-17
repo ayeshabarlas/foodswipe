@@ -337,7 +337,7 @@ export default function RiderOrders({ riderId, setShowNotifications, unreadCount
                 <div className="px-6 py-5">
                     <div className="bg-white rounded-[24px] p-5 shadow-sm border border-gray-100 flex items-center justify-between">
                         <div>
-                            <p className="text-gray-400 font-medium text-[11px] uppercase tracking-wider mb-1">Potential Earnings</p>
+                            <p className="text-gray-700 font-bold text-[11px] uppercase tracking-wider mb-1">Potential Earnings</p>
                             <div className="flex items-baseline gap-1">
                                 <span className="text-xl font-semibold text-green-600">Rs. {potentialEarnings}</span>
                             </div>
@@ -353,7 +353,7 @@ export default function RiderOrders({ riderId, setShowNotifications, unreadCount
                     <div className="flex gap-3 overflow-x-auto pb-2 no-scrollbar">
                         <button 
                             onClick={() => { setFilter('active'); setAvailableFilter('all'); }}
-                            className={`flex items-center gap-2 px-5 py-2.5 rounded-full text-xs font-semibold whitespace-nowrap transition-all ${filter === 'active' && availableFilter === 'all' ? 'bg-gradient-to-r from-orange-500 to-red-500 text-white shadow-lg shadow-orange-500/30' : 'bg-white text-gray-400 border border-gray-100'}`}
+                            className={`flex items-center gap-2 px-5 py-2.5 rounded-full text-xs font-semibold whitespace-nowrap transition-all ${filter === 'active' && availableFilter === 'all' ? 'bg-gradient-to-r from-orange-500 to-red-500 text-white shadow-lg shadow-orange-500/30' : 'bg-white text-gray-700 font-bold border border-gray-100'}`}
                         >
                             All Orders
                             <span className={`px-1.5 py-0.5 rounded-md text-[10px] ${filter === 'active' && availableFilter === 'all' ? 'bg-white/20' : 'bg-gray-100'}`}>
@@ -362,7 +362,7 @@ export default function RiderOrders({ riderId, setShowNotifications, unreadCount
                         </button>
                         <button 
                             onClick={() => { setFilter('active'); setAvailableFilter('nearby'); }}
-                            className={`flex items-center gap-2 px-5 py-2.5 rounded-full text-xs font-semibold whitespace-nowrap transition-all ${filter === 'active' && availableFilter === 'nearby' ? 'bg-gradient-to-r from-orange-500 to-red-500 text-white shadow-lg shadow-orange-500/30' : 'bg-white text-gray-400 border border-gray-100'}`}
+                            className={`flex items-center gap-2 px-5 py-2.5 rounded-full text-xs font-semibold whitespace-nowrap transition-all ${filter === 'active' && availableFilter === 'nearby' ? 'bg-gradient-to-r from-orange-500 to-red-500 text-white shadow-lg shadow-orange-500/30' : 'bg-white text-gray-700 font-bold border border-gray-100'}`}
                         >
                             Nearby
                             <span className={`px-1.5 py-0.5 rounded-md text-[10px] ${filter === 'active' && availableFilter === 'nearby' ? 'bg-white/20' : 'bg-gray-100'}`}>
@@ -371,7 +371,7 @@ export default function RiderOrders({ riderId, setShowNotifications, unreadCount
                         </button>
                         <button 
                             onClick={() => { setFilter('active'); setAvailableFilter('high_pay'); }}
-                            className={`flex items-center gap-2 px-5 py-2.5 rounded-full text-xs font-semibold whitespace-nowrap transition-all ${filter === 'active' && availableFilter === 'high_pay' ? 'bg-gradient-to-r from-orange-500 to-red-500 text-white shadow-lg shadow-orange-500/30' : 'bg-white text-gray-400 border border-gray-100'}`}
+                            className={`flex items-center gap-2 px-5 py-2.5 rounded-full text-xs font-semibold whitespace-nowrap transition-all ${filter === 'active' && availableFilter === 'high_pay' ? 'bg-gradient-to-r from-orange-500 to-red-500 text-white shadow-lg shadow-orange-500/30' : 'bg-white text-gray-700 font-bold border border-gray-100'}`}
                         >
                             High Pay
                             <span className={`px-1.5 py-0.5 rounded-md text-[10px] ${filter === 'active' && availableFilter === 'high_pay' ? 'bg-white/20' : 'bg-gray-100'}`}>
@@ -380,7 +380,7 @@ export default function RiderOrders({ riderId, setShowNotifications, unreadCount
                         </button>
                         <button 
                             onClick={() => setFilter('completed')}
-                            className={`flex items-center gap-2 px-5 py-2.5 rounded-full text-xs font-semibold whitespace-nowrap transition-all ${filter === 'completed' ? 'bg-gradient-to-r from-orange-500 to-red-500 text-white shadow-lg shadow-orange-500/30' : 'bg-white text-gray-400 border border-gray-100'}`}
+                            className={`flex items-center gap-2 px-5 py-2.5 rounded-full text-xs font-semibold whitespace-nowrap transition-all ${filter === 'completed' ? 'bg-gradient-to-r from-orange-500 to-red-500 text-white shadow-lg shadow-orange-500/30' : 'bg-white text-gray-700 font-bold border border-gray-100'}`}
                         >
                             History
                         </button>
@@ -435,12 +435,12 @@ export default function RiderOrders({ riderId, setShowNotifications, unreadCount
                                                 </div>
                                                 
                                                 <h2 className="text-2xl font-semibold text-center text-[#FF4D00] mb-1">Order Accepted!</h2>
-                                                <p className="text-gray-400 text-center text-xs font-semibold mb-8">You've successfully accepted this delivery</p>
+                                                <p className="text-gray-800 text-center text-xs font-bold mb-8">You've successfully accepted this delivery</p>
 
                                                 <div className="space-y-6">
                                                     <div className="flex items-center justify-between pb-4 border-b border-gray-50">
-                                                        <span className="text-gray-400 font-medium text-xs uppercase tracking-wider">Order Summary</span>
-                                                        <span className="text-gray-900 font-semibold text-sm">Order ID <span className="text-gray-400 ml-1">#{activeDelivery.orderNumber || activeDelivery._id.slice(-6).toUpperCase()}</span></span>
+                                                        <span className="text-gray-700 font-bold text-xs uppercase tracking-wider">Order Summary</span>
+                                                        <span className="text-gray-900 font-semibold text-sm">Order ID <span className="text-gray-700 ml-1">#{activeDelivery.orderNumber || activeDelivery._id.slice(-6).toUpperCase()}</span></span>
                                                     </div>
 
                                                     <div className="space-y-4">
@@ -449,10 +449,10 @@ export default function RiderOrders({ riderId, setShowNotifications, unreadCount
                                                                 <FaMapMarkerAlt size={16} />
                                                             </div>
                                                             <div>
-                                                                <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-widest">Pickup from</p>
-                                                                <p className="font-semibold text-gray-900 text-sm">{activeDelivery.restaurant?.name}</p>
-                                                                <p className="text-[11px] text-gray-500 line-clamp-1">{activeDelivery.restaurant?.address || 'Restaurant Address'}</p>
-                                                                <p className="text-[11px] font-semibold text-gray-500 mt-0.5">{activeDelivery.distanceKm || '1.2'} km away</p>
+                                                                <p className="text-[10px] font-bold text-gray-800 uppercase tracking-widest">Pickup from</p>
+                                                                <p className="font-bold text-gray-900 text-sm">{activeDelivery.restaurant?.name}</p>
+                                                                <p className="text-[11px] text-gray-800 font-bold line-clamp-1">{activeDelivery.restaurant?.address || 'Restaurant Address'}</p>
+                                                                <p className="text-[11px] font-bold text-gray-800 mt-0.5">{activeDelivery.distanceKm || '1.2'} km away</p>
                                                             </div>
                                                     </div>
 
@@ -461,22 +461,22 @@ export default function RiderOrders({ riderId, setShowNotifications, unreadCount
                                                                 <FaMapMarkerAlt size={16} />
                                                             </div>
                                                             <div>
-                                                                <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-widest">Deliver to</p>
-                                                                <p className="font-semibold text-gray-900 text-sm line-clamp-1">{activeDelivery.user?.name || 'Customer'}</p>
-                                                                <p className="text-[11px] text-gray-500 line-clamp-1">{activeDelivery.shippingAddress?.address || activeDelivery.deliveryAddress || 'Customer Address'}</p>
+                                                                <p className="text-[10px] font-bold text-gray-800 uppercase tracking-widest">Deliver to</p>
+                                                                <p className="font-bold text-gray-900 text-sm line-clamp-1">{activeDelivery.user?.name || 'Customer'}</p>
+                                                                <p className="text-[11px] text-gray-800 font-bold line-clamp-1">{activeDelivery.shippingAddress?.address || activeDelivery.deliveryAddress || 'Customer Address'}</p>
                                                                 {activeDelivery.user?.phone && (
-                                                                    <p className="text-[11px] font-bold text-orange-500 mt-1 flex items-center gap-1.5 bg-orange-50 w-fit px-2 py-0.5 rounded-md">
+                                                                    <p className="text-[11px] font-bold text-orange-600 mt-1 flex items-center gap-1.5 bg-orange-50 w-fit px-2 py-0.5 rounded-md">
                                                                         <FaPhone size={10} /> {activeDelivery.user.phone}
                                                                     </p>
                                                                 )}
-                                                                <p className="text-[11px] font-semibold text-gray-500 mt-1.5">{(activeDelivery.distanceKm * 1.5).toFixed(1) || '3.5'} km from restaurant</p>
+                                                                <p className="text-[11px] font-bold text-gray-800 mt-1.5">{(activeDelivery.distanceKm * 1.5).toFixed(1) || '3.5'} km from restaurant</p>
                                                             </div>
                                                         </div>
                                                 </div>
 
                                                 <div className="pt-4 border-t border-gray-50 space-y-3">
                                                     <div className="flex justify-between items-center">
-                                                            <div className="flex items-center gap-2 text-gray-400 font-semibold text-xs">
+                                                            <div className="flex items-center gap-2 text-gray-800 font-bold text-xs">
                                                                 <span>Rs.</span> Total Earning
                                                             </div>
                                                             <span className="text-[#FF4D00] font-semibold text-lg">Rs. {activeDelivery.netRiderEarning || activeDelivery.riderEarning || activeDelivery.earnings || Math.round(60 + ((activeDelivery.distanceKm || 4.2) * 20))}</span>
@@ -485,20 +485,20 @@ export default function RiderOrders({ riderId, setShowNotifications, unreadCount
                                                     {/* MVP Earnings Breakdown */}
                                                     <div className="bg-gray-50/80 rounded-2xl p-3 space-y-2">
                                                         <div className="flex justify-between items-center text-[10px]">
-                                                            <span className="text-gray-500">Base Pay</span>
-                                                            <span className="font-semibold text-gray-700">Rs. 60</span>
+                                                            <span className="text-gray-800 font-bold">Base Pay</span>
+                                                            <span className="font-bold text-gray-800">Rs. 60</span>
                                                         </div>
                                                         <div className="flex justify-between items-center text-[10px]">
-                                                            <span className="text-gray-500">Distance ({activeDelivery.distanceKm || 4.2} km x 20)</span>
-                                                            <span className="font-semibold text-gray-700">Rs. {Math.round((activeDelivery.distanceKm || 4.2) * 20)}</span>
+                                                            <span className="text-gray-800 font-bold">Distance ({activeDelivery.distanceKm || 4.2} km x 20)</span>
+                                                            <span className="font-bold text-gray-800">Rs. {Math.round((activeDelivery.distanceKm || 4.2) * 20)}</span>
                                                         </div>
                                                     </div>
 
                                                     <div className="flex justify-between items-center">
-                                                        <div className="flex items-center gap-2 text-gray-400 font-semibold text-xs">
+                                                        <div className="flex items-center gap-2 text-gray-800 font-bold text-xs">
                                                             <FaClock /> Estimated time
                                                         </div>
-                                                        <span className="text-gray-900 font-semibold text-sm">{activeDelivery.estimatedTime || '25-30'} mins</span>
+                                                        <span className="text-gray-900 font-bold text-sm">{activeDelivery.estimatedTime || '25-30'} mins</span>
                                                     </div>
                                                 </div>
                                                 </div>
@@ -521,7 +521,7 @@ export default function RiderOrders({ riderId, setShowNotifications, unreadCount
                                                 <h2 className="text-lg font-semibold tracking-tight text-gray-900">
                                                     {['Arrived', 'Ready'].includes(activeDelivery.status) ? 'Pickup' : 'Delivery'} In Progress
                                                 </h2>
-                                                <p className="text-[10px] font-medium text-gray-400 uppercase tracking-widest">
+                                                <p className="text-[10px] font-bold text-gray-700 uppercase tracking-widest">
                                                     {['Arrived', 'Ready'].includes(activeDelivery.status) ? 'Restaurant' : 'Customer'}: {['Arrived', 'Ready'].includes(activeDelivery.status) ? activeDelivery.restaurant?.name : activeDelivery.user?.name}
                                                 </p>
                                             </div>
@@ -558,7 +558,7 @@ export default function RiderOrders({ riderId, setShowNotifications, unreadCount
                                                         <div className={`w-7 h-7 rounded-full flex items-center justify-center border-4 border-white shadow-sm transition-colors duration-500 ${isCompleted ? 'bg-gradient-to-r from-orange-500 to-red-500 text-white' : 'bg-gray-100 text-gray-400'}`}>
                                                             {isCompleted ? <FaCheckCircle size={10} /> : <div className="w-1.5 h-1.5 rounded-full bg-current" />}
                                                         </div>
-                                                        <span className={`absolute -bottom-6 whitespace-nowrap text-[8px] font-normal tracking-tight ${isCompleted ? 'text-orange-500' : 'text-gray-300'}`}>
+                                                        <span className={`absolute -bottom-6 whitespace-nowrap text-[8px] font-bold tracking-tight ${isCompleted ? 'text-orange-500' : 'text-gray-700'}`}>
                                                             {step.label}
                                                         </span>
                                                     </div>
@@ -573,9 +573,9 @@ export default function RiderOrders({ riderId, setShowNotifications, unreadCount
                                                     <FaMapMarkerAlt size={12} />
                                                 </div>
                                                 <div>
-                                                    <p className="text-[9px] font-bold text-gray-400 uppercase tracking-wider">Pickup</p>
-                                                    <p className="font-semibold text-gray-900 text-xs">{activeDelivery.restaurant?.name}</p>
-                                                    <p className="text-[10px] text-gray-500 line-clamp-1">{activeDelivery.restaurant?.address}</p>
+                                                    <p className="text-[9px] font-bold text-gray-800 uppercase tracking-wider">Pickup</p>
+                                                    <p className="font-bold text-gray-900 text-xs">{activeDelivery.restaurant?.name}</p>
+                                                    <p className="text-[10px] text-gray-800 font-bold line-clamp-1">{activeDelivery.restaurant?.address}</p>
                                                 </div>
                                             </div>
                                             <div className="flex gap-3">
@@ -583,11 +583,11 @@ export default function RiderOrders({ riderId, setShowNotifications, unreadCount
                                                     <FaMapMarkerAlt size={12} />
                                                 </div>
                                                 <div>
-                                                    <p className="text-[9px] font-bold text-gray-400 uppercase tracking-wider">Deliver to</p>
-                                                    <p className="font-semibold text-gray-900 text-xs">{activeDelivery.user?.name || 'Customer'}</p>
-                                                    <p className="text-[10px] text-gray-500 line-clamp-1">{activeDelivery.shippingAddress?.address || activeDelivery.deliveryAddress || 'No address provided'}</p>
+                                                    <p className="text-[9px] font-bold text-gray-800 uppercase tracking-wider">Deliver to</p>
+                                                    <p className="font-bold text-gray-900 text-xs">{activeDelivery.user?.name || 'Customer'}</p>
+                                                    <p className="text-[10px] text-gray-800 font-bold line-clamp-1">{activeDelivery.shippingAddress?.address || activeDelivery.deliveryAddress || 'No address provided'}</p>
                                                     {activeDelivery.user?.phone && (
-                                                        <p className="text-[10px] font-bold text-orange-500 mt-1 flex items-center gap-1.5">
+                                                        <p className="text-[10px] font-bold text-orange-600 mt-1 flex items-center gap-1.5">
                                                             <FaPhone size={8} /> {activeDelivery.user.phone}
                                                         </p>
                                                     )}

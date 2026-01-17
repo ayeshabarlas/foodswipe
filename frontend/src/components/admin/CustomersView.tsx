@@ -1,8 +1,7 @@
 'use client';
 import { useState, useEffect } from 'react';
-import axios from 'axios';
-import { io } from 'socket.io-client';
-import { API_BASE_URL, SOCKET_URL } from '../../utils/config';
+import { getSocket } from '../../utils/socket';
+import { API_BASE_URL } from '../../utils/config';
 import toast from 'react-hot-toast';
 import { FaUser, FaSearch, FaFilter, FaEye, FaFlag, FaBan, FaCheckCircle, FaTimesCircle, FaSync, FaTimes, FaShoppingBag, FaCalendarAlt, FaEnvelope, FaPhoneAlt, FaHistory, FaCreditCard, FaExclamationTriangle } from 'react-icons/fa';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -37,14 +36,18 @@ export default function CustomersView() {
 
     const fetchCustomers = async () => {
         try {
-            const token = JSON.parse(localStorage.getItem('userInfo') || '{}').token;
+            const userInfo = JSON.parse(localStorage.getItem('userInfo') || '{}');
+            if (!userInfo.token) return;
+
             const res = await axios.get(`${API_BASE_URL}/api/admin/users?role=customer`, {
-                headers: { Authorization: `Bearer ${token}` }
+                headers: { Authorization: `Bearer ${userInfo.token}` }
             });
             setCustomers(Array.isArray(res.data) ? res.data : (res.data?.users || []));
-        } catch (error) {
+        } catch (error: any) {
             console.error('Error fetching customers:', error);
-            toast.error('Failed to fetch customers');
+            if (error.response?.status !== 401) {
+                toast.error('Failed to fetch customers');
+            }
         } finally {
             setLoading(false);
         }
@@ -55,13 +58,15 @@ export default function CustomersView() {
         setSyncing(true);
         const toastId = toast.loading('Syncing with Firebase...');
         try {
-            const token = JSON.parse(localStorage.getItem('userInfo') || '{}').token;
+            const userInfo = JSON.parse(localStorage.getItem('userInfo') || '{}');
+            if (!userInfo.token) return;
+
             const res = await axios.post(`${API_BASE_URL}/api/admin/users/sync`, {}, {
-                headers: { Authorization: `Bearer ${token}` }
+                headers: { Authorization: `Bearer ${userInfo.token}` }
             });
             toast.success(`Sync complete! Synced: ${res.data.syncedCount} new users.`, { id: toastId });
             fetchCustomers();
-        } catch (error) {
+        } catch (error: any) {
             console.error('Sync Error:', error);
             toast.error('Failed to sync users', { id: toastId });
         } finally {
@@ -73,16 +78,18 @@ export default function CustomersView() {
         e.stopPropagation();
         if (!window.confirm('Are you sure you want to suspend this customer?')) return;
         try {
-            const token = JSON.parse(localStorage.getItem('userInfo') || '{}').token;
+            const userInfo = JSON.parse(localStorage.getItem('userInfo') || '{}');
+            if (!userInfo.token) return;
+
             await axios.put(`${API_BASE_URL}/api/admin/users/${id}/suspend`, {}, {
-                headers: { Authorization: `Bearer ${token}` }
+                headers: { Authorization: `Bearer ${userInfo.token}` }
             });
             toast.success('Customer suspended');
             fetchCustomers();
             if (selectedCustomer?._id === id) {
                 setSelectedCustomer(prev => prev ? { ...prev, status: 'suspended' } : null);
             }
-        } catch (error) {
+        } catch (error: any) {
             console.error('Error suspending customer:', error);
             toast.error('Failed to suspend customer');
         }
@@ -91,16 +98,18 @@ export default function CustomersView() {
     const handleUnsuspend = async (id: string, e: React.MouseEvent) => {
         e.stopPropagation();
         try {
-            const token = JSON.parse(localStorage.getItem('userInfo') || '{}').token;
+            const userInfo = JSON.parse(localStorage.getItem('userInfo') || '{}');
+            if (!userInfo.token) return;
+
             await axios.put(`${API_BASE_URL}/api/admin/users/${id}/unsuspend`, {}, {
-                headers: { Authorization: `Bearer ${token}` }
+                headers: { Authorization: `Bearer ${userInfo.token}` }
             });
             toast.success('Customer unsuspended');
             fetchCustomers();
             if (selectedCustomer?._id === id) {
                 setSelectedCustomer(prev => prev ? { ...prev, status: 'active' } : null);
             }
-        } catch (error) {
+        } catch (error: any) {
             console.error('Error unsuspending customer:', error);
             toast.error('Failed to unsuspend customer');
         }
@@ -110,27 +119,29 @@ export default function CustomersView() {
         e.stopPropagation();
         if (!window.confirm('WARNING: This will permanently delete the customer account. Proceed?')) return;
         try {
-            const token = JSON.parse(localStorage.getItem('userInfo') || '{}').token;
+            const userInfo = JSON.parse(localStorage.getItem('userInfo') || '{}');
+            if (!userInfo.token) return;
+
             await axios.delete(`${API_BASE_URL}/api/admin/users/${id}`, {
-                headers: { Authorization: `Bearer ${token}` }
+                headers: { Authorization: `Bearer ${userInfo.token}` }
             });
             toast.success('Customer deleted permanently');
             setSelectedCustomer(null);
             fetchCustomers();
-        } catch (error) {
+        } catch (error: any) {
             console.error('Error deleting customer:', error);
             toast.error('Failed to delete customer');
         }
     };
 
     useEffect(() => {
-        const socket = io(SOCKET_URL);
+        const socket = getSocket();
         socket.on('user_registered', () => {
             console.log('New user registered, refreshing...');
             fetchCustomers();
         });
         return () => {
-            socket.disconnect();
+            socket.off('user_registered');
         };
     }, []);
 

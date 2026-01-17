@@ -2,8 +2,8 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import axios from 'axios';
-import { io } from 'socket.io-client';
-import { API_BASE_URL, SOCKET_URL } from '../../utils/config';
+import { getSocket } from '../../utils/socket';
+import { API_BASE_URL } from '../../utils/config';
 import { FaClock, FaMotorcycle, FaStore, FaUser, FaPhone, FaMapMarkerAlt, FaSyncAlt, FaShoppingBag } from 'react-icons/fa';
 
 interface Order {
@@ -28,21 +28,24 @@ export default function OrdersView() {
     useEffect(() => {
         fetchOrders();
 
-        const socket = io(SOCKET_URL);
+        const socket = getSocket();
 
-        const handleUpdate = () => {
-            if (autoRefresh) {
-                console.log('Order update detected, refreshing list...');
-                fetchOrders();
-            }
-        };
+        if (socket) {
+            const handleUpdate = () => {
+                if (autoRefresh) {
+                    console.log('Order update detected, refreshing list...');
+                    fetchOrders();
+                }
+            };
 
-        socket.on('order_created', handleUpdate);
-        socket.on('order_updated', handleUpdate);
+            socket.on('order_created', handleUpdate);
+            socket.on('order_updated', handleUpdate);
 
-        return () => {
-            socket.disconnect();
-        };
+            return () => {
+                socket.off('order_created', handleUpdate);
+                socket.off('order_updated', handleUpdate);
+            };
+        }
     }, [autoRefresh]);
 
     const fetchOrders = async () => {

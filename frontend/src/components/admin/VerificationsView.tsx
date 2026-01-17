@@ -2,9 +2,8 @@
 
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import axios from 'axios';
-import { io } from 'socket.io-client';
-import { API_BASE_URL, SOCKET_URL } from '../../utils/config';
+import { getSocket } from '../../utils/socket';
+import { API_BASE_URL } from '../../utils/config';
 import { getImageUrl } from '../../utils/imageUtils';
 import { FaCheckCircle, FaTimesCircle, FaEye, FaSpinner, FaStore, FaMotorcycle, FaFileAlt } from 'react-icons/fa';
 
@@ -20,47 +19,31 @@ export default function VerificationsView({ initialTab = 'restaurants' }: { init
     useEffect(() => {
         fetchVerifications();
 
-        // Join admin room for real-time updates
-        const userInfo = localStorage.getItem('userInfo');
-        let socket: any;
+        const socket = getSocket();
 
-        if (userInfo) {
-            try {
-                const user = JSON.parse(userInfo);
-                socket = io(SOCKET_URL);
-                
-                socket.on('connect', () => {
-                    console.log('Connected to socket for verification updates');
-                    socket.emit('join', { userId: user._id, role: 'admin' });
-                });
+        if (socket) {
+            const handleRefresh = () => {
+                console.log('Verification update detected, refreshing...');
+                fetchVerifications();
+            };
 
-                socket.on('restaurant_registered', (newRestaurant: any) => {
-                    console.log('New restaurant registered for verification:', newRestaurant);
-                    fetchVerifications();
-                });
+            socket.on('restaurant_registered', handleRefresh);
+            socket.on('rider_registered', handleRefresh);
+            socket.on('verification_updated', handleRefresh);
 
-                socket.on('rider_registered', (newRider: any) => {
-                    console.log('New rider registered for verification:', newRider);
-                    fetchVerifications();
-                });
-
-                socket.on('verification_updated', () => {
-                    console.log('Verification updated, refreshing...');
-                    fetchVerifications();
-                });
-            } catch (e) {
-                console.error('Error setting up socket in VerificationsView:', e);
-            }
+            return () => {
+                socket.off('restaurant_registered', handleRefresh);
+                socket.off('rider_registered', handleRefresh);
+                socket.off('verification_updated', handleRefresh);
+            };
         }
-
-        return () => {
-            if (socket) socket.disconnect();
-        };
     }, []);
 
     const fetchVerifications = async () => {
         try {
             const userInfo = JSON.parse(localStorage.getItem('userInfo') || '{}');
+            if (!userInfo.token) return;
+
             const config = {
                 headers: { Authorization: `Bearer ${userInfo.token}` }
             };
@@ -72,8 +55,9 @@ export default function VerificationsView({ initialTab = 'restaurants' }: { init
 
             setRestaurants(Array.isArray(restaurantsRes.data) ? restaurantsRes.data : (restaurantsRes.data?.restaurants || []));
             setRiders(Array.isArray(ridersRes.data) ? ridersRes.data : (ridersRes.data?.riders || []));
-        } catch (error) {
+        } catch (error: any) {
             console.error('Error fetching verifications:', error);
+            // Silence but log
         } finally {
             setLoading(false);
         }

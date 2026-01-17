@@ -1,8 +1,8 @@
 'use client';
 import { useState, useEffect } from 'react';
 import axios from 'axios';
-import { io } from 'socket.io-client';
-import { API_BASE_URL, SOCKET_URL } from '../../utils/config';
+import { getSocket } from '../../utils/socket';
+import { API_BASE_URL } from '../../utils/config';
 import { FaHeadset, FaSearch, FaFilter, FaClock, FaCheck, FaExclamationCircle } from 'react-icons/fa';
 
 export default function SupportView() {
@@ -12,13 +12,16 @@ export default function SupportView() {
     useEffect(() => {
         fetchTickets();
 
-        const socket = io(SOCKET_URL);
-        socket.on('ticket_created', fetchTickets);
-        socket.on('ticket_updated', fetchTickets);
+        const socket = getSocket();
+        if (socket) {
+            socket.on('ticket_created', fetchTickets);
+            socket.on('ticket_updated', fetchTickets);
 
-        return () => {
-            socket.disconnect();
-        };
+            return () => {
+                socket.off('ticket_created', fetchTickets);
+                socket.off('ticket_updated', fetchTickets);
+            };
+        }
     }, []);
 
     const fetchTickets = async () => {
@@ -29,8 +32,9 @@ export default function SupportView() {
             };
             const { data } = await axios.get(`${API_BASE_URL}/api/tickets`, config);
             setTickets(data);
-        } catch (error) {
+        } catch (error: any) {
             console.error('Error fetching tickets:', error);
+            // Silence but log
         } finally {
             setLoading(false);
         }

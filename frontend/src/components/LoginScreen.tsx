@@ -309,7 +309,7 @@ export default function LoginScreen({ onLogin }: LoginScreenProps) {
                                             placeholder="First Name"
                                             value={formData.firstName}
                                             onChange={handleChange}
-                                            className="w-full rounded-full border border-gray-200 bg-white pl-10 pr-4 py-3 text-gray-700 placeholder-gray-400 outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-500 transition-all text-sm"
+                                            className="w-full rounded-full border border-gray-200 bg-white pl-10 pr-4 py-3 text-gray-900 placeholder:text-gray-400 font-medium outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-500 transition-all text-sm"
                                             required
                                         />
                                     </div>
@@ -320,7 +320,7 @@ export default function LoginScreen({ onLogin }: LoginScreenProps) {
                                             placeholder="Last Name"
                                             value={formData.lastName}
                                             onChange={handleChange}
-                                            className="w-full rounded-full border border-gray-200 bg-white px-4 py-3 text-gray-700 placeholder-gray-400 outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-500 transition-all text-sm"
+                                            className="w-full rounded-full border border-gray-200 bg-white px-4 py-3 text-gray-900 placeholder:text-gray-400 font-medium outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-500 transition-all text-sm"
                                             required
                                         />
                                     </div>
@@ -333,7 +333,7 @@ export default function LoginScreen({ onLogin }: LoginScreenProps) {
                                         placeholder="Email address"
                                         value={formData.email}
                                         onChange={handleChange}
-                                        className="w-full rounded-full border border-gray-200 bg-white pl-12 pr-4 py-3 text-gray-700 placeholder-gray-400 outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-500 transition-all"
+                                        className="w-full rounded-full border border-gray-200 bg-white pl-12 pr-4 py-3 text-gray-900 placeholder:text-gray-400 font-medium outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-500 transition-all"
                                         required
                                     />
                                 </div>
@@ -344,7 +344,7 @@ export default function LoginScreen({ onLogin }: LoginScreenProps) {
                                         placeholder="Password"
                                         value={formData.password}
                                         onChange={handleChange}
-                                        className="w-full rounded-full border border-gray-200 bg-white pl-4 pr-4 py-3 text-gray-700 placeholder-gray-400 outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-500 transition-all"
+                                        className="w-full rounded-full border border-gray-200 bg-white pl-4 pr-4 py-3 text-gray-900 placeholder:text-gray-400 font-medium outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-500 transition-all"
                                         required
                                     />
                                 </div>
@@ -401,7 +401,7 @@ export default function LoginScreen({ onLogin }: LoginScreenProps) {
                                             placeholder="Email address"
                                             value={formData.email}
                                             onChange={handleChange}
-                                            className="w-full rounded-full border border-gray-200 bg-white pl-12 pr-4 py-3 text-gray-700 placeholder-gray-400 outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-500 transition-all"
+                                            className="w-full rounded-full border border-gray-200 bg-white pl-12 pr-4 py-3 text-gray-900 placeholder:text-gray-400 font-medium outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-500 transition-all"
                                             required
                                         />
                                     </div>
@@ -412,7 +412,7 @@ export default function LoginScreen({ onLogin }: LoginScreenProps) {
                                             placeholder="Password"
                                             value={formData.password}
                                             onChange={handleChange}
-                                            className="w-full rounded-full border border-gray-200 bg-white pl-4 pr-4 py-3 text-gray-700 placeholder-gray-400 outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-500 transition-all"
+                                            className="w-full rounded-full border border-gray-200 bg-white pl-4 pr-4 py-3 text-gray-900 placeholder:text-gray-400 font-medium outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-500 transition-all"
                                             required
                                         />
                                     </div>

@@ -1,8 +1,8 @@
 'use client';
 import { useState, useEffect } from 'react';
 import axios from 'axios';
-import { io } from 'socket.io-client';
-import { API_BASE_URL, SOCKET_URL } from '../../utils/config';
+import { getSocket } from '../../utils/socket';
+import { API_BASE_URL } from '../../utils/config';
 import { FaSearch, FaFilter, FaCalendarAlt, FaDownload, FaReceipt, FaSyncAlt } from 'react-icons/fa';
 
 interface Order {
@@ -31,34 +31,41 @@ export default function EnhancedOrdersView() {
     useEffect(() => {
         fetchOrders();
 
-        const socket = io(SOCKET_URL);
+        const socket = getSocket();
         
-        const handleUpdate = () => {
-            if (autoRefresh) {
-                console.log('Real-time update: Refreshing enhanced orders...');
-                fetchOrders();
-            }
-        };
+        if (socket) {
+            const handleUpdate = () => {
+                if (autoRefresh) {
+                    console.log('Real-time update: Refreshing enhanced orders...');
+                    fetchOrders();
+                }
+            };
 
-        socket.on('order_created', handleUpdate);
-        socket.on('order_updated', handleUpdate);
-        socket.on('stats_updated', handleUpdate);
+            socket.on('order_created', handleUpdate);
+            socket.on('order_updated', handleUpdate);
+            socket.on('stats_updated', handleUpdate);
 
-        return () => {
-            socket.disconnect();
-        };
+            return () => {
+                socket.off('order_created', handleUpdate);
+                socket.off('order_updated', handleUpdate);
+                socket.off('stats_updated', handleUpdate);
+            };
+        }
     }, [autoRefresh]);
 
     const fetchOrders = async () => {
         try {
-            const token = JSON.parse(localStorage.getItem('userInfo') || '{}').token;
+            const userInfo = JSON.parse(localStorage.getItem('userInfo') || '{}');
+            if (!userInfo.token) return;
+
             // Fetch all orders
             const res = await axios.get(`${API_BASE_URL}/api/admin/orders`, {
-                headers: { Authorization: `Bearer ${token}` }
+                headers: { Authorization: `Bearer ${userInfo.token}` }
             });
             setOrders(Array.isArray(res.data) ? res.data : (res.data?.orders || []));
-        } catch (error) {
+        } catch (error: any) {
             console.error('Error fetching orders:', error);
+            // Silence but log
         } finally {
             setLoading(false);
         }

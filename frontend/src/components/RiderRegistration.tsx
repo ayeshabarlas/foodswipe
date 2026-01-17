@@ -92,14 +92,14 @@ export default function RiderRegistration({ onComplete }: RiderRegistrationProps
 
                     <form onSubmit={handleSubmit} className="space-y-4">
                         <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-2">Full Name</label>
+                            <label className="block text-sm font-semibold text-gray-800 mb-2">Full Name</label>
                             <div className="relative">
                                 <input
                                     type="text"
                                     required
                                     value={formData.fullName}
                                     onChange={(e) => setFormData({ ...formData, fullName: e.target.value })}
-                                    className="w-full pl-10 pr-4 py-2.5 rounded-lg border border-gray-200 focus:ring-2 focus:ring-orange-400 focus:border-transparent outline-none transition text-sm font-light"
+                                    className="w-full pl-10 pr-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-orange-400 focus:border-transparent outline-none transition text-sm font-medium text-gray-900 placeholder:text-gray-400 bg-gray-50/50"
                                     placeholder="Muhammad Ali"
                                 />
                                 <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -109,14 +109,14 @@ export default function RiderRegistration({ onComplete }: RiderRegistrationProps
                         </div>
 
                         <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-2">CNIC Number</label>
+                            <label className="block text-sm font-semibold text-gray-800 mb-2">CNIC Number</label>
                             <div className="relative">
                                 <input
                                     type="text"
                                     required
                                     value={formData.cnicNumber}
                                     onChange={handleCNICChange}
-                                    className="w-full pl-10 pr-4 py-2.5 rounded-lg border border-gray-200 focus:ring-2 focus:ring-orange-400 focus:border-transparent outline-none transition text-sm font-light"
+                                    className="w-full pl-10 pr-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-orange-400 focus:border-transparent outline-none transition text-sm font-medium text-gray-900 placeholder:text-gray-400 bg-gray-50/50"
                                     placeholder="12345-1234567-1"
                                 />
                                 <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -126,14 +126,14 @@ export default function RiderRegistration({ onComplete }: RiderRegistrationProps
                         </div>
 
                         <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-2">Date of Birth</label>
+                            <label className="block text-sm font-semibold text-gray-800 mb-2">Date of Birth</label>
                             <div className="relative">
                                 <input
                                     type="date"
                                     required
                                     value={formData.dateOfBirth}
                                     onChange={(e) => setFormData({ ...formData, dateOfBirth: e.target.value })}
-                                    className="w-full pl-10 pr-4 py-2.5 rounded-lg border border-gray-200 focus:ring-2 focus:ring-orange-400 focus:border-transparent outline-none transition text-sm font-light"
+                                    className="w-full pl-10 pr-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-orange-400 focus:border-transparent outline-none transition text-sm font-medium text-gray-900 bg-gray-50/50"
                                 />
                                 <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />

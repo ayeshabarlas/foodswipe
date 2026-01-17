@@ -494,7 +494,7 @@ export default function CheckoutModal({ isOpen, onClose, cart, total, subtotal, 
                                         initial={{ opacity: 0 }}
                                         animate={{ opacity: 1 }}
                                         transition={{ delay: 0.3 }}
-                                        className="text-gray-500 mb-6 text-xs"
+                                        className="text-gray-700 font-medium mb-6 text-xs"
                                     >
                                         Your delicious food is being prepared
                                     </motion.p>
@@ -512,7 +512,7 @@ export default function CheckoutModal({ isOpen, onClose, cart, total, subtotal, 
                                                     <div className="w-7 h-7 bg-orange-100 rounded-full flex items-center justify-center">
                                                         <FaWallet className="text-orange-500 text-xs" />
                                                     </div>
-                                                    <p className="text-xs text-gray-600 font-normal">Order Number</p>
+                                                    <p className="text-xs text-gray-800 font-medium">Order Number</p>
                                                 </div>
                                                 <p className="font-semibold text-orange-500 text-sm">#{placedOrder.id.slice(-4).toUpperCase()}</p>
                                             </div>
@@ -522,7 +522,7 @@ export default function CheckoutModal({ isOpen, onClose, cart, total, subtotal, 
                                                     <div className="w-7 h-7 bg-orange-100 rounded-full flex items-center justify-center">
                                                         <FaClock className="text-orange-500 text-xs" />
                                                     </div>
-                                                    <p className="text-xs text-gray-600 font-normal">Estimated Time</p>
+                                                    <p className="text-xs text-gray-800 font-medium">Estimated Time</p>
                                                 </div>
                                                 <p className="font-semibold text-orange-500 text-sm">{placedOrder.estimatedTime}</p>
                                             </div>
@@ -532,7 +532,7 @@ export default function CheckoutModal({ isOpen, onClose, cart, total, subtotal, 
                                                     <div className="w-7 h-7 bg-orange-100 rounded-full flex items-center justify-center">
                                                         <FaMapMarkerAlt className="text-orange-500 text-xs" />
                                                     </div>
-                                                    <p className="text-xs text-gray-600 font-normal">Delivery to</p>
+                                                    <p className="text-xs text-gray-800 font-medium">Delivery to</p>
                                                 </div>
                                                 <p className="font-semibold text-orange-500 text-sm">{placedOrder.deliveryAddress}</p>
                                             </div>
@@ -631,7 +631,7 @@ export default function CheckoutModal({ isOpen, onClose, cart, total, subtotal, 
 
                                         {/* House Number */}
                                         <div className="mb-3">
-                                            <label className="text-xs font-medium text-gray-500 mb-1.5 block">
+                                            <label className="text-xs font-semibold text-gray-800 mb-1.5 block">
                                                 House / Flat / Building No.
                                             </label>
                                             <input
@@ -639,13 +639,13 @@ export default function CheckoutModal({ isOpen, onClose, cart, total, subtotal, 
                                                 value={houseNumber}
                                                 onChange={(e) => setHouseNumber(e.target.value)}
                                                 placeholder="e.g., House 123, Flat 4B"
-                                                className="w-full bg-white border border-gray-200 rounded-xl px-4 py-2.5 outline-none focus:border-orange-500 focus:ring-2 focus:ring-orange-100 transition text-sm text-gray-900"
+                                                className="w-full bg-white border border-gray-200 rounded-xl px-4 py-2.5 outline-none focus:border-orange-500 focus:ring-2 focus:ring-orange-100 transition text-sm text-gray-900 placeholder:text-gray-400"
                                             />
                                         </div>
 
                                         {/* Area / Block */}
                                         <div className="relative">
-                                            <label className="text-xs font-medium text-gray-500 mb-1.5 block">
+                                            <label className="text-xs font-semibold text-gray-800 mb-1.5 block">
                                                 Area / Block / Street
                                             </label>
                                             <input
@@ -662,7 +662,7 @@ export default function CheckoutModal({ isOpen, onClose, cart, total, subtotal, 
                                                 }}
                                                 onBlur={handleAddressBlur}
                                                 placeholder="Type area/block (e.g., Allama Iqbal Town)"
-                                                className="w-full bg-white border border-gray-200 rounded-xl px-4 py-2.5 outline-none focus:border-orange-500 focus:ring-2 focus:ring-orange-100 transition text-sm pr-10 text-gray-900"
+                                                className="w-full bg-white border border-gray-200 rounded-xl px-4 py-2.5 outline-none focus:border-orange-500 focus:ring-2 focus:ring-orange-100 transition text-sm pr-10 text-gray-900 placeholder:text-gray-400"
                                             />
                                             {deliveryAddress && (
                                                 <button
@@ -718,17 +718,17 @@ export default function CheckoutModal({ isOpen, onClose, cart, total, subtotal, 
                                                                     >
                                                                         <FaMapMarkerAlt className="text-orange-500 mt-1 shrink-0 text-sm" />
                                                                         <div className="flex-1 min-w-0">
-                                                                            <p className="text-sm font-medium text-gray-800 truncate">{props.name || props.street}</p>
-                                                                            <p className="text-xs text-gray-500 truncate">{displayAddress}</p>
+                                                                            <p className="text-sm font-semibold text-gray-900 truncate">{props.name || props.street}</p>
+                                                                            <p className="text-xs text-gray-600 truncate">{displayAddress}</p>
                                                                         </div>
                                                                     </div>
                                                                 );
                                                             })}
-                                                        </>
+                                                        <>
                                                     ) : deliveryAddress.length > 2 ? (
-                                                        <div className="p-4 text-center text-gray-500 text-sm">
-                                                            <p className="font-medium">No suggestions found</p>
-                                                            <p className="text-xs text-gray-400 mt-1">You can type your address manually</p>
+                                                        <div className="p-4 text-center text-gray-600 text-sm">
+                                                            <p className="font-semibold">No suggestions found</p>
+                                                            <p className="text-xs text-gray-500 mt-1">You can type your address manually</p>
                                                         </div>
                                                     ) : null}
                                                 </div>
@@ -743,7 +743,7 @@ export default function CheckoutModal({ isOpen, onClose, cart, total, subtotal, 
                                                 <FaClock className="text-blue-500 text-lg" />
                                                 <div>
                                                     <h3 className="font-semibold text-gray-900 text-base">Estimated Delivery</h3>
-                                                    <p className="text-sm text-gray-600">25-35 minutes</p>
+                                                    <p className="text-sm text-gray-700 font-medium">25-35 minutes</p>
                                                 </div>
                                             </div>
                                             <span className="text-xs bg-green-50 text-green-600 px-2.5 py-1 rounded-full font-medium border border-green-100">
@@ -844,7 +844,7 @@ export default function CheckoutModal({ isOpen, onClose, cart, total, subtotal, 
                                                             setVoucherError('');
                                                         }}
                                                         placeholder="Enter code"
-                                                        className="flex-1 bg-white border border-gray-200 rounded-xl px-4 py-2.5 outline-none focus:border-orange-500 focus:ring-2 focus:ring-orange-100 transition text-sm uppercase text-gray-900"
+                                                        className="flex-1 bg-white border border-gray-200 rounded-xl px-4 py-2.5 outline-none focus:border-orange-500 focus:ring-2 focus:ring-orange-100 transition text-sm uppercase text-gray-900 placeholder:text-gray-400"
                                                         onKeyDown={(e) => {
                                                             if (e.key === 'Enter') handleApplyPromoCode();
                                                         }}
@@ -858,7 +858,7 @@ export default function CheckoutModal({ isOpen, onClose, cart, total, subtotal, 
                                                     </button>
                                                 </div>
                                                 {voucherError && (
-                                                    <p className="text-red-500 text-xs mt-2 flex items-center gap-1">
+                                                    <p className="text-red-500 text-xs mt-2 font-medium flex items-center gap-1">
                                                         <span>❌</span> {voucherError}
                                                     </p>
                                                 )}
@@ -866,16 +866,16 @@ export default function CheckoutModal({ isOpen, onClose, cart, total, subtotal, 
                                         ) : (
                                             <div className="bg-green-50 border border-green-200 rounded-xl p-3 flex items-center justify-between">
                                                 <div>
-                                                    <p className="font-semibold text-green-700 text-sm flex items-center gap-2">
+                                                    <p className="font-bold text-green-700 text-sm flex items-center gap-2">
                                                         <span>✅</span> {appliedVoucher.code} Applied!
                                                     </p>
-                                                    <p className="text-xs text-green-600 mt-0.5">
+                                                    <p className="text-xs text-green-700 font-medium mt-0.5">
                                                         {appliedVoucher.discount}% off • Saving Rs. {discountAmount.toLocaleString()}
                                                     </p>
                                                 </div>
                                                 <button
                                                     onClick={handleRemoveVoucher}
-                                                    className="text-green-600 hover:text-green-800 text-sm font-medium"
+                                                    className="text-green-700 hover:text-green-900 text-sm font-bold"
                                                 >
                                                     Remove
                                                 </button>
@@ -892,7 +892,7 @@ export default function CheckoutModal({ isOpen, onClose, cart, total, subtotal, 
                                             value={deliveryInstructions}
                                             onChange={(e) => setDeliveryInstructions(e.target.value)}
                                             placeholder="e.g. Ring doorbell, leave at gate..."
-                                            className="w-full bg-white border border-gray-200 rounded-xl px-4 py-3 outline-none focus:border-orange-500 focus:ring-2 focus:ring-orange-100 transition h-24 resize-none text-sm text-gray-900"
+                                            className="w-full bg-white border border-gray-200 rounded-xl px-4 py-3 outline-none focus:border-orange-500 focus:ring-2 focus:ring-orange-100 transition h-24 resize-none text-sm text-gray-900 placeholder:text-gray-400"
                                         />
                                     </div>
 
@@ -900,29 +900,29 @@ export default function CheckoutModal({ isOpen, onClose, cart, total, subtotal, 
                                     <div className="bg-white rounded-2xl p-5 shadow-sm mb-4 border border-gray-100">
                                         <h3 className="font-semibold text-gray-900 mb-4 text-base">Bill Details</h3>
                                         <div className="space-y-3 text-sm">
-                                            <div className="flex justify-between text-gray-600">
+                                            <div className="flex justify-between text-gray-800 font-medium">
                                                 <span>Subtotal</span>
                                                 <span>Rs. {subtotal.toLocaleString()}</span>
                                             </div>
-                                            <div className="flex justify-between text-gray-600">
+                                            <div className="flex justify-between text-gray-800 font-medium">
                                                 <div className="flex flex-col">
                                                     <span>Delivery Fee</span>
                                                     {distance !== null ? (
-                                                        <span className="text-[10px] text-gray-400 font-normal">
+                                                        <span className="text-[10px] text-gray-600 font-medium">
                                                             (Rs. 60 base + Rs. {Math.round(distance * 20)} for {distance.toFixed(1)} km)
                                                         </span>
                                                     ) : (
-                                                        <span className="text-[10px] text-gray-400 font-normal">Based on distance</span>
+                                                        <span className="text-[10px] text-gray-600 font-medium">Based on distance</span>
                                                     )}
                                                 </div>
                                                 <span>Rs. {calculatedFee.toLocaleString()}</span>
                                             </div>
-                                            <div className="flex justify-between text-gray-600">
+                                            <div className="flex justify-between text-gray-800 font-medium">
                                                 <span>Tax (8%)</span>
                                                 <span>Rs. {tax.toLocaleString()}</span>
                                             </div>
                                             {appliedVoucher && (
-                                                <div className="flex justify-between text-green-600 font-medium">
+                                                <div className="flex justify-between text-green-700 font-bold">
                                                     <span>Discount ({appliedVoucher.discount}%)</span>
                                                     <span>- Rs. {discountAmount.toLocaleString()}</span>
                                                 </div>

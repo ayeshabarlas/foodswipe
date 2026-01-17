@@ -20,18 +20,22 @@ export default function SettingsView() {
 
     const fetchSettings = async () => {
         try {
-            const token = JSON.parse(localStorage.getItem('userInfo') || '{}').token;
+            const userInfo = JSON.parse(localStorage.getItem('userInfo') || '{}');
+            if (!userInfo.token) return;
+
             const { data } = await axios.get(`${API_BASE_URL}/api/admin/settings`, {
-                headers: { Authorization: `Bearer ${token}` }
+                headers: { Authorization: `Bearer ${userInfo.token}` }
             });
             if (data) {
                 setCommission(data.commission || 10);
                 setSupportEmail(data.supportEmail || 'app.foodswipehelp@gmail.com');
                 setAnnouncement(data.announcement || '');
             }
-        } catch (error) {
+        } catch (error: any) {
             console.error('Error fetching settings:', error);
-            toast.error('Failed to load settings');
+            if (error.response?.status !== 401) {
+                toast.error('Failed to load settings');
+            }
         } finally {
             setLoading(false);
         }
@@ -41,11 +45,16 @@ export default function SettingsView() {
         setSaving(true);
         const toastId = toast.loading('Saving settings...');
         try {
-            const token = JSON.parse(localStorage.getItem('userInfo') || '{}').token;
+            const userInfo = JSON.parse(localStorage.getItem('userInfo') || '{}');
+            if (!userInfo.token) {
+                toast.error('Session expired', { id: toastId });
+                return;
+            }
+
             await axios.put(
                 `${API_BASE_URL}/api/admin/settings`,
                 { commission, supportEmail, announcement },
-                { headers: { Authorization: `Bearer ${token}` } }
+                { headers: { Authorization: `Bearer ${userInfo.token}` } }
             );
             toast.success('Settings updated successfully!', { id: toastId });
         } catch (error) {

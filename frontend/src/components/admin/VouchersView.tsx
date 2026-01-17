@@ -1,8 +1,8 @@
 'use client';
 import { useState, useEffect } from 'react';
 import axios from 'axios';
-import { io } from 'socket.io-client';
-import { API_BASE_URL, SOCKET_URL } from '../../utils/config';
+import { getSocket } from '../../utils/socket';
+import { API_BASE_URL } from '../../utils/config';
 import { FaPlus, FaFilter, FaEdit, FaTrash, FaTicketAlt } from 'react-icons/fa';
 import AdminCreateVoucherModal from './AdminCreateVoucherModal';
 
@@ -30,28 +30,26 @@ export default function VouchersView() {
     useEffect(() => {
         fetchVouchers();
 
-        const socket = io(SOCKET_URL);
+        const socket = getSocket();
 
-        socket.on('new_voucher', () => {
-            fetchVouchers();
-        });
+        if (socket) {
+            socket.on('new_voucher', fetchVouchers);
+            socket.on('voucher_updated', fetchVouchers);
+            socket.on('voucher_deleted', fetchVouchers);
 
-        socket.on('voucher_updated', () => {
-            fetchVouchers();
-        });
-
-        socket.on('voucher_deleted', () => {
-            fetchVouchers();
-        });
-
-        return () => {
-            socket.disconnect();
-        };
+            return () => {
+                socket.off('new_voucher', fetchVouchers);
+                socket.off('voucher_updated', fetchVouchers);
+                socket.off('voucher_deleted', fetchVouchers);
+            };
+        }
     }, []);
 
     const fetchVouchers = async () => {
         try {
             const userInfo = JSON.parse(localStorage.getItem('userInfo') || '{}');
+            if (!userInfo.token) return;
+
             const config = {
                 headers: { Authorization: `Bearer ${userInfo.token}` }
             };
@@ -67,8 +65,9 @@ export default function VouchersView() {
                 discountType: v.discountType,
                 minOrder: v.minimumAmount
             })));
-        } catch (error) {
+        } catch (error: any) {
             console.error('Error fetching vouchers:', error);
+            // Silence but log
         } finally {
             setLoading(false);
         }

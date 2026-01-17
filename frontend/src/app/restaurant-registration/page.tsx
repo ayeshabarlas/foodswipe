@@ -212,61 +212,61 @@ export default function RestaurantRegistration() {
                 {step === 1 && (
                     <div className="space-y-4">
                         <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">Restaurant Name *</label>
+                            <label className="block text-sm font-semibold text-gray-800 mb-1">Restaurant Name *</label>
                             <input
                                 type="text"
                                 value={formData.name}
                                 onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 outline-none"
+                                className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-orange-500 outline-none text-gray-900 font-medium placeholder:text-gray-400 bg-gray-50/50"
                                 required
                             />
                         </div>
                         <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">Address *</label>
+                            <label className="block text-sm font-semibold text-gray-800 mb-1">Address *</label>
                             <textarea
                                 value={formData.address}
                                 onChange={(e) => setFormData({ ...formData, address: e.target.value })}
-                                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 outline-none"
+                                className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-orange-500 outline-none text-gray-900 font-medium placeholder:text-gray-400 bg-gray-50/50"
                                 rows={3}
                                 required
                             />
                         </div>
                         <div className="grid grid-cols-2 gap-4">
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">Contact Number *</label>
+                                <label className="block text-sm font-semibold text-gray-800 mb-1">Contact Number *</label>
                                 <input
                                     type="tel"
                                     value={formData.contact}
                                     onChange={(e) => setFormData({ ...formData, contact: e.target.value })}
-                                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 outline-none"
+                                    className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-orange-500 outline-none text-gray-900 font-medium placeholder:text-gray-400 bg-gray-50/50"
                                     required
                                 />
                             </div>
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">Owner CNIC *</label>
+                                <label className="block text-sm font-semibold text-gray-800 mb-1">Owner CNIC *</label>
                                 <input
                                     type="text"
                                     value={formData.ownerCNIC}
                                     onChange={(e) => setFormData({ ...formData, ownerCNIC: e.target.value })}
                                     placeholder="12345-1234567-1"
-                                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 outline-none"
+                                    className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-orange-500 outline-none text-gray-900 font-medium placeholder:text-gray-400 bg-gray-50/50"
                                     required
                                 />
                             </div>
                         </div>
                         <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">Business Type *</label>
+                            <label className="block text-sm font-semibold text-gray-800 mb-1">Business Type *</label>
                             <select
                                 value={formData.businessType}
                                 onChange={(e) => setFormData({ ...formData, businessType: e.target.value })}
-                                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 outline-none"
+                                className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-orange-500 outline-none text-gray-900 font-medium bg-gray-50/50"
                             >
                                 <option value="restaurant">Restaurant</option>
                                 <option value="home-chef">Home Chef</option>
                             </select>
                         </div>
                         <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-2">Cuisine Types *</label>
+                            <label className="block text-sm font-semibold text-gray-800 mb-2">Cuisine Types *</label>
                             <div className="grid grid-cols-3 gap-2">
                                 {cuisineOptions.map((cuisine) => (
                                     <label key={cuisine} className="flex items-center gap-2 cursor-pointer">
@@ -282,17 +282,17 @@ export default function RestaurantRegistration() {
                                             }}
                                             className="w-4 h-4 text-orange-500 rounded focus:ring-orange-500"
                                         />
-                                        <span className="text-sm">{cuisine}</span>
+                                        <span className="text-sm font-medium text-gray-700">{cuisine}</span>
                                     </label>
                                 ))}
                             </div>
                         </div>
                         <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
+                            <label className="block text-sm font-semibold text-gray-800 mb-1">Description</label>
                             <textarea
                                 value={formData.description}
                                 onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 outline-none"
+                                className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-orange-500 outline-none text-gray-900 font-medium placeholder:text-gray-400 bg-gray-50/50"
                                 rows={3}
                                 placeholder="Tell us about your restaurant..."
                             />
@@ -324,11 +324,11 @@ export default function RestaurantRegistration() {
                 {step === 4 && (
                     <div className="space-y-4">
                         <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">Account Type *</label>
+                            <label className="block text-sm font-semibold text-gray-800 mb-1">Account Type *</label>
                             <select
                                 value={formData.bankDetails.accountType}
                                 onChange={(e) => setFormData({ ...formData, bankDetails: { ...formData.bankDetails, accountType: e.target.value } })}
-                                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 outline-none"
+                                className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-orange-500 outline-none text-gray-900 font-medium bg-gray-50/50"
                             >
                                 <option value="bank">Bank Account</option>
                                 <option value="jazzcash">JazzCash</option>
@@ -336,45 +336,45 @@ export default function RestaurantRegistration() {
                             </select>
                         </div>
                         <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">Account Holder Name *</label>
+                            <label className="block text-sm font-semibold text-gray-800 mb-1">Account Holder Name *</label>
                             <input
                                 type="text"
                                 value={formData.bankDetails.accountHolderName}
                                 onChange={(e) => setFormData({ ...formData, bankDetails: { ...formData.bankDetails, accountHolderName: e.target.value } })}
-                                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 outline-none"
+                                className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-orange-500 outline-none text-gray-900 font-medium placeholder:text-gray-400 bg-gray-50/50"
                                 required
                             />
                         </div>
                         <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">Account Number *</label>
+                            <label className="block text-sm font-semibold text-gray-800 mb-1">Account Number *</label>
                             <input
                                 type="text"
                                 value={formData.bankDetails.accountNumber}
                                 onChange={(e) => setFormData({ ...formData, bankDetails: { ...formData.bankDetails, accountNumber: e.target.value } })}
-                                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 outline-none"
+                                className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-orange-500 outline-none text-gray-900 font-medium placeholder:text-gray-400 bg-gray-50/50"
                                 required
                             />
                         </div>
                         {formData.bankDetails.accountType === 'bank' && (
                             <>
                                 <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-1">Bank Name *</label>
+                                    <label className="block text-sm font-semibold text-gray-800 mb-1">Bank Name *</label>
                                     <input
                                         type="text"
                                         value={formData.bankDetails.bankName}
                                         onChange={(e) => setFormData({ ...formData, bankDetails: { ...formData.bankDetails, bankName: e.target.value } })}
-                                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 outline-none"
+                                        className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-orange-500 outline-none text-gray-900 font-medium placeholder:text-gray-400 bg-gray-50/50"
                                         required
                                     />
                                 </div>
                                 <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-1">IBAN</label>
+                                    <label className="block text-sm font-semibold text-gray-800 mb-1">IBAN</label>
                                     <input
                                         type="text"
                                         value={formData.bankDetails.iban}
                                         onChange={(e) => setFormData({ ...formData, bankDetails: { ...formData.bankDetails, iban: e.target.value } })}
                                         placeholder="PK36XXXX0000001234567890"
-                                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 outline-none"
+                                        className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-orange-500 outline-none text-gray-900 font-medium placeholder:text-gray-400 bg-gray-50/50"
                                     />
                                 </div>
                             </>

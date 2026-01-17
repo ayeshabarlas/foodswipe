@@ -223,7 +223,7 @@ export default function NavDrawer({ isOpen, onClose, user, onOpenProfile, active
                             </div>
                             <div className="flex-1 min-w-0">
                                 <h2 className="text-base font-medium truncate">{user?.name || 'Guest User'}</h2>
-                                <p className="text-xs text-white/80 truncate font-light">{user?.email || 'Sign in to order'}</p>
+                                <p className="text-xs text-white font-medium truncate">{user?.email || 'Sign in to order'}</p>
                             </div>
                         </div>
                     </div>
@@ -233,7 +233,7 @@ export default function NavDrawer({ isOpen, onClose, user, onOpenProfile, active
                     {menuItems.map((section, sectionIndex) => (
                         <div key={sectionIndex} className="mb-1">
                             {sectionIndex > 0 && (
-                                <div className="px-6 py-2 text-[10px] font-semibold text-gray-400 uppercase tracking-widest mt-2">
+                                <div className="px-6 py-2 text-[10px] font-bold text-gray-700 uppercase tracking-widest mt-2">
                                     {section.section}
                                 </div>
                             )}
@@ -246,19 +246,19 @@ export default function NavDrawer({ isOpen, onClose, user, onOpenProfile, active
                                 const ItemContent = (
                                     <motion.div
                                         whileHover={{ x: 4 }}
-                                        className="flex items-center gap-3 px-6 py-3 text-gray-600 hover:text-primary transition-colors cursor-pointer group"
+                                        className="flex items-center gap-3 px-6 py-3 text-gray-700 hover:text-primary transition-colors cursor-pointer group"
                                     >
-                                        <div className="w-8 h-8 rounded-full bg-gray-50 flex items-center justify-center text-gray-400 group-hover:bg-orange-50 group-hover:text-primary transition-colors">
+                                        <div className="w-8 h-8 rounded-full bg-gray-50 flex items-center justify-center text-gray-600 group-hover:bg-orange-50 group-hover:text-primary transition-colors">
                                             <item.icon size={14} />
                                         </div>
-                                        <span className="flex-1 text-sm font-medium text-gray-700 group-hover:text-gray-900">{item.label}</span>
+                                        <span className="flex-1 text-sm font-semibold text-gray-700 group-hover:text-gray-900">{item.label}</span>
                                         {item.badge && (
                                             <span className="bg-primary text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full min-w-[1.25rem] text-center">
                                                 {item.badge}
                                             </span>
                                         )}
                                         {!item.badge && (
-                                            <FaChevronRight className="text-gray-300 group-hover:text-primary/50 transition-colors" size={10} />
+                                            <FaChevronRight className="text-gray-500 group-hover:text-primary/50 transition-colors" size={10} />
                                         )}
                                     </motion.div>
                                 );

@@ -156,18 +156,18 @@ export default function DishDetails({ dish, onClose }: DishDetailsProps) {
                 <div className="mb-6">
                     <div className="w-12 h-1.5 bg-gray-200 rounded-full mx-auto mb-6" />
                     <h1 className="text-2xl font-bold text-gray-900 mb-1">{dish.name}</h1>
-                    <p className="text-gray-500 font-medium mb-3">{dish.restaurant.name}</p>
+                    <p className="text-gray-700 font-bold mb-3">{dish.restaurant.name}</p>
 
                     <div className="flex items-center justify-between mb-4">
                         <span className="text-2xl font-bold text-primary">Rs. {currentPrice}</span>
                         <div className="flex items-center gap-1">
                             <FaStar className="text-yellow-400" size={16} />
                             <span className="text-gray-900 font-bold">{dish.restaurant.rating || 'New'}</span>
-                            <span className="text-gray-500 text-sm">({reviews.length})</span>
+                            <span className="text-gray-700 font-bold text-sm">({reviews.length})</span>
                         </div>
                     </div>
 
-                    <p className="text-gray-600 leading-relaxed text-sm">{dish.description}</p>
+                    <p className="text-gray-800 font-medium leading-relaxed text-sm">{dish.description}</p>
                 </div>
 
                 {/* Combos Section */}
@@ -178,10 +178,10 @@ export default function DishDetails({ dish, onClose }: DishDetailsProps) {
                             {dish.combos.map((combo, idx) => (
                                  <div key={idx} className="flex items-center justify-between p-4 rounded-2xl bg-gray-50 border border-gray-100">
                                      <div>
-                                         <p className="font-bold text-gray-800">{combo.title}</p>
-                                         <p className="text-sm text-primary font-medium">Rs. {combo.price}</p>
+                                         <p className="font-bold text-gray-900">{combo.title}</p>
+                                         <p className="text-sm text-primary font-bold">Rs. {combo.price}</p>
                                          {combo.items && combo.items.length > 0 && (
-                                             <p className="text-xs text-gray-500 mt-1">{combo.items.join(', ')}</p>
+                                             <p className="text-xs text-gray-700 font-medium mt-1">{combo.items.join(', ')}</p>
                                          )}
                                      </div>
                                      <button 

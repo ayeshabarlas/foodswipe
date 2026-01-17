@@ -208,7 +208,7 @@ export default function OrderTracking({ order: initialOrder, userRole = 'user', 
                                     </div>
                                     <div>
                                         <h4 className="font-bold text-gray-900 text-sm">{order.rider.fullName || 'Rider'} is nearby</h4>
-                                        <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Your delivery partner</p>
+                                        <p className="text-[10px] font-bold text-gray-600 uppercase tracking-wider">Your delivery partner</p>
                                     </div>
                                 </div>
                                 <div className="flex gap-2">
@@ -239,7 +239,7 @@ export default function OrderTracking({ order: initialOrder, userRole = 'user', 
                         <div className="flex items-center justify-between gap-4">
                             <div className="flex-1">
                                 <h4 className="font-bold text-gray-900 text-sm">Need to ask something?</h4>
-                                <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Chat with the restaurant</p>
+                                <p className="text-[10px] font-bold text-gray-600 uppercase tracking-wider">Chat with the restaurant</p>
                             </div>
                             <button 
                                 onClick={() => setIsChatOpen(true)}
@@ -254,10 +254,10 @@ export default function OrderTracking({ order: initialOrder, userRole = 'user', 
 
                 {/* Status Timeline - Screenshot Style */}
                 <div className="bg-white p-8 overflow-y-auto flex-1 border-t border-gray-100">
-                    <h3 className="text-sm font-medium text-gray-400 uppercase tracking-widest mb-8">Order Status</h3>
+                    <h3 className="text-sm font-bold text-gray-700 uppercase tracking-widest mb-8">Order Status</h3>
                     <div className="relative">
                         {/* Vertical line connecting steps */}
-                        <div className="absolute left-[15px] top-[15px] bottom-[15px] w-0.5 bg-gray-100" />
+                        <div className="absolute left-[15px] top-[15px] bottom-[15px] w-0.5 bg-gray-200" />
                         
                         <div className="space-y-10 relative">
                             {steps.map((step, index) => {
@@ -265,22 +265,22 @@ export default function OrderTracking({ order: initialOrder, userRole = 'user', 
                                 const isCurrent = index === currentStepIndex + 1;
                                 
                                 return (
-                                    <div key={index} className={`flex gap-6 items-start ${isCompleted ? 'opacity-100' : 'opacity-40'}`}>
+                                    <div key={index} className={`flex gap-6 items-start ${isCompleted ? 'opacity-100' : 'opacity-60'}`}>
                                         <div className={`w-8 h-8 rounded-full flex items-center justify-center relative z-10 transition-all duration-500 ${
                                             isCompleted 
                                             ? 'bg-gradient-to-r from-orange-500 to-red-500 text-white shadow-lg shadow-orange-200 scale-110' 
-                                            : 'bg-white border-2 border-gray-100 text-gray-300'
+                                            : 'bg-white border-2 border-gray-200 text-gray-400'
                                         }`}>
                                             {isCompleted ? <FaCheck size={12} /> : step.icon}
                                         </div>
                                         <div className="flex-1 pt-1">
                                             <div className="flex justify-between items-center">
-                                                <h4 className={`font-semibold text-sm ${isCompleted ? 'text-gray-900' : 'text-gray-400'}`}>
+                                                <h4 className={`font-bold text-sm ${isCompleted ? 'text-gray-900' : 'text-gray-600'}`}>
                                                     {step.label}
                                                 </h4>
-                                                <span className="text-[10px] font-medium text-gray-400">{step.time}</span>
+                                                <span className="text-[10px] font-bold text-gray-700">{step.time}</span>
                                             </div>
-                                            <p className="text-[10px] font-medium text-gray-400 mt-1 uppercase tracking-wider">
+                                            <p className="text-[10px] font-bold text-gray-600 mt-1 uppercase tracking-wider">
                                                 {isCompleted ? 'Completed' : isCurrent ? 'In Progress' : 'Pending'}
                                             </p>
                                         </div>

@@ -2,8 +2,8 @@
 
 import { useState, useEffect } from 'react';
 import axios from 'axios';
-import { io } from 'socket.io-client';
-import { API_BASE_URL, SOCKET_URL } from '../../utils/config';
+import { getSocket } from '../../utils/socket';
+import { API_BASE_URL } from '../../utils/config';
 import { FaChartLine, FaShoppingBag, FaMoneyBillWave, FaUsers, FaStore, FaMotorcycle } from 'react-icons/fa';
 
 interface AnalyticsData {
@@ -27,19 +27,25 @@ export default function AnalyticsView() {
     useEffect(() => {
         fetchAnalytics();
 
-        const socket = io(SOCKET_URL);
-        socket.on('order_created', fetchAnalytics);
-        socket.on('order_updated', fetchAnalytics);
-        socket.on('restaurant_updated', fetchAnalytics);
+        const socket = getSocket();
+        if (socket) {
+            socket.on('order_created', fetchAnalytics);
+            socket.on('order_updated', fetchAnalytics);
+            socket.on('restaurant_updated', fetchAnalytics);
 
-        return () => {
-            socket.disconnect();
-        };
+            return () => {
+                socket.off('order_created', fetchAnalytics);
+                socket.off('order_updated', fetchAnalytics);
+                socket.off('restaurant_updated', fetchAnalytics);
+            };
+        }
     }, []);
 
     const fetchAnalytics = async () => {
         try {
             const userInfo = JSON.parse(localStorage.getItem('userInfo') || '{}');
+            if (!userInfo.token) return;
+
             const config = {
                 headers: {
                     Authorization: `Bearer ${userInfo.token}`,

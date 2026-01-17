@@ -213,9 +213,9 @@ export default function PhoneAuthModal({ isOpen, onClose, onSuccess }: PhoneAuth
                         {step === 'phone' ? (
                             <div className="space-y-6">
                                 <div>
-                                    <label className="block text-sm font-bold text-gray-700 mb-2">Phone Number</label>
+                                    <label className="block text-sm font-bold text-gray-800 mb-2">Phone Number</label>
                                     <div className="flex gap-2">
-                                        <div className="w-24 bg-gray-100 border border-gray-200 rounded-xl px-4 py-3 text-gray-500 font-medium flex items-center justify-center">
+                                        <div className="w-24 bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-gray-600 font-semibold flex items-center justify-center">
                                             {countryCode}
                                         </div>
                                         <input
@@ -223,11 +223,11 @@ export default function PhoneAuthModal({ isOpen, onClose, onSuccess }: PhoneAuth
                                             value={phoneNumber}
                                             onChange={(e) => setPhoneNumber(e.target.value.replace(/\D/g, ''))}
                                             placeholder="3XXXXXXXXX"
-                                            className="flex-1 bg-gray-100 border border-gray-200 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 transition-all font-medium"
+                                            className="flex-1 bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 transition-all font-medium text-gray-900 placeholder:text-gray-400"
                                             maxLength={11}
                                         />
                                     </div>
-                                    <p className="text-xs text-gray-500 mt-2">Example: 3001234567</p>
+                                    <p className="text-xs text-gray-500 mt-2 font-medium">Example: 3001234567</p>
                                 </div>
 
                                 {/* reCAPTCHA Container */}
@@ -248,13 +248,13 @@ export default function PhoneAuthModal({ isOpen, onClose, onSuccess }: PhoneAuth
                         ) : (
                             <div className="space-y-6">
                                 <div>
-                                    <label className="block text-sm font-bold text-gray-700 mb-2">6-Digit Code</label>
+                                    <label className="block text-sm font-bold text-gray-800 mb-2">6-Digit Code</label>
                                     <input
                                         type="text"
                                         value={otp}
                                         onChange={(e) => setOtp(e.target.value.replace(/\D/g, ''))}
                                         placeholder="Enter OTP"
-                                        className="w-full bg-gray-100 border border-gray-200 rounded-xl px-4 py-3 text-center text-2xl tracking-[0.5em] font-bold focus:outline-none focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 transition-all"
+                                        className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-center text-2xl tracking-[0.5em] font-bold focus:outline-none focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 transition-all text-gray-900 placeholder:text-gray-400"
                                         maxLength={6}
                                     />
                                 </div>

@@ -86,8 +86,8 @@ export default function ProfileModal({ isOpen, onClose, user }: ProfileModalProp
                                             <FaUser size={18} />
                                         </div>
                                         <div>
-                                            <p className="text-xs text-gray-400 font-medium uppercase tracking-wide">Full Name</p>
-                                            <p className="text-gray-800 font-semibold text-lg">{userData.name}</p>
+                                            <p className="text-xs text-gray-700 font-bold uppercase tracking-wide">Full Name</p>
+                                            <p className="text-gray-900 font-bold text-lg">{userData.name}</p>
                                         </div>
                                     </div>
                                 </div>
@@ -99,8 +99,8 @@ export default function ProfileModal({ isOpen, onClose, user }: ProfileModalProp
                                             <FaEnvelope size={18} />
                                         </div>
                                         <div>
-                                            <p className="text-xs text-gray-400 font-medium uppercase tracking-wide">Email</p>
-                                            <p className="text-gray-800 font-semibold text-lg">{userData.email}</p>
+                                            <p className="text-xs text-gray-700 font-bold uppercase tracking-wide">Email</p>
+                                            <p className="text-gray-900 font-bold text-lg">{userData.email}</p>
                                         </div>
                                     </div>
                                 </div>
@@ -112,8 +112,8 @@ export default function ProfileModal({ isOpen, onClose, user }: ProfileModalProp
                                             <FaPhone size={18} />
                                         </div>
                                         <div>
-                                            <p className="text-xs text-gray-400 font-medium uppercase tracking-wide">Phone</p>
-                                            <p className="text-gray-800 font-semibold text-lg">{userData.phone}</p>
+                                            <p className="text-xs text-gray-700 font-bold uppercase tracking-wide">Phone</p>
+                                            <p className="text-gray-900 font-bold text-lg">{userData.phone}</p>
                                         </div>
                                     </div>
                                 </div>
@@ -125,8 +125,8 @@ export default function ProfileModal({ isOpen, onClose, user }: ProfileModalProp
                                             <FaMapMarkerAlt size={18} />
                                         </div>
                                         <div>
-                                            <p className="text-xs text-gray-400 font-medium uppercase tracking-wide">Address</p>
-                                            <p className="text-gray-800 font-semibold text-lg whitespace-pre-line">{userData.address}</p>
+                                            <p className="text-xs text-gray-700 font-bold uppercase tracking-wide">Address</p>
+                                            <p className="text-gray-900 font-bold text-lg whitespace-pre-line">{userData.address}</p>
                                         </div>
                                     </div>
                                 </div>
@@ -138,8 +138,8 @@ export default function ProfileModal({ isOpen, onClose, user }: ProfileModalProp
                                             <FaCalendarAlt size={18} />
                                         </div>
                                         <div>
-                                            <p className="text-xs text-gray-400 font-medium uppercase tracking-wide">Member Since</p>
-                                            <p className="text-gray-800 font-semibold text-lg">{userData.memberSince}</p>
+                                            <p className="text-xs text-gray-700 font-bold uppercase tracking-wide">Member Since</p>
+                                            <p className="text-gray-900 font-bold text-lg">{userData.memberSince}</p>
                                         </div>
                                     </div>
                                 </div>

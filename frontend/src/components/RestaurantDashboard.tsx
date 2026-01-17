@@ -138,6 +138,11 @@ export default function RestaurantDashboard() {
 
         } catch (error: any) {
             console.error('Error in fetchDashboardData:', error);
+            if (!error.response) {
+                toast.error('Network error: Cannot reach backend server');
+            } else {
+                toast.error(`Failed to fetch dashboard data: ${error.response?.data?.message || error.message}`);
+            }
         } finally {
             setLoading(false);
         }
@@ -406,7 +411,7 @@ export default function RestaurantDashboard() {
 
             {/* Sidebar */}
             <aside
-                className={`fixed lg:sticky top-0 inset-y-0 left-0 z-50 w-64 bg-gray-900 text-white transform transition-transform duration-300 ease-in-out shadow-2xl min-h-screen overflow-y-auto
+                className={`fixed lg:sticky top-0 inset-y-0 left-0 z-50 w-64 bg-gray-900 text-white transform transition-transform duration-300 ease-in-out shadow-2xl h-screen overflow-hidden
                 ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'} lg:translate-x-0 lg:static`}
             >
                 <div className="h-full flex flex-col">
@@ -438,7 +443,7 @@ export default function RestaurantDashboard() {
                                 <div className="flex items-center gap-2">
                                     <h2 className="text-[13px] font-bold truncate leading-tight">{displayRestaurant.name}</h2>
                                 </div>
-                                <p className="text-[9px] text-gray-400 truncate flex items-center gap-1.5 mt-0.5 font-bold uppercase tracking-wider">
+                                <p className="text-[9px] text-gray-300 truncate flex items-center gap-1.5 mt-0.5 font-bold uppercase tracking-wider">
                                     <span className={`w-1.5 h-1.5 rounded-full ${displayRestaurant.isVerified ? 'bg-green-500' : 'bg-yellow-500 animate-pulse'}`}></span>
                                     {displayRestaurant.isVerified ? 'Partner' : 'Pending'}
                                 </p>

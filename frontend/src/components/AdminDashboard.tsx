@@ -163,8 +163,16 @@ export default function AdminDashboard() {
 
             const res = await axios.get(`${API_BASE_URL}/api/admin/stats`, config);
             setStats(res.data);
-        } catch (error) {
+        } catch (error: any) {
             console.error('Error fetching admin stats:', error);
+            if (!error.response) {
+                toast.error('Cannot connect to backend server. Is it running?');
+            } else if (error.response.status === 401) {
+                toast.error('Session expired. Please login again.');
+                handleLogout();
+            } else {
+                toast.error(`Failed to fetch dashboard data: ${error.response?.data?.message || error.message}`);
+            }
         } finally {
             setLoading(false);
         }
@@ -242,7 +250,7 @@ export default function AdminDashboard() {
     };
 
     return (
-        <div className="min-h-screen bg-[#F8FAFC] flex overflow-x-hidden relative">
+        <div className="h-screen bg-[#F8FAFC] flex overflow-hidden relative">
             <Toaster />
             
             {/* Background Decorative Gradients */}
@@ -253,7 +261,7 @@ export default function AdminDashboard() {
 
             <Sidebar activeTab={activeTab} setActiveTab={handleTabChange} onLogout={handleLogout} />
             
-            <div className="flex-1 w-full md:ml-64 pt-16 md:pt-0 min-h-screen overflow-y-auto relative z-10">
+            <div className="flex-1 w-full md:ml-64 pt-16 md:pt-0 h-screen overflow-y-auto relative z-10 custom-scrollbar">
                 {renderView()}
             </div>
         </div>

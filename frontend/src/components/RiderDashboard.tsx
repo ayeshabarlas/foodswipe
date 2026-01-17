@@ -136,6 +136,9 @@ const RiderDashboard = ({
             setError(null);
         } catch (err: any) {
             console.error('Error fetching rider data:', err);
+            if (!err.response) {
+                toast.error('Network error: Cannot reach backend server');
+            }
             if (err.message.includes('Rider profile not found')) {
                 setError('Rider profile not found. Please contact admin to activate your rider account.');
             } else {
@@ -430,7 +433,7 @@ const RiderDashboard = ({
                             <h1 className="text-xl font-medium text-white tracking-tight">
                                 {displayRider.fullName}
                             </h1>
-                            <p className="text-[10px] text-white/80 font-medium uppercase tracking-widest mt-0.5">
+                            <p className="text-[10px] text-white font-bold uppercase tracking-widest mt-0.5">
                                 {isOnline ? 'Online • Accepting Orders' : 'Offline • Go online to start'}
                             </p>
                         </div>
@@ -452,8 +455,8 @@ const RiderDashboard = ({
 
                 <div className="relative z-10 bg-white/10 backdrop-blur-md rounded-[28px] p-5 flex items-center justify-between border border-white/20">
                     <div>
-                        <p className="text-white text-sm font-light tracking-tight">You are {isOnline ? 'Online' : 'Offline'}</p>
-                        <p className="text-white/70 text-[9px] font-extralight">{isOnline ? 'Looking for new orders' : 'Go online to start earning'}</p>
+                        <p className="text-white text-sm font-medium tracking-tight">You are {isOnline ? 'Online' : 'Offline'}</p>
+                        <p className="text-white text-[9px] font-medium">{isOnline ? 'Looking for new orders' : 'Go online to start earning'}</p>
                     </div>
                     <button 
                         onClick={handleToggleOnline}
@@ -545,15 +548,15 @@ const RiderDashboard = ({
                                             <div className="w-5 h-5 bg-orange-100 rounded-lg flex items-center justify-center text-orange-600">
                                                 <FaHome size={10} />
                                             </div>
-                                            <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Pickup From</p>
+                                            <p className="text-[10px] font-bold text-gray-700 uppercase tracking-widest">Pickup From</p>
                                         </div>
                                         <p className="text-gray-900 font-bold text-sm leading-tight mb-1">{activeOrder.restaurant?.name}</p>
-                                        <p className="text-gray-500 text-[11px] leading-relaxed line-clamp-2">{activeOrder.restaurant?.address || activeOrder.pickupAddress}</p>
+                                        <p className="text-gray-800 font-medium text-[11px] leading-relaxed line-clamp-2">{activeOrder.restaurant?.address || activeOrder.pickupAddress}</p>
                                     </div>
                                     <div className="flex flex-col items-end gap-2">
                                     <div className="text-right">
                                         <p className="text-orange-600 font-bold text-base">Rs. {activeOrder.netRiderEarning || activeOrder.riderEarning || activeOrder.earnings || Math.round(60 + ((activeOrder.distanceKm || 4.2) * 20))}</p>
-                                        <p className="text-gray-400 text-[9px] font-bold uppercase tracking-widest">Your Pay</p>
+                                        <p className="text-gray-700 text-[9px] font-bold uppercase tracking-widest">Your Pay</p>
                                     </div>
                                         {activeOrder.restaurant?.contact && (
                                             <a 
@@ -573,15 +576,15 @@ const RiderDashboard = ({
                                             <div className="w-5 h-5 bg-blue-100 rounded-lg flex items-center justify-center text-blue-600">
                                                 <FaUser size={10} />
                                             </div>
-                                            <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Deliver To</p>
+                                            <p className="text-[10px] font-bold text-gray-700 uppercase tracking-widest">Deliver To</p>
                                         </div>
                                         <p className="text-gray-900 font-bold text-sm leading-tight mb-1">{activeOrder.user?.name || 'Customer'}</p>
-                                        <p className="text-gray-500 text-[11px] leading-relaxed line-clamp-2">{activeOrder.shippingAddress?.address || activeOrder.deliveryAddress || activeOrder.deliveryLocation?.address || 'Loading address...'}</p>
+                                        <p className="text-gray-800 font-medium text-[11px] leading-relaxed line-clamp-2">{activeOrder.shippingAddress?.address || activeOrder.deliveryAddress || activeOrder.deliveryLocation?.address || 'Loading address...'}</p>
                                     </div>
                                     <div className="flex flex-col items-end gap-2">
                                         <div className="text-right">
                                             <p className="text-gray-900 font-bold text-[11px] tracking-tight">#{activeOrder._id?.slice(-6).toUpperCase()}</p>
-                                            <p className="text-gray-400 text-[9px] font-bold uppercase tracking-widest">Order ID</p>
+                                            <p className="text-gray-700 text-[9px] font-bold uppercase tracking-widest">Order ID</p>
                                         </div>
                                         {activeOrder.user?.phone && (
                                             <a 
@@ -646,7 +649,7 @@ const RiderDashboard = ({
                                 ) : (
                                     <div className="flex flex-col items-center gap-2">
                                         <div className="w-10 h-10 border-2 border-orange-500 border-t-transparent rounded-full animate-spin" />
-                                        <p className="text-[10px] text-gray-400 font-medium uppercase tracking-widest">Scanning for orders...</p>
+                                        <p className="text-[10px] text-gray-700 font-bold uppercase tracking-widest">Scanning for orders...</p>
                                     </div>
                                 )}
                             </div>
@@ -688,7 +691,7 @@ const RiderDashboard = ({
 
             {/* Quick Actions */}
             <div className="mt-4">
-                <h3 className="text-gray-400 font-light text-[11px] uppercase tracking-widest mb-4 px-4">Quick Actions</h3>
+                <h3 className="text-gray-700 font-bold text-[11px] uppercase tracking-widest mb-4 px-4">Quick Actions</h3>
                 <div className="bg-white rounded-[35px] shadow-[0_10px_40px_rgba(0,0,0,0.02)] border border-gray-50 overflow-hidden">
                     <ActionItem 
                         icon={<FaLocationArrow size={16} />} 
@@ -720,7 +723,7 @@ function DashboardStat({ icon, label, value, color, bgColor }: any) {
                 {icon}
             </div>
             <div>
-                <p className="text-gray-400 text-[9px] font-light uppercase tracking-widest mb-0.5">{label}</p>
+                <p className="text-gray-700 text-[9px] font-bold uppercase tracking-widest mb-0.5">{label}</p>
                 <p className="text-gray-900 text-base font-medium tracking-tight">{value}</p>
             </div>
         </div>
@@ -738,7 +741,7 @@ function ActionItem({ icon, label, sublabel, onClick }: any) {
             </div>
             <div className="flex-1 text-left">
                 <p className="text-gray-800 font-medium text-sm tracking-tight">{label}</p>
-                <p className="text-gray-400 text-[10px] font-light mt-0.5">{sublabel}</p>
+                <p className="text-gray-600 text-[10px] font-medium mt-0.5">{sublabel}</p>
             </div>
         </button>
     );

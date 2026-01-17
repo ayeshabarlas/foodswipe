@@ -2,9 +2,10 @@
 import { useState, useEffect } from 'react';
 import axios from 'axios';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
-import { io } from 'socket.io-client';
-import { API_BASE_URL, SOCKET_URL } from '../../utils/config';
+import { getSocket } from '../../utils/socket';
+import { API_BASE_URL } from '../../utils/config';
 import { FaCalendarAlt, FaDownload } from 'react-icons/fa';
+import toast from 'react-hot-toast';
 
 export default function FinanceView() {
     const [loading, setLoading] = useState(true);
@@ -23,27 +24,33 @@ export default function FinanceView() {
     useEffect(() => {
         fetchFinanceData();
 
-        const socket = io(SOCKET_URL);
+        const socket = getSocket();
         const handleUpdate = () => {
             console.log('Finance-relevant update detected, refreshing stats...');
             fetchFinanceData();
         };
 
-        socket.on('order_created', handleUpdate);
-        socket.on('order_updated', handleUpdate);
-        socket.on('stats_updated', handleUpdate);
+        if (socket) {
+            socket.on('order_created', handleUpdate);
+            socket.on('order_updated', handleUpdate);
+            socket.on('stats_updated', handleUpdate);
 
-        return () => {
-            socket.disconnect();
-        };
+            return () => {
+                socket.off('order_created', handleUpdate);
+                socket.off('order_updated', handleUpdate);
+                socket.off('stats_updated', handleUpdate);
+            };
+        }
     }, []);
 
     const fetchFinanceData = async () => {
         try {
-            const token = JSON.parse(localStorage.getItem('userInfo') || '{}').token;
+            const userInfo = JSON.parse(localStorage.getItem('userInfo') || '{}');
+            if (!userInfo.token) return;
+
             // Fetch dashboard stats which is lighter and has aggregated data
             const res = await axios.get(`${API_BASE_URL}/api/admin/stats`, {
-                headers: { Authorization: `Bearer ${token}` }
+                headers: { Authorization: `Bearer ${userInfo.token}` }
             });
             const data = res.data;
 
@@ -76,8 +83,11 @@ export default function FinanceView() {
             }
 
             setLoading(false);
-        } catch (error) {
-            console.error(error);
+        } catch (error: any) {
+            console.error('Error fetching finance data:', error);
+            if (error.response?.status !== 401) {
+                toast.error('Failed to load financial data');
+            }
             setLoading(false);
         }
     };

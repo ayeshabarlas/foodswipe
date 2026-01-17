@@ -3,8 +3,8 @@
 import { useState, useEffect } from 'react';
 import dynamic from 'next/dynamic';
 import axios from 'axios';
-import { io } from 'socket.io-client';
-import { API_BASE_URL, SOCKET_URL } from '../../utils/config';
+import { getSocket } from '../../utils/socket';
+import { API_BASE_URL } from '../../utils/config';
 import { FaMotorcycle, FaSyncAlt } from 'react-icons/fa';
 
 // Dynamically import the map content to avoid SSR issues
@@ -41,40 +41,41 @@ export default function RiderLiveMap() {
     useEffect(() => {
         fetchRiders();
 
-        const socket = io(SOCKET_URL);
+        const socket = getSocket();
 
-        socket.on('connect', () => {
-            console.log('Connected to socket for live map');
-        });
+        if (socket) {
+            const handleLocationUpdate = (data: any) => {
+                console.log('Rider location update:', data);
+                setRiders(prev => prev.map(rider => {
+                    if (rider._id === data.riderId) {
+                        return {
+                            ...rider,
+                            location: data.location,
+                            status: 'online' // Assume online if sending updates
+                        };
+                    }
+                    return rider;
+                }));
+                setLastUpdate(new Date());
+            };
 
-        socket.on('riderLocationUpdate', (data: any) => {
-            console.log('Rider location update:', data);
-            setRiders(prev => prev.map(rider => {
-                if (rider._id === data.riderId) {
-                    return {
-                        ...rider,
-                        location: data.location,
-                        status: 'online' // Assume online if sending updates
-                    };
-                }
-                return rider;
-            }));
-            setLastUpdate(new Date());
-        });
+            const handleStatusUpdate = (data: any) => {
+                setRiders(prev => prev.map(rider => {
+                    if (rider._id === data.riderId) {
+                        return { ...rider, status: data.status };
+                    }
+                    return rider;
+                }));
+            };
 
-        // Also listen for status changes if available
-        socket.on('riderStatusUpdate', (data: any) => {
-            setRiders(prev => prev.map(rider => {
-                if (rider._id === data.riderId) {
-                    return { ...rider, status: data.status };
-                }
-                return rider;
-            }));
-        });
+            socket.on('riderLocationUpdate', handleLocationUpdate);
+            socket.on('riderStatusUpdate', handleStatusUpdate);
 
-        return () => {
-            socket.disconnect();
-        };
+            return () => {
+                socket.off('riderLocationUpdate', handleLocationUpdate);
+                socket.off('riderStatusUpdate', handleStatusUpdate);
+            };
+        }
     }, []);
 
     const fetchRiders = async () => {
@@ -101,9 +102,10 @@ export default function RiderLiveMap() {
             }));
 
             setRiders(mappedRiders);
-            setLoading(false);
-        } catch (error) {
-            console.error('Error fetching riders:', error);
+        } catch (error: any) {
+            console.error('Error fetching riders for live map:', error);
+            // Silence but log
+        } finally {
             setLoading(false);
         }
     };

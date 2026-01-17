@@ -173,10 +173,10 @@ export default function MyProfile({ isOpen, onClose, user }: MyProfileProps) {
                                             type="text"
                                             value={editedUser?.name || ''}
                                             onChange={(e) => setEditedUser({ ...editedUser, name: e.target.value })}
-                                            className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-orange-100 focus:border-orange-500 outline-none transition text-sm text-gray-700"
+                                            className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-orange-100 focus:border-orange-500 outline-none transition text-sm text-gray-900 font-medium"
                                         />
                                     ) : (
-                                        <p className="text-sm font-medium text-gray-700 border-b border-gray-100 pb-2">{editedUser?.name}</p>
+                                        <p className="text-sm font-semibold text-gray-900 border-b border-gray-100 pb-2">{editedUser?.name}</p>
                                     )}
                                 </div>
 
@@ -186,7 +186,7 @@ export default function MyProfile({ isOpen, onClose, user }: MyProfileProps) {
                                         <FaEnvelope size={12} />
                                         Email
                                     </label>
-                                    <p className="text-sm font-medium text-gray-700 border-b border-gray-100 pb-2">{editedUser?.email}</p>
+                                    <p className="text-sm font-semibold text-gray-900 border-b border-gray-100 pb-2">{editedUser?.email}</p>
                                 </div>
 
                                 {/* Phone */}
@@ -200,10 +200,10 @@ export default function MyProfile({ isOpen, onClose, user }: MyProfileProps) {
                                             type="tel"
                                             value={editedUser?.phone || ''}
                                             onChange={(e) => setEditedUser({ ...editedUser, phone: e.target.value })}
-                                            className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-orange-100 focus:border-orange-500 outline-none transition text-sm text-gray-700"
+                                            className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-orange-100 focus:border-orange-500 outline-none transition text-sm text-gray-900 font-medium"
                                         />
                                     ) : (
-                                        <p className="text-sm font-medium text-gray-700 border-b border-gray-100 pb-2">{editedUser?.phone || 'Not set'}</p>
+                                        <p className="text-sm font-semibold text-gray-900 border-b border-gray-100 pb-2">{editedUser?.phone || 'Not set'}</p>
                                     )}
                                 </div>
 
@@ -217,12 +217,12 @@ export default function MyProfile({ isOpen, onClose, user }: MyProfileProps) {
                                         <textarea
                                             value={editedUser?.address || ''}
                                             onChange={(e) => setEditedUser({ ...editedUser, address: e.target.value })}
-                                            className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-orange-100 focus:border-orange-500 outline-none transition resize-none text-sm text-gray-700"
+                                            className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-orange-100 focus:border-orange-500 outline-none transition resize-none text-sm text-gray-900 font-medium"
                                             rows={3}
                                             placeholder="Enter your delivery address..."
                                         />
                                     ) : (
-                                        <p className="text-sm font-medium text-gray-700 border-b border-gray-100 pb-2 leading-relaxed">
+                                        <p className="text-sm font-semibold text-gray-900 border-b border-gray-100 pb-2 leading-relaxed">
                                             {editedUser?.address || 'No address set'}
                                         </p>
                                     )}
@@ -234,7 +234,7 @@ export default function MyProfile({ isOpen, onClose, user }: MyProfileProps) {
                                         <FaCalendar size={12} />
                                         Member Since
                                     </label>
-                                    <p className="text-sm font-medium text-gray-700 border-b border-gray-100 pb-2">
+                                    <p className="text-sm font-semibold text-gray-900 border-b border-gray-100 pb-2">
                                         {formatDate(editedUser?.createdAt || user.memberSince)}
                                     </p>
                                 </div>

@@ -92,20 +92,24 @@ export default function RestaurantsView() {
 
     const fetchRestaurants = async () => {
         try {
-            const userInfo = localStorage.getItem('userInfo');
-            const token = userInfo ? JSON.parse(userInfo).token : null;
-
-            if (!token) return;
+            const userInfo = JSON.parse(localStorage.getItem('userInfo') || '{}');
+            if (!userInfo.token) return;
 
             const res = await axios.get(`${API_BASE_URL}/api/admin/restaurants`, {
-                headers: { Authorization: `Bearer ${token}` }
+                headers: { Authorization: `Bearer ${userInfo.token}` }
             });
             const data = res.data;
             const restaurantList = Array.isArray(data) ? data : (Array.isArray(data.restaurants) ? data.restaurants : []);
             setRestaurants(restaurantList);
-        } catch (error) {
+        } catch (error: any) {
             console.error('Error fetching restaurants:', error);
-            toast.error('Failed to fetch restaurants');
+            if (error.response?.status !== 401) {
+                if (!error.response) {
+                    toast.error('Network error: Cannot reach backend server');
+                } else {
+                    toast.error(`Failed to fetch restaurants: ${error.response?.data?.message || error.message}`);
+                }
+            }
         } finally {
             setLoading(false);
         }
@@ -115,18 +119,20 @@ export default function RestaurantsView() {
         e.stopPropagation();
         if (!window.confirm('Approve this restaurant?')) return;
         try {
-            const token = JSON.parse(localStorage.getItem('userInfo') || '{}').token;
+            const userInfo = JSON.parse(localStorage.getItem('userInfo') || '{}');
+            if (!userInfo.token) return;
+
             await axios.put(`${API_BASE_URL}/api/admin/restaurants/${id}/approve`, {}, {
-                headers: { Authorization: `Bearer ${token}` }
+                headers: { Authorization: `Bearer ${userInfo.token}` }
             });
             toast.success('Restaurant approved');
             fetchRestaurants();
             if (selectedRestaurant?._id === id) {
                 setSelectedRestaurant(prev => prev ? { ...prev, verificationStatus: 'approved', isActive: true } : null);
             }
-        } catch (error) {
+        } catch (error: any) {
             console.error('Error approving restaurant:', error);
-            toast.error('Failed to approve restaurant');
+            toast.error(error.response?.data?.message || 'Failed to approve restaurant');
         }
     };
 
@@ -136,18 +142,20 @@ export default function RestaurantsView() {
         if (!reason) return;
 
         try {
-            const token = JSON.parse(localStorage.getItem('userInfo') || '{}').token;
+            const userInfo = JSON.parse(localStorage.getItem('userInfo') || '{}');
+            if (!userInfo.token) return;
+
             await axios.put(`${API_BASE_URL}/api/admin/restaurants/${id}/reject`, { reason }, {
-                headers: { Authorization: `Bearer ${token}` }
+                headers: { Authorization: `Bearer ${userInfo.token}` }
             });
             toast.success('Restaurant application rejected');
             fetchRestaurants();
             if (selectedRestaurant?._id === id) {
                 setSelectedRestaurant(prev => prev ? { ...prev, verificationStatus: 'rejected' } : null);
             }
-        } catch (error) {
+        } catch (error: any) {
             console.error('Error rejecting restaurant:', error);
-            toast.error('Failed to reject restaurant');
+            toast.error(error.response?.data?.message || 'Failed to reject restaurant');
         }
     };
 
@@ -156,9 +164,11 @@ export default function RestaurantsView() {
         if (!id) return;
         if (!window.confirm('Suspend this user and their restaurant?')) return;
         try {
-            const token = JSON.parse(localStorage.getItem('userInfo') || '{}').token;
+            const userInfo = JSON.parse(localStorage.getItem('userInfo') || '{}');
+            if (!userInfo.token) return;
+
             await axios.put(`${API_BASE_URL}/api/admin/users/${id}/suspend`, {}, {
-                headers: { Authorization: `Bearer ${token}` }
+                headers: { Authorization: `Bearer ${userInfo.token}` }
             });
             toast.success('User suspended');
             fetchRestaurants();
@@ -172,9 +182,11 @@ export default function RestaurantsView() {
         e.stopPropagation();
         if (!id) return;
         try {
-            const token = JSON.parse(localStorage.getItem('userInfo') || '{}').token;
+            const userInfo = JSON.parse(localStorage.getItem('userInfo') || '{}');
+            if (!userInfo.token) return;
+
             await axios.put(`${API_BASE_URL}/api/admin/users/${id}/unsuspend`, {}, {
-                headers: { Authorization: `Bearer ${token}` }
+                headers: { Authorization: `Bearer ${userInfo.token}` }
             });
             toast.success('User unsuspended');
             fetchRestaurants();
@@ -189,9 +201,11 @@ export default function RestaurantsView() {
         if (!id) return;
         if (!window.confirm('DANGER: Permanently delete this user and their restaurant?')) return;
         try {
-            const token = JSON.parse(localStorage.getItem('userInfo') || '{}').token;
+            const userInfo = JSON.parse(localStorage.getItem('userInfo') || '{}');
+            if (!userInfo.token) return;
+
             await axios.delete(`${API_BASE_URL}/api/admin/users/${id}`, {
-                headers: { Authorization: `Bearer ${token}` }
+                headers: { Authorization: `Bearer ${userInfo.token}` }
             });
             toast.success('User deleted');
             fetchRestaurants();

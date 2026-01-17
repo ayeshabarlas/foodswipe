@@ -126,7 +126,7 @@ export default function RiderDocumentUpload({ riderId, onVerified }: RiderDocume
                         <FaCheckCircle className="text-green-500 text-4xl" />
                     </div>
                     <h2 className="text-2xl font-bold text-gray-900 mb-3">Verified!</h2>
-                    <p className="text-gray-600 font-light mb-8">
+                    <p className="text-gray-800 font-medium mb-8">
                         Congratulations! Your account has been approved. You can now start accepting orders.
                     </p>
                     <button
@@ -148,7 +148,7 @@ export default function RiderDocumentUpload({ riderId, onVerified }: RiderDocume
                         <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-orange-500"></div>
                     </div>
                     <h2 className="text-2xl font-bold text-gray-900 mb-3">Under Review</h2>
-                    <p className="text-gray-600 font-light mb-8">
+                    <p className="text-gray-800 font-medium mb-8">
                         Your documents have been submitted and are under review. We will notify you once your account is approved.
                     </p>
                     <button
@@ -169,11 +169,11 @@ export default function RiderDocumentUpload({ riderId, onVerified }: RiderDocume
             <div className="max-w-2xl mx-auto pt-8">
                 <div className="mb-8">
                     <h1 className="text-2xl font-bold text-gray-900 mb-2">Upload Documents</h1>
-                    <p className="text-gray-600 font-light text-sm">Upload the required documents to verify your account</p>
+                    <p className="text-gray-800 font-medium text-sm">Upload the required documents to verify your account</p>
 
                     <div className="mt-6">
                         <div className="flex justify-between items-center mb-2">
-                            <span className="text-sm font-medium text-gray-700">Progress</span>
+                            <span className="text-sm font-semibold text-gray-900">Progress</span>
                             <span className="text-sm font-semibold text-pink-600">{uploadedCount} / {totalRequired} uploaded</span>
                         </div>
                         <div className="w-full h-2 bg-gray-200 rounded-full overflow-hidden">
@@ -277,14 +277,14 @@ function DocumentItem({
 
                 <div className="flex-1">
                     <div className="flex items-center gap-2 mb-1">
-                        <h3 className="font-semibold text-gray-900">{title}</h3>
-                        {required && <span className="text-xs bg-red-100 text-red-600 px-2 py-0.5 rounded-full font-medium">Required</span>}
+                        <h3 className="font-bold text-gray-900">{title}</h3>
+                        {required && <span className="text-xs bg-red-100 text-red-600 px-2 py-0.5 rounded-full font-bold">Required</span>}
                     </div>
-                    <p className="text-sm text-gray-500 font-light">{subtitle}</p>
+                    <p className="text-sm text-gray-700 font-medium">{subtitle}</p>
                     {uploaded && (
                         <div className="flex items-center gap-1 mt-2">
-                            <FaCheckCircle className="text-teal-500 text-xs" />
-                            <span className="text-xs text-teal-600 font-medium">Uploaded</span>
+                            <FaCheckCircle className="text-teal-600 text-xs" />
+                            <span className="text-xs text-teal-700 font-bold">Uploaded</span>
                         </div>
                     )}
                 </div>

@@ -1,8 +1,8 @@
 'use client';
 import { useState, useEffect } from 'react';
 import axios from 'axios';
-import { io } from 'socket.io-client';
-import { API_BASE_URL, SOCKET_URL } from '../../utils/config';
+import { getSocket } from '../../utils/socket';
+import { API_BASE_URL } from '../../utils/config';
 import { FaUserShield, FaPlus, FaSearch, FaEllipsisV, FaShieldAlt } from 'react-icons/fa';
 
 export default function AdminManagementView() {
@@ -12,16 +12,20 @@ export default function AdminManagementView() {
     useEffect(() => {
         fetchAdmins();
 
-        const socket = io(SOCKET_URL);
+        const socket = getSocket();
         
-        socket.on('user_registered', () => {
-            console.log('User update (possibly new admin) detected, refreshing...');
-            fetchAdmins();
-        });
+        if (socket) {
+            const handleUpdate = () => {
+                console.log('User update (possibly new admin) detected, refreshing...');
+                fetchAdmins();
+            };
 
-        return () => {
-            socket.disconnect();
-        };
+            socket.on('user_registered', handleUpdate);
+
+            return () => {
+                socket.off('user_registered', handleUpdate);
+            };
+        }
     }, []);
 
     const fetchAdmins = async () => {
@@ -33,8 +37,14 @@ export default function AdminManagementView() {
             // Use the getUsers endpoint with role=admin
             const { data } = await axios.get(`${API_BASE_URL}/api/admin/users?role=admin`, config);
             setAdmins(data);
-        } catch (error) {
+        } catch (error: any) {
             console.error('Error fetching admins:', error);
+            if (error.response?.status === 401) {
+                // Let the parent handle redirect
+            } else {
+                // Silence common errors but log them
+                console.warn('Failed to fetch admins list');
+            }
         } finally {
             setLoading(false);
         }

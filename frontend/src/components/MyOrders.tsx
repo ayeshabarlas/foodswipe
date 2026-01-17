@@ -212,15 +212,15 @@ const MyOrders = forwardRef<MyOrdersRef, MyOrdersProps>(({ isOpen, onClose, onTr
                                                     }}
                                                 />
                                                 <div>
-                                                    <h3 className="font-bold text-gray-800">{order.restaurant.name}</h3>
-                                                    <p className="text-xs text-gray-500">{formatDate(order.createdAt)}</p>
+                                                    <h3 className="font-bold text-gray-900">{order.restaurant.name}</h3>
+                                                    <p className="text-xs text-gray-700 font-medium">{formatDate(order.createdAt)}</p>
                                                 </div>
                                             </div>
                                         </div>
 
                                         <div className="mb-3 pl-1">
                                             {order.items.map((item, index) => (
-                                                <div key={index} className="flex items-start gap-2 text-sm text-gray-600 mb-1">
+                                                <div key={index} className="flex items-start gap-2 text-sm text-gray-800 font-medium mb-1">
                                                     <span className="text-orange-500">•</span>
                                                     <span>{item.quantity}x {item.name}</span>
                                                 </div>
@@ -229,11 +229,11 @@ const MyOrders = forwardRef<MyOrdersRef, MyOrdersProps>(({ isOpen, onClose, onTr
 
                                         {/* Order Breakdown */}
                                         <div className="mb-3 px-1 py-2 border-t border-gray-50 space-y-1">
-                                            <div className="flex justify-between text-[11px] text-gray-500">
+                                            <div className="flex justify-between text-[11px] text-gray-700 font-medium">
                                                 <span>Items Subtotal</span>
                                                 <span>Rs. {order.subtotal || (order.totalAmount - (order.deliveryFee || 0))}</span>
                                             </div>
-                                            <div className="flex justify-between text-[11px] text-gray-500">
+                                            <div className="flex justify-between text-[11px] text-gray-700 font-medium">
                                                 <span>Delivery Fee {order.distanceKm ? `(${order.distanceKm}km)` : ''}</span>
                                                 <span>Rs. {order.deliveryFee || 0}</span>
                                             </div>
@@ -263,8 +263,8 @@ const MyOrders = forwardRef<MyOrdersRef, MyOrdersProps>(({ isOpen, onClose, onTr
                         {!loading && !error && orders.length === 0 && (
                             <div className="flex flex-col items-center justify-center h-64 text-center px-6">
                                 <FaReceipt size={48} className="text-gray-300 mb-4" />
-                                <p className="text-lg font-medium text-gray-700">No orders yet</p>
-                                <p className="text-sm text-gray-500 mt-2">Your order history will appear here when you place your first order</p>
+                                <p className="text-lg font-bold text-gray-900">No orders yet</p>
+                                <p className="text-sm text-gray-700 font-medium mt-2">Your order history will appear here when you place your first order</p>
                             </div>
                         )}
                     </motion.div>
