@@ -137,12 +137,10 @@ const loginUser = async (req, res) => {
                 restaurant.owner = user._id;
                 await restaurant.save();
             }
-            // Auto-update role if not admin
+            // DO NOT update user.role here as it might cause E11000 duplicate key error
+            // with an existing account that already has that role.
             if (activeRole !== 'admin' && activeRole !== 'restaurant') {
-                console.log(`[AutoRole] Updating user ${user.email} role to 'restaurant'`);
-                user.role = 'restaurant';
-                await user.save();
-                activeRole = 'restaurant';
+                activeRole = 'restaurant'; 
             }
         }
 
@@ -169,10 +167,8 @@ const loginUser = async (req, res) => {
                 rider.user = user._id;
                 await rider.save();
             }
+            // DO NOT update user.role here to avoid E11000 conflicts
             if (activeRole !== 'admin' && activeRole !== 'restaurant' && activeRole !== 'rider') {
-                console.log(`[AutoRole] Updating user ${user.email} role to 'rider'`);
-                user.role = 'rider';
-                await user.save();
                 activeRole = 'rider';
             }
         }
@@ -427,10 +423,43 @@ const verifyFirebaseToken = async (req, res) => {
         console.log(`Requested role for ${decoded.email}: ${requestedRole}`);
 
         // Find user by email AND strict role match. 
-        // Using email as primary because Google accounts always have emails.
-        let user = await User.findOne({ email: decoded.email, role: requestedRole });
-        console.log(`User found by email/role: ${!!user}`);
+        // Using case-insensitive regex for email to avoid duplicate account issues.
+        const emailRegex = new RegExp(`^${decoded.email}$`, 'i');
+        let user = await User.findOne({ email: emailRegex, role: requestedRole });
+        console.log(`User found by email/role (${requestedRole}): ${!!user}`);
         
+        if (!user) {
+            // Check if they have ANY account with this email
+            const existingAnyRole = await User.findOne({ email: emailRegex });
+            if (existingAnyRole) {
+                console.log(`User exists with different role: ${existingAnyRole.role}. Checking for profiles...`);
+                
+                // If they have a restaurant profile, and requested 'restaurant', use that account!
+                if (requestedRole === 'restaurant') {
+                    const Restaurant = require('../models/Restaurant');
+                    const rest = await Restaurant.findOne({ 
+                        $or: [{ owner: existingAnyRole._id }, { contact: existingAnyRole.phone }]
+                    });
+                    if (rest) {
+                        console.log(`[SmartLinking] Found restaurant for existing user. Using this account.`);
+                        user = existingAnyRole;
+                    }
+                }
+                
+                // If they have a rider profile, and requested 'rider', use that account!
+                if (!user && requestedRole === 'rider') {
+                    const Rider = require('../models/Rider');
+                    const rider = await Rider.findOne({ 
+                        $or: [{ user: existingAnyRole._id }, { phone: existingAnyRole.phone }]
+                    });
+                    if (rider) {
+                        console.log(`[SmartLinking] Found rider profile for existing user. Using this account.`);
+                        user = existingAnyRole;
+                    }
+                }
+            }
+        }
+
         if (!user && verifiedPhone) {
             user = await User.findOne({
                 $or: [{ phone: verifiedPhone }, { phoneNumber: verifiedPhone }],
