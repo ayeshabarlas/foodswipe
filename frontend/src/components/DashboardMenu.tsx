@@ -364,7 +364,7 @@ export default function DashboardMenu({ restaurant: initialRestaurant }: { resta
                 }}
                 onSubmit={handleModalSubmit}
                 editingDish={editingDish}
-                categories={restaurant?.menuCategories || []}
+                categories={allCategories}
             />
         </div>
     );
