@@ -411,7 +411,7 @@ export default function RestaurantDashboard() {
 
             {/* Sidebar */}
             <aside
-                className={`fixed lg:sticky top-0 inset-y-0 left-0 z-50 w-64 bg-gray-900 text-white transform transition-transform duration-300 ease-in-out shadow-2xl h-screen overflow-hidden
+                className={`fixed top-0 inset-y-0 left-0 z-50 w-64 bg-gray-900 text-white transform transition-transform duration-300 ease-in-out shadow-2xl h-screen overflow-hidden
                 ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'} lg:translate-x-0`}
             >
                 <div className="h-full flex flex-col no-scrollbar">
@@ -519,7 +519,7 @@ export default function RestaurantDashboard() {
             </aside>
 
             {/* Main Content */}
-            <main className="flex-1 min-w-0 flex flex-col min-h-screen">
+            <main className="flex-1 min-w-0 flex flex-col min-h-screen lg:ml-64">
                 {/* Desktop Header */}
                 <header className="bg-white/80 backdrop-blur-md border-b border-gray-100 p-4 hidden lg:flex items-center justify-between sticky top-0 z-30 shadow-sm">
                     <div className="flex items-center gap-6">
