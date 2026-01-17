@@ -614,20 +614,6 @@ const updateSystemSettings = async (req, res) => {
     }
 };
 
-// @desc    Get all users (customers) with stats
-const getUsers = async (req, res) => {
-    try {
-        const users = await User.find({}).sort({ createdAt: -1 });
-        
-        // Add audit logs for user fetch
-        console.log(`[Audit] Admin ${req.user.email} fetched all users at ${new Date().toISOString()}`);
-        
-        res.json(users);
-    } catch (error) {
-        res.status(500).json({ message: 'Error fetching users', error: error.message });
-    }
-};
-
 // @desc    Sync Firebase users with MongoDB
 const syncFirebaseUsers = async (req, res) => {
     try {
@@ -738,6 +724,8 @@ const getUsers = async (req, res) => {
                     phone: 1,
                     role: 1,
                     createdAt: 1,
+                    lastLogin: 1,
+                    firebaseUid: 1,
                     totalOrders: 1,
                     totalSpent: 1,
                     lastOrderDate: 1,
