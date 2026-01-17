@@ -615,6 +615,19 @@ const updateSystemSettings = async (req, res) => {
 };
 
 // @desc    Get all users (customers) with stats
+const getUsers = async (req, res) => {
+    try {
+        const users = await User.find({}).sort({ createdAt: -1 });
+        
+        // Add audit logs for user fetch
+        console.log(`[Audit] Admin ${req.user.email} fetched all users at ${new Date().toISOString()}`);
+        
+        res.json(users);
+    } catch (error) {
+        res.status(500).json({ message: 'Error fetching users', error: error.message });
+    }
+};
+
 // @desc    Sync Firebase users with MongoDB
 const syncFirebaseUsers = async (req, res) => {
     try {
@@ -623,45 +636,65 @@ const syncFirebaseUsers = async (req, res) => {
         const firebaseUsers = listUsersResult.users;
 
         let syncedCount = 0;
-        let alreadyExistsCount = 0;
+        let updatedCount = 0;
 
         for (const fbUser of firebaseUsers) {
             const email = fbUser.email;
             if (!email) continue;
 
             // Check if user exists in MongoDB for any role
-            // Usually, we want to ensure they exist as a 'customer' at least
-            const existingUser = await User.findOne({ email: { $regex: new RegExp(`^${email}$`, 'i') }, role: 'customer' });
+            // We search for the email case-insensitively
+            let existingUser = await User.findOne({ 
+                email: { $regex: new RegExp(`^${email}$`, 'i') } 
+            });
 
             if (!existingUser) {
+                // Create as customer by default if missing
                 await User.create({
                     name: fbUser.displayName || 'Firebase User',
                     email: email,
                     phone: fbUser.phoneNumber || undefined,
-                    password: '', // Social login users don't have passwords
+                    password: '', 
                     role: 'customer',
                     firebaseUid: fbUser.uid,
-                    status: 'active'
+                    status: 'active',
+                    lastLogin: fbUser.metadata.lastSignInTime ? new Date(fbUser.metadata.lastSignInTime) : null
                 });
                 syncedCount++;
             } else {
-                // If user exists but firebaseUid is missing, update it
+                // Update existing user with Firebase details if missing
+                let modified = false;
                 if (!existingUser.firebaseUid) {
                     existingUser.firebaseUid = fbUser.uid;
-                    await existingUser.save();
+                    modified = true;
                 }
-                alreadyExistsCount++;
+                
+                // Track last login from Firebase
+                if (fbUser.metadata.lastSignInTime) {
+                    const fbLastLogin = new Date(fbUser.metadata.lastSignInTime);
+                    if (!existingUser.lastLogin || fbLastLogin > existingUser.lastLogin) {
+                        existingUser.lastLogin = fbLastLogin;
+                        modified = true;
+                    }
+                }
+
+                if (modified) {
+                    await existingUser.save();
+                    updatedCount++;
+                }
             }
         }
+
+        console.log(`[Sync] Firebase Sync completed: ${syncedCount} created, ${updatedCount} updated`);
 
         res.json({
             message: 'Sync completed',
             syncedCount,
-            alreadyExistsCount,
+            updatedCount,
             totalFirebaseUsers: firebaseUsers.length
         });
     } catch (error) {
-        console.error('Sync Error:', error);
+        console.error('❌ Firebase Sync Error:', error);
         res.status(500).json({ message: 'Error syncing users', error: error.message });
     }
 };

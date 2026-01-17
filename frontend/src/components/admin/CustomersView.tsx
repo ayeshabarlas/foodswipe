@@ -15,12 +15,13 @@ interface Customer {
     role: string;
     status?: string;
     createdAt: string;
+    lastLogin?: string;
+    firebaseUid?: string;
     totalOrders: number;
     totalSpent: number;
     avgOrderValue: number;
     cancellations: number;
     lastOrderDate: string;
-    firebaseUid?: string;
 }
 
 export default function CustomersView() {
@@ -55,9 +56,9 @@ export default function CustomersView() {
     };
 
     const handleSync = async () => {
-        if (!window.confirm('This will fetch missing users from Firebase. Continue?')) return;
+        if (!window.confirm('This will fetch missing users from Firebase and update login timestamps. Continue?')) return;
         setSyncing(true);
-        const toastId = toast.loading('Syncing with Firebase...');
+        const toastId = toast.loading('Syncing with Firebase Auth...');
         try {
             const userInfo = JSON.parse(localStorage.getItem('userInfo') || '{}');
             if (!userInfo.token) return;
@@ -65,7 +66,7 @@ export default function CustomersView() {
             const res = await axios.post(`${API_BASE_URL}/api/admin/users/sync`, {}, {
                 headers: { Authorization: `Bearer ${userInfo.token}` }
             });
-            toast.success(`Sync complete! Synced: ${res.data.syncedCount} new users.`, { id: toastId });
+            toast.success(`Sync complete! Created: ${res.data.syncedCount}, Updated: ${res.data.updatedCount}`, { id: toastId });
             fetchCustomers();
         } catch (error: any) {
             console.error('Sync Error:', error);
@@ -357,6 +358,12 @@ export default function CustomersView() {
                                                     })}
                                                 </p>
                                                 <p className="text-[11px] text-[#9CA3AF] font-bold uppercase tracking-widest mt-0.5">{formatTimeAgo(customer.createdAt)}</p>
+                                                {customer.lastLogin && (
+                                                    <p className="text-[10px] text-orange-600 font-bold uppercase tracking-widest mt-2 flex items-center gap-1">
+                                                        <span className="w-1.5 h-1.5 bg-orange-500 rounded-full animate-pulse"></span>
+                                                        Last: {formatTimeAgo(customer.lastLogin)}
+                                                    </p>
+                                                )}
                                             </td>
                                             <td className="px-8 py-5 text-right">
                                                 <div className="flex justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
@@ -497,6 +504,26 @@ export default function CustomersView() {
                                         </div>
                                         <div className="flex items-start gap-3">
                                             <div className="w-8 h-8 bg-purple-50 rounded-lg flex items-center justify-center text-purple-500 shrink-0">
+                                                <FaCreditCard className="text-xs" />
+                                            </div>
+                                            <div>
+                                                <label className="text-[11px] font-medium text-[#9CA3AF] uppercase block mb-1">Last Login</label>
+                                                <p className="text-[14px] font-medium text-[#111827]">
+                                                    {selectedCustomer.lastLogin 
+                                                        ? new Date(selectedCustomer.lastLogin).toLocaleString('en-GB', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })
+                                                        : 'Never'}
+                                                </p>
+                                            </div>
+                                        </div>
+                                        <div className="flex items-start gap-3">
+                                            <div className="w-8 h-8 bg-red-50 rounded-lg flex items-center justify-center text-red-500 shrink-0">
+                                                <FaExclamationTriangle className="text-xs" />
+                                            </div>
+                                            <div>
+                                                <label className="text-[11px] font-medium text-[#9CA3AF] uppercase block mb-1">Cancellations</label>
+                                                <p className="text-[14px] font-medium text-[#111827]">{selectedCustomer.cancellations || 0}</p>
+                                            </div>
+                                        </div>
                                                 <FaUser className="text-xs" />
                                             </div>
                                             <div>

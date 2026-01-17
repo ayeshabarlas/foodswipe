@@ -18,29 +18,58 @@ const createVideo = async (req, res) => {
  */
 const getVideoFeed = async (req, res) => {
     try {
-        const { page = 1, limit = 10, category } = req.query;
+        const { page = 1, limit = 10, category, lat, lng } = req.query;
 
         // MVP: Show all dishes for now
         const query = {};
         if (category) query.category = category;
 
-        console.log('Fetching video feed with query:', JSON.stringify(query));
+        console.log(`Fetching video feed with query: ${JSON.stringify(query)}, lat: ${lat}, lng: ${lng}`);
 
-        const videos = await Dish.find(query)
+        // Get all dishes with populated restaurant
+        let videos = await Dish.find(query)
             .populate({
                  path: 'restaurant',
                  select: 'name logo rating location address contact verificationStatus isActive',
              })
              .populate('likes', 'name')
-             .limit(parseInt(limit))
-            .skip((parseInt(page) - 1) * parseInt(limit))
-            .sort({ createdAt: -1 })
-            .lean();
+             .sort({ createdAt: -1 })
+             .lean();
 
-        console.log(`Found ${videos.length} dishes for feed`);
+        // Distance-based sorting if coordinates provided
+        if (lat && lng) {
+            const userLat = parseFloat(lat);
+            const userLng = parseFloat(lng);
+
+            videos = videos.map(video => {
+                let distance = Infinity;
+                if (video.restaurant?.location?.coordinates) {
+                    const [restLng, restLat] = video.restaurant.location.coordinates;
+                    // Haversine formula for sorting (approximate distance)
+                    const R = 6371; // km
+                    const dLat = (restLat - userLat) * Math.PI / 180;
+                    const dLon = (restLng - userLng) * Math.PI / 180;
+                    const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+                              Math.cos(userLat * Math.PI / 180) * Math.cos(restLat * Math.PI / 180) *
+                              Math.sin(dLon / 2) * Math.sin(dLon / 2);
+                    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+                    distance = R * c;
+                }
+                return { ...video, distance };
+            });
+
+            // Sort by distance (nearest first)
+            videos.sort((a, b) => a.distance - b.distance);
+        }
+
+        // Apply pagination after sorting
+        const start = (parseInt(page) - 1) * parseInt(limit);
+        const paginatedVideos = videos.slice(start, start + parseInt(limit));
+
+        console.log(`Found ${paginatedVideos.length} dishes for feed`);
 
         // Attach active deals for these restaurants
-        const restaurantIds = videos.filter(v => v.restaurant).map(v => v.restaurant._id);
+        const restaurantIds = paginatedVideos.filter(v => v.restaurant).map(v => v.restaurant._id);
         const activeDeals = restaurantIds.length > 0 ? await Deal.find({
             restaurant: { $in: restaurantIds },
             isActive: true,
@@ -48,7 +77,7 @@ const getVideoFeed = async (req, res) => {
         }) : [];
 
         // Attach deals and ensure videoUrl/imageUrl are never empty if they exist
-        const videosWithDeals = videos.map(video => {
+        const videosWithDeals = paginatedVideos.map(video => {
             const deals = video.restaurant ? activeDeals.filter(d => d.restaurant.toString() === video.restaurant._id.toString()) : [];
             
             // Debug logging for video URLs

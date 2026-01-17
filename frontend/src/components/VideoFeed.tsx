@@ -422,8 +422,11 @@ export default function VideoFeed() {
     useEffect(() => {
         const fetchDishes = async () => {
             try {
-                console.log('📡 Fetching videos from:', `${API_BASE_URL}/api/videos/feed`);
-                const res = await axios.get(`${API_BASE_URL}/api/videos/feed`);
+                const loc = userLocation || (localStorage.getItem('userLocation') ? JSON.parse(localStorage.getItem('userLocation')!) : null);
+                const queryParams = loc ? `?lat=${loc.latitude}&lng=${loc.longitude}` : '';
+                
+                console.log('📡 Fetching videos from:', `${API_BASE_URL}/api/videos/feed${queryParams}`);
+                const res = await axios.get(`${API_BASE_URL}/api/videos/feed${queryParams}`);
                 console.log('📡 Feed Response:', res.status, 'Videos:', res.data?.videos?.length);
                 if (res.data && res.data.videos) {
                     setDishes(res.data.videos);

@@ -499,6 +499,13 @@ const verifyFirebaseToken = async (req, res) => {
                 });
             }
         }
+        // 5. Success - send response
+        console.log(`[VerifyToken] User ${user.email} verified successfully. Role: ${user.role}`);
+        
+        // Update last login timestamp
+        user.lastLogin = new Date();
+        await user.save();
+
         return res.json({ verified: true, type, token: generateToken(user._id), user: { _id: user._id, name: user.name, email: user.email, phone: user.phone, phoneVerified: user.phoneVerified, role: user.role } });
     } catch (err) {
         console.error('Firebase verification CRITICAL error:', err);
