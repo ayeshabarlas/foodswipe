@@ -35,15 +35,16 @@ interface AddDishModalProps {
     onClose: () => void;
     onSubmit: (data: any) => void;
     editingDish?: any;
+    categories?: string[];
 }
 
-export default function AddDishModal({ isOpen, onClose, onSubmit, editingDish }: AddDishModalProps) {
+export default function AddDishModal({ isOpen, onClose, onSubmit, editingDish, categories = [] }: AddDishModalProps) {
     const [activeTab, setActiveTab] = useState(0);
     const [formData, setFormData] = useState({
         name: '',
         description: '',
         price: 0,
-        category: 'Desi',
+        category: categories[0] || '',
         ingredients: '',
         imageUrl: '',
         videoUrl: '',
@@ -56,7 +57,7 @@ export default function AddDishModal({ isOpen, onClose, onSubmit, editingDish }:
                 name: editingDish.name || '',
                 description: editingDish.description || '',
                 price: editingDish.price || 0,
-                category: editingDish.category || 'Desi',
+                category: editingDish.category || categories[0] || '',
                 ingredients: editingDish.ingredients?.join(', ') || '',
                 imageUrl: editingDish.imageUrl || '',
                 videoUrl: editingDish.videoUrl || '',
@@ -71,7 +72,7 @@ export default function AddDishModal({ isOpen, onClose, onSubmit, editingDish }:
                 name: '',
                 description: '',
                 price: 0,
-                category: 'Desi',
+                category: categories[0] || '',
                 ingredients: '',
                 imageUrl: '',
                 videoUrl: '',
@@ -81,7 +82,7 @@ export default function AddDishModal({ isOpen, onClose, onSubmit, editingDish }:
             setDrinks([]);
             setCombos([]);
         }
-    }, [editingDish]);
+    }, [editingDish, categories]);
 
     const [variants, setVariants] = useState<Variant[]>([]);
     const [addOns, setAddOns] = useState<AddOn[]>([]);
@@ -145,7 +146,6 @@ export default function AddDishModal({ isOpen, onClose, onSubmit, editingDish }:
     };
 
     const tabs = ['Basic Info', 'Variants', 'Add-ons', 'Drinks', 'Combos', 'Media'];
-    const categories = ['Desi', 'Fast Food', 'Chinese', 'Italian', 'Dessert', 'Beverages'];
 
     const addVariant = () => setVariants([...variants, { name: '', price: 0 }]);
     const removeVariant = (index: number) => setVariants(variants.filter((_, i) => i !== index));

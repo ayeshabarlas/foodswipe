@@ -412,12 +412,12 @@ export default function RestaurantDashboard() {
             {/* Sidebar */}
             <aside
                 className={`fixed lg:sticky top-0 inset-y-0 left-0 z-50 w-64 bg-gray-900 text-white transform transition-transform duration-300 ease-in-out shadow-2xl h-screen overflow-hidden
-                ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'} lg:translate-x-0 lg:static`}
+                ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'} lg:translate-x-0`}
             >
-                <div className="h-full flex flex-col">
+                <div className="h-full flex flex-col no-scrollbar">
                     {/* Header */}
-                    <div className="p-4 border-b border-gray-800">
-                        <div className="flex items-center gap-3 mb-2">
+                    <div className="p-6 border-b border-gray-800/50">
+                        <div className="flex items-center gap-3 mb-4">
                             <div className="relative group">
                                 <div className="w-10 h-10 rounded-xl overflow-hidden bg-gray-800 ring-2 ring-orange-500 shadow-lg shadow-orange-500/20">
                                     <img
@@ -466,7 +466,7 @@ export default function RestaurantDashboard() {
                     </div>
 
                     {/* Navigation */}
-                    <nav className="flex-1 overflow-y-auto px-3 py-6 space-y-3 custom-scrollbar">
+                    <nav className="flex-1 overflow-y-auto px-3 py-6 space-y-2 no-scrollbar">
                         {menuItems.map((item) => (
                             <button
                                 key={item.id}

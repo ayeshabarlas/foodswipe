@@ -136,6 +136,10 @@ const restaurantSchema = mongoose.Schema(
             twitter: { type: String, default: '' },
             website: { type: String, default: '' },
         },
+        menuCategories: {
+            type: [String],
+            default: ['Popular', 'Main Course', 'Appetizers', 'Beverages', 'Desserts']
+        },
         analytics: {
             totalViews: { type: Number, default: 0 },
             totalLikes: { type: Number, default: 0 },

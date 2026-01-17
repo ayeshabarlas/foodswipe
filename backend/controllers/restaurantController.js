@@ -519,18 +519,27 @@ const Dish = require('../models/Dish');
 const getRestaurantMenu = async (req, res) => {
     try {
         const restaurantId = req.params.id;
-        const dishes = await Dish.find({ restaurant: restaurantId, isAvailable: true });
+        const [restaurant, dishes] = await Promise.all([
+            Restaurant.findById(restaurantId),
+            Dish.find({ restaurant: restaurantId, isAvailable: true })
+        ]);
 
-        // 1. Popular Items (Top 10 by views/likes/orders - using views/likes for now)
+        if (!restaurant) {
+            return res.status(404).json({ message: 'Restaurant not found' });
+        }
+
+        // 1. Popular Items (Top 10 by views/likes/orders)
         const popularItems = [...dishes]
-            .sort((a, b) => (b.views + b.likes.length) - (a.views + a.likes.length))
+            .sort((a, b) => (b.views + (a.likes?.length || 0)) - (a.views + (a.likes?.length || 0)))
             .slice(0, 10);
 
         // 2. Exclusive Discounted Deals (Items with discount > 0)
         const discountedDeals = dishes.filter(dish => dish.discount && dish.discount > 0);
 
-        // 3. Restaurant Categories
-        const categories = [...new Set(dishes.map(dish => dish.category))];
+        // 3. Restaurant Categories (Use defined categories or fall back to dish categories)
+        const definedCategories = restaurant.menuCategories && restaurant.menuCategories.length > 0 
+            ? restaurant.menuCategories 
+            : [...new Set(dishes.map(dish => dish.category))];
 
         // Build the menu structure
         const menu = [
@@ -544,12 +553,25 @@ const getRestaurantMenu = async (req, res) => {
                 type: 'auto',
                 items: discountedDeals
             },
-            ...categories.map(category => ({
+            ...definedCategories.map(category => ({
                 name: category,
                 type: 'restaurant',
                 items: dishes.filter(dish => dish.category === category)
             }))
         ];
+
+        // Also add dishes that don't belong to any defined category but exist in the dishes list
+        const otherDishes = dishes.filter(dish => !definedCategories.includes(dish.category));
+        if (otherDishes.length > 0) {
+            const otherCategories = [...new Set(otherDishes.map(d => d.category))];
+            otherCategories.forEach(cat => {
+                menu.push({
+                    name: cat,
+                    type: 'restaurant',
+                    items: otherDishes.filter(d => d.category === cat)
+                });
+            });
+        }
 
         // Filter out empty sections
         const nonEmptyMenu = menu.filter(section => section.items.length > 0);
@@ -558,6 +580,35 @@ const getRestaurantMenu = async (req, res) => {
     } catch (error) {
         console.error('Get restaurant menu error:', error);
         res.status(500).json({ message: 'Failed to get restaurant menu', error: error.message });
+    }
+};
+
+/**
+ * @desc    Update menu categories
+ * @route   PUT /api/restaurants/categories
+ * @access  Private (owner only)
+ */
+const updateMenuCategories = async (req, res) => {
+    try {
+        const { categories } = req.body;
+
+        if (!Array.isArray(categories)) {
+            return res.status(400).json({ message: 'Categories must be an array' });
+        }
+
+        const restaurant = await Restaurant.findOne({ owner: req.user._id });
+
+        if (!restaurant) {
+            return res.status(404).json({ message: 'Restaurant not found' });
+        }
+
+        restaurant.menuCategories = categories;
+        await restaurant.save();
+
+        res.json({ message: 'Categories updated successfully', categories: restaurant.menuCategories });
+    } catch (error) {
+        console.error('Update categories error:', error);
+        res.status(500).json({ message: 'Failed to update categories', error: error.message });
     }
 };
 

@@ -14,6 +14,7 @@ const {
     submitVerification,
     getWeeklyOrderHistory,
     getRestaurantEarningsStats,
+    updateMenuCategories,
 } = require('../controllers/restaurantController');
 const { protect } = require('../middleware/authMiddleware');
 
@@ -34,6 +35,7 @@ router.get('/earnings/stats', protect, getRestaurantEarningsStats);
 router.get('/orders/history/weekly', protect, getWeeklyOrderHistory);
 router.put('/store-settings', protect, updateStoreSettings);
 router.put('/prep-time', protect, updatePrepTime);
+router.put('/categories', protect, updateMenuCategories);
 router.get('/:id', getRestaurantById);
 router.put('/:id', protect, updateRestaurant);
 router.get('/', getAllRestaurants);
