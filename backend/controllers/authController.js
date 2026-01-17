@@ -105,6 +105,78 @@ const loginUser = async (req, res) => {
 
         console.log('User logged in successfully:', { id: user._id, email: user.email, role: user.role });
 
+        // AUTO-FIX ROLE & SMART LINKING:
+        // Ensure the user is linked to any existing profiles and has the correct role.
+        let activeRole = user.role;
+        const userEmail = user.email?.toLowerCase();
+        const userPhone = user.phone || user.phoneNumber;
+        const normalizedPhone = userPhone ? userPhone.replace(/[\s\-\+\(\)]/g, '').slice(-10) : null;
+        
+        // Check for Restaurant Profile
+        const Restaurant = require('../models/Restaurant');
+        let restaurant = await Restaurant.findOne({ 
+            $or: [
+                { owner: user._id },
+                { contact: user.phone },
+                { contact: user.phoneNumber },
+                ...(normalizedPhone ? [{ contact: new RegExp(normalizedPhone + '$') }] : [])
+            ]
+        });
+        
+        // If not found by phone, try finding by owner email (if owner is populated)
+        if (!restaurant && userEmail) {
+            const allRests = await Restaurant.find({}).populate('owner');
+            restaurant = allRests.find(r => r.owner?.email?.toLowerCase() === userEmail);
+        }
+
+        if (restaurant) {
+            console.log(`[SmartLinking] Found restaurant "${restaurant.name}" for user ${user.email}`);
+            // Link it if not already linked
+            if (restaurant.owner?.toString() !== user._id.toString()) {
+                console.log(`[SmartLinking] Re-linking restaurant ${restaurant._id} to user ${user._id}`);
+                restaurant.owner = user._id;
+                await restaurant.save();
+            }
+            // Auto-update role if not admin
+            if (activeRole !== 'admin' && activeRole !== 'restaurant') {
+                console.log(`[AutoRole] Updating user ${user.email} role to 'restaurant'`);
+                user.role = 'restaurant';
+                await user.save();
+                activeRole = 'restaurant';
+            }
+        }
+
+        // Check for Rider Profile
+        const Rider = require('../models/Rider');
+        let rider = await Rider.findOne({ 
+            $or: [
+                { user: user._id },
+                { phone: user.phone },
+                { phone: user.phoneNumber },
+                ...(normalizedPhone ? [{ phone: new RegExp(normalizedPhone + '$') }] : [])
+            ]
+        });
+
+        if (!rider && userEmail) {
+            const allRiders = await Rider.find({}).populate('user');
+            rider = allRiders.find(r => r.user?.email?.toLowerCase() === userEmail);
+        }
+
+        if (rider) {
+            console.log(`[SmartLinking] Found rider profile for user ${user.email}`);
+            if (rider.user?.toString() !== user._id.toString()) {
+                console.log(`[SmartLinking] Re-linking rider ${rider._id} to user ${user._id}`);
+                rider.user = user._id;
+                await rider.save();
+            }
+            if (activeRole !== 'admin' && activeRole !== 'restaurant' && activeRole !== 'rider') {
+                console.log(`[AutoRole] Updating user ${user.email} role to 'rider'`);
+                user.role = 'rider';
+                await user.save();
+                activeRole = 'rider';
+            }
+        }
+
         // Check user status
         if (user.status === 'suspended') {
             return res.status(403).json({ message: 'Your account has been suspended. Please contact support.' });
@@ -117,7 +189,7 @@ const loginUser = async (req, res) => {
             phone: user.phone, 
             phoneVerified: user.phoneVerified, 
             phoneNumber: user.phoneNumber, 
-            role: user.role, // Return the ACTUAL role from DB
+            role: activeRole, // Return the UPDATED role
             token: generateToken(user._id) 
         });
     } catch (err) {

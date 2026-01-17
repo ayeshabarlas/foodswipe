@@ -179,44 +179,57 @@ const getRestaurantById = async (req, res) => {
  */
 const getMyRestaurant = async (req, res) => {
     try {
-        console.log(`Getting restaurant for owner ID: ${req.user._id} (Email: ${req.user.email})`);
+        console.log(`[Dashboard] Fetching restaurant for user ID: ${req.user._id} (Role: ${req.user.role}, Email: ${req.user.email})`);
+        
         let restaurant = await Restaurant.findOne({ owner: req.user._id })
             .populate('videos');
 
         if (!restaurant) {
-            console.log(`No restaurant found for user ID ${req.user._id}. Checking by email ${req.user.email} and phone ${req.user.phone}...`);
-            // SMART LINKING: Check if a restaurant exists for this email or phone but different owner ID
-            const otherRests = await Restaurant.find({}).populate('owner');
-            restaurant = otherRests.find(r => {
-                const ownerEmailMatch = r.owner && r.owner.email && r.owner.email.toLowerCase() === req.user.email.toLowerCase();
-                const contactMatch = r.contact === req.user.phone || r.contact === req.user.phoneNumber;
-                return ownerEmailMatch || contactMatch;
-            });
+            console.log(`[Dashboard] No restaurant linked to ID ${req.user._id}. Searching by contact info...`);
             
+            // SMART LINKING: Try to find a restaurant by owner's email or phone
+            const userEmail = req.user.email?.toLowerCase();
+            const userPhone = req.user.phone || req.user.phoneNumber;
+            const normalizedUserPhone = userPhone ? userPhone.replace(/[\s\-\+\(\)]/g, '').slice(-10) : null;
+
+            // Search by contact phone (using regex for flexibility)
+            if (normalizedUserPhone) {
+                restaurant = await Restaurant.findOne({ 
+                    contact: new RegExp(normalizedUserPhone + '$') 
+                }).populate('videos');
+            }
+
+            // If still not found, search by owner email
+            if (!restaurant && userEmail) {
+                const allRests = await Restaurant.find({}).populate('owner').populate('videos');
+                restaurant = allRests.find(r => r.owner?.email?.toLowerCase() === userEmail);
+            }
+
             if (restaurant) {
-                console.log(`SMART LINKING: Re-linking restaurant ${restaurant._id} to new owner ID ${req.user._id}`);
+                console.log(`[SmartLinking] AUTO-RECOVERED: Re-linking restaurant ${restaurant._id} ("${restaurant.name}") to user ID ${req.user._id}`);
                 restaurant.owner = req.user._id;
                 await restaurant.save();
-                // Re-fetch with population
-                restaurant = await Restaurant.findById(restaurant._id).populate('videos');
             } else {
+                console.log(`[Dashboard] No restaurant found for user ${req.user.email}. Sending 404.`);
                 return res.status(404).json({ 
-                    message: 'No restaurant found for this user',
-                    redirect: '/restaurant/create-profile'
+                    message: 'No restaurant profile found. Please create one.',
+                    redirect: '/restaurant/register'
                 });
             }
+        } else {
+            console.log(`[Dashboard] Success: Found restaurant "${restaurant.name}" for owner ${req.user._id}`);
         }
 
-        // Self-healing: Ensure user has 'restaurant' role if they own a restaurant
+        // SELF-HEALING: Ensure user has 'restaurant' role if they own a restaurant
         if (req.user.role !== 'restaurant' && req.user.role !== 'admin') {
-            console.log(`Fixing role for user ${req.user._id} from ${req.user.role} to restaurant`);
+            console.log(`[Dashboard] Fixing role for user ${req.user._id} from ${req.user.role} to restaurant`);
             await User.findByIdAndUpdate(req.user._id, { role: 'restaurant' });
         }
 
         res.json(restaurant);
     } catch (error) {
-        console.error('Get my restaurant error:', error);
-        res.status(500).json({ message: 'Failed to get restaurant', error: error.message });
+        console.error('[Dashboard] Error in getMyRestaurant:', error);
+        res.status(500).json({ message: 'Failed to retrieve restaurant profile', error: error.message });
     }
 };
 
@@ -768,6 +781,7 @@ module.exports = {
     submitVerification,
     getRestaurantMenu,
     getWeeklyOrderHistory,
-    getRestaurantEarningsStats
+    getRestaurantEarningsStats,
+    updateMenuCategories
 };
 

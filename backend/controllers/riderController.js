@@ -82,42 +82,57 @@ const registerRider = async (req, res) => {
 // @access  Private (Rider role)
 const getMyProfile = async (req, res) => {
     try {
+        console.log(`[Rider] Fetching profile for user ID: ${req.user._id} (Role: ${req.user.role}, Email: ${req.user.email})`);
+        
         let rider = await Rider.findOne({ user: req.user._id }).populate('user', 'name email phone');
 
         if (!rider) {
-            console.log(`No rider profile for user ID ${req.user._id}. Checking by email ${req.user.email} and phone ${req.user.phone}...`);
-            // SMART LINKING: Check if a rider profile exists for this email or phone but different user ID
-            const otherRiders = await Rider.find({}).populate('user');
-            rider = otherRiders.find(r => {
-                const emailMatch = r.user && r.user.email && r.user.email.toLowerCase() === req.user.email.toLowerCase();
-                // We don't have a contact field in Rider model, so we check the user's phone
-                const phoneMatch = r.user && (r.user.phone === req.user.phone || r.user.phone === req.user.phoneNumber);
-                return emailMatch || phoneMatch;
-            });
+            console.log(`[Rider] No profile linked to ID ${req.user._id}. Searching by contact info...`);
             
+            // SMART LINKING: Try to find a rider profile by user's email or phone
+            const userEmail = req.user.email?.toLowerCase();
+            const userPhone = req.user.phone || req.user.phoneNumber;
+            const normalizedUserPhone = userPhone ? userPhone.replace(/[\s\-\+\(\)]/g, '').slice(-10) : null;
+
+            // Search by phone number
+            if (normalizedUserPhone) {
+                rider = await Rider.findOne({ 
+                    phone: new RegExp(normalizedUserPhone + '$') 
+                }).populate('user', 'name email phone');
+            }
+
+            // If still not found, search by user email
+            if (!rider && userEmail) {
+                const allRiders = await Rider.find({}).populate('user');
+                rider = allRiders.find(r => r.user?.email?.toLowerCase() === userEmail);
+                if (rider) {
+                    // Populate user data
+                    rider = await Rider.findById(rider._id).populate('user', 'name email phone');
+                }
+            }
+
             if (rider) {
-                console.log(`SMART LINKING: Re-linking rider ${rider._id} to new user ID ${req.user._id}`);
+                console.log(`[SmartLinking] AUTO-RECOVERED: Re-linking rider ${rider._id} to user ID ${req.user._id}`);
                 rider.user = req.user._id;
                 await rider.save();
-                // Re-fetch with population
-                rider = await Rider.findById(rider._id).populate('user', 'name email phone');
-            } else if (req.user.role === 'rider') {
-                // Auto-create if role is rider but profile missing (and no email match)
-                rider = await Rider.create({
-                    user: req.user._id,
-                    fullName: req.user.name,
-                    verificationStatus: 'new',
-                    isOnline: false
-                });
-                rider = await Rider.findById(rider._id).populate('user', 'name email phone');
             } else {
-                return res.status(404).json({ message: 'Rider profile not found' });
+                console.log(`[Rider] No rider profile found for user ${req.user.email}. Sending 404.`);
+                return res.status(404).json({ 
+                    message: 'No rider profile found. Please register.',
+                    redirect: '/rider/register'
+                });
             }
+        }
+
+        // SELF-HEALING: Ensure user has 'rider' role if they have a profile
+        if (req.user.role !== 'rider' && req.user.role !== 'admin') {
+            console.log(`[Rider] Fixing role for user ${req.user._id} from ${req.user.role} to rider`);
+            await User.findByIdAndUpdate(req.user._id, { role: 'rider' });
         }
 
         res.json(rider);
     } catch (error) {
-        console.error('Get rider profile error:', error);
+        console.error('[Rider] Error in getMyProfile:', error);
         res.status(500).json({ message: 'Server error', error: error.message });
     }
 };

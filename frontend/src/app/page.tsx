@@ -195,22 +195,12 @@ export default function Home() {
 
   // Restaurant owner flow
   if (userRole === "restaurant") {
-       // Show dashboard by default for restaurant roles to avoid flicker
-       // Only show CreateRestaurant if we explicitly know hasRestaurant is false
-       if (hasRestaurant || localStorage.getItem("hasRestaurant") === "true") {
-         return (
-           <div className="min-h-screen w-full bg-black">
-             <RestaurantDashboard />
-           </div>
-         );
-       }
-
-       return (
-         <div className="min-h-screen w-full bg-black">
-           <CreateRestaurant onRestaurantCreated={handleRestaurantCreated} />
-         </div>
-       );
-    }
+    return (
+      <div className="min-h-screen w-full bg-black">
+        <RestaurantDashboard />
+      </div>
+    );
+  }
 
   // Rider flow
   if (userRole === "rider") {
