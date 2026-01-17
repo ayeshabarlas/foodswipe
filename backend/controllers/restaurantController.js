@@ -605,6 +605,12 @@ const updateMenuCategories = async (req, res) => {
         restaurant.menuCategories = categories;
         await restaurant.save();
 
+        // Trigger Pusher event for real-time menu update
+        triggerEvent(`restaurant-${restaurant._id}`, 'menu_updated', {
+            restaurantId: restaurant._id,
+            categories: restaurant.menuCategories
+        });
+
         res.json({ message: 'Categories updated successfully', categories: restaurant.menuCategories });
     } catch (error) {
         console.error('Update categories error:', error);

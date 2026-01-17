@@ -77,9 +77,10 @@ const createRestaurantVoucher = async (req, res) => {
             return res.status(404).json({ message: 'Restaurant not found' });
         }
 
-        const { code, discount, description, expiryDate, minimumAmount } = req.body;
+        const { code, discount, description, expiryDate, minimumAmount, name } = req.body;
 
         const voucher = await Voucher.create({
+            name: name || code.toUpperCase(), // Use code as name if not provided
             code: code.toUpperCase(),
             discount,
             description,

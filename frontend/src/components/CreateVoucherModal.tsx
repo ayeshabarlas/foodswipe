@@ -32,6 +32,7 @@ export default function CreateVoucherModal({ isOpen, onClose, onSuccess }: Creat
                 `${API_BASE_URL}/api/vouchers/restaurant`,
                 {
                     ...formData,
+                    name: formData.code, // Added name field
                     discount: parseFloat(formData.discount),
                     minimumAmount: parseFloat(formData.minimumAmount) || 0,
                 },

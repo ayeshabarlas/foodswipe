@@ -8,6 +8,7 @@ import { useSwipeBack } from '../hooks/useSwipeBack';
 import DishDetails from './DishDetails';
 import { getImageUrl, getImageFallback } from '../utils/imageUtils';
 import { API_BASE_URL } from '../utils/config';
+import { getSocket, initSocket, subscribeToChannel, unsubscribeFromChannel } from '../utils/socket';
 
 interface Dish {
     _id: string;
@@ -236,8 +237,31 @@ export default function RestaurantProfile({ restaurant: initialRestaurant, onBac
         // Initial fetch
         fetchAllData();
 
-        // Real-time polling every 5 seconds for live updates
-        const interval = setInterval(fetchAllData, 5000);
+        // Socket listener for real-time updates
+        const userInfo = JSON.parse(localStorage.getItem('userInfo') || '{}');
+        // Initialize socket and subscribe to restaurant channel
+         const socket = initSocket(userInfo._id, 'user');
+         subscribeToChannel(`restaurant-${initialRestaurant._id}`);
+ 
+         if (socket) {
+            socket.on('menu_updated', (data: any) => {
+                console.log('Menu updated via Pusher:', data);
+                fetchMenu();
+            });
+
+            socket.on('restaurant_updated', (data: any) => {
+                console.log('Restaurant updated via Pusher:', data);
+                fetchRestaurantDetails();
+            });
+
+            socket.on('new_voucher', (data: any) => {
+                console.log('New voucher via Pusher:', data);
+                fetchVouchers();
+            });
+        }
+
+        // Real-time polling every 30 seconds as a fallback (less frequent now)
+        const interval = setInterval(fetchAllData, 30000);
 
         window.history.pushState({ modal: 'restaurant' }, '', '');
         const handlePopState = () => onBack();
@@ -246,6 +270,7 @@ export default function RestaurantProfile({ restaurant: initialRestaurant, onBac
         return () => {
             clearInterval(interval);
             window.removeEventListener('popstate', handlePopState);
+            unsubscribeFromChannel(`restaurant-${initialRestaurant._id}`);
         };
     }, [initialRestaurant, onBack]);
 

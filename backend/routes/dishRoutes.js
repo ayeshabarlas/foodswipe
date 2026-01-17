@@ -3,6 +3,7 @@ const router = express.Router();
 const Dish = require('../models/Dish');
 const { protect, requireRestaurant } = require('../middleware/authMiddleware');
 const { checkRestaurantApproval } = require('../middleware/approvalMiddleware');
+const { triggerEvent } = require('../socket');
 
 /**
  * Normalizes image/video paths to store only the relative path
@@ -98,9 +99,16 @@ router.post('/', protect, requireRestaurant, checkRestaurantApproval, async (req
             recommendedItems: recommendedItems || [],
             customizations: customizations || [],
             likes: [],
+            views: 0
         });
 
-        console.log('Dish created successfully:', dish._id);
+        // Trigger Pusher event for real-time menu update
+        triggerEvent(`restaurant-${restaurant}`, 'menu_updated', {
+            restaurantId: restaurant,
+            dishId: dish._id,
+            action: 'create'
+        });
+
         res.status(201).json(dish);
     } catch (error) {
         console.error('Create dish error:', error);
@@ -138,6 +146,14 @@ router.put('/:id', protect, requireRestaurant, checkRestaurantApproval, async (r
         if (ingredients !== undefined) dish.ingredients = ingredients;
 
         await dish.save();
+
+        // Trigger Pusher event for real-time menu update
+        triggerEvent(`restaurant-${dish.restaurant}`, 'menu_updated', {
+            restaurantId: dish.restaurant,
+            dishId: dish._id,
+            action: 'update'
+        });
+
         res.json(dish);
     } catch (error) {
         res.status(500).json({ message: 'Server error', error: error.message });
@@ -155,7 +171,16 @@ router.delete('/:id', protect, requireRestaurant, checkRestaurantApproval, async
             return res.status(404).json({ message: 'Dish not found' });
         }
 
+        const restaurantId = dish.restaurant;
         await dish.deleteOne();
+
+        // Trigger Pusher event for real-time menu update
+        triggerEvent(`restaurant-${restaurantId}`, 'menu_updated', {
+            restaurantId: restaurantId,
+            dishId: req.params.id,
+            action: 'delete'
+        });
+
         res.json({ message: 'Dish deleted successfully' });
     } catch (error) {
         res.status(500).json({ message: 'Server error', error: error.message });
