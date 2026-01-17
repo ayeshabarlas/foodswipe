@@ -516,14 +516,7 @@ export default function CustomersView() {
                                             </div>
                                         </div>
                                         <div className="flex items-start gap-3">
-                                            <div className="w-8 h-8 bg-red-50 rounded-lg flex items-center justify-center text-red-500 shrink-0">
-                                                <FaExclamationTriangle className="text-xs" />
-                                            </div>
-                                            <div>
-                                                <label className="text-[11px] font-medium text-[#9CA3AF] uppercase block mb-1">Cancellations</label>
-                                                <p className="text-[14px] font-medium text-[#111827]">{selectedCustomer.cancellations || 0}</p>
-                                            </div>
-                                        </div>
+                                            <div className="w-8 h-8 bg-indigo-50 rounded-lg flex items-center justify-center text-indigo-500 shrink-0">
                                                 <FaUser className="text-xs" />
                                             </div>
                                             <div>
