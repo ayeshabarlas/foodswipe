@@ -6,6 +6,8 @@ const bcrypt = require('bcryptjs'); // used by User model for hashing
 const User = require('../models/User');
 const Otp = require('../models/Otp');
 const { admin } = require('../config/firebase');
+const { triggerEvent } = require('../socket');
+const AuditLog = require('../models/AuditLog');
 
 // Helper to generate a JWT token for a user id
 const generateToken = (id) => {
@@ -43,6 +45,25 @@ const registerUser = async (req, res) => {
             role: role || 'customer' 
         });
         console.log(`User registered: id=${user._id}, role=${user.role}`);
+        
+        // Trigger real-time event for admin dashboard
+        triggerEvent('admin-channel', 'user_registered', {
+            _id: user._id,
+            name: user.name,
+            email: user.email,
+            role: user.role,
+            createdAt: user.createdAt
+        });
+
+        // Audit Log
+        await AuditLog.create({
+            event: 'SIGNUP',
+            userId: user._id,
+            email: user.email,
+            role: user.role,
+            details: { method: 'email/password' }
+        });
+
         return res.status(201).json({ _id: user._id, name: user.name, email: user.email, phone: user.phone, phoneVerified: user.phoneVerified, role: user.role, token: generateToken(user._id) });
     } catch (err) {
         return res.status(500).json({ message: err.message });
@@ -104,6 +125,27 @@ const loginUser = async (req, res) => {
         }
 
         console.log('User logged in successfully:', { id: user._id, email: user.email, role: user.role });
+
+        // Update last login
+        user.lastLogin = new Date();
+        await user.save();
+
+        // Trigger real-time event for admin dashboard
+        triggerEvent('admin-channel', 'user_logged_in', {
+            _id: user._id,
+            email: user.email,
+            role: user.role,
+            lastLogin: user.lastLogin
+        });
+
+        // Audit Log
+        await AuditLog.create({
+            event: 'LOGIN',
+            userId: user._id,
+            email: user.email,
+            role: user.role,
+            details: { method: 'email/phone' }
+        });
 
         // AUTO-FIX ROLE & SMART LINKING:
         // Ensure the user is linked to any existing profiles and has the correct role.
@@ -286,8 +328,47 @@ const verifyOtp = async (req, res) => {
             user = await User.create({ name, email, phone, password: password || '', role: requestedRole });
             console.log(`User created via OTP: id=${user._id}, role=${user.role}`);
             type = 'signup';
+            
+            // Trigger real-time event for admin dashboard
+            triggerEvent('admin-channel', 'user_registered', {
+                _id: user._id,
+                name: user.name,
+                email: user.email,
+                role: user.role,
+                createdAt: user.createdAt
+            });
+
+            // Audit Log
+            await AuditLog.create({
+                event: 'SIGNUP',
+                userId: user._id,
+                email: user.email,
+                role: user.role,
+                details: { method: 'otp' }
+            });
         } else {
             console.log(`User logged in via OTP: id=${user._id}, role=${user.role}`);
+            
+            // Update last login
+            user.lastLogin = new Date();
+            await user.save();
+            
+            // Trigger real-time event for admin dashboard
+            triggerEvent('admin-channel', 'user_logged_in', {
+                _id: user._id,
+                email: user.email,
+                role: user.role,
+                lastLogin: user.lastLogin
+            });
+
+            // Audit Log
+            await AuditLog.create({
+                event: 'LOGIN',
+                userId: user._id,
+                email: user.email,
+                role: user.role,
+                details: { method: 'otp' }
+            });
         }
         return res.json({ verified: true, type, token: generateToken(user._id), user: { _id: user._id, name: user.name, email: user.email, phone: user.phone, role: user.role } });
     } catch (err) {
@@ -489,8 +570,44 @@ const verifyFirebaseToken = async (req, res) => {
             });
             console.log(`User created successfully: ${user._id}`);
             type = 'signup';
+
+            // Trigger real-time event for admin dashboard
+            triggerEvent('admin-channel', 'user_registered', {
+                _id: user._id,
+                name: user.name,
+                email: user.email,
+                role: user.role,
+                createdAt: user.createdAt
+            });
+
+            // Audit Log
+            await AuditLog.create({
+                event: 'SIGNUP',
+                userId: user._id,
+                email: user.email,
+                role: user.role,
+                details: { method: 'google', firebaseUid: decoded.uid }
+            });
         } else {
             console.log(`Existing user found: ${user._id}, checking password...`);
+            
+            // Update last login (already handled later but triggering event here)
+            // Trigger real-time event for admin dashboard
+            triggerEvent('admin-channel', 'user_logged_in', {
+                _id: user._id,
+                email: user.email,
+                role: user.role,
+                lastLogin: new Date()
+            });
+
+            // Audit Log
+            await AuditLog.create({
+                event: 'LOGIN',
+                userId: user._id,
+                email: user.email,
+                role: user.role,
+                details: { method: 'google', firebaseUid: decoded.uid }
+            });
             // Existing user – ensure they are not a password‑based account
             if (user.password && user.password !== '') {
                 console.log(`User ${user._id} has a password set, blocking Google login`);

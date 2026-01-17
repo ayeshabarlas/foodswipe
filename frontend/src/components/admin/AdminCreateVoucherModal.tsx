@@ -21,7 +21,28 @@ export default function AdminCreateVoucherModal({ isOpen, onClose, onSuccess, in
         expiryDate: '',
         minimumAmount: '',
         usageLimit: '',
+        fundedBy: 'platform',
+        restaurantId: '',
     });
+    const [restaurants, setRestaurants] = useState<any[]>([]);
+
+    React.useEffect(() => {
+        fetchRestaurants();
+    }, []);
+
+    const fetchRestaurants = async () => {
+        try {
+            const userInfoStr = localStorage.getItem('userInfo');
+            const token = userInfoStr ? JSON.parse(userInfoStr).token : null;
+            if (!token) return;
+
+            const config = { headers: { Authorization: `Bearer ${token}` } };
+            const { data } = await axios.get(`${API_BASE_URL}/api/admin/restaurants`, config);
+            setRestaurants(data);
+        } catch (error) {
+            console.error('Failed to fetch restaurants:', error);
+        }
+    };
 
     React.useEffect(() => {
         if (isOpen && initialData) {
@@ -32,6 +53,8 @@ export default function AdminCreateVoucherModal({ isOpen, onClose, onSuccess, in
                 expiryDate: initialData.expiryDate ? new Date(initialData.expiryDate).toISOString().split('T')[0] : '',
                 minimumAmount: initialData.minOrder?.toString() || initialData.minimumAmount?.toString() || '',
                 usageLimit: initialData.usageLimit === Infinity ? '' : (initialData.usageLimit?.toString() || ''),
+                fundedBy: initialData.fundedBy?.toLowerCase() || 'platform',
+                restaurantId: initialData.restaurant?._id || initialData.restaurant || '',
             });
         } else if (isOpen && !initialData) {
             setFormData({
@@ -41,6 +64,8 @@ export default function AdminCreateVoucherModal({ isOpen, onClose, onSuccess, in
                 expiryDate: '',
                 minimumAmount: '',
                 usageLimit: '',
+                fundedBy: 'platform',
+                restaurantId: '',
             });
         }
     }, [isOpen, initialData]);
@@ -197,6 +222,44 @@ export default function AdminCreateVoucherModal({ isOpen, onClose, onSuccess, in
                                     rows={3}
                                     className="w-full px-6 py-4 bg-gray-50 border border-gray-100 rounded-2xl focus:ring-2 focus:ring-[#FF6A00]/10 focus:border-[#FF6A00] outline-none text-[14px] text-[#111827] placeholder:text-[#9CA3AF] transition-all resize-none"
                                 />
+                            </div>
+
+                            <div className="grid grid-cols-2 gap-6">
+                                <div className="space-y-2">
+                                    <label className="block text-[11px] font-bold text-[#6B7280] uppercase tracking-widest ml-1">
+                                        Funded By
+                                    </label>
+                                    <select
+                                        name="fundedBy"
+                                        value={formData.fundedBy}
+                                        onChange={(e) => setFormData({ ...formData, fundedBy: e.target.value })}
+                                        className="w-full px-6 py-4 bg-gray-50 border border-gray-100 rounded-2xl focus:ring-2 focus:ring-[#FF6A00]/10 focus:border-[#FF6A00] outline-none text-[14px] text-[#111827] font-bold cursor-pointer transition-all"
+                                    >
+                                        <option value="platform">Platform</option>
+                                        <option value="restaurant">Restaurant</option>
+                                    </select>
+                                </div>
+                                {formData.fundedBy === 'restaurant' && (
+                                    <div className="space-y-2">
+                                        <label className="block text-[11px] font-bold text-[#6B7280] uppercase tracking-widest ml-1">
+                                            Select Restaurant
+                                        </label>
+                                        <select
+                                            name="restaurantId"
+                                            required={formData.fundedBy === 'restaurant'}
+                                            value={formData.restaurantId}
+                                            onChange={(e) => setFormData({ ...formData, restaurantId: e.target.value })}
+                                            className="w-full px-6 py-4 bg-gray-50 border border-gray-100 rounded-2xl focus:ring-2 focus:ring-[#FF6A00]/10 focus:border-[#FF6A00] outline-none text-[14px] text-[#111827] font-bold cursor-pointer transition-all"
+                                        >
+                                            <option value="">Select a restaurant</option>
+                                            {restaurants.map((rest: any) => (
+                                                <option key={rest._id} value={rest._id}>
+                                                    {rest.name}
+                                                </option>
+                                            ))}
+                                        </select>
+                                    </div>
+                                )}
                             </div>
 
                             <div className="grid grid-cols-2 gap-6">

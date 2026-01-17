@@ -18,14 +18,23 @@ interface Voucher {
     usageCount: number;
     usageLimit: number;
     fundedBy: 'Platform' | 'Restaurant';
+    displayFundedBy: string;
     totalCost: number;
+    restaurant?: {
+        _id: string;
+        name: string;
+    };
 }
 
 export default function VouchersView() {
     const [vouchers, setVouchers] = useState<Voucher[]>([]);
+    const [filteredVouchers, setFilteredVouchers] = useState<Voucher[]>([]);
     const [loading, setLoading] = useState(true);
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [editingVoucher, setEditingVoucher] = useState<Voucher | null>(null);
+    const [searchQuery, setSearchQuery] = useState('');
+    const [statusFilter, setStatusFilter] = useState('All Status');
+    const [fundingFilter, setFundingFilter] = useState('All Funding');
 
     useEffect(() => {
         fetchVouchers();
@@ -45,6 +54,24 @@ export default function VouchersView() {
         }
     }, []);
 
+    useEffect(() => {
+        let result = vouchers;
+
+        if (searchQuery) {
+            result = result.filter(v => v.code.toLowerCase().includes(searchQuery.toLowerCase()));
+        }
+
+        if (statusFilter !== 'All Status') {
+            result = result.filter(v => v.status === statusFilter);
+        }
+
+        if (fundingFilter !== 'All Funding') {
+            result = result.filter(v => v.fundedBy === fundingFilter);
+        }
+
+        setFilteredVouchers(result);
+    }, [vouchers, searchQuery, statusFilter, fundingFilter]);
+
     const fetchVouchers = async () => {
         try {
             const userInfo = JSON.parse(localStorage.getItem('userInfo') || '{}');
@@ -63,7 +90,8 @@ export default function VouchersView() {
                 fundedBy: v.fundedBy ? (v.fundedBy.charAt(0).toUpperCase() + v.fundedBy.slice(1)) : 'Platform',
                 discountValue: v.discount,
                 discountType: v.discountType,
-                minOrder: v.minimumAmount
+                minOrder: v.minimumAmount,
+                displayFundedBy: v.fundedBy === 'restaurant' && v.restaurant ? v.restaurant.name : (v.fundedBy ? (v.fundedBy.charAt(0).toUpperCase() + v.fundedBy.slice(1)) : 'Platform')
             })));
         } catch (error: any) {
             console.error('Error fetching vouchers:', error);
@@ -200,19 +228,30 @@ export default function VouchersView() {
                     <input
                         type="text"
                         placeholder="Search voucher codes..."
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
                         className="w-full pl-11 pr-4 py-3.5 bg-white border border-gray-100 rounded-[1.25rem] outline-none focus:ring-2 focus:ring-[#FF6A00]/10 focus:border-[#FF6A00] text-[14px] text-[#111827] placeholder:text-[#9CA3AF] transition-all"
                     />
                 </div>
                 <div className="flex gap-3">
-                    <select className="px-6 py-3.5 bg-white border border-gray-100 rounded-[1.25rem] outline-none focus:ring-2 focus:ring-[#FF6A00]/10 focus:border-[#FF6A00] text-[13px] font-bold text-[#111827] cursor-pointer appearance-none min-w-[140px]">
-                        <option>All Status</option>
-                        <option>Active</option>
-                        <option>Expired</option>
+                    <select 
+                        value={statusFilter}
+                        onChange={(e) => setStatusFilter(e.target.value)}
+                        className="px-6 py-3.5 bg-white border border-gray-100 rounded-[1.25rem] outline-none focus:ring-2 focus:ring-[#FF6A00]/10 focus:border-[#FF6A00] text-[13px] font-bold text-[#111827] cursor-pointer appearance-none min-w-[140px]"
+                    >
+                        <option value="All Status">All Status</option>
+                        <option value="Active">Active</option>
+                        <option value="Expired">Expired</option>
+                        <option value="Inactive">Inactive</option>
                     </select>
-                    <select className="px-6 py-3.5 bg-white border border-gray-100 rounded-[1.25rem] outline-none focus:ring-2 focus:ring-[#FF6A00]/10 focus:border-[#FF6A00] text-[13px] font-bold text-[#111827] cursor-pointer appearance-none min-w-[140px]">
-                        <option>All Funding</option>
-                        <option>Platform</option>
-                        <option>Restaurant</option>
+                    <select 
+                        value={fundingFilter}
+                        onChange={(e) => setFundingFilter(e.target.value)}
+                        className="px-6 py-3.5 bg-white border border-gray-100 rounded-[1.25rem] outline-none focus:ring-2 focus:ring-[#FF6A00]/10 focus:border-[#FF6A00] text-[13px] font-bold text-[#111827] cursor-pointer appearance-none min-w-[140px]"
+                    >
+                        <option value="All Funding">All Funding</option>
+                        <option value="Platform">Platform</option>
+                        <option value="Restaurant">Restaurant</option>
                     </select>
                 </div>
             </div>
@@ -235,7 +274,7 @@ export default function VouchersView() {
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-gray-50">
-                            {vouchers.map((voucher) => (
+                            {filteredVouchers.map((voucher) => (
                                 <tr key={voucher._id} className="hover:bg-gray-50/50 transition-colors group">
                                     <td className="px-8 py-5">
                                         <span className="text-[14px] font-bold text-[#111827] font-mono tracking-tight bg-gray-50 px-3 py-1 rounded-lg border border-gray-100">{voucher.code}</span>
@@ -249,7 +288,7 @@ export default function VouchersView() {
                                     <td className="px-8 py-5">
                                         <span className={`px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider ${voucher.fundedBy === 'Platform' ? 'bg-orange-50 text-[#FF6A00]' : 'bg-blue-50 text-blue-600'
                                             }`}>
-                                            {voucher.fundedBy}
+                                            {voucher.displayFundedBy}
                                         </span>
                                     </td>
                                     <td className="px-8 py-5 text-[14px] font-medium text-[#6B7280]">Rs. {voucher.minOrder}</td>

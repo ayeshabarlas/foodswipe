@@ -17,6 +17,7 @@ const {
     updateSystemSettings,
     getUsers,
     syncFirebaseUsers,
+    verifyUsers,
     suspendUser,
     unsuspendUser,
     deleteUser,
@@ -56,6 +57,7 @@ router.delete('/riders/:id', deleteRider);
 // User management
 router.get('/users', getUsers);
 router.post('/users/sync', syncFirebaseUsers);
+router.get('/users/verify', verifyUsers);
 router.put('/users/:id/suspend', suspendUser);
 router.put('/users/:id/unsuspend', unsuspendUser);
 router.delete('/users/:id', deleteUser);

@@ -9,6 +9,7 @@ const Video = require('../models/Video');
 const Settings = require('../models/Settings');
 const Dish = require('../models/Dish');
 const { triggerEvent } = require('../socket');
+const AuditLog = require('../models/AuditLog');
 
 // @desc    Get all pending restaurants
 // @route   GET /api/admin/restaurants/pending
@@ -673,6 +674,16 @@ const syncFirebaseUsers = async (req, res) => {
 
         console.log(`[Sync] Firebase Sync completed: ${syncedCount} created, ${updatedCount} updated`);
 
+        // Audit Log
+        await AuditLog.create({
+            event: 'SYNC_FIREBASE',
+            details: { 
+                syncedCount, 
+                updatedCount, 
+                totalFirebaseUsers: firebaseUsers.length 
+            }
+        });
+
         res.json({
             message: 'Sync completed',
             syncedCount,
@@ -685,6 +696,73 @@ const syncFirebaseUsers = async (req, res) => {
     }
 };
 
+/**
+ * @desc    Verify users between Firebase and MongoDB
+ * @route   GET /api/admin/verify-users
+ * @access  Private/Admin
+ */
+const verifyUsers = async (req, res) => {
+    try {
+        const { admin } = require('../config/firebase');
+        const listUsersResult = await admin.auth().listUsers();
+        const firebaseUsers = listUsersResult.users;
+        const mongoUsers = await User.find({}, 'email firebaseUid role');
+
+        const discrepancies = [];
+
+        // 1. Check Firebase users missing in MongoDB
+        for (const fbUser of firebaseUsers) {
+            const existsInMongo = mongoUsers.find(u => 
+                u.email?.toLowerCase() === fbUser.email?.toLowerCase() || 
+                u.firebaseUid === fbUser.uid
+            );
+
+            if (!existsInMongo) {
+                discrepancies.push({
+                    type: 'MISSING_IN_MONGO',
+                    firebaseUser: {
+                        uid: fbUser.uid,
+                        email: fbUser.email,
+                        displayName: fbUser.displayName
+                    },
+                    severity: 'high'
+                });
+            }
+        }
+
+        // 2. Check MongoDB users missing Firebase UID (but should have one if they use social login)
+        // We only care about users who are likely social users or have been synced before
+        for (const mUser of mongoUsers) {
+            const existsInFirebase = firebaseUsers.find(u => 
+                u.email?.toLowerCase() === mUser.email?.toLowerCase() || 
+                u.uid === mUser.firebaseUid
+            );
+
+            if (!existsInFirebase && mUser.firebaseUid) {
+                discrepancies.push({
+                    type: 'MISSING_IN_FIREBASE',
+                    mongoUser: {
+                        id: mUser._id,
+                        email: mUser.email,
+                        firebaseUid: mUser.firebaseUid
+                    },
+                    severity: 'medium'
+                });
+            }
+        }
+
+        res.json({
+            totalFirebase: firebaseUsers.length,
+            totalMongo: mongoUsers.length,
+            discrepancyCount: discrepancies.length,
+            discrepancies
+        });
+    } catch (error) {
+        res.status(500).json({ message: 'Verification failed', error: error.message });
+    }
+};
+
+// @desc    Get all users with stats
 const getUsers = async (req, res) => {
     try {
         const role = req.query.role || 'customer';
@@ -752,6 +830,14 @@ const suspendUser = async (req, res) => {
         user.status = 'suspended';
         await user.save();
 
+        // Audit Log
+        await AuditLog.create({
+            event: 'USER_SUSPENDED',
+            userId: user._id,
+            email: user.email,
+            details: { suspendedBy: req.admin?._id }
+        });
+
         // Notify admins to refresh UI
         triggerEvent('admin', 'restaurant_updated');
         triggerEvent('admin', 'stats_updated');
@@ -771,6 +857,14 @@ const unsuspendUser = async (req, res) => {
         }
         user.status = 'active';
         await user.save();
+
+        // Audit Log
+        await AuditLog.create({
+            event: 'USER_UNSUSPENDED',
+            userId: user._id,
+            email: user.email,
+            details: { unsuspendedBy: req.admin?._id }
+        });
 
         // Notify admins to refresh UI
         triggerEvent('admin', 'restaurant_updated');
@@ -802,6 +896,13 @@ const deleteUser = async (req, res) => {
         }
 
         await User.findByIdAndDelete(req.params.id);
+
+        // Audit Log
+        await AuditLog.create({
+            event: 'USER_DELETED',
+            email: user.email,
+            details: { deletedBy: req.admin?._id, role: user.role }
+        });
 
         // Notify admins to refresh UI
         triggerEvent('admin', 'restaurant_updated');
@@ -893,6 +994,7 @@ module.exports = {
     updateSystemSettings,
     getUsers,
     syncFirebaseUsers,
+    verifyUsers,
     suspendUser,
     unsuspendUser,
     deleteUser,

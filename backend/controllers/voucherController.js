@@ -87,6 +87,7 @@ const createRestaurantVoucher = async (req, res) => {
             expiryDate,
             minimumAmount: minimumAmount || 0,
             createdBy: 'restaurant',
+            fundedBy: 'restaurant', // Set fundedBy to restaurant
             restaurant: restaurant._id,
             isActive: true,
         });
@@ -190,7 +191,7 @@ const toggleVoucherStatus = async (req, res) => {
  */
 const createAdminVoucher = async (req, res) => {
     try {
-        const { code, discount, description, expiryDate, minimumAmount, usageLimit, name } = req.body;
+        const { code, discount, description, expiryDate, minimumAmount, usageLimit, name, fundedBy, restaurantId } = req.body;
 
         const voucher = await Voucher.create({
             name: name || code, // Ensure name is provided
@@ -201,7 +202,8 @@ const createAdminVoucher = async (req, res) => {
             minimumAmount: minimumAmount || 0,
             maxUsage: usageLimit || 1000,
             createdBy: 'platform',
-            fundedBy: 'platform',
+            fundedBy: fundedBy || 'platform',
+            restaurant: fundedBy === 'restaurant' ? restaurantId : undefined,
             isActive: true,
         });
 
@@ -217,18 +219,20 @@ const createAdminVoucher = async (req, res) => {
 // @access  Private/Admin
 const getAllVouchersAdmin = async (req, res) => {
     try {
-        const vouchers = await Voucher.aggregate([
-            {
-                $addFields: {
-                    totalCost: {
-                        $sum: '$usedBy.discountApplied'
-                    }
-                }
-            },
-            { $sort: { createdAt: -1 } }
-        ]);
+        const vouchers = await Voucher.find()
+            .populate('restaurant', 'name')
+            .sort({ createdAt: -1 });
 
-        res.json(vouchers);
+        // Calculate total cost manually since we switched from aggregation
+        const vouchersWithStats = vouchers.map(v => {
+            const voucherObj = v.toObject();
+            voucherObj.totalCost = Array.isArray(v.usedBy) 
+                ? v.usedBy.reduce((acc, usage) => acc + (usage.discountApplied || 0), 0)
+                : 0;
+            return voucherObj;
+        });
+
+        res.json(vouchersWithStats);
     } catch (error) {
         res.status(500).json({ message: 'Server error', error: error.message });
     }
@@ -257,7 +261,7 @@ const updateVoucher = async (req, res) => {
             }
         }
 
-        const { code, discount, description, expiryDate, minimumAmount, usageLimit, name, isActive } = req.body;
+        const { code, discount, description, expiryDate, minimumAmount, usageLimit, name, isActive, fundedBy, restaurantId } = req.body;
 
         voucher.code = code || voucher.code;
         voucher.discount = discount || voucher.discount;
@@ -267,6 +271,12 @@ const updateVoucher = async (req, res) => {
         voucher.maxUsage = usageLimit !== undefined ? usageLimit : voucher.maxUsage;
         voucher.name = name || voucher.name;
         if (isActive !== undefined) voucher.isActive = isActive;
+
+        if (req.user.role === 'admin') {
+            if (fundedBy) voucher.fundedBy = fundedBy;
+            if (restaurantId) voucher.restaurant = restaurantId;
+            else if (fundedBy === 'platform') voucher.restaurant = undefined;
+        }
 
         await voucher.save();
         res.json(voucher);

@@ -139,6 +139,11 @@ export default function AdminDashboard() {
             socket.on('stats_updated', updateStats);
             socket.on('rider_updated', updateStats);
             socket.on('user_registered', updateStats);
+            socket.on('user_logged_in', updateStats);
+            socket.on('admin-channel', (data: any) => {
+                console.log('Admin channel event:', data);
+                updateStats();
+            });
 
             socket.on('notification', (data) => {
                 if (data.type === 'success') toast.success(data.message);
