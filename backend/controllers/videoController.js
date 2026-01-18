@@ -18,13 +18,22 @@ const createVideo = async (req, res) => {
  */
 const getVideoFeed = async (req, res) => {
     try {
-        const { page = 1, limit = 10, category, lat, lng } = req.query;
+        const { page = 1, limit = 10, category, lat, lng, search } = req.query;
 
         // MVP: Show all dishes for now
         const query = {};
         if (category) query.category = category;
+        
+        if (search) {
+            query.$or = [
+                { name: { $regex: search, $options: 'i' } },
+                { description: { $regex: search, $options: 'i' } },
+                { category: { $regex: search, $options: 'i' } },
+                { ingredients: { $in: [new RegExp(search, 'i')] } }
+            ];
+        }
 
-        console.log(`Fetching video feed with query: ${JSON.stringify(query)}, lat: ${lat}, lng: ${lng}`);
+        console.log(`Fetching video feed with query: ${JSON.stringify(query)}, lat: ${lat}, lng: ${lng}, search: ${search}`);
 
         // Get all dishes with populated restaurant
         let videos = await Dish.find(query)
