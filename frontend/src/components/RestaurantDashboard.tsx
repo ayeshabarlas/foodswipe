@@ -1,9 +1,10 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { FaShoppingBag, FaUtensils, FaStore, FaChartLine, FaWallet, FaStar, FaBullhorn, FaHeadset, FaConciergeBell, FaBell, FaClock, FaBox, FaCheck, FaPaperPlane, FaSignOutAlt, FaBars, FaTimes, FaBan, FaThLarge } from 'react-icons/fa';
+import { FaShoppingBag, FaUtensils, FaStore, FaChartLine, FaWallet, FaStar, FaBullhorn, FaHeadset, FaConciergeBell, FaBell, FaClock, FaBox, FaCheck, FaPaperPlane, FaSignOutAlt, FaBars, FaTimes, FaBan, FaThLarge, FaMapMarkerAlt } from 'react-icons/fa';
 import { motion, AnimatePresence } from 'framer-motion';
 import axios from 'axios';
+import toast from 'react-hot-toast';
 import CreateRestaurant from './CreateRestaurant';
 import OrderBoard from './OrderBoard';
 import DashboardMenu from './DashboardMenu';
@@ -43,8 +44,54 @@ export default function RestaurantDashboard() {
         isOnline: false
     });
 
-    // Socket state
     const [socket, setSocket] = useState<any>(null);
+    const [newOrderModal, setNewOrderModal] = useState<any>(null);
+    const [countdown, setCountdown] = useState(60);
+
+    useEffect(() => {
+        if (newOrderModal && countdown > 0) {
+            const timer = setInterval(() => setCountdown(c => c - 1), 1000);
+            return () => clearInterval(timer);
+        } else if (countdown === 0 && newOrderModal) {
+            setNewOrderModal(null);
+        }
+    }, [newOrderModal, countdown]);
+
+    const handleAcceptOrder = async (orderId: string) => {
+        try {
+            if (!userInfo?.token) return;
+            await axios.put(
+                `${API_BASE_URL}/api/orders/${orderId}/status`,
+                { status: 'Accepted' },
+                { headers: { Authorization: `Bearer ${userInfo.token}` } }
+            );
+            toast.success('Order Accepted');
+            setNewOrderModal(null);
+            fetchDashboardData(true);
+            // Switch to orders page if not already there
+            setActivePage('orders');
+        } catch (error) {
+            console.error('Error accepting order:', error);
+            toast.error('Failed to accept order');
+        }
+    };
+
+    const handleRejectOrder = async (orderId: string) => {
+        try {
+            if (!userInfo?.token) return;
+            await axios.put(
+                `${API_BASE_URL}/api/orders/${orderId}/status`,
+                { status: 'Cancelled', cancellationReason: 'Restaurant rejected the order' },
+                { headers: { Authorization: `Bearer ${userInfo.token}` } }
+            );
+            toast.success('Order Rejected');
+            setNewOrderModal(null);
+            fetchDashboardData(true);
+        } catch (error) {
+            console.error('Error rejecting order:', error);
+            toast.error('Failed to reject order');
+        }
+    };
 
     useEffect(() => {
         if (typeof window !== 'undefined') {
@@ -182,6 +229,8 @@ export default function RestaurantDashboard() {
                 type: 'order'
             };
             setNotifications(prev => [newNotification, ...prev]);
+            setNewOrderModal(order);
+            setCountdown(60);
             fetchDashboardData(true);
         };
 
@@ -712,6 +761,125 @@ export default function RestaurantDashboard() {
                     </div>
                 </div>
             </main>
+{/* New Order Modal Popup */}
+                <AnimatePresence>
+                    {newOrderModal && (
+                        <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4">
+                            <motion.div
+                                initial={{ opacity: 0 }}
+                                animate={{ opacity: 1 }}
+                                exit={{ opacity: 0 }}
+                                onClick={() => setNewOrderModal(null)}
+                                className="absolute inset-0 bg-black/60 backdrop-blur-md"
+                            />
+                            <motion.div
+                                initial={{ scale: 0.9, opacity: 0, y: 20 }}
+                                animate={{ scale: 1, opacity: 1, y: 0 }}
+                                exit={{ scale: 0.9, opacity: 0, y: 20 }}
+                                className="relative bg-white rounded-[40px] shadow-2xl w-full max-w-lg overflow-hidden border border-gray-100"
+                            >
+                                {/* Modal Header */}
+                                <div className="p-8 pb-4 flex justify-between items-start">
+                                    <div className="flex items-center gap-4">
+                                        <div className="w-14 h-14 rounded-2xl bg-orange-500 flex items-center justify-center text-white shadow-lg shadow-orange-500/30">
+                                            <FaClock className="text-2xl animate-pulse" />
+                                        </div>
+                                        <div>
+                                            <h3 className="text-2xl font-black text-gray-900 leading-tight">New Order Arrived!</h3>
+                                            <p className="text-gray-400 font-bold text-[10px] uppercase tracking-[0.2em] mt-1">Order #{newOrderModal._id.slice(-6).toUpperCase()}</p>
+                                        </div>
+                                    </div>
+                                    <div className="relative w-16 h-16 flex items-center justify-center">
+                                        <svg className="w-full h-full transform -rotate-90">
+                                            <circle
+                                                cx="32"
+                                                cy="32"
+                                                r="28"
+                                                stroke="currentColor"
+                                                strokeWidth="3"
+                                                fill="transparent"
+                                                className="text-gray-100"
+                                            />
+                                            <circle
+                                                cx="32"
+                                                cy="32"
+                                                r="28"
+                                                stroke="currentColor"
+                                                strokeWidth="3"
+                                                fill="transparent"
+                                                strokeDasharray={175.9}
+                                                strokeDashoffset={175.9 - (175.9 * countdown) / 60}
+                                                className="text-orange-500 transition-all duration-1000"
+                                            />
+                                        </svg>
+                                        <span className="absolute text-sm font-black text-gray-900">{countdown}s</span>
+                                    </div>
+                                </div>
+
+                                {/* Customer Info */}
+                                <div className="px-8 mb-6">
+                                    <div className="bg-gray-50/80 rounded-3xl p-5 flex items-center gap-4 border border-gray-100">
+                                        <div className="w-12 h-12 rounded-xl bg-blue-500 flex items-center justify-center text-white font-bold text-lg">
+                                            {newOrderModal.user?.name?.[0].toUpperCase() || 'C'}
+                                        </div>
+                                        <div className="flex-1 min-w-0">
+                                            <h4 className="font-bold text-gray-900 truncate">{newOrderModal.user?.name || 'Customer'}</h4>
+                                            <p className="text-[10px] text-blue-600 font-bold uppercase tracking-wider">Regular Customer</p>
+                                        </div>
+                                    </div>
+                                    <div className="flex items-start gap-3 mt-4 px-1">
+                                        <div className="w-5 h-5 rounded-full bg-gray-100 flex items-center justify-center text-gray-400 mt-0.5">
+                                            <FaMapMarkerAlt size={10} />
+                                        </div>
+                                        <p className="text-gray-500 text-xs leading-relaxed font-medium">
+                                            {newOrderModal.shippingAddress?.address || 'Address not available'}
+                                        </p>
+                                    </div>
+                                </div>
+
+                                {/* Order Items */}
+                                <div className="px-8 mb-8">
+                                    <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-4">Order Items</p>
+                                    <div className="space-y-3 max-h-[200px] overflow-y-auto pr-2 custom-scrollbar">
+                                        {newOrderModal.orderItems?.map((item: any, idx: number) => (
+                                            <div key={idx} className="flex justify-between items-center group">
+                                                <div className="flex items-center gap-3">
+                                                    <div className="w-2 h-2 rounded-full bg-gray-200 group-hover:bg-orange-400 transition-colors" />
+                                                    <div>
+                                                        <p className="text-sm font-bold text-gray-800">{item.name}</p>
+                                                        <p className="text-[10px] text-gray-400 font-medium">Qty: {item.qty}</p>
+                                                    </div>
+                                                </div>
+                                                <p className="text-sm font-bold text-gray-900">Rs. {item.price * item.qty}</p>
+                                            </div>
+                                        ))}
+                                    </div>
+                                    <div className="mt-6 pt-6 border-t border-dashed border-gray-200 flex justify-between items-center">
+                                        <span className="text-lg font-bold text-gray-900">Total</span>
+                                        <span className="text-2xl font-black text-orange-600">Rs. {newOrderModal.totalPrice}</span>
+                                    </div>
+                                </div>
+
+                                {/* Actions */}
+                                <div className="p-8 pt-0 flex gap-4">
+                                    <button
+                                        onClick={() => handleRejectOrder(newOrderModal._id)}
+                                        className="flex-1 py-4 rounded-2xl font-bold text-xs text-red-500 bg-red-50 hover:bg-red-100 transition-colors uppercase tracking-widest"
+                                    >
+                                        Reject
+                                    </button>
+                                    <button
+                                        onClick={() => handleAcceptOrder(newOrderModal._id)}
+                                        className="flex-[2] py-4 rounded-2xl font-bold text-xs text-white bg-gradient-to-r from-emerald-500 to-teal-600 shadow-xl shadow-emerald-500/30 hover:shadow-emerald-500/40 transition-all active:scale-95 uppercase tracking-widest"
+                                    >
+                                        Accept Order
+                                    </button>
+                                </div>
+                            </motion.div>
+                        </div>
+                    )}
+                </AnimatePresence>
+            </div>
         </div>
     );
 }

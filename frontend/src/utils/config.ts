@@ -1,4 +1,4 @@
-// Deploy Version: 1.0.1 - Triggering fresh Vercel build
+// Deploy Version: 1.0.2 - Triggering fresh Vercel build for restaurant popup
 const getApiUrl = () => {
   // Priority 1: Use Environment variable if provided (from .env.local)
   let url = process.env.NEXT_PUBLIC_API_URL;
