@@ -318,4 +318,12 @@ const getAdminMe = async (req, res) => {
     }
 };
 
-module.exports = { registerAdmin, loginAdmin, getAdminMe };
+module.exports = { 
+    registerAdmin, 
+    loginAdmin, 
+    getAdminMe, 
+    inviteAdmin, 
+    acceptInvite, 
+    getAllAdmins, 
+    deleteAdmin 
+};

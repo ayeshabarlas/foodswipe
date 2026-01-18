@@ -26,10 +26,13 @@ interface SidebarProps {
 export default function Sidebar({ activeTab, setActiveTab, onLogout }: SidebarProps) {
     const [expandedMenus, setExpandedMenus] = useState<string[]>(['restaurants', 'riders', 'orders']);
     const [isMobileOpen, setIsMobileOpen] = useState(false);
-    
-    // Get user role from userInfo
-    const userInfo = typeof window !== 'undefined' ? JSON.parse(localStorage.getItem('userInfo') || '{}') : {};
-    const userRole = userInfo.role || 'admin';
+    const [userRole] = useState<string>(() => {
+        if (typeof window !== 'undefined') {
+            const userInfo = JSON.parse(localStorage.getItem('userInfo') || '{}');
+            return userInfo.role || localStorage.getItem('userRole') || 'admin';
+        }
+        return 'admin';
+    });
 
     const menuItems = [
         { id: 'dashboard', label: 'Dashboard', icon: FaChartLine },
@@ -37,7 +40,7 @@ export default function Sidebar({ activeTab, setActiveTab, onLogout }: SidebarPr
             id: 'restaurants',
             label: 'Restaurants',
             icon: FaStore,
-            roles: ['super-admin', 'restaurant-manager'],
+            roles: ['super-admin', 'admin', 'restaurant-manager'],
             subItems: [
                 { id: 'restaurants-all', label: 'All Restaurants' },
                 { id: 'restaurants-pending', label: 'Approvals' }
@@ -47,7 +50,7 @@ export default function Sidebar({ activeTab, setActiveTab, onLogout }: SidebarPr
             id: 'orders',
             label: 'Orders',
             icon: FaShoppingBag,
-            roles: ['super-admin', 'support-admin', 'finance-admin'],
+            roles: ['super-admin', 'admin', 'support-admin', 'finance-admin'],
             subItems: [
                 { id: 'orders-live', label: 'Live Orders' },
                 { id: 'orders-all', label: 'Order History' }
@@ -57,7 +60,7 @@ export default function Sidebar({ activeTab, setActiveTab, onLogout }: SidebarPr
             id: 'riders',
             label: 'Riders',
             icon: FaMotorcycle,
-            roles: ['super-admin', 'support-admin'],
+            roles: ['super-admin', 'admin', 'support-admin'],
             subItems: [
                 { id: 'riders-all', label: 'All Riders' },
                 { id: 'riders-pending', label: 'Rider Approvals' },
@@ -65,12 +68,12 @@ export default function Sidebar({ activeTab, setActiveTab, onLogout }: SidebarPr
                 { id: 'cod-settlement', label: 'COD Settlement' }
             ]
         },
-        { id: 'customers', label: 'Customers', icon: FaUser, roles: ['super-admin', 'support-admin'] },
-        { id: 'finance', label: 'Finance', icon: FaMoneyBillWave, roles: ['super-admin', 'finance-admin'] },
-        { id: 'vouchers', label: 'Vouchers', icon: FaTicketAlt, roles: ['super-admin', 'finance-admin'] },
-        { id: 'admin-management', label: 'Admins', icon: FaUser, roles: ['super-admin'] },
+        { id: 'customers', label: 'Customers', icon: FaUser, roles: ['super-admin', 'admin', 'support-admin'] },
+        { id: 'finance', label: 'Finance', icon: FaMoneyBillWave, roles: ['super-admin', 'admin', 'finance-admin'] },
+        { id: 'vouchers', label: 'Vouchers', icon: FaTicketAlt, roles: ['super-admin', 'admin', 'finance-admin'] },
+        { id: 'admin-management', label: 'Admins', icon: FaUser, roles: ['super-admin', 'admin'] },
         { id: 'support', label: 'Support', icon: FaHeadset },
-        { id: 'settings', label: 'Settings', icon: FaCog, roles: ['super-admin'] },
+        { id: 'settings', label: 'Settings', icon: FaCog, roles: ['super-admin', 'admin'] },
     ];
 
     // Filter menu items based on user role

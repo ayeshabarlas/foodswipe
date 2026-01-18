@@ -160,14 +160,33 @@ export default function AdminDashboard() {
 
     const fetchStats = async () => {
         try {
-            const userInfo = JSON.parse(localStorage.getItem('userInfo') || '{}');
+            const userInfoStr = localStorage.getItem('userInfo');
+            const token = localStorage.getItem('token');
+            
+            if (!userInfoStr && !token) {
+                console.error('No auth info found');
+                handleLogout();
+                return;
+            }
+
+            const userInfo = JSON.parse(userInfoStr || '{}');
+            const authToken = token || userInfo.token;
+
+            if (!authToken) {
+                console.error('No token found');
+                handleLogout();
+                return;
+            }
+
             const config = {
                 headers: {
-                    Authorization: `Bearer ${userInfo.token}`,
+                    Authorization: `Bearer ${authToken}`,
                 },
             };
 
+            console.log('Fetching stats from:', `${API_BASE_URL}/api/admin/stats`);
             const res = await axios.get(`${API_BASE_URL}/api/admin/stats`, config);
+            console.log('Stats received:', res.data);
             setStats(res.data);
         } catch (error: any) {
             console.error('Error fetching admin stats:', error);
