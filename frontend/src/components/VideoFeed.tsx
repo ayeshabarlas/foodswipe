@@ -387,7 +387,9 @@ const VideoCard = React.memo(({
             </AnimatePresence>
         </div>
     );
-};
+});
+
+VideoCard.displayName = 'VideoCard';
 
 export default function VideoFeed() {
     const [dishes, setDishes] = useState<Dish[]>([]);
