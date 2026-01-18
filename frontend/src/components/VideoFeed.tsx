@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
-import { FaHeart, FaComment, FaShare, FaShoppingCart, FaFilter, FaStar, FaTimes, FaPaperPlane, FaBars, FaChevronRight, FaSearch, FaMapMarkerAlt } from 'react-icons/fa';
+import { FaHeart, FaComment, FaShare, FaShoppingCart, FaFilter, FaStar, FaTimes, FaPaperPlane, FaBars, FaChevronRight, FaSearch, FaMapMarkerAlt, FaPlay, FaVolumeUp, FaVolumeMute } from 'react-icons/fa';
 import axios from 'axios';
 import { motion, AnimatePresence, PanInfo } from 'framer-motion';
 import DishDetails from './DishDetails';
@@ -76,6 +76,9 @@ const VideoCard = React.memo(({
     const [commentText, setCommentText] = useState('');
     const [comments, setComments] = useState<any[]>([]);
     const [loadingComments, setLoadingComments] = useState(false);
+    const [isPlaying, setIsPlaying] = useState(true);
+    const [isMuted, setIsMuted] = useState(true);
+    const [isVideoLoading, setIsVideoLoading] = useState(true);
 
     useEffect(() => {
         if (!user) return;
@@ -91,18 +94,33 @@ const VideoCard = React.memo(({
         if (!videoRef.current) return;
 
         if (isActive) {
-            console.log('🎬 Playing video:', getImageUrl(dish.videoUrl));
-            // Use a promise to handle play() properly
+            setIsPlaying(true);
             const playPromise = videoRef.current.play();
             if (playPromise !== undefined) {
                 playPromise.catch((error) => {
-                    console.error('❌ Autoplay prevented or interrupted:', error, dish.videoUrl);
+                    console.warn('❌ Autoplay prevented:', error);
+                    setIsPlaying(false);
                 });
             }
         } else {
             videoRef.current.pause();
+            videoRef.current.currentTime = 0;
+            setIsPlaying(false);
         }
     }, [isActive, dish.videoUrl]);
+
+    const togglePlay = (e: React.MouseEvent) => {
+        e.stopPropagation();
+        if (!videoRef.current) return;
+
+        if (videoRef.current.paused) {
+            videoRef.current.play();
+            setIsPlaying(true);
+        } else {
+            videoRef.current.pause();
+            setIsPlaying(false);
+        }
+    };
 
     // Preload handling
     useEffect(() => {
@@ -226,21 +244,26 @@ const VideoCard = React.memo(({
     };
 
     return (
-        <div className="relative h-screen w-full snap-start snap-always bg-black flex-shrink-0 overflow-hidden">
+        <div className="relative h-screen w-full snap-start snap-always bg-black flex-shrink-0 overflow-hidden" onClick={togglePlay}>
             <div className="absolute inset-0 z-0" onPointerDown={handlePointerDown} onPointerMove={handlePointerMove} onPointerUp={handlePointerUp}>
                 {dish.videoUrl ? (
+                    <div className="relative w-full h-full">
                         <video
                             ref={videoRef}
                             src={getImageUrl(dish.videoUrl)}
-                            className="w-full h-full object-cover pointer-events-none"
+                            className="w-full h-full object-cover"
                             loop
-                            muted
+                            muted={isMuted}
                             playsInline
                             autoPlay={isActive}
                             webkit-playsinline="true"
                             preload={isActive ? "auto" : isNext ? "auto" : "metadata"}
                             poster={getImageUrl(dish.imageUrl)}
+                            onLoadedData={() => setIsVideoLoading(false)}
+                            onWaiting={() => setIsVideoLoading(true)}
+                            onPlaying={() => setIsVideoLoading(false)}
                             onError={(e) => {
+                                setIsVideoLoading(false);
                                 const fullUrl = getImageUrl(dish.videoUrl);
                                 console.error('❌ Video playback error:', {
                                     originalUrl: dish.videoUrl,
@@ -249,6 +272,23 @@ const VideoCard = React.memo(({
                                 });
                             }}
                         />
+                        {isVideoLoading && isActive && (
+                            <div className="absolute inset-0 flex items-center justify-center bg-black/20 z-10">
+                                <div className="w-10 h-10 border-4 border-white/30 border-t-white rounded-full animate-spin"></div>
+                            </div>
+                        )}
+                        {!isPlaying && isActive && !isVideoLoading && (
+                            <div className="absolute inset-0 flex items-center justify-center bg-black/20 z-10">
+                                <FaPlay className="text-white text-6xl opacity-70" />
+                            </div>
+                        )}
+                        <button 
+                            onClick={(e) => { e.stopPropagation(); setIsMuted(!isMuted); }}
+                            className="absolute bottom-28 right-4 z-30 bg-black/20 p-2 rounded-full text-white backdrop-blur-sm"
+                        >
+                            {isMuted ? <FaVolumeMute size={20} /> : <FaVolumeUp size={20} />}
+                        </button>
+                    </div>
                 ) : (
                     <img
                         src={getImageUrl(dish.imageUrl) || getImageFallback('dish')}
@@ -577,8 +617,13 @@ export default function VideoFeed() {
 
     const handleScroll = (e: React.UIEvent<HTMLDivElement>) => {
         const container = e.currentTarget;
-        const index = Math.round(container.scrollTop / container.clientHeight);
-        if (index !== currentVideoIndex) setCurrentVideoIndex(index);
+        const height = container.clientHeight;
+        if (height <= 0) return;
+
+        const index = Math.round(container.scrollTop / height);
+        if (index !== currentVideoIndex && index >= 0 && index < filteredDishes.length) {
+            setCurrentVideoIndex(index);
+        }
     };
 
     useEffect(() => {
