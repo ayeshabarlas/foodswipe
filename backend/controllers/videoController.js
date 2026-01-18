@@ -22,7 +22,9 @@ const getVideoFeed = async (req, res) => {
 
         // MVP: Show all dishes for now
         const query = {};
-        if (category) query.category = category;
+        if (category && category !== 'All') {
+            query.category = { $regex: `^${category}$`, $options: 'i' };
+        }
         
         if (search) {
             query.$or = [

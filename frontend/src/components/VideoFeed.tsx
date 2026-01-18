@@ -404,6 +404,9 @@ export default function VideoFeed() {
     const [selectedOrderId, setSelectedOrderId] = useState<string | undefined>();
     const [activeOrder, setActiveOrder] = useState<any>(null);
     const [searchTerm, setSearchTerm] = useState('');
+    const [selectedCategory, setSelectedCategory] = useState('All');
+
+    const CATEGORIES = ['All', 'Breakfast', 'Lunch', 'Dinner', 'Coffee', 'Desserts', 'Fast Food'];
 
     const fetchActiveOrder = async () => {
         try {
@@ -438,13 +441,20 @@ export default function VideoFeed() {
         setShowTrackingModal(true);
     };
 
-    const fetchDishes = useCallback(async (searchQuery?: string) => {
+    const fetchDishes = useCallback(async (searchQuery?: string, category?: string) => {
         try {
             const loc = userLocation || (localStorage.getItem('userLocation') ? JSON.parse(localStorage.getItem('userLocation')!) : null);
             let queryParams = loc ? `?lat=${loc.latitude}&lng=${loc.longitude}` : '';
             
-            if (searchQuery) {
-                queryParams += (queryParams ? '&' : '?') + `search=${encodeURIComponent(searchQuery)}`;
+            const activeSearch = searchQuery ?? searchTerm;
+            const activeCategory = category ?? selectedCategory;
+
+            if (activeSearch) {
+                queryParams += (queryParams ? '&' : '?') + `search=${encodeURIComponent(activeSearch)}`;
+            }
+            
+            if (activeCategory && activeCategory !== 'All') {
+                queryParams += (queryParams ? '&' : '?') + `category=${encodeURIComponent(activeCategory)}`;
             }
             
             console.log('📡 Fetching videos from:', `${API_BASE_URL}/api/videos/feed${queryParams}`);
@@ -460,7 +470,7 @@ export default function VideoFeed() {
         } catch (error: any) {
             console.error('❌ Error fetching dishes:', error.message, error.response?.data);
         }
-    }, [userLocation]);
+    }, [userLocation, searchTerm, selectedCategory]);
 
     useEffect(() => {
         // Initial fetch
@@ -477,18 +487,12 @@ export default function VideoFeed() {
     }, []); // Only run once on mount
 
     useEffect(() => {
-        if (!searchTerm) {
-            // If search is cleared, fetch the normal feed
-            fetchDishes();
-            return;
-        }
-
         const debounceTimer = setTimeout(() => {
-            fetchDishes(searchTerm);
+            fetchDishes(searchTerm, selectedCategory);
         }, 500);
 
         return () => clearTimeout(debounceTimer);
-    }, [searchTerm, fetchDishes]);
+    }, [searchTerm, selectedCategory, fetchDishes]);
 
     useEffect(() => {
         const handleCartOpen = () => setIsCartOpen(true);
@@ -641,6 +645,23 @@ export default function VideoFeed() {
                         </svg>
                         {cartCount > 0 && <span className="absolute -top-1 -right-1 bg-[#FF6A00] text-white text-xs font-bold w-5 h-5 flex items-center justify-center rounded-full">{cartCount}</span>}
                     </button>
+                </div>
+
+                {/* Categories Filter */}
+                <div className="flex gap-2 overflow-x-auto no-scrollbar pb-1 -mx-4 px-4">
+                    {CATEGORIES.map((cat) => (
+                        <button
+                            key={cat}
+                            onClick={() => setSelectedCategory(cat)}
+                            className={`px-4 py-1.5 rounded-full whitespace-nowrap text-xs font-semibold transition-all duration-200 border ${
+                                selectedCategory === cat
+                                    ? 'bg-[#FF6A00] text-white border-[#FF6A00] shadow-lg shadow-orange-500/30'
+                                    : 'bg-white/10 text-white border-white/10 backdrop-blur-md hover:bg-white/20'
+                            }`}
+                        >
+                            {cat}
+                        </button>
+                    ))}
                 </div>
             </div>
 
