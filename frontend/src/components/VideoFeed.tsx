@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { FaHeart, FaComment, FaShare, FaShoppingCart, FaFilter, FaStar, FaTimes, FaPaperPlane, FaBars, FaChevronRight, FaSearch, FaMapMarkerAlt } from 'react-icons/fa';
 import axios from 'axios';
 import { motion, AnimatePresence, PanInfo } from 'framer-motion';
@@ -51,18 +51,20 @@ interface Dish {
     }[];
 }
 
-const VideoCard = ({
+const VideoCard = React.memo(({
     dish,
     isActive,
     onOpenDetails,
     onOpenProfile,
-    distance
+    distance,
+    isNext // Add isNext prop for preloading
 }: {
     dish: Dish;
     isActive: boolean;
     onOpenDetails: (dish: Dish) => void;
     onOpenProfile: (restaurant: any) => void;
     distance?: string;
+    isNext?: boolean;
 }) => {
     const videoRef = useRef<HTMLVideoElement>(null);
     const [isLiked, setIsLiked] = useState(false);
@@ -83,15 +85,6 @@ const VideoCard = ({
     }, []);
 
     useEffect(() => {
-        if (isActive) {
-            videoRef.current?.play().catch((error) => console.log('Autoplay prevented:', error));
-        } else {
-            videoRef.current?.pause();
-            if (videoRef.current) videoRef.current.currentTime = 0;
-        }
-    }, [isActive]);
-
-    useEffect(() => {
         if (!userInfo) return;
         const userId = userInfo._id;
         const userLiked = dish.likes?.some((like: any) => (like._id || like) === userId);
@@ -99,6 +92,33 @@ const VideoCard = ({
         setLikesCount(dish.likes?.length || 0);
         setSharesCount(dish.shares || 0);
     }, [dish, userInfo]);
+
+    // Optimize video playback
+    useEffect(() => {
+        if (!videoRef.current) return;
+
+        if (isActive) {
+            // Use a promise to handle play() properly
+            const playPromise = videoRef.current.play();
+            if (playPromise !== undefined) {
+                playPromise.catch((error) => {
+                    console.log('Autoplay prevented or interrupted:', error);
+                });
+            }
+        } else {
+            videoRef.current.pause();
+            // Optional: Reset to beginning when not active to save memory/resource
+            // but might make it less smooth when scrolling back
+            // videoRef.current.currentTime = 0; 
+        }
+    }, [isActive]);
+
+    // Preload handling
+    useEffect(() => {
+        if (isNext && videoRef.current) {
+            videoRef.current.preload = "auto";
+        }
+    }, [isNext]);
 
     const fetchComments = async () => {
         setLoadingComments(true);
@@ -218,20 +238,20 @@ const VideoCard = ({
         <div className="relative h-screen w-full snap-start snap-always bg-black flex-shrink-0 overflow-hidden">
             <div className="absolute inset-0 z-0" onPointerDown={handlePointerDown} onPointerMove={handlePointerMove} onPointerUp={handlePointerUp}>
                 {dish.videoUrl ? (
-                    <video
-                        ref={videoRef}
-                        src={getImageUrl(dish.videoUrl)}
-                        className="w-full h-full object-cover pointer-events-none"
-                        loop
-                        muted
-                        playsInline
-                        poster={getImageUrl(dish.imageUrl)}
-                        onError={(e) => {
-                            console.error('Video error:', dish.videoUrl);
-                            const target = e.target as HTMLVideoElement;
-                            // target.style.display = 'none'; // Don't hide, poster will show
-                        }}
-                    />
+                        <video
+                            ref={videoRef}
+                            src={getImageUrl(dish.videoUrl)}
+                            className="w-full h-full object-cover pointer-events-none"
+                            loop
+                            muted
+                            playsInline
+                            webkit-playsinline="true"
+                            preload={isActive ? "auto" : isNext ? "auto" : "metadata"}
+                            poster={getImageUrl(dish.imageUrl)}
+                            onError={(e) => {
+                                console.error('Video error:', dish.videoUrl);
+                            }}
+                        />
                 ) : (
                     <img
                         src={getImageUrl(dish.imageUrl) || getImageFallback('dish')}
@@ -548,14 +568,25 @@ export default function VideoFeed() {
         if (container) container.scrollTop = 0;
     }, [searchTerm]);
 
-    const filteredDishes = Array.isArray(dishes) ? dishes.filter(dish => {
-        const matchesSearch = 
-            dish.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            dish.restaurant?.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            dish.description?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            dish.ingredients?.some(ing => ing.toLowerCase().includes(searchTerm.toLowerCase()));
-        return matchesSearch;
-    }) : [];
+    const handleOpenDetails = useCallback((dish: Dish) => {
+        setSelectedDish(dish);
+    }, []);
+
+    const handleOpenProfile = useCallback((restaurant: any) => {
+        setSelectedRestaurant(restaurant);
+        setIsProfileOpen(true);
+    }, []);
+
+    const filteredDishes = useMemo(() => {
+        if (!Array.isArray(dishes)) return [];
+        const term = searchTerm.toLowerCase();
+        return dishes.filter(dish => {
+            return dish.name?.toLowerCase().includes(term) ||
+                dish.restaurant?.name?.toLowerCase().includes(term) ||
+                dish.description?.toLowerCase().includes(term) ||
+                dish.ingredients?.some(ing => ing.toLowerCase().includes(term));
+        });
+    }, [dishes, searchTerm]);
 
     return (
         <div className="relative min-h-screen w-full bg-black">
@@ -604,7 +635,17 @@ export default function VideoFeed() {
                         const [restLng, restLat] = dish.restaurant.location.coordinates;
                         distance = calculateDistance(userLocation.latitude, userLocation.longitude, restLat, restLng);
                     }
-                    return <VideoCard key={dish._id} dish={dish} isActive={index === currentVideoIndex} onOpenDetails={setSelectedDish} onOpenProfile={setSelectedRestaurant} distance={distance} />;
+                    return (
+                        <VideoCard 
+                            key={dish._id} 
+                            dish={dish} 
+                            isActive={index === currentVideoIndex} 
+                            isNext={index === currentVideoIndex + 1}
+                            onOpenDetails={handleOpenDetails} 
+                            onOpenProfile={handleOpenProfile} 
+                            distance={distance} 
+                        />
+                    );
                 })}
                 {filteredDishes.length === 0 && (
                     <div className="h-screen flex flex-col items-center justify-center text-white bg-gray-900 px-6 text-center">

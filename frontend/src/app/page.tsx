@@ -23,87 +23,48 @@ export default function Home() {
   const [userRole, setUserRole] = useState<string>("");
   const [hasRestaurant, setHasRestaurant] = useState(false);
   const [checkingRestaurant, setCheckingRestaurant] = useState(false);
-
-  // Safety timeout to prevent getting stuck on loading screen
-  useEffect(() => {
-    let timeout: NodeJS.Timeout;
-    if (checkingRestaurant) {
-      timeout = setTimeout(() => {
-        console.warn("Safety timeout: Force clearing checkingRestaurant state");
-        setCheckingRestaurant(false);
-      }, 15000); // 15 seconds safety net
-    }
-    return () => clearTimeout(timeout);
-  }, [checkingRestaurant]);
+  const [isTransitioning, setIsTransitioning] = useState(false);
 
   useEffect(() => {
     const checkAuth = async () => {
       const userInfoStr = localStorage.getItem("userInfo");
       let token = localStorage.getItem("token");
       
-      // Proactively recover token from userInfo if missing in standalone localStorage
-      if (userInfoStr && !token) {
-        try {
-          const ui = JSON.parse(userInfoStr);
-          if (ui.token) {
-            token = ui.token;
-            localStorage.setItem("token", token);
-          }
-        } catch (e) {}
-      }
-
-      // 1. IMMEDIATE RENDER FROM LOCAL CACHE
       if (userInfoStr && token) {
         try {
           const ui = JSON.parse(userInfoStr);
-          if (ui.role === "restaurant") {
-            setUserRole("restaurant");
-            setHasRestaurant(true); // Trust the role, show dashboard
-            setIsLoggedIn(true);
-            setLoading(false); // STOP LOADING EARLY
-          } else if (ui.role) {
+          if (ui.role) {
             setUserRole(ui.role);
+            if (ui.role === "restaurant") setHasRestaurant(true);
             setIsLoggedIn(true);
-            setLoading(false);
           }
         } catch (e) {}
       }
 
-      // 2. BACKGROUND RE-VALIDATION
-      if (userInfoStr && token) {
+      // Background re-validation
+      if (token) {
         try {
-          console.log("Home: Starting background re-validation...");
           const response = await axios.get(`${API_BASE_URL}/api/auth/me`, {
             headers: { Authorization: `Bearer ${token}` },
             timeout: 5000 
           });
 
           const user = response.data;
-          console.log("Home: Re-validation success, user data:", user);
-          const ui = JSON.parse(userInfoStr || '{}');
+          const ui = JSON.parse(localStorage.getItem("userInfo") || '{}');
           const updated = { ...ui, ...user };
           localStorage.setItem("userInfo", JSON.stringify(updated));
           
-          // Update state if needed
           if (updated.role !== userRole) {
-            console.log(`Home: Role changed from ${userRole} to ${updated.role}`);
             setUserRole(updated.role);
           }
-          
           if (updated.role === "restaurant") {
-             setHasRestaurant(true);
+            setHasRestaurant(true);
           }
         } catch (error: any) {
-          console.error("Home: Auth background re-validation failed:", error.response?.data || error.message);
-          
-          // If 401/403, the token is invalid or expired
           if (error.response?.status === 401 || error.response?.status === 403) {
-             console.warn("Home: Token invalid, clearing session...");
-             localStorage.removeItem("userInfo");
-             localStorage.removeItem("token");
-             localStorage.removeItem("hasRestaurant");
-             setIsLoggedIn(false);
-             setUserRole("");
+            localStorage.clear();
+            setIsLoggedIn(false);
+            setUserRole("");
           }
         }
       }
@@ -112,7 +73,7 @@ export default function Home() {
     };
 
     checkAuth();
-  }, [userRole]);
+  }, []); // Empty dependency array to run only once on mount
 
   // Admin flow redirect hook - moved here to follow rules of hooks
   useEffect(() => {
@@ -134,56 +95,20 @@ export default function Home() {
   }
 
   if (!isLoggedIn) {
-    return <LoginScreen onLogin={async (userInfoFromLogin) => {
-      // Use passed info directly as the primary source of truth
-      // Fallback to localStorage ONLY if userInfoFromLogin is missing
-      const userInfoStr = localStorage.getItem("userInfo");
-      const userInfo = userInfoFromLogin || (userInfoStr ? JSON.parse(userInfoStr) : null);
-
-      console.log("Login successful, checking redirection for:", userInfo);
-
-      if (userInfo) {
-        // Ensure we strictly use the role from the login response
+    return <LoginScreen onLogin={(userInfoFromLogin) => {
+      const userInfo = userInfoFromLogin;
+      if (userInfo && userInfo.role) {
         const role = userInfo.role;
+        
+        // Use functional updates or batch them
+        // In React 18, these are batched automatically
+        setUserRole(role);
+        if (role === "restaurant") setHasRestaurant(true);
+        setIsLoggedIn(true);
 
-        if (!role) {
-          console.error("CRITICAL ERROR: No role found in userInfo:", userInfo);
-          alert(`Login Error: No user role found in response.\nPlease contact support.`);
-          return;
-        }
-
-        console.log("Login successful. Role:", role);
-
-        // Update localStorage first
-        const existingUserInfo = userInfoStr ? JSON.parse(userInfoStr) : {};
-        const updatedUserInfo = { ...existingUserInfo, ...userInfo };
-        localStorage.setItem("userInfo", JSON.stringify(updatedUserInfo));
-        if (userInfo.token) {
-          localStorage.setItem("token", userInfo.token);
-        }
-
-        // If restaurant owner, show dashboard IMMEDIATELY
-        if (role === "restaurant") {
-          setUserRole(role);
-          setHasRestaurant(true); // Always default to dashboard
-          setIsLoggedIn(true);
-          
-          // Just update cache in background, don't trigger state changes that might redirect back
-          const token = userInfo.token || localStorage.getItem("token");
-          axios.get(`${API_BASE_URL}/api/restaurants/my-restaurant`, {
-            headers: { Authorization: `Bearer ${token}` },
-            timeout: 5000
-          }).then(res => {
-            if (res.data) {
-              localStorage.setItem("hasRestaurant", "true");
-            }
-          }).catch(err => {
-             console.log("Login-time background check failed:", err.message);
-          });
-        } else {
-          setUserRole(role);
-          setIsLoggedIn(true);
-        }
+        // Update localStorage
+        localStorage.setItem("userInfo", JSON.stringify(userInfo));
+        if (userInfo.token) localStorage.setItem("token", userInfo.token);
       } else {
         setIsLoggedIn(true);
       }
