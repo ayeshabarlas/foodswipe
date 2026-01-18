@@ -435,7 +435,7 @@ export default function VideoFeed() {
     const [selectedRestaurant, setSelectedRestaurant] = useState<any | null>(null);
     const [isCartOpen, setIsCartOpen] = useState(false);
     const [isNavOpen, setIsNavOpen] = useState(false);
-    const [isProfileOpen, setIsProfileOpen] = useState(false);
+    const [isUserProfileOpen, setIsUserProfileOpen] = useState(false);
     const [user, setUser] = useState<any>(null);
     const [userLocation, setUserLocation] = useState<{ latitude: number, longitude: number } | null>(null);
     const [showLocationPrompt, setShowLocationPrompt] = useState(false);
@@ -639,7 +639,6 @@ export default function VideoFeed() {
 
     const handleOpenProfile = useCallback((restaurant: any) => {
         setSelectedRestaurant(restaurant);
-        setIsProfileOpen(true);
     }, []);
 
     const filteredDishes = useMemo(() => {
@@ -764,10 +763,10 @@ export default function VideoFeed() {
                 isOpen={isNavOpen} 
                 onClose={() => setIsNavOpen(false)} 
                 user={user} 
-                onOpenProfile={() => setIsProfileOpen(true)}
+                onOpenProfile={() => setIsUserProfileOpen(true)}
                 activeOrderId={activeOrder?._id}
             />
-            <ProfileModal isOpen={isProfileOpen} onClose={() => setIsProfileOpen(false)} user={user} />
+            <ProfileModal isOpen={isUserProfileOpen} onClose={() => setIsUserProfileOpen(false)} user={user} />
             <OrderTracking isOpen={showTrackingModal} onClose={() => setShowTrackingModal(false)} orderId={selectedOrderId} />
             {showLocationPrompt && <LocationPermission onAllow={handleAllowLocation} onDeny={handleDenyLocation} />}
         </div>
