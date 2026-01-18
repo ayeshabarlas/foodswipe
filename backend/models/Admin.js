@@ -14,13 +14,24 @@ const adminSchema = mongoose.Schema(
         },
         password: {
             type: String,
-            required: true,
+            required: function() { return !this.isInvited; }, // Required only if not invited
         },
         role: {
             type: String,
             enum: ['admin', 'super-admin', 'finance-admin', 'support-admin', 'restaurant-manager'],
             default: 'admin',
         },
+        isInvited: {
+            type: Boolean,
+            default: false,
+        },
+        inviteToken: String,
+        inviteExpires: Date,
+        status: {
+            type: String,
+            enum: ['active', 'pending', 'suspended'],
+            default: 'active',
+        }
     },
     {
         timestamps: true,

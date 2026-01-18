@@ -23,20 +23,27 @@ const {
     deleteUser,
     deleteRestaurant,
     deleteRider,
-    cleanupMockData
+    cleanupMockData,
+    getCODLedger,
+    settleRider,
+    blockRider
 } = require('../controllers/adminController');
-const { loginAdmin, getAdminMe, registerAdmin } = require('../controllers/adminAuthController');
+const { loginAdmin, getAdminMe, registerAdmin, inviteAdmin, acceptInvite, getAllAdmins, deleteAdmin } = require('../controllers/adminAuthController');
 
 // Public routes
 router.post('/register', registerAdmin);
 router.post('/login', loginAdmin);
+router.post('/accept-invite', acceptInvite);
 
 // All other routes require admin authentication
 router.use(protect);
 router.use(requireAdmin);
 
-// Admin Info
+// Admin Info & Management
 router.get('/me', getAdminMe);
+router.get('/list', getAllAdmins);
+router.post('/invite', inviteAdmin);
+router.delete('/:id', deleteAdmin);
 
 // Restaurant management
 router.get('/restaurants/pending', getPendingRestaurants);
@@ -77,5 +84,10 @@ router.get('/stats', getDashboardStats);
 
 // System Cleanup
 router.post('/cleanup-mock', cleanupMockData);
+
+// COD Ledger & Settlement
+router.get('/cod-ledger', getCODLedger);
+router.post('/settle-rider', settleRider);
+router.post('/riders/:id/block', blockRider);
 
 module.exports = router;

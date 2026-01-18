@@ -25,6 +25,23 @@ const settingsSchema = mongoose.Schema(
         deliveryFee: {
             type: Number,
             default: 0,
+        },
+        serviceFee: {
+            type: Number,
+            default: 0,
+        },
+        featureToggles: {
+            isWalletEnabled: { type: Boolean, default: true },
+            isChatEnabled: { type: Boolean, default: true },
+            isReviewsEnabled: { type: Boolean, default: true },
+            isPromotionsEnabled: { type: Boolean, default: true },
+        },
+        appConfig: {
+            currentVersion: { type: String, default: '1.0.0' },
+            minVersion: { type: String, default: '1.0.0' },
+            forceUpdate: { type: Boolean, default: false },
+            androidLink: { type: String, default: '' },
+            iosLink: { type: String, default: '' },
         }
     },
     {

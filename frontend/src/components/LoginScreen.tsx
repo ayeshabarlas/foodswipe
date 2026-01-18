@@ -34,6 +34,26 @@ export default function LoginScreen({ onLogin }: LoginScreenProps) {
     const [error, setError] = useState("");
     const router = useRouter();
 
+    useEffect(() => {
+        const checkForceUpdate = async () => {
+            try {
+                const { data } = await axios.get(`${API_BASE_URL}/api/admin/settings/public`);
+                if (data.appConfig?.forceUpdate) {
+                    const currentVersion = '1.0.0'; // Should come from app config/package.json
+                    if (data.appConfig.minVersion > currentVersion) {
+                        alert(`Please update the app to continue. Current version: ${currentVersion}, Required: ${data.appConfig.minVersion}`);
+                        if (data.appConfig.androidLink) {
+                            window.location.href = data.appConfig.androidLink;
+                        }
+                    }
+                }
+            } catch (error) {
+                console.error('Error checking force update:', error);
+            }
+        };
+        checkForceUpdate();
+    }, []);
+
     const handleGoogleSignIn = async () => {
         try {
             setLoading(true);

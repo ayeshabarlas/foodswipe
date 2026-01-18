@@ -6,6 +6,7 @@ const Rider = require('../models/Rider');
 const RestaurantWallet = require('../models/RestaurantWallet');
 const RiderWallet = require('../models/RiderWallet');
 const Transaction = require('../models/Transaction');
+const CODLedger = require('../models/CODLedger');
 const { calculateRiderEarning, calculateDeliveryFee } = require('../utils/paymentUtils');
 const { calculateDistance } = require('../utils/locationUtils');
 const { triggerEvent } = require('../socket');
@@ -430,6 +431,28 @@ const processOrderCompletion = async (order, distanceKm, req = null) => {
             rider.walletBalance = (rider.walletBalance || 0) + riderEarning;
             rider.earnings.total = (rider.earnings.total || 0) + riderEarning;
             rider.earnings.today = (rider.earnings.today || 0) + riderEarning;
+            
+            // COD System Fields
+            rider.earnings_balance = (rider.earnings_balance || 0) + riderEarning;
+            if (order.paymentMethod === 'COD') {
+                rider.cod_balance = (rider.cod_balance || 0) + (order.totalPrice || 0);
+                
+                // Check if COD balance exceeds limit (e.g., 20,000)
+                if (rider.cod_balance > 20000) {
+                    rider.settlementStatus = 'overdue';
+                }
+
+                // Create COD Ledger entry
+                await CODLedger.create({
+                    rider: rider._id,
+                    order: order._id,
+                    cod_collected: order.totalPrice || 0,
+                    rider_earning: riderEarning,
+                    admin_balance: (order.totalPrice || 0) - riderEarning,
+                    status: 'pending'
+                });
+            }
+
             rider.stats.completedDeliveries = (rider.stats.completedDeliveries || 0) + 1;
             rider.stats.totalDeliveries = (rider.stats.totalDeliveries || 0) + 1;
             

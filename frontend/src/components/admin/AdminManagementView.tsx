@@ -3,11 +3,19 @@ import { useState, useEffect } from 'react';
 import axios from 'axios';
 import { getSocket } from '../../utils/socket';
 import { API_BASE_URL } from '../../utils/config';
-import { FaUserShield, FaPlus, FaSearch, FaEllipsisV, FaShieldAlt } from 'react-icons/fa';
+import { FaUserShield, FaPlus, FaSearch, FaEllipsisV, FaShieldAlt, FaTimes, FaEnvelope, FaUserTag } from 'react-icons/fa';
+import toast from 'react-hot-toast';
 
 export default function AdminManagementView() {
     const [admins, setAdmins] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
+    const [isInviteModalOpen, setIsInviteModalOpen] = useState(false);
+    const [inviteData, setInviteData] = useState({
+        name: '',
+        email: '',
+        role: 'admin'
+    });
+    const [inviting, setInviting] = useState(false);
 
     useEffect(() => {
         fetchAdmins();
@@ -34,19 +42,53 @@ export default function AdminManagementView() {
             const config = {
                 headers: { Authorization: `Bearer ${userInfo.token}` }
             };
-            // Use the getUsers endpoint with role=admin
-            const { data } = await axios.get(`${API_BASE_URL}/api/admin/users?role=admin`, config);
+            // Use the new list endpoint
+            const { data } = await axios.get(`${API_BASE_URL}/api/admin/list`, config);
             setAdmins(data);
         } catch (error: any) {
             console.error('Error fetching admins:', error);
-            if (error.response?.status === 401) {
-                // Let the parent handle redirect
-            } else {
-                // Silence common errors but log them
-                console.warn('Failed to fetch admins list');
-            }
+            toast.error('Failed to load admins list');
         } finally {
             setLoading(false);
+        }
+    };
+
+    const handleInvite = async (e: React.FormEvent) => {
+        e.preventDefault();
+        setInviting(true);
+        const toastId = toast.loading('Sending invitation...');
+
+        try {
+            const userInfo = JSON.parse(localStorage.getItem('userInfo') || '{}');
+            await axios.post(
+                `${API_BASE_URL}/api/admin/invite`,
+                inviteData,
+                { headers: { Authorization: `Bearer ${userInfo.token}` } }
+            );
+            toast.success('Invitation sent successfully!', { id: toastId });
+            setIsInviteModalOpen(false);
+            setInviteData({ name: '', email: '', role: 'admin' });
+            fetchAdmins();
+        } catch (error: any) {
+            toast.error(error.response?.data?.message || 'Failed to send invitation', { id: toastId });
+        } finally {
+            setInviting(false);
+        }
+    };
+
+    const handleDelete = async (id: string) => {
+        if (!window.confirm('Are you sure you want to remove this administrator?')) return;
+
+        try {
+            const userInfo = JSON.parse(localStorage.getItem('userInfo') || '{}');
+            await axios.delete(
+                `${API_BASE_URL}/api/admin/${id}`,
+                { headers: { Authorization: `Bearer ${userInfo.token}` } }
+            );
+            toast.success('Administrator removed');
+            fetchAdmins();
+        } catch (error: any) {
+            toast.error(error.response?.data?.message || 'Failed to delete administrator');
         }
     };
 
@@ -64,10 +106,91 @@ export default function AdminManagementView() {
                     <h2 className="text-[24px] font-semibold text-[#111827] tracking-tight">Admin Management</h2>
                     <p className="text-[14px] font-normal text-[#6B7280] mt-1">Manage system administrators and role-based permissions</p>
                 </div>
-                <button className="flex items-center gap-2 px-8 py-4 bg-gradient-to-r from-orange-500 to-pink-500 text-white rounded-2xl font-bold hover:shadow-xl hover:shadow-orange-500/20 transition-all active:scale-95 text-[13px] uppercase tracking-widest shadow-lg">
-                    <FaPlus className="text-sm" /> Add Admin
+                <button 
+                    onClick={() => setIsInviteModalOpen(true)}
+                    className="flex items-center gap-2 px-8 py-4 bg-gradient-to-r from-orange-500 to-pink-500 text-white rounded-2xl font-bold hover:shadow-xl hover:shadow-orange-500/20 transition-all active:scale-95 text-[13px] uppercase tracking-widest shadow-lg"
+                >
+                    <FaPlus className="text-sm" /> Invite Admin
                 </button>
             </div>
+
+            {/* Invite Modal */}
+            {isInviteModalOpen && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+                    <div className="bg-white rounded-[2.5rem] w-full max-w-md overflow-hidden shadow-2xl animate-in fade-in zoom-in duration-300">
+                        <div className="p-8 border-b border-gray-50 flex justify-between items-center bg-gray-50/50">
+                            <div>
+                                <h3 className="text-xl font-bold text-gray-900">Invite Administrator</h3>
+                                <p className="text-sm text-gray-500 mt-1">Send an email invitation</p>
+                            </div>
+                            <button 
+                                onClick={() => setIsInviteModalOpen(false)}
+                                className="p-2 hover:bg-gray-200 rounded-full transition-colors"
+                            >
+                                <FaTimes className="text-gray-400" />
+                            </button>
+                        </div>
+
+                        <form onSubmit={handleInvite} className="p-8 space-y-6">
+                            <div className="space-y-2">
+                                <label className="text-xs font-bold text-gray-500 uppercase tracking-wider ml-1">Full Name</label>
+                                <div className="relative">
+                                    <FaPlus className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 text-xs" />
+                                    <input
+                                        required
+                                        type="text"
+                                        value={inviteData.name}
+                                        onChange={(e) => setInviteData({...inviteData, name: e.target.value})}
+                                        className="w-full pl-10 pr-4 py-4 bg-gray-50 border border-gray-100 rounded-2xl outline-none focus:border-orange-500 focus:ring-4 focus:ring-orange-500/5 transition-all font-medium"
+                                        placeholder="Enter name"
+                                    />
+                                </div>
+                            </div>
+
+                            <div className="space-y-2">
+                                <label className="text-xs font-bold text-gray-500 uppercase tracking-wider ml-1">Email Address</label>
+                                <div className="relative">
+                                    <FaEnvelope className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 text-xs" />
+                                    <input
+                                        required
+                                        type="email"
+                                        value={inviteData.email}
+                                        onChange={(e) => setInviteData({...inviteData, email: e.target.value})}
+                                        className="w-full pl-10 pr-4 py-4 bg-gray-50 border border-gray-100 rounded-2xl outline-none focus:border-orange-500 focus:ring-4 focus:ring-orange-500/5 transition-all font-medium"
+                                        placeholder="admin@foodswipe.com"
+                                    />
+                                </div>
+                            </div>
+
+                            <div className="space-y-2">
+                                <label className="text-xs font-bold text-gray-500 uppercase tracking-wider ml-1">Assigned Role</label>
+                                <div className="relative">
+                                    <FaUserTag className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 text-xs" />
+                                    <select
+                                        value={inviteData.role}
+                                        onChange={(e) => setInviteData({...inviteData, role: e.target.value})}
+                                        className="w-full pl-10 pr-4 py-4 bg-gray-50 border border-gray-100 rounded-2xl outline-none focus:border-orange-500 focus:ring-4 focus:ring-orange-500/5 transition-all font-bold appearance-none cursor-pointer"
+                                    >
+                                        <option value="admin">Admin</option>
+                                        <option value="super-admin">Super Admin</option>
+                                        <option value="finance-admin">Finance Admin</option>
+                                        <option value="support-admin">Support Admin</option>
+                                        <option value="restaurant-manager">Restaurant Manager</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <button
+                                type="submit"
+                                disabled={inviting}
+                                className="w-full py-5 bg-gradient-to-r from-orange-500 to-pink-500 text-white rounded-2xl font-bold hover:shadow-xl hover:shadow-orange-500/30 transition-all active:scale-[0.98] disabled:opacity-50 mt-4 uppercase tracking-widest text-sm"
+                            >
+                                {inviting ? 'Sending...' : 'Send Invitation'}
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            )}
 
             {/* Stats Row */}
             <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-10">
@@ -159,17 +282,28 @@ export default function AdminManagementView() {
                                             </span>
                                         </td>
                                         <td className="px-8 py-6">
-                                            <span className="inline-flex items-center gap-2 px-4 py-2 bg-emerald-50 text-emerald-600 rounded-xl text-[10px] font-bold uppercase tracking-widest border border-emerald-100">
-                                                <div className="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-pulse"></div>
-                                                Active
+                                            <span className={`inline-flex items-center gap-2 px-4 py-2 rounded-xl text-[10px] font-bold uppercase tracking-widest border ${
+                                                admin.status === 'active' 
+                                                    ? 'bg-emerald-50 text-emerald-600 border-emerald-100' 
+                                                    : admin.status === 'pending'
+                                                        ? 'bg-amber-50 text-amber-600 border-amber-100'
+                                                        : 'bg-red-50 text-red-600 border-red-100'
+                                            }`}>
+                                                <div className={`w-1.5 h-1.5 rounded-full ${
+                                                    admin.status === 'active' ? 'bg-emerald-500 animate-pulse' : 'bg-amber-500'
+                                                }`}></div>
+                                                {admin.status}
                                             </span>
                                         </td>
                                         <td className="px-8 py-6 text-[14px] text-[#6B7280] font-bold">
                                             {new Date(admin.createdAt).toLocaleDateString(undefined, { day: 'numeric', month: 'short', year: 'numeric' })}
                                         </td>
                                         <td className="px-8 py-6 text-right">
-                                            <button className="p-3 hover:bg-orange-50 text-[#9CA3AF] hover:text-orange-500 rounded-2xl transition-all active:scale-90">
-                                                <FaEllipsisV className="text-sm" />
+                                            <button 
+                                                onClick={() => handleDelete(admin._id)}
+                                                className="p-3 hover:bg-red-50 text-[#9CA3AF] hover:text-red-500 rounded-2xl transition-all active:scale-90"
+                                            >
+                                                <FaTimes className="text-sm" />
                                             </button>
                                         </td>
                                     </tr>

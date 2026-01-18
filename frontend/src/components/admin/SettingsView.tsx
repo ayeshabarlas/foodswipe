@@ -5,12 +5,32 @@ import axios from 'axios';
 import { API_BASE_URL } from '../../utils/config';
 
 import toast from 'react-hot-toast';
-import { FaSave, FaCog, FaEnvelope, FaBullhorn, FaPercentage } from 'react-icons/fa';
+import { FaSave, FaCog, FaEnvelope, FaBullhorn, FaPercentage, FaShieldAlt, FaMobileAlt, FaTools, FaMoneyBillWave, FaTruck, FaShoppingCart } from 'react-icons/fa';
 
 export default function SettingsView() {
     const [commission, setCommission] = useState(10);
     const [supportEmail, setSupportEmail] = useState('app.foodswipehelp@gmail.com');
     const [announcement, setAnnouncement] = useState('');
+    const [deliveryFee, setDeliveryFee] = useState(0);
+    const [serviceFee, setServiceFee] = useState(0);
+    const [minimumOrderAmount, setMinimumOrderAmount] = useState(0);
+    const [isMaintenanceMode, setIsMaintenanceMode] = useState(false);
+    
+    const [featureToggles, setFeatureToggles] = useState({
+        isWalletEnabled: true,
+        isChatEnabled: true,
+        isReviewsEnabled: true,
+        isPromotionsEnabled: true,
+    });
+
+    const [appConfig, setAppConfig] = useState({
+        currentVersion: '1.0.0',
+        minVersion: '1.0.0',
+        forceUpdate: false,
+        androidLink: '',
+        iosLink: '',
+    });
+
     const [saving, setSaving] = useState(false);
     const [loading, setLoading] = useState(true);
 
@@ -30,6 +50,12 @@ export default function SettingsView() {
                 setCommission(data.commission || 10);
                 setSupportEmail(data.supportEmail || 'app.foodswipehelp@gmail.com');
                 setAnnouncement(data.announcement || '');
+                setDeliveryFee(data.deliveryFee || 0);
+                setServiceFee(data.serviceFee || 0);
+                setMinimumOrderAmount(data.minimumOrderAmount || 0);
+                setIsMaintenanceMode(data.isMaintenanceMode || false);
+                if (data.featureToggles) setFeatureToggles(data.featureToggles);
+                if (data.appConfig) setAppConfig(data.appConfig);
             }
         } catch (error: any) {
             console.error('Error fetching settings:', error);
@@ -53,7 +79,17 @@ export default function SettingsView() {
 
             await axios.put(
                 `${API_BASE_URL}/api/admin/settings`,
-                { commission, supportEmail, announcement },
+                { 
+                    commission, 
+                    supportEmail, 
+                    announcement,
+                    deliveryFee,
+                    serviceFee,
+                    minimumOrderAmount,
+                    isMaintenanceMode,
+                    featureToggles,
+                    appConfig
+                },
                 { headers: { Authorization: `Bearer ${userInfo.token}` } }
             );
             toast.success('Settings updated successfully!', { id: toastId });
@@ -159,6 +195,221 @@ export default function SettingsView() {
                                 <p className="text-[15px] text-[#111827] font-bold relative z-10 leading-relaxed italic">"{announcement || 'No announcement set'}"</p>
                                 <FaBullhorn className="absolute bottom-4 right-4 text-6xl text-orange-200/20 rotate-12 group-hover/preview:rotate-0 transition-transform duration-500" />
                             </div>
+                        </div>
+                    </div>
+                </div>
+
+                {/* Fees & Limits */}
+                <div className="bg-white rounded-[2.5rem] shadow-xl shadow-gray-200/50 border border-gray-100 overflow-hidden group hover:shadow-2xl transition-all duration-500">
+                    <div className="p-10 border-b border-gray-50 bg-gray-50/30">
+                        <div className="flex items-center gap-5">
+                            <div className="w-16 h-16 bg-gradient-to-br from-green-500 to-emerald-600 rounded-2xl flex items-center justify-center text-white shadow-lg shadow-green-500/20 group-hover:scale-110 transition-transform duration-500">
+                                <FaMoneyBillWave className="text-2xl" />
+                            </div>
+                            <div>
+                                <h3 className="text-[20px] font-bold text-[#111827] tracking-tight">Fees & Limits</h3>
+                                <p className="text-[14px] text-[#6B7280] font-medium">Manage delivery and service costs</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div className="p-10 space-y-8">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                            <div className="space-y-4">
+                                <label className="flex items-center gap-2 text-[12px] font-bold text-[#6B7280] uppercase tracking-[0.2em] ml-1">
+                                    <FaTruck className="text-green-500" /> Delivery Fee
+                                </label>
+                                <div className="relative">
+                                    <input
+                                        type="number"
+                                        value={deliveryFee}
+                                        onChange={(e) => setDeliveryFee(Number(e.target.value))}
+                                        className="w-full px-6 py-4 bg-gray-50 border border-gray-100 rounded-2xl focus:ring-4 focus:ring-orange-500/5 focus:border-orange-500 outline-none text-[16px] font-bold text-[#111827] transition-all"
+                                    />
+                                    <span className="absolute right-6 top-1/2 -translate-y-1/2 text-[#9CA3AF] font-bold">Rs</span>
+                                </div>
+                            </div>
+                            <div className="space-y-4">
+                                <label className="flex items-center gap-2 text-[12px] font-bold text-[#6B7280] uppercase tracking-[0.2em] ml-1">
+                                    <FaCog className="text-blue-500" /> Service Fee
+                                </label>
+                                <div className="relative">
+                                    <input
+                                        type="number"
+                                        value={serviceFee}
+                                        onChange={(e) => setServiceFee(Number(e.target.value))}
+                                        className="w-full px-6 py-4 bg-gray-50 border border-gray-100 rounded-2xl focus:ring-4 focus:ring-orange-500/5 focus:border-orange-500 outline-none text-[16px] font-bold text-[#111827] transition-all"
+                                    />
+                                    <span className="absolute right-6 top-1/2 -translate-y-1/2 text-[#9CA3AF] font-bold">Rs</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div className="space-y-4">
+                            <label className="flex items-center gap-2 text-[12px] font-bold text-[#6B7280] uppercase tracking-[0.2em] ml-1">
+                                <FaShoppingCart className="text-orange-500" /> Min Order Amount
+                            </label>
+                            <div className="relative">
+                                <input
+                                    type="number"
+                                    value={minimumOrderAmount}
+                                    onChange={(e) => setMinimumOrderAmount(Number(e.target.value))}
+                                    className="w-full px-6 py-4 bg-gray-50 border border-gray-100 rounded-2xl focus:ring-4 focus:ring-orange-500/5 focus:border-orange-500 outline-none text-[16px] font-bold text-[#111827] transition-all"
+                                />
+                                <span className="absolute right-6 top-1/2 -translate-y-1/2 text-[#9CA3AF] font-bold">Rs</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                {/* Feature Toggles */}
+                <div className="bg-white rounded-[2.5rem] shadow-xl shadow-gray-200/50 border border-gray-100 overflow-hidden group hover:shadow-2xl transition-all duration-500">
+                    <div className="p-10 border-b border-gray-50 bg-gray-50/30">
+                        <div className="flex items-center gap-5">
+                            <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-2xl flex items-center justify-center text-white shadow-lg shadow-blue-500/20 group-hover:scale-110 transition-transform duration-500">
+                                <FaShieldAlt className="text-2xl" />
+                            </div>
+                            <div>
+                                <h3 className="text-[20px] font-bold text-[#111827] tracking-tight">Feature Toggles</h3>
+                                <p className="text-[14px] text-[#6B7280] font-medium">Enable or disable app features</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div className="p-10 space-y-6">
+                        {Object.entries(featureToggles).map(([key, value]) => (
+                            <div key={key} className="flex items-center justify-between p-4 bg-gray-50 rounded-2xl">
+                                <span className="text-[14px] font-bold text-[#374151] capitalize">
+                                    {key.replace('is', '').replace('Enabled', '')} System
+                                </span>
+                                <button
+                                    onClick={() => setFeatureToggles(prev => ({ ...prev, [key]: !value }))}
+                                    className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none ${
+                                        value ? 'bg-orange-500' : 'bg-gray-300'
+                                    }`}
+                                >
+                                    <span
+                                        className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                                            value ? 'translate-x-6' : 'translate-x-1'
+                                        }`}
+                                    />
+                                </button>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+
+                {/* App Configuration */}
+                <div className="bg-white rounded-[2.5rem] shadow-xl shadow-gray-200/50 border border-gray-100 overflow-hidden group hover:shadow-2xl transition-all duration-500">
+                    <div className="p-10 border-b border-gray-50 bg-gray-50/30">
+                        <div className="flex items-center gap-5">
+                            <div className="w-16 h-16 bg-gradient-to-br from-amber-500 to-orange-600 rounded-2xl flex items-center justify-center text-white shadow-lg shadow-amber-500/20 group-hover:scale-110 transition-transform duration-500">
+                                <FaMobileAlt className="text-2xl" />
+                            </div>
+                            <div>
+                                <h3 className="text-[20px] font-bold text-[#111827] tracking-tight">App Configuration</h3>
+                                <p className="text-[14px] text-[#6B7280] font-medium">Manage versions and updates</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div className="p-10 space-y-6">
+                        <div className="grid grid-cols-2 gap-4">
+                            <div className="space-y-2">
+                                <label className="text-[12px] font-bold text-[#6B7280] uppercase tracking-wider">Current Version</label>
+                                <input
+                                    type="text"
+                                    value={appConfig.currentVersion}
+                                    onChange={(e) => setAppConfig(prev => ({ ...prev, currentVersion: e.target.value }))}
+                                    className="w-full px-4 py-3 bg-gray-50 border border-gray-100 rounded-xl outline-none focus:border-orange-500"
+                                />
+                            </div>
+                            <div className="space-y-2">
+                                <label className="text-[12px] font-bold text-[#6B7280] uppercase tracking-wider">Min Version</label>
+                                <input
+                                    type="text"
+                                    value={appConfig.minVersion}
+                                    onChange={(e) => setAppConfig(prev => ({ ...prev, minVersion: e.target.value }))}
+                                    className="w-full px-4 py-3 bg-gray-50 border border-gray-100 rounded-xl outline-none focus:border-orange-500"
+                                />
+                            </div>
+                        </div>
+
+                        <div className="flex items-center justify-between p-4 bg-orange-50 rounded-2xl border border-orange-100">
+                            <div>
+                                <span className="text-[14px] font-bold text-[#374151]">Force Update</span>
+                                <p className="text-[12px] text-orange-600 font-medium">Require users to update</p>
+                            </div>
+                            <button
+                                onClick={() => setAppConfig(prev => ({ ...prev, forceUpdate: !prev.forceUpdate }))}
+                                className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none ${
+                                    appConfig.forceUpdate ? 'bg-orange-500' : 'bg-gray-300'
+                                }`}
+                            >
+                                <span
+                                    className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                                        appConfig.forceUpdate ? 'translate-x-6' : 'translate-x-1'
+                                    }`}
+                                />
+                            </button>
+                        </div>
+
+                        <div className="space-y-4">
+                            <div className="space-y-2">
+                                <label className="text-[12px] font-bold text-[#6B7280] uppercase tracking-wider">Android Link</label>
+                                <input
+                                    type="text"
+                                    value={appConfig.androidLink}
+                                    onChange={(e) => setAppConfig(prev => ({ ...prev, androidLink: e.target.value }))}
+                                    className="w-full px-4 py-3 bg-gray-50 border border-gray-100 rounded-xl outline-none focus:border-orange-500"
+                                    placeholder="Play Store URL"
+                                />
+                            </div>
+                            <div className="space-y-2">
+                                <label className="text-[12px] font-bold text-[#6B7280] uppercase tracking-wider">iOS Link</label>
+                                <input
+                                    type="text"
+                                    value={appConfig.iosLink}
+                                    onChange={(e) => setAppConfig(prev => ({ ...prev, iosLink: e.target.value }))}
+                                    className="w-full px-4 py-3 bg-gray-50 border border-gray-100 rounded-xl outline-none focus:border-orange-500"
+                                    placeholder="App Store URL"
+                                />
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                {/* Maintenance Mode */}
+                <div className="bg-white rounded-[2.5rem] shadow-xl shadow-gray-200/50 border border-gray-100 overflow-hidden group hover:shadow-2xl transition-all duration-500">
+                    <div className="p-10 border-b border-gray-50 bg-gray-50/30">
+                        <div className="flex items-center gap-5">
+                            <div className="w-16 h-16 bg-gradient-to-br from-red-500 to-rose-600 rounded-2xl flex items-center justify-center text-white shadow-lg shadow-red-500/20 group-hover:scale-110 transition-transform duration-500">
+                                <FaTools className="text-2xl" />
+                            </div>
+                            <div>
+                                <h3 className="text-[20px] font-bold text-[#111827] tracking-tight">Maintenance Mode</h3>
+                                <p className="text-[14px] text-[#6B7280] font-medium">Temporarily disable public access</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div className="p-10">
+                        <div className="flex items-center justify-between p-6 bg-red-50 rounded-2xl border border-red-100">
+                            <div className="space-y-1">
+                                <span className="text-[16px] font-bold text-red-900">Maintenance Status</span>
+                                <p className="text-[13px] text-red-600 font-medium">When active, users will see a maintenance screen</p>
+                            </div>
+                            <button
+                                onClick={() => setIsMaintenanceMode(!isMaintenanceMode)}
+                                className={`relative inline-flex h-8 w-14 items-center rounded-full transition-colors focus:outline-none ${
+                                    isMaintenanceMode ? 'bg-red-500' : 'bg-gray-300'
+                                }`}
+                            >
+                                <span
+                                    className={`inline-block h-6 w-6 transform rounded-full bg-white transition-transform ${
+                                        isMaintenanceMode ? 'translate-x-7' : 'translate-x-1'
+                                    }`}
+                                />
+                            </button>
                         </div>
                     </div>
                 </div>

@@ -86,6 +86,23 @@ const riderSchema = mongoose.Schema(
             accountNumber: { type: String, default: '' },
             accountTitle: { type: String, default: '' },
         },
+        cod_balance: {
+            type: Number,
+            default: 0,
+        },
+        earnings_balance: {
+            type: Number,
+            default: 0,
+        },
+        settlementStatus: {
+            type: String,
+            enum: ['active', 'overdue', 'blocked'],
+            default: 'active',
+        },
+        lastSettlementDate: {
+            type: Date,
+            default: Date.now,
+        },
     },
     {
         timestamps: true,

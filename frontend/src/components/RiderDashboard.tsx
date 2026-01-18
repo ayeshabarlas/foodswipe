@@ -20,6 +20,7 @@ const RiderEarnings = dynamic(() => import('./RiderEarnings'), { ssr: false });
 const RiderProfile = dynamic(() => import('./RiderProfile'), { ssr: false });
 const OrderTracking = dynamic(() => import('./OrderTracking'), { ssr: false });
 const NotificationPanel = dynamic(() => import('./NotificationPanel'), { ssr: false });
+const RiderCODWallet = dynamic(() => import('./RiderCODWallet'), { ssr: false });
 
 const RiderDashboard = ({ 
     riderId: initialRiderId, 
@@ -889,6 +890,7 @@ function ActionItem({ icon, label, sublabel, onClick }: any) {
                 />
             )}
             {activeTab === 'earnings' && <RiderEarnings riderId={riderData?._id} />}
+            {activeTab === 'wallet' && <RiderCODWallet rider={riderData} token={userInfo?.token} onRefresh={fetchRiderData} />}
             {activeTab === 'profile' && <RiderProfile riderId={riderData?._id} />}
             </div>
 
@@ -1035,6 +1037,12 @@ function ActionItem({ icon, label, sublabel, onClick }: any) {
                         onClick={() => setActiveTab('earnings')} 
                         icon={<FaWallet size={20} />} 
                         label="Earnings" 
+                    />
+                    <NavButton 
+                        active={activeTab === 'wallet'} 
+                        onClick={() => setActiveTab('wallet')} 
+                        icon={<FaMoneyBillWave size={20} />} 
+                        label="Wallet" 
                     />
                     <NavButton 
                         active={activeTab === 'orders'} 

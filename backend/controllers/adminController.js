@@ -8,6 +8,8 @@ const RiderWallet = require('../models/RiderWallet');
 const Video = require('../models/Video');
 const Settings = require('../models/Settings');
 const Dish = require('../models/Dish');
+const CODLedger = require('../models/CODLedger');
+const Payout = require('../models/Payout');
 const { triggerEvent } = require('../socket');
 const AuditLog = require('../models/AuditLog');
 
@@ -593,7 +595,17 @@ const getSystemSettings = async (req, res) => {
 // @desc    Update system settings
 const updateSystemSettings = async (req, res) => {
     try {
-        const { commission, supportEmail, announcement } = req.body;
+        const { 
+            commission, 
+            supportEmail, 
+            announcement, 
+            isMaintenanceMode, 
+            minimumOrderAmount, 
+            deliveryFee,
+            serviceFee,
+            featureToggles,
+            appConfig
+        } = req.body;
         
         let settings = await Settings.findOne();
         if (!settings) {
@@ -603,6 +615,18 @@ const updateSystemSettings = async (req, res) => {
         if (commission !== undefined) settings.commission = commission;
         if (supportEmail !== undefined) settings.supportEmail = supportEmail;
         if (announcement !== undefined) settings.announcement = announcement;
+        if (isMaintenanceMode !== undefined) settings.isMaintenanceMode = isMaintenanceMode;
+        if (minimumOrderAmount !== undefined) settings.minimumOrderAmount = minimumOrderAmount;
+        if (deliveryFee !== undefined) settings.deliveryFee = deliveryFee;
+        if (serviceFee !== undefined) settings.serviceFee = serviceFee;
+        
+        if (featureToggles) {
+            settings.featureToggles = { ...settings.featureToggles, ...featureToggles };
+        }
+        
+        if (appConfig) {
+            settings.appConfig = { ...settings.appConfig, ...appConfig };
+        }
 
         await settings.save();
 
@@ -978,6 +1002,99 @@ const cleanupMockData = async (req, res) => {
     }
 };
 
+// @desc    Get all riders with COD details
+// @route   GET /api/admin/cod-ledger
+// @access  Private/Admin
+const getCODLedger = async (req, res) => {
+    try {
+        const riders = await Rider.find()
+            .populate('user', 'name email phone')
+            .select('fullName cod_balance earnings_balance settlementStatus lastSettlementDate user');
+
+        const ledger = await CODLedger.find({ status: 'pending' })
+            .populate('rider', 'fullName')
+            .populate('order', 'orderNumber totalPrice')
+            .sort({ createdAt: -1 });
+
+        res.json({ riders, pendingTransactions: ledger });
+    } catch (error) {
+        res.status(500).json({ message: 'Server error', error: error.message });
+    }
+};
+
+// @desc    Settle rider COD and earnings
+// @route   POST /api/admin/settle-rider
+// @access  Private/Admin
+const settleRider = async (req, res) => {
+    try {
+        const { riderId, amountCollected, earningsPaid, transactionId, notes } = req.body;
+
+        const rider = await Rider.findById(riderId);
+        if (!rider) {
+            return res.status(404).json({ message: 'Rider not found' });
+        }
+
+        // Update rider balances
+        if (amountCollected) {
+            rider.cod_balance = Math.max(0, rider.cod_balance - amountCollected);
+        }
+        if (earningsPaid) {
+            rider.earnings_balance = Math.max(0, rider.earnings_balance - earningsPaid);
+        }
+
+        // Update settlement status if balances are cleared
+        if (rider.cod_balance <= 20000) {
+            rider.settlementStatus = 'active';
+        }
+        rider.lastSettlementDate = Date.now();
+        await rider.save();
+
+        // Mark related ledger entries as paid
+        await CODLedger.updateMany(
+            { rider: riderId, status: 'pending' },
+            { 
+                status: 'paid', 
+                settlementDate: Date.now(),
+                transactionId: transactionId || 'Admin-Manual'
+            }
+        );
+
+        // Log the settlement
+        await AuditLog.create({
+            user: req.user._id,
+            action: 'SETTLE_RIDER',
+            entityType: 'Rider',
+            entityId: riderId,
+            details: `Settled COD: ${amountCollected}, Paid Earnings: ${earningsPaid}. Notes: ${notes}`
+        });
+
+        res.json({ message: 'Rider settled successfully', rider });
+    } catch (error) {
+        res.status(500).json({ message: 'Server error', error: error.message });
+    }
+};
+
+// @desc    Block/Unblock rider
+// @route   POST /api/admin/riders/:id/block
+// @access  Private/Admin
+const blockRider = async (req, res) => {
+    try {
+        const { status } = req.body; // 'blocked' or 'active'
+        const rider = await Rider.findById(req.params.id);
+
+        if (!rider) {
+            return res.status(404).json({ message: 'Rider not found' });
+        }
+
+        rider.settlementStatus = status;
+        await rider.save();
+
+        res.json({ message: `Rider ${status} successfully`, rider });
+    } catch (error) {
+        res.status(500).json({ message: 'Server error', error: error.message });
+    }
+};
+
 module.exports = {
     getPendingRestaurants,
     approveRestaurant,
@@ -1000,5 +1117,8 @@ module.exports = {
     deleteUser,
     deleteRestaurant,
     deleteRider,
-    cleanupMockData
+    cleanupMockData,
+    getCODLedger,
+    settleRider,
+    blockRider
 };

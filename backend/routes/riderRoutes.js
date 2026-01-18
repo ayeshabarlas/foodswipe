@@ -19,7 +19,9 @@ const {
     updateLocation,
     markPickedUp,
     cashout,
-    updateProfile
+    updateProfile,
+    getRiderLedger,
+    requestPayout
 } = require('../controllers/riderController');
 
 // Register new rider
@@ -75,5 +77,13 @@ router.put('/:id/orders/:orderId/pickup', protect, markPickedUp);
 
 // Cashout
 router.post('/:id/cashout', protect, cashout);
+
+// COD Ledger
+router.get('/me/ledger', protect, getRiderLedger);
+router.get('/:id/ledger', protect, getRiderLedger);
+
+// Request Payout
+router.post('/me/request-payout', protect, requestPayout);
+router.post('/:id/request-payout', protect, requestPayout);
 
 module.exports = router;

@@ -3,6 +3,7 @@ const User = require('../models/User');
 const Order = require('../models/Order');
 const Payout = require('../models/Payout');
 const Transaction = require('../models/Transaction');
+const CODLedger = require('../models/CODLedger');
 const { calculateRiderEarning } = require('../utils/paymentUtils');
 const { calculateDistance } = require('../utils/locationUtils');
 const { createNotification } = require('./notificationController');
@@ -334,6 +335,24 @@ const acceptOrder = async (req, res) => {
             return res.status(404).json({ message: 'Order not found' });
         }
 
+        const rider = await Rider.findById(req.params.id).populate('user', 'name phone');
+        if (!rider) {
+            return res.status(404).json({ message: 'Rider not found' });
+        }
+
+        // COD Block Check
+        if (rider.settlementStatus === 'blocked') {
+            return res.status(403).json({ message: 'Account blocked due to overdue COD. Please settle with admin.' });
+        }
+
+        // Check for overdue by time (7 days)
+        const sevenDaysAgo = new Date();
+        sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+        if (rider.lastSettlementDate < sevenDaysAgo && rider.cod_balance > 0) {
+            rider.settlementStatus = 'overdue';
+            await rider.save();
+        }
+
         // Calculate rider earnings if not already set
         if (!order.netRiderEarning || order.netRiderEarning === 0) {
             let distance = order.distanceKm || 0;
@@ -354,7 +373,6 @@ const acceptOrder = async (req, res) => {
         order.riderAcceptedAt = new Date();
         await order.save();
 
-        const rider = await Rider.findById(req.params.id).populate('user', 'name phone');
         rider.currentOrder = orderId;
         await rider.save();
 
@@ -829,6 +847,69 @@ const updateProfile = async (req, res) => {
     }
 };
 
+// @desc    Get rider ledger
+// @route   GET /api/riders/:id/ledger
+// @access  Private
+const getRiderLedger = async (req, res) => {
+    try {
+        const rider = await Rider.findOne({ user: req.user._id });
+        if (!rider) {
+            return res.status(404).json({ message: 'Rider not found' });
+        }
+
+        const ledger = await CODLedger.find({ rider: rider._id })
+            .populate('order', 'orderNumber totalPrice createdAt')
+            .sort({ createdAt: -1 });
+
+        res.json(ledger);
+    } catch (error) {
+        res.status(500).json({ message: 'Server error', error: error.message });
+    }
+};
+
+// @desc    Request payout for delivery earnings
+// @route   POST /api/riders/:id/request-payout
+// @access  Private
+const requestPayout = async (req, res) => {
+    try {
+        const rider = await Rider.findOne({ user: req.user._id });
+        if (!rider) {
+            return res.status(404).json({ message: 'Rider not found' });
+        }
+
+        const { amount, notes } = req.body;
+
+        if (!amount || amount <= 0) {
+            return res.status(400).json({ message: 'Invalid amount' });
+        }
+
+        if (amount > rider.earnings_balance) {
+            return res.status(400).json({ message: 'Insufficient earnings balance' });
+        }
+
+        // Create payout request
+        const payout = await Payout.create({
+            type: 'rider',
+            entityId: req.user._id,
+            entityModel: 'User',
+            rider: req.user._id,
+            totalAmount: amount,
+            netPayable: amount,
+            status: 'pending',
+            notes: notes || 'Rider payout request',
+            bankDetails: {
+                bankName: rider.bankDetails?.bankName || '',
+                accountNumber: rider.bankDetails?.accountNumber || '',
+                accountName: rider.bankDetails?.accountTitle || ''
+            }
+        });
+
+        res.status(201).json({ message: 'Payout request submitted', payout });
+    } catch (error) {
+        res.status(500).json({ message: 'Server error', error: error.message });
+    }
+};
+
 module.exports = {
     registerRider,
     getMyProfile,
@@ -847,5 +928,7 @@ module.exports = {
     updateLocation,
     markPickedUp,
     cashout,
-    updateProfile
+    updateProfile,
+    getRiderLedger,
+    requestPayout
 };

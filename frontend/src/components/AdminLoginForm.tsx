@@ -39,7 +39,7 @@ export default function AdminLoginForm() {
                 localStorage.setItem('userInfo', JSON.stringify(data));
                 localStorage.setItem('isAdmin', 'true');
                 localStorage.setItem('userRole', data.role || 'admin');
-                router.push('/admin');
+                router.push('/foodswipe-portal');
             } else {
                 console.error('Authorization failed. Data:', data);
                 // Debugging: show what we got
@@ -143,11 +143,8 @@ export default function AdminLoginForm() {
                 </form>
 
                 <div className="mt-6 text-center">
-                    <p className="text-gray-600 text-sm">
-                        Don't have an admin account?{' '}
-                        <Link href="/admin/register" className="text-orange-500 font-bold hover:text-orange-600">
-                            Create Account
-                        </Link>
+                    <p className="text-gray-500 text-xs">
+                        Admin access is restricted. Please contact your super-admin for credentials.
                     </p>
                 </div>
 

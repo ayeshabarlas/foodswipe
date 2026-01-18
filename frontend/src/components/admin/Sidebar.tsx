@@ -26,6 +26,10 @@ interface SidebarProps {
 export default function Sidebar({ activeTab, setActiveTab, onLogout }: SidebarProps) {
     const [expandedMenus, setExpandedMenus] = useState<string[]>(['restaurants', 'riders', 'orders']);
     const [isMobileOpen, setIsMobileOpen] = useState(false);
+    
+    // Get user role from userInfo
+    const userInfo = typeof window !== 'undefined' ? JSON.parse(localStorage.getItem('userInfo') || '{}') : {};
+    const userRole = userInfo.role || 'admin';
 
     const menuItems = [
         { id: 'dashboard', label: 'Dashboard', icon: FaChartLine },
@@ -33,6 +37,7 @@ export default function Sidebar({ activeTab, setActiveTab, onLogout }: SidebarPr
             id: 'restaurants',
             label: 'Restaurants',
             icon: FaStore,
+            roles: ['super-admin', 'restaurant-manager'],
             subItems: [
                 { id: 'restaurants-all', label: 'All Restaurants' },
                 { id: 'restaurants-pending', label: 'Approvals' }
@@ -42,6 +47,7 @@ export default function Sidebar({ activeTab, setActiveTab, onLogout }: SidebarPr
             id: 'orders',
             label: 'Orders',
             icon: FaShoppingBag,
+            roles: ['super-admin', 'support-admin', 'finance-admin'],
             subItems: [
                 { id: 'orders-live', label: 'Live Orders' },
                 { id: 'orders-all', label: 'Order History' }
@@ -51,19 +57,27 @@ export default function Sidebar({ activeTab, setActiveTab, onLogout }: SidebarPr
             id: 'riders',
             label: 'Riders',
             icon: FaMotorcycle,
+            roles: ['super-admin', 'support-admin'],
             subItems: [
                 { id: 'riders-all', label: 'All Riders' },
                 { id: 'riders-pending', label: 'Rider Approvals' },
-                { id: 'riders-map', label: 'Live Map' }
+                { id: 'riders-map', label: 'Live Map' },
+                { id: 'cod-settlement', label: 'COD Settlement' }
             ]
         },
-        { id: 'customers', label: 'Customers', icon: FaUser },
-        { id: 'finance', label: 'Finance', icon: FaMoneyBillWave },
-        { id: 'vouchers', label: 'Vouchers', icon: FaTicketAlt },
-        { id: 'admin-management', label: 'Admins', icon: FaUser },
+        { id: 'customers', label: 'Customers', icon: FaUser, roles: ['super-admin', 'support-admin'] },
+        { id: 'finance', label: 'Finance', icon: FaMoneyBillWave, roles: ['super-admin', 'finance-admin'] },
+        { id: 'vouchers', label: 'Vouchers', icon: FaTicketAlt, roles: ['super-admin', 'finance-admin'] },
+        { id: 'admin-management', label: 'Admins', icon: FaUser, roles: ['super-admin'] },
         { id: 'support', label: 'Support', icon: FaHeadset },
-        { id: 'settings', label: 'Settings', icon: FaCog },
+        { id: 'settings', label: 'Settings', icon: FaCog, roles: ['super-admin'] },
     ];
+
+    // Filter menu items based on user role
+    const filteredMenuItems = menuItems.filter(item => {
+        if (!item.roles) return true; // Public for all admins
+        return item.roles.includes(userRole);
+    });
 
     const toggleMenu = (menuId: string) => {
         setExpandedMenus(prev =>
@@ -113,7 +127,7 @@ export default function Sidebar({ activeTab, setActiveTab, onLogout }: SidebarPr
                 {/* Menu Section */}
                 <div className="flex-1 overflow-y-auto py-4 px-4 min-h-0 custom-scrollbar">
                     <nav className="space-y-1">
-                        {menuItems.map((item) => (
+                        {filteredMenuItems.map((item) => (
                             <div key={item.id} className="space-y-1">
                                 <button
                                     onClick={() => item.subItems ? toggleMenu(item.id) : setActiveTab(item.id)}

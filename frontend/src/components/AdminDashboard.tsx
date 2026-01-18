@@ -20,6 +20,7 @@ import VerificationsView from './admin/VerificationsView';
 import CustomersView from './admin/CustomersView';
 import AdminManagementView from './admin/AdminManagementView';
 import SupportView from './admin/SupportView';
+import CODSettlementView from './admin/CODSettlementView';
 
 import axios from 'axios';
 import { initSocket, getSocket, disconnectSocket } from '../utils/socket';
@@ -225,6 +226,8 @@ export default function AdminDashboard() {
                 return <CustomersView />;
             case 'finance':
                 return <FinanceView />;
+            case 'cod-settlement':
+                return <CODSettlementView />;
             case 'payments':
                 return <PaymentsView />;
             case 'vouchers':
