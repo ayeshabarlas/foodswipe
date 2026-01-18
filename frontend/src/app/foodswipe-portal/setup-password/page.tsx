@@ -1,12 +1,12 @@
 'use client';
-import { useState, useEffect } from 'react';
+import { Suspense, useState, useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import axios from 'axios';
 import { API_BASE_URL } from '../../../utils/config';
 import { FaLock, FaCheckCircle, FaShieldAlt } from 'react-icons/fa';
 import toast from 'react-hot-toast';
 
-export default function SetupPasswordPage() {
+function SetupPasswordForm() {
     const router = useRouter();
     const searchParams = useSearchParams();
     const token = searchParams.get('token');
@@ -154,5 +154,17 @@ export default function SetupPasswordPage() {
                 </div>
             </div>
         </div>
+    );
+}
+
+export default function SetupPasswordPage() {
+    return (
+        <Suspense fallback={
+            <div className="min-h-screen bg-black flex items-center justify-center">
+                <div className="w-12 h-12 border-4 border-orange-500/20 border-t-orange-500 rounded-full animate-spin"></div>
+            </div>
+        }>
+            <SetupPasswordForm />
+        </Suspense>
     );
 }
