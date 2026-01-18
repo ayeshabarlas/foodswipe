@@ -120,7 +120,7 @@ export default function Home() {
     const adminRoles = ["admin", "super-admin", "finance-admin", "support-admin", "restaurant-manager"];
     const isAdmin = adminRoles.includes(userRole);
     if (isAdmin) {
-      router.push('/foodswipe-portal');
+      router.push('/admin');
     }
   }, [userRole, router]);
 

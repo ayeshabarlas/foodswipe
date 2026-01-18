@@ -5,7 +5,7 @@ export function middleware(request: NextRequest) {
     const path = request.nextUrl.pathname;
 
     if (path === '/admin-login' || path === '/admin-login/') {
-        return NextResponse.redirect(new URL('/foodswipe-portal/login', request.url));
+        return NextResponse.redirect(new URL('/admin/login', request.url));
     }
 
     return NextResponse.next();

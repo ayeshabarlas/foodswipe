@@ -39,7 +39,7 @@ export default function AdminLoginForm() {
                 localStorage.setItem('userInfo', JSON.stringify(data));
                 localStorage.setItem('isAdmin', 'true');
                 localStorage.setItem('userRole', data.role || 'admin');
-                router.push('/foodswipe-portal');
+                router.push('/admin');
             } else {
                 console.error('Authorization failed. Data:', data);
                 // Debugging: show what we got

@@ -92,7 +92,7 @@ export default function LoginPage() {
 
         // Default redirect based on role
         if (data.role === 'restaurant') router.push('/restaurant');
-        else if (data.role === 'admin' || data.role === 'super-admin') router.push('/foodswipe-portal');
+        else if (data.role === 'admin' || data.role === 'super-admin') router.push('/admin');
         else if (data.role === 'rider') router.push('/rider');
         else router.push('/'); // Customer
     };

@@ -41,7 +41,7 @@ function SetupPasswordForm() {
             setStatus('success');
             toast.success('Account setup successful!');
             setTimeout(() => {
-                router.push('/foodswipe-portal/login');
+                router.push('/admin/login');
             }, 3000);
         } catch (error: any) {
             toast.error(error.response?.data?.message || 'Failed to setup account');
