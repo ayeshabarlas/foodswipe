@@ -203,8 +203,9 @@ export default function CODSettlementView() {
                         <thead>
                             <tr className="bg-gray-50/50">
                                 <th className="px-8 py-4 text-left text-[10px] font-bold text-gray-400 uppercase tracking-widest">Rider</th>
-                                <th className="px-8 py-4 text-left text-[10px] font-bold text-gray-400 uppercase tracking-widest">COD Balance</th>
-                                <th className="px-8 py-4 text-left text-[10px] font-bold text-gray-400 uppercase tracking-widest">Earnings</th>
+                                <th className="px-8 py-4 text-left text-[10px] font-bold text-gray-400 uppercase tracking-widest">COD Collected</th>
+                                <th className="px-8 py-4 text-left text-[10px] font-bold text-gray-400 uppercase tracking-widest">Rider Fee</th>
+                                <th className="px-8 py-4 text-left text-[10px] font-bold text-gray-400 uppercase tracking-widest">Admin Net</th>
                                 <th className="px-8 py-4 text-left text-[10px] font-bold text-gray-400 uppercase tracking-widest">Status</th>
                                 <th className="px-8 py-4 text-left text-[10px] font-bold text-gray-400 uppercase tracking-widest">Last Settlement</th>
                                 <th className="px-8 py-4 text-right text-[10px] font-bold text-gray-400 uppercase tracking-widest">Actions</th>
@@ -214,80 +215,95 @@ export default function CODSettlementView() {
                             {loading ? (
                                 [1, 2, 3].map(i => (
                                     <tr key={i} className="animate-pulse">
-                                        <td colSpan={6} className="px-8 py-6"><div className="h-4 bg-gray-100 rounded w-full" /></td>
+                                        <td colSpan={7} className="px-8 py-6"><div className="h-4 bg-gray-100 rounded w-full" /></td>
                                     </tr>
                                 ))
                             ) : filteredRiders.length === 0 ? (
                                 <tr>
-                                    <td colSpan={6} className="px-8 py-12 text-center text-gray-400">No riders found</td>
+                                    <td colSpan={7} className="px-8 py-12 text-center text-gray-400">No riders found</td>
                                 </tr>
                             ) : (
-                                filteredRiders.map((rider) => (
-                                    <tr key={rider._id} className="hover:bg-gray-50/50 transition-colors">
-                                        <td className="px-8 py-6">
-                                            <div className="flex items-center gap-4">
-                                                <div className="w-10 h-10 bg-orange-100 rounded-xl flex items-center justify-center text-orange-600 font-bold">
-                                                    {rider.fullName?.charAt(0) || rider.user?.name?.charAt(0)}
+                                filteredRiders.map((rider) => {
+                                    // Calculate breakdown for this rider from pending transactions
+                                    const riderPendingTx = pendingTransactions.filter(tx => 
+                                        (typeof tx.rider === 'object' && tx.rider?._id === rider._id) || 
+                                        (typeof tx.rider === 'string' && tx.rider === rider._id)
+                                    );
+                                    const totalRiderFee = riderPendingTx.reduce((acc, tx) => acc + (tx.rider_earning || 0), 0);
+                                    const totalAdminNet = riderPendingTx.reduce((acc, tx) => acc + (tx.admin_balance || 0), 0);
+
+                                    return (
+                                        <tr key={rider._id} className="hover:bg-gray-50/50 transition-colors">
+                                            <td className="px-8 py-6">
+                                                <div className="flex items-center gap-4">
+                                                    <div className="w-10 h-10 bg-orange-100 rounded-xl flex items-center justify-center text-orange-600 font-bold">
+                                                        {rider.fullName?.charAt(0) || rider.user?.name?.charAt(0)}
+                                                    </div>
+                                                    <div>
+                                                        <p className="text-sm font-bold text-gray-900">{rider.fullName || rider.user?.name}</p>
+                                                        <p className="text-[10px] text-gray-400">{rider.user?.phone}</p>
+                                                    </div>
                                                 </div>
-                                                <div>
-                                                    <p className="text-sm font-bold text-gray-900">{rider.fullName || rider.user?.name}</p>
-                                                    <p className="text-[10px] text-gray-400">{rider.user?.phone}</p>
+                                            </td>
+                                            <td className="px-8 py-6">
+                                                <p className={`text-sm font-bold ${rider.cod_balance > 15000 ? 'text-red-500' : 'text-gray-900'}`}>
+                                                    Rs. {rider.cod_balance?.toLocaleString()}
+                                                </p>
+                                            </td>
+                                            <td className="px-8 py-6">
+                                                <p className="text-sm font-bold text-green-600">
+                                                    Rs. {totalRiderFee.toLocaleString()}
+                                                </p>
+                                            </td>
+                                            <td className="px-8 py-6">
+                                                <p className="text-sm font-bold text-blue-600">
+                                                    Rs. {totalAdminNet.toLocaleString()}
+                                                </p>
+                                            </td>
+                                            <td className="px-8 py-6">
+                                                <div className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-[9px] font-bold uppercase tracking-wider ${
+                                                    rider.settlementStatus === 'active' ? 'bg-green-50 text-green-600' :
+                                                    rider.settlementStatus === 'overdue' ? 'bg-orange-50 text-orange-600' :
+                                                    'bg-red-50 text-red-600'
+                                                }`}>
+                                                    <div className={`w-1.5 h-1.5 rounded-full ${
+                                                        rider.settlementStatus === 'active' ? 'bg-green-500' :
+                                                        rider.settlementStatus === 'overdue' ? 'bg-orange-500' :
+                                                        'bg-red-500'
+                                                    }`} />
+                                                    {rider.settlementStatus}
                                                 </div>
-                                            </div>
-                                        </td>
-                                        <td className="px-8 py-6">
-                                            <p className={`text-sm font-bold ${rider.cod_balance > 15000 ? 'text-red-500' : 'text-gray-900'}`}>
-                                                Rs. {rider.cod_balance?.toLocaleString()}
-                                            </p>
-                                        </td>
-                                        <td className="px-8 py-6">
-                                            <p className="text-sm font-bold text-green-600">
-                                                Rs. {rider.earnings_balance?.toLocaleString()}
-                                            </p>
-                                        </td>
-                                        <td className="px-8 py-6">
-                                            <div className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-[9px] font-bold uppercase tracking-wider ${
-                                                rider.settlementStatus === 'active' ? 'bg-green-50 text-green-600' :
-                                                rider.settlementStatus === 'overdue' ? 'bg-orange-50 text-orange-600' :
-                                                'bg-red-50 text-red-600'
-                                            }`}>
-                                                <div className={`w-1.5 h-1.5 rounded-full ${
-                                                    rider.settlementStatus === 'active' ? 'bg-green-500' :
-                                                    rider.settlementStatus === 'overdue' ? 'bg-orange-500' :
-                                                    'bg-red-500'
-                                                }`} />
-                                                {rider.settlementStatus}
-                                            </div>
-                                        </td>
-                                        <td className="px-8 py-6">
-                                            <p className="text-xs text-gray-500">
-                                                {rider.lastSettlementDate ? new Date(rider.lastSettlementDate).toLocaleDateString() : 'Never'}
-                                            </p>
-                                        </td>
-                                        <td className="px-8 py-6">
-                                            <div className="flex items-center justify-end gap-2">
-                                                <button 
-                                                    onClick={() => handleSettle(rider._id)}
-                                                    disabled={settlingRider === rider._id || rider.cod_balance === 0}
-                                                    className="px-4 py-2 bg-green-500 text-white text-[10px] font-bold uppercase tracking-widest rounded-xl hover:shadow-lg hover:shadow-green-200 transition-all disabled:opacity-50"
-                                                >
-                                                    {settlingRider === rider._id ? '...' : 'Settle'}
-                                                </button>
-                                                <button 
-                                                    onClick={() => handleToggleBlock(rider._id, rider.settlementStatus)}
-                                                    className={`p-2 rounded-xl transition-all ${
-                                                        rider.settlementStatus === 'blocked' 
-                                                        ? 'bg-green-50 text-green-600 hover:bg-green-100' 
-                                                        : 'bg-red-50 text-red-600 hover:bg-red-100'
-                                                    }`}
-                                                    title={rider.settlementStatus === 'blocked' ? 'Unblock' : 'Block'}
-                                                >
-                                                    {rider.settlementStatus === 'blocked' ? <FaCheckCircle /> : <FaBan />}
-                                                </button>
-                                            </div>
-                                        </td>
-                                    </tr>
-                                ))
+                                            </td>
+                                            <td className="px-8 py-6">
+                                                <p className="text-xs text-gray-500">
+                                                    {rider.lastSettlementDate ? new Date(rider.lastSettlementDate).toLocaleDateString() : 'Never'}
+                                                </p>
+                                            </td>
+                                            <td className="px-8 py-6">
+                                                <div className="flex items-center justify-end gap-2">
+                                                    <button 
+                                                        onClick={() => handleSettle(rider._id)}
+                                                        disabled={settlingRider === rider._id || rider.cod_balance === 0}
+                                                        className="px-4 py-2 bg-green-500 text-white text-[10px] font-bold uppercase tracking-widest rounded-xl hover:shadow-lg hover:shadow-green-200 transition-all disabled:opacity-50"
+                                                    >
+                                                        {settlingRider === rider._id ? '...' : 'Settle'}
+                                                    </button>
+                                                    <button 
+                                                        onClick={() => handleToggleBlock(rider._id, rider.settlementStatus)}
+                                                        className={`p-2 rounded-xl transition-all ${
+                                                            rider.settlementStatus === 'blocked' 
+                                                            ? 'bg-green-50 text-green-600 hover:bg-green-100' 
+                                                            : 'bg-red-50 text-red-600 hover:bg-red-100'
+                                                        }`}
+                                                        title={rider.settlementStatus === 'blocked' ? 'Unblock' : 'Block'}
+                                                    >
+                                                        {rider.settlementStatus === 'blocked' ? <FaCheckCircle /> : <FaBan />}
+                                                    </button>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    );
+                                })
                             )}
                         </tbody>
                     </table>

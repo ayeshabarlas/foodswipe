@@ -434,8 +434,16 @@ const processOrderCompletion = async (order, distanceKm, req = null) => {
             
             // COD System Fields
             rider.earnings_balance = (rider.earnings_balance || 0) + riderEarning;
-            if (order.paymentMethod === 'COD') {
+            
+            // Robust check for COD (case-insensitive)
+            const isCOD = order.paymentMethod && 
+                         (order.paymentMethod.toUpperCase() === 'COD' || 
+                          order.paymentMethod.toUpperCase() === 'CASH');
+            
+            if (isCOD) {
                 rider.cod_balance = (rider.cod_balance || 0) + (order.totalPrice || 0);
+                
+                console.log(`[Finance] COD Order detected. Updating rider.cod_balance by ${order.totalPrice}. New balance: ${rider.cod_balance}`);
                 
                 // Check if COD balance exceeds limit (e.g., 20,000)
                 if (rider.cod_balance > 20000) {
@@ -451,6 +459,8 @@ const processOrderCompletion = async (order, distanceKm, req = null) => {
                     admin_balance: (order.totalPrice || 0) - riderEarning,
                     status: 'pending'
                 });
+            } else {
+                console.log(`[Finance] Prepaid Order (${order.paymentMethod}). No COD balance update needed.`);
             }
 
             rider.stats.completedDeliveries = (rider.stats.completedDeliveries || 0) + 1;
@@ -474,7 +484,8 @@ const processOrderCompletion = async (order, distanceKm, req = null) => {
             }
             riderWallet.totalEarnings = (riderWallet.totalEarnings || 0) + riderEarning;
             riderWallet.availableWithdraw = (riderWallet.availableWithdraw || 0) + riderEarning;
-            if (order.paymentMethod === 'COD') {
+            
+            if (isCOD) {
                 riderWallet.cashCollected = (riderWallet.cashCollected || 0) + (order.totalPrice || 0);
             }
             await riderWallet.save();

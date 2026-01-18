@@ -87,6 +87,11 @@ const RiderCODWallet: React.FC<RiderCODWalletProps> = ({ rider, token, onRefresh
     const limit = 20000;
     const progress = Math.min((totalCOD / limit) * 100, 100);
 
+    // Calculate breakdown from pending ledger entries
+    const pendingLedger = ledger.filter(entry => entry.status === 'pending');
+    const totalRiderFeeFromLedger = pendingLedger.reduce((sum, entry) => sum + entry.rider_earning, 0);
+    const netPayableToAdmin = pendingLedger.reduce((sum, entry) => sum + entry.admin_balance, 0);
+
     return (
         <div className="space-y-6 pb-20">
             {/* Wallet Header */}
@@ -112,6 +117,18 @@ const RiderCODWallet: React.FC<RiderCODWalletProps> = ({ rider, token, onRefresh
                                 'bg-red-400'
                             }`} />
                             {status}
+                        </div>
+                    </div>
+
+                    {/* COD Breakdown */}
+                    <div className="grid grid-cols-2 gap-4 mb-8 py-4 border-y border-white/5">
+                        <div>
+                            <p className="text-gray-400 text-[9px] font-bold uppercase tracking-widest mb-1">Rider Fee</p>
+                            <p className="text-lg font-bold text-green-400">Rs. {totalRiderFeeFromLedger.toLocaleString()}</p>
+                        </div>
+                        <div className="text-right">
+                            <p className="text-gray-400 text-[9px] font-bold uppercase tracking-widest mb-1">Net to Admin</p>
+                            <p className="text-lg font-bold text-orange-400">Rs. {netPayableToAdmin.toLocaleString()}</p>
                         </div>
                     </div>
 
