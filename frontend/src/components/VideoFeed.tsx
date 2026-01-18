@@ -57,7 +57,8 @@ const VideoCard = React.memo(({
     onOpenDetails,
     onOpenProfile,
     distance,
-    isNext // Add isNext prop for preloading
+    isNext, // Add isNext prop for preloading
+    user // Pass user down
 }: {
     dish: Dish;
     isActive: boolean;
@@ -65,6 +66,7 @@ const VideoCard = React.memo(({
     onOpenProfile: (restaurant: any) => void;
     distance?: string;
     isNext?: boolean;
+    user: any;
 }) => {
     const videoRef = useRef<HTMLVideoElement>(null);
     const [isLiked, setIsLiked] = useState(false);
@@ -75,43 +77,32 @@ const VideoCard = React.memo(({
     const [comments, setComments] = useState<any[]>([]);
     const [loadingComments, setLoadingComments] = useState(false);
 
-    const [userInfo, setUserInfo] = useState<any>(null);
-
     useEffect(() => {
-        if (typeof window !== 'undefined') {
-            const saved = localStorage.getItem('userInfo');
-            if (saved) setUserInfo(JSON.parse(saved));
-        }
-    }, []);
-
-    useEffect(() => {
-        if (!userInfo) return;
-        const userId = userInfo._id;
+        if (!user) return;
+        const userId = user._id;
         const userLiked = dish.likes?.some((like: any) => (like._id || like) === userId);
         setIsLiked(!!userLiked);
         setLikesCount(dish.likes?.length || 0);
         setSharesCount(dish.shares || 0);
-    }, [dish, userInfo]);
+    }, [dish, user]);
 
     // Optimize video playback
     useEffect(() => {
         if (!videoRef.current) return;
 
         if (isActive) {
+            console.log('🎬 Playing video:', getImageUrl(dish.videoUrl));
             // Use a promise to handle play() properly
             const playPromise = videoRef.current.play();
             if (playPromise !== undefined) {
                 playPromise.catch((error) => {
-                    console.log('Autoplay prevented or interrupted:', error);
+                    console.error('❌ Autoplay prevented or interrupted:', error, dish.videoUrl);
                 });
             }
         } else {
             videoRef.current.pause();
-            // Optional: Reset to beginning when not active to save memory/resource
-            // but might make it less smooth when scrolling back
-            // videoRef.current.currentTime = 0; 
         }
-    }, [isActive]);
+    }, [isActive, dish.videoUrl]);
 
     // Preload handling
     useEffect(() => {
@@ -141,10 +132,10 @@ const VideoCard = React.memo(({
     const handleLike = async (e: React.MouseEvent) => {
         e.stopPropagation();
         try {
-            if (!userInfo?.token) return alert('Please login to like');
+            if (!user?.token) return alert('Please login to like');
 
             const res = await axios.post(`${API_BASE_URL}/api/videos/${dish._id}/like`, {}, {
-                headers: { Authorization: `Bearer ${userInfo.token}` }
+                headers: { Authorization: `Bearer ${user.token}` }
             });
 
             setIsLiked(res.data.isLiked);
@@ -179,13 +170,13 @@ const VideoCard = React.memo(({
         if (!commentText.trim()) return;
 
         try {
-            if (!userInfo?.token) return alert('Please login to comment');
+            if (!user?.token) return alert('Please login to comment');
 
             const res = await axios.post(`${API_BASE_URL}/api/videos/${dish._id}/comment`, {
                 text: commentText,
                 rating: 5
             }, {
-                headers: { Authorization: `Bearer ${userInfo.token}` }
+                headers: { Authorization: `Bearer ${user.token}` }
             });
 
             setComments([res.data, ...comments]);
@@ -245,11 +236,17 @@ const VideoCard = React.memo(({
                             loop
                             muted
                             playsInline
+                            autoPlay={isActive}
                             webkit-playsinline="true"
                             preload={isActive ? "auto" : isNext ? "auto" : "metadata"}
                             poster={getImageUrl(dish.imageUrl)}
                             onError={(e) => {
-                                console.error('Video error:', dish.videoUrl);
+                                const fullUrl = getImageUrl(dish.videoUrl);
+                                console.error('❌ Video playback error:', {
+                                    originalUrl: dish.videoUrl,
+                                    resolvedUrl: fullUrl,
+                                    error: e
+                                });
                             }}
                         />
                 ) : (
@@ -461,10 +458,6 @@ export default function VideoFeed() {
             }
         };
         fetchDishes();
-        const refreshInterval = setInterval(() => {
-            fetchDishes();
-            console.log('📡 Feed refreshed - checking for new dishes');
-        }, 30000);
         const userInfo = localStorage.getItem('userInfo');
         if (userInfo) setUser(JSON.parse(userInfo));
         const savedLocation = localStorage.getItem('userLocation');
@@ -473,7 +466,6 @@ export default function VideoFeed() {
         } else {
             setTimeout(() => setShowLocationPrompt(true), 1500);
         }
-        return () => clearInterval(refreshInterval);
     }, []);
 
     useEffect(() => {
@@ -646,6 +638,7 @@ export default function VideoFeed() {
                             onOpenDetails={handleOpenDetails} 
                             onOpenProfile={handleOpenProfile} 
                             distance={distance} 
+                            user={user}
                         />
                     );
                 })}

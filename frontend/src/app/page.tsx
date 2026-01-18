@@ -23,6 +23,7 @@ export default function Home() {
   const [userRole, setUserRole] = useState<string>("");
   const [hasRestaurant, setHasRestaurant] = useState(false);
   const [checkingRestaurant, setCheckingRestaurant] = useState(false);
+  const [isTransitioning, setIsTransitioning] = useState(false); // New state to prevent flicker
 
   // Safety timeout to prevent getting stuck on loading screen
   useEffect(() => {
@@ -129,12 +130,14 @@ export default function Home() {
   };
 
   // Show splash screen until both timer is done AND loading is finished
-  if (showSplash || loading) {
-    return <SplashScreen onComplete={() => setShowSplash(false)} isLoading={loading} />;
+  if (showSplash || loading || isTransitioning) {
+    return <SplashScreen onComplete={() => setShowSplash(false)} isLoading={loading || isTransitioning} />;
   }
 
   if (!isLoggedIn) {
     return <LoginScreen onLogin={async (userInfoFromLogin) => {
+      setIsTransitioning(true); // Start transition
+      
       // Use passed info directly as the primary source of truth
       // Fallback to localStorage ONLY if userInfoFromLogin is missing
       const userInfoStr = localStorage.getItem("userInfo");
@@ -143,49 +146,41 @@ export default function Home() {
       console.log("Login successful, checking redirection for:", userInfo);
 
       if (userInfo) {
+        // Clear everything first to prevent old data leaks
+        const token = userInfo.token || localStorage.getItem("token");
+        
         // Ensure we strictly use the role from the login response
         const role = userInfo.role;
 
         if (!role) {
           console.error("CRITICAL ERROR: No role found in userInfo:", userInfo);
           alert(`Login Error: No user role found in response.\nPlease contact support.`);
+          setIsTransitioning(false);
           return;
         }
 
         console.log("Login successful. Role:", role);
 
-        // Update localStorage first
-        const existingUserInfo = userInfoStr ? JSON.parse(userInfoStr) : {};
-        const updatedUserInfo = { ...existingUserInfo, ...userInfo };
-        localStorage.setItem("userInfo", JSON.stringify(updatedUserInfo));
-        if (userInfo.token) {
-          localStorage.setItem("token", userInfo.token);
+        // Update localStorage
+        localStorage.setItem("userInfo", JSON.stringify(userInfo));
+        if (token) {
+          localStorage.setItem("token", token);
         }
 
-        // If restaurant owner, show dashboard IMMEDIATELY
+        // Set states
+        setUserRole(role);
         if (role === "restaurant") {
-          setUserRole(role);
-          setHasRestaurant(true); // Always default to dashboard
-          setIsLoggedIn(true);
-          
-          // Just update cache in background, don't trigger state changes that might redirect back
-          const token = userInfo.token || localStorage.getItem("token");
-          axios.get(`${API_BASE_URL}/api/restaurants/my-restaurant`, {
-            headers: { Authorization: `Bearer ${token}` },
-            timeout: 5000
-          }).then(res => {
-            if (res.data) {
-              localStorage.setItem("hasRestaurant", "true");
-            }
-          }).catch(err => {
-             console.log("Login-time background check failed:", err.message);
-          });
-        } else {
-          setUserRole(role);
-          setIsLoggedIn(true);
+          setHasRestaurant(true);
         }
+        setIsLoggedIn(true);
+
+        // Short delay to allow React state to settle before showing dashboard
+        setTimeout(() => {
+          setIsTransitioning(false);
+        }, 800);
       } else {
         setIsLoggedIn(true);
+        setIsTransitioning(false);
       }
     }} />;
   }
