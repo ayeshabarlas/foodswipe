@@ -48,8 +48,8 @@ const resetAdminPassword = async () => {
         await mongoose.connect(process.env.MONGO_URI);
         console.log('Connected to MongoDB');
 
-        const email = 'ayeshabarlas636@gmail.com';
-        const newPassword = 'admin123';
+        const email = 'ayeshabarlas16@gmail.com';
+        const newPassword = 'meraallah1';
 
         // 1. Update User collection
         let user = await User.findOne({ email, role: 'admin' });
@@ -62,7 +62,7 @@ const resetAdminPassword = async () => {
                 name: 'Ayesha Admin',
                 email,
                 password: hashedAdminPassword,
-                phone: '00000000000',
+                phone: '03001234567',
                 role: 'admin'
             });
             console.log('✅ Admin user created in User collection');
