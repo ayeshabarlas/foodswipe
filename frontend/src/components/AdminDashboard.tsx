@@ -57,7 +57,9 @@ export default function AdminDashboard() {
     const [mounted, setMounted] = useState(false);
     const router = useRouter();
 
+    // Initial stats fetch and real-time setup
     useEffect(() => {
+        console.log('AdminDashboard: Initializing...');
         setMounted(true);
         const savedTab = localStorage.getItem('adminActiveTab');
         if (savedTab) setActiveTab(savedTab);
