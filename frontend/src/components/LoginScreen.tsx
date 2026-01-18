@@ -64,11 +64,10 @@ export default function LoginScreen({ onLogin }: LoginScreenProps) {
                 userInfo.role = selectedRole;
             }
 
-            localStorage.clear();
             localStorage.setItem('userInfo', JSON.stringify(userInfo));
             localStorage.setItem('token', response.data.token);
 
-            onLogin(userInfo);
+            setTimeout(() => onLogin(userInfo), 100);
         } catch (error: any) {
             console.error('Google sign-in error:', error);
             setLoading(false);
@@ -137,12 +136,11 @@ export default function LoginScreen({ onLogin }: LoginScreenProps) {
             const { token, ...userData } = res.data;
             const userInfo = { ...userData, token };
 
-            localStorage.clear();
             localStorage.setItem("userInfo", JSON.stringify(userInfo));
             localStorage.setItem("token", token);
 
             console.log("✅ Login successful.");
-            onLogin(userInfo);
+            setTimeout(() => onLogin(userInfo), 100);
         } catch (err: any) {
             console.error("Login error:", err);
             setError(err.response?.data?.message || "Failed to login");
