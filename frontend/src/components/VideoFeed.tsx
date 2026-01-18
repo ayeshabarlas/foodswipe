@@ -438,26 +438,34 @@ export default function VideoFeed() {
         setShowTrackingModal(true);
     };
 
-    useEffect(() => {
-        const fetchDishes = async () => {
-            try {
-                const loc = userLocation || (localStorage.getItem('userLocation') ? JSON.parse(localStorage.getItem('userLocation')!) : null);
-                const queryParams = loc ? `?lat=${loc.latitude}&lng=${loc.longitude}` : '';
-                
-                console.log('📡 Fetching videos from:', `${API_BASE_URL}/api/videos/feed${queryParams}`);
-                const res = await axios.get(`${API_BASE_URL}/api/videos/feed${queryParams}`);
-                console.log('📡 Feed Response:', res.status, 'Videos:', res.data?.videos?.length);
-                if (res.data && res.data.videos) {
-                    setDishes(res.data.videos);
-                } else {
-                    console.warn('No videos found in feed response:', res.data);
-                    setDishes([]);
-                }
-            } catch (error: any) {
-                console.error('❌ Error fetching dishes:', error.message, error.response?.data);
+    const fetchDishes = useCallback(async (searchQuery?: string) => {
+        try {
+            const loc = userLocation || (localStorage.getItem('userLocation') ? JSON.parse(localStorage.getItem('userLocation')!) : null);
+            let queryParams = loc ? `?lat=${loc.latitude}&lng=${loc.longitude}` : '';
+            
+            if (searchQuery) {
+                queryParams += (queryParams ? '&' : '?') + `search=${encodeURIComponent(searchQuery)}`;
             }
-        };
+            
+            console.log('📡 Fetching videos from:', `${API_BASE_URL}/api/videos/feed${queryParams}`);
+            const res = await axios.get(`${API_BASE_URL}/api/videos/feed${queryParams}`);
+            console.log('📡 Feed Response:', res.status, 'Videos:', res.data?.videos?.length);
+            
+            if (res.data && res.data.videos) {
+                setDishes(res.data.videos);
+            } else {
+                console.warn('No videos found in feed response:', res.data);
+                setDishes([]);
+            }
+        } catch (error: any) {
+            console.error('❌ Error fetching dishes:', error.message, error.response?.data);
+        }
+    }, [userLocation]);
+
+    useEffect(() => {
+        // Initial fetch
         fetchDishes();
+        
         const userInfo = localStorage.getItem('userInfo');
         if (userInfo) setUser(JSON.parse(userInfo));
         const savedLocation = localStorage.getItem('userLocation');
@@ -466,7 +474,21 @@ export default function VideoFeed() {
         } else {
             setTimeout(() => setShowLocationPrompt(true), 1500);
         }
-    }, []);
+    }, []); // Only run once on mount
+
+    useEffect(() => {
+        if (!searchTerm) {
+            // If search is cleared, fetch the normal feed
+            fetchDishes();
+            return;
+        }
+
+        const debounceTimer = setTimeout(() => {
+            fetchDishes(searchTerm);
+        }, 500);
+
+        return () => clearTimeout(debounceTimer);
+    }, [searchTerm, fetchDishes]);
 
     useEffect(() => {
         const handleCartOpen = () => setIsCartOpen(true);
