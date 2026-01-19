@@ -1,10 +1,8 @@
-const bcrypt = require('bcryptjs');
-
 const users = [
     {
         name: 'Admin User',
         email: 'admin@example.com',
-        password: 'password123', // Will be hashed by pre-save hook
+        password: 'password123',
         role: 'admin',
         phone: '1234567890',
     },
@@ -21,6 +19,20 @@ const users = [
         password: 'password123',
         role: 'admin',
         phone: '1234567892',
+    },
+    {
+        name: 'Ayesha Barlas 16',
+        email: 'ayeshabarlas16@gmail.com',
+        password: 'password123',
+        role: 'admin',
+        phone: '1234567893',
+    },
+    {
+        name: 'Muhammad Ali',
+        email: 'muhammadali@example.com', // User should provide actual email if different
+        password: 'password123',
+        role: 'admin',
+        phone: '1234567894',
     },
     {
         name: 'Restaurant Owner',
