@@ -41,6 +41,7 @@ interface Stats {
     totalCommission: number;
     netPlatformProfit?: number;
     totalDeliveryFees?: number;
+    totalRiderEarnings?: number;
     totalPendingPayouts: number;
     revenueStats: { date: string; revenue: number }[];
     orderStatusDist: { delivered: number; cancelled: number; inProgress: number };
@@ -122,21 +123,22 @@ export default function DashboardHome({ stats, refreshStats }: DashboardHomeProp
             trendColor: 'text-[#FF6A00]'
         },
         {
+            label: 'Rider Earnings',
+            value: `Rs. ${(displayStats.totalRiderEarnings || 0).toLocaleString()}`,
+            subValue: `Rs. ${(displayStats.totalDeliveryFees || 0).toLocaleString()}`,
+            subLabel: 'Delivery Fees',
+            icon: FaMotorcycle,
+            color: 'bg-gradient-to-br from-blue-500 to-indigo-600 text-white shadow-lg shadow-blue-500/20',
+            trend: 'Riders',
+            trendColor: 'text-blue-500'
+        },
+        {
             label: 'Total Orders',
             value: displayStats.totalOrders.toLocaleString(),
             subValue: `${displayStats.todayOrders} new today`,
             icon: FaShoppingBag,
-            color: 'bg-gradient-to-br from-blue-500 to-indigo-600 text-white shadow-lg shadow-blue-500/20',
-            trend: 'Orders',
-            trendColor: 'text-blue-500'
-        },
-        {
-            label: 'Active Partners',
-            value: (displayStats.totalRestaurants + displayStats.totalRiders).toLocaleString(),
-            subValue: `${displayStats.onlineRiders || 0} riders online`,
-            icon: FaMotorcycle,
             color: 'bg-gradient-to-br from-indigo-500 to-purple-600 text-white shadow-lg shadow-indigo-500/20',
-            trend: 'Partners',
+            trend: 'Orders',
             trendColor: 'text-indigo-500'
         }
     ];

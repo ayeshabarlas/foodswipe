@@ -39,6 +39,10 @@ interface Stats {
     totalRevenue: number;
     todayRevenue: number;
     totalCommission: number;
+    netPlatformProfit?: number;
+    totalDeliveryFees?: number;
+    totalRiderEarnings?: number;
+    totalRestaurantEarnings?: number;
     totalPendingPayouts: number;
     revenueStats: { date: string; revenue: number }[];
     orderStatusDist: { delivered: number; cancelled: number; inProgress: number };

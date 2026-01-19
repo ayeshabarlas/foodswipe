@@ -18,6 +18,7 @@ export default function FinanceView() {
         gatewayFees: 0,
         restaurantEarnings: 0,
         riderEarnings: 0,
+        remainingAfterRider: 0,
         netRevenue: 0,
         thisMonthRevenue: 0
     });
@@ -64,6 +65,7 @@ export default function FinanceView() {
             const riderEarnings = data.totalRiderEarnings || 0;
             const restaurantEarnings = data.totalRestaurantEarnings || 0;
             const pendingPayouts = data.totalPendingPayouts || 0;
+            const remainingAfterRider = totalRevenue - riderEarnings;
             
             setStats({
                 totalRevenue,
@@ -74,6 +76,7 @@ export default function FinanceView() {
                 gatewayFees: Math.round(totalRevenue * 0.02),
                 restaurantEarnings,
                 riderEarnings,
+                remainingAfterRider,
                 netRevenue: netPlatformProfit, // Use the calculated net profit from backend
                 thisMonthRevenue: data.todayRevenue ? data.todayRevenue * 30 : totalRevenue / 12
             });
@@ -194,19 +197,24 @@ export default function FinanceView() {
             </div>
 
             {/* Sub Stats Row */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-10">
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-10">
                 <div className="bg-gray-50/50 p-6 rounded-[2rem] border border-gray-100">
-                    <p className="text-[#6B7280] text-[13px] font-medium uppercase tracking-wider mb-2">Restaurant Earnings</p>
-                    <h3 className="text-[24px] font-bold text-[#111827] tracking-tight">Rs. {stats.restaurantEarnings.toLocaleString()}</h3>
+                    <p className="text-[#6B7280] text-[13px] font-medium uppercase tracking-wider mb-2">Order Total</p>
+                    <h3 className="text-[24px] font-bold text-[#111827] tracking-tight">Rs. {stats.totalRevenue.toLocaleString()}</h3>
                 </div>
                 <div className="bg-gray-50/50 p-6 rounded-[2rem] border border-gray-100">
-                    <p className="text-[#6B7280] text-[13px] font-medium uppercase tracking-wider mb-2">Rider Earnings</p>
+                    <p className="text-[#6B7280] text-[13px] font-medium uppercase tracking-wider mb-2">Rider Earning</p>
                     <h3 className="text-[24px] font-bold text-[#111827] tracking-tight">Rs. {stats.riderEarnings.toLocaleString()}</h3>
                 </div>
+                <div className="bg-orange-50/50 p-6 rounded-[2rem] border border-orange-100">
+                    <p className="text-orange-600 text-[13px] font-medium uppercase tracking-wider mb-2">Remaining (Total-Rider)</p>
+                    <h3 className="text-[24px] font-bold text-orange-700 tracking-tight">Rs. {stats.remainingAfterRider.toLocaleString()}</h3>
+                    <p className="text-[11px] text-orange-600/60 mt-1 uppercase font-medium tracking-wider">Commission is taken from this</p>
+                </div>
                 <div className="bg-green-50/50 p-6 rounded-[2rem] border border-green-100">
-                    <p className="text-green-600 text-[13px] font-medium uppercase tracking-wider mb-2">Platform Net Revenue</p>
-                    <h3 className="text-[24px] font-bold text-green-700 tracking-tight">Rs. {stats.netRevenue.toLocaleString()}</h3>
-                    <p className="text-[11px] text-green-600/60 mt-1 uppercase font-medium tracking-wider">After Processor Fees</p>
+                    <p className="text-green-600 text-[13px] font-medium uppercase tracking-wider mb-2">Platform Commission</p>
+                    <h3 className="text-[24px] font-bold text-green-700 tracking-tight">Rs. {stats.platformCommission.toLocaleString()}</h3>
+                    <p className="text-[11px] text-green-600/60 mt-1 uppercase font-medium tracking-wider">Your Earnings</p>
                 </div>
             </div>
 

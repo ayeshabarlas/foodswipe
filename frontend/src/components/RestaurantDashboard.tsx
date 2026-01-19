@@ -880,6 +880,5 @@ export default function RestaurantDashboard() {
                     )}
                 </AnimatePresence>
             </div>
-        </div>
     );
 }
