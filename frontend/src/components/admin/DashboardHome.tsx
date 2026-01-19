@@ -39,6 +39,8 @@ interface Stats {
     totalRevenue: number;
     todayRevenue: number;
     totalCommission: number;
+    netPlatformProfit?: number;
+    totalDeliveryFees?: number;
     totalPendingPayouts: number;
     revenueStats: { date: string; revenue: number }[];
     orderStatusDist: { delivered: number; cancelled: number; inProgress: number };
@@ -110,13 +112,13 @@ export default function DashboardHome({ stats, refreshStats }: DashboardHomeProp
             trendColor: 'text-emerald-500'
         },
         {
-            label: 'Platform Commission',
-            value: `Rs. ${(displayStats.totalCommission || 0).toLocaleString()}`,
-            subValue: `Rs. ${(displayStats.totalPendingPayouts || 0).toLocaleString()}`,
-            subLabel: 'Pending Payouts',
+            label: 'Net Platform Profit',
+            value: `Rs. ${(displayStats.netPlatformProfit || 0).toLocaleString()}`,
+            subValue: `Rs. ${(displayStats.totalCommission || 0).toLocaleString()}`,
+            subLabel: 'Gross Commission',
             icon: FaWallet,
             color: 'bg-gradient-to-br from-orange-500 to-pink-500 text-white shadow-lg shadow-orange-500/20',
-            trend: 'Live',
+            trend: 'Net',
             trendColor: 'text-[#FF6A00]'
         },
         {

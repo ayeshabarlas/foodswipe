@@ -12,6 +12,8 @@ export default function FinanceView() {
     const [stats, setStats] = useState({
         totalRevenue: 0,
         platformCommission: 0,
+        netPlatformProfit: 0,
+        totalDeliveryFees: 0,
         pendingPayouts: 0,
         gatewayFees: 0,
         restaurantEarnings: 0,
@@ -57,18 +59,22 @@ export default function FinanceView() {
             // Use real data from backend
             const totalRevenue = data.totalRevenue || 0;
             const platformCommission = data.totalCommission || 0;
+            const netPlatformProfit = data.netPlatformProfit || 0;
+            const totalDeliveryFees = data.totalDeliveryFees || 0;
             const riderEarnings = data.totalRiderEarnings || 0;
             const restaurantEarnings = data.totalRestaurantEarnings || 0;
             const pendingPayouts = data.totalPendingPayouts || 0;
-
+            
             setStats({
                 totalRevenue,
                 platformCommission,
+                netPlatformProfit,
+                totalDeliveryFees,
                 pendingPayouts,
                 gatewayFees: Math.round(totalRevenue * 0.02),
                 restaurantEarnings,
                 riderEarnings,
-                netRevenue: Math.round(platformCommission * 0.8),
+                netRevenue: netPlatformProfit, // Use the calculated net profit from backend
                 thisMonthRevenue: data.todayRevenue ? data.todayRevenue * 30 : totalRevenue / 12
             });
 
@@ -141,7 +147,7 @@ export default function FinanceView() {
                     </div>
                 </div>
 
-                {/* Platform Commission */}
+                {/* Net Platform Profit */}
                 <div className="bg-gradient-to-br from-orange-500 to-pink-500 rounded-[2rem] p-6 text-white shadow-xl shadow-orange-500/20 relative overflow-hidden group">
                     <div className="absolute top-[-10%] right-[-10%] w-32 h-32 bg-white/10 rounded-full blur-3xl group-hover:bg-white/20 transition-all duration-500"></div>
                     <div className="relative z-10">
@@ -150,9 +156,9 @@ export default function FinanceView() {
                                 <span className="text-lg font-bold">↗</span>
                             </div>
                         </div>
-                        <p className="text-white/60 text-[13px] font-bold uppercase tracking-wider mb-1">Platform Earnings</p>
-                        <h3 className="text-[28px] font-bold tracking-tight">Rs. {stats.platformCommission.toLocaleString()}</h3>
-                        <p className="text-white/40 text-[11px] font-medium uppercase tracking-wider mt-1">Net Commission</p>
+                        <p className="text-white/60 text-[13px] font-bold uppercase tracking-wider mb-1">Net Platform Profit</p>
+                        <h3 className="text-[28px] font-bold tracking-tight">Rs. {stats.netPlatformProfit.toLocaleString()}</h3>
+                        <p className="text-white/40 text-[11px] font-medium uppercase tracking-wider mt-1">After Rider & Vendor Split</p>
                     </div>
                 </div>
 
