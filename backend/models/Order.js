@@ -40,6 +40,10 @@ const orderSchema = mongoose.Schema(
             required: true,
             default: 'COD',
         },
+        transactionId: {
+            type: String,
+            default: null,
+        },
         totalPrice: {
             type: Number,
             required: true,
@@ -99,6 +103,10 @@ const orderSchema = mongoose.Schema(
         gatewayFee: {
             type: Number,
             default: 0,
+        },
+        transactionId: {
+            type: String,
+            default: null,
         },
         isPaid: {
             type: Boolean,

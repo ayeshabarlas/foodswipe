@@ -335,6 +335,16 @@ export default function OrdersView() {
                                         <p className="text-[11px] font-bold text-gray-400 uppercase tracking-widest mb-4">Payment Summary</p>
                                         <div className="space-y-3">
                                             <div className="flex justify-between text-sm">
+                                                <span className="text-gray-500">Method</span>
+                                                <span className="font-bold text-gray-900 uppercase">{selectedOrder.paymentMethod}</span>
+                                            </div>
+                                            {selectedOrder.transactionId && (
+                                                <div className="flex justify-between text-sm bg-orange-100 p-2 rounded-lg border border-orange-200">
+                                                    <span className="text-orange-700 font-bold">TID</span>
+                                                    <span className="font-black text-orange-900">{selectedOrder.transactionId}</span>
+                                                </div>
+                                            )}
+                                            <div className="flex justify-between text-sm">
                                                 <span className="text-gray-500">Subtotal</span>
                                                 <span className="font-bold text-gray-900">Rs. {(selectedOrder.totalPrice - (selectedOrder.deliveryFee || 0)).toLocaleString()}</span>
                                             </div>

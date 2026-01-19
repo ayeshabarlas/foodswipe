@@ -26,6 +26,9 @@ interface CheckoutModalProps {
 export default function CheckoutModal({ isOpen, onClose, cart, total, subtotal, deliveryFee, tax, onSuccess, onTrackOrder }: CheckoutModalProps) {
     const router = useRouter();
     const [paymentMethod, setPaymentMethod] = useState<'card' | 'cod' | 'jazzcash' | 'easypaisa'>('card');
+    const [paymentStep, setPaymentStep] = useState<'selection' | 'details' | 'verifying'>('selection');
+    const [walletNumber, setWalletNumber] = useState('');
+    const [transactionId, setTransactionId] = useState('');
     const [deliveryInstructions, setDeliveryInstructions] = useState('');
     const [deliveryAddress, setDeliveryAddress] = useState('');
     const [deliveryLocation, setDeliveryLocation] = useState<{ lat: number, lng: number } | null>(null);
@@ -379,6 +382,12 @@ export default function CheckoutModal({ isOpen, onClose, cart, total, subtotal, 
                 ? `${houseNumber}, ${deliveryAddress}`
                 : deliveryAddress;
 
+            if ((paymentMethod === 'jazzcash' || paymentMethod === 'easypaisa') && !transactionId.trim()) {
+                alert('Please enter the Transaction ID (TID) after sending the payment');
+                setLoading(false);
+                return;
+            }
+
             const orderData = {
                 restaurant: restaurantId,
                 items: items,
@@ -388,6 +397,7 @@ export default function CheckoutModal({ isOpen, onClose, cart, total, subtotal, 
                 deliveryFee: calculatedFee,
                 totalAmount: currentTotal,
                 paymentMethod,
+                transactionId: (paymentMethod === 'jazzcash' || paymentMethod === 'easypaisa') ? transactionId : null,
                 deliveryInstructions,
                 promoCode: appliedVoucher ? appliedVoucher.code : ''
             };
@@ -810,7 +820,7 @@ export default function CheckoutModal({ isOpen, onClose, cart, total, subtotal, 
                                                         </div>
                                                         <span className="font-medium text-gray-900 text-sm">JazzCash</span>
                                                     </div>
-                                                    <input type="radio" name="payment" value="jazzcash" checked={paymentMethod === 'jazzcash'} onChange={() => setPaymentMethod('jazzcash')} className="w-4 h-4 text-orange-500 border-gray-300" />
+                                                    <input type="radio" name="payment" value="jazzcash" checked={paymentMethod === 'jazzcash'} onChange={() => { setPaymentMethod('jazzcash'); setPaymentStep('details'); }} className="w-4 h-4 text-orange-500 border-gray-300" />
                                                 </label>
 
                                                 {/* EasyPaisa */}
@@ -821,8 +831,88 @@ export default function CheckoutModal({ isOpen, onClose, cart, total, subtotal, 
                                                         </div>
                                                         <span className="font-medium text-gray-900 text-sm">EasyPaisa</span>
                                                     </div>
-                                                    <input type="radio" name="payment" value="easypaisa" checked={paymentMethod === 'easypaisa'} onChange={() => setPaymentMethod('easypaisa')} className="w-4 h-4 text-orange-500 border-gray-300" />
+                                                    <input type="radio" name="payment" value="easypaisa" checked={paymentMethod === 'easypaisa'} onChange={() => { setPaymentMethod('easypaisa'); setPaymentStep('details'); }} className="w-4 h-4 text-orange-500 border-gray-300" />
                                                 </label>
+
+                                                {/* Professional Mock Gateway Flow */}
+                                                {(paymentMethod === 'jazzcash' || paymentMethod === 'easypaisa') && (
+                                                    <motion.div 
+                                                        initial={{ opacity: 0, height: 0 }}
+                                                        animate={{ opacity: 1, height: 'auto' }}
+                                                        className="p-5 bg-white border-t-2 border-orange-100"
+                                                    >
+                                                        {paymentStep === 'details' && (
+                                                            <div className="space-y-4">
+                                                                <div className="flex items-center gap-2 text-orange-600 mb-2">
+                                                                    <div className="w-2 h-2 rounded-full bg-orange-500 animate-pulse"></div>
+                                                                    <span className="text-[10px] font-bold uppercase tracking-wider">Secure Checkout</span>
+                                                                </div>
+                                                                <div>
+                                                                    <label className="text-xs font-bold text-gray-700 mb-1.5 block">Mobile Wallet Number</label>
+                                                                    <input 
+                                                                        type="tel" 
+                                                                        value={walletNumber}
+                                                                        onChange={(e) => setWalletNumber(e.target.value)}
+                                                                        placeholder="03xx xxxxxxx"
+                                                                        className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 outline-none focus:border-orange-500 focus:ring-2 focus:ring-orange-100 transition text-sm font-medium"
+                                                                    />
+                                                                </div>
+                                                                <button 
+                                                                    onClick={() => setPaymentStep('verifying')}
+                                                                    disabled={walletNumber.length < 11}
+                                                                    className="w-full py-3 bg-gray-900 text-white rounded-xl font-bold text-sm shadow-lg active:scale-95 transition disabled:opacity-50"
+                                                                >
+                                                                    Continue to Payment
+                                                                </button>
+                                                            </div>
+                                                        )}
+
+                                                        {paymentStep === 'verifying' && (
+                                                            <div className="space-y-4 text-center py-2">
+                                                                <div className="bg-orange-50 rounded-2xl p-4 border border-orange-100">
+                                                                    <p className="text-xs text-gray-600 mb-2 font-medium">Please send <span className="text-orange-600 font-bold">Rs. {currentTotal}</span> to:</p>
+                                                                    <div className="flex items-center justify-center gap-2 mb-1">
+                                                                        <span className="text-lg font-black text-gray-900">0300 1234567</span>
+                                                                        <span className="text-[10px] bg-white px-2 py-0.5 rounded-full border border-orange-200 text-orange-500 font-bold">COPY</span>
+                                                                    </div>
+                                                                    <p className="text-[10px] text-gray-500 italic">Account Name: FoodSwipe Admin</p>
+                                                                </div>
+
+                                                                <div className="text-left space-y-3">
+                                                                    <div className="flex items-start gap-3">
+                                                                        <div className="w-5 h-5 rounded-full bg-orange-500 text-white text-[10px] flex items-center justify-center shrink-0 font-bold">1</div>
+                                                                        <p className="text-[11px] text-gray-700 leading-tight">Open your {paymentMethod === 'jazzcash' ? 'JazzCash' : 'EasyPaisa'} App or dial *786#</p>
+                                                                    </div>
+                                                                    <div className="flex items-start gap-3">
+                                                                        <div className="w-5 h-5 rounded-full bg-orange-500 text-white text-[10px] flex items-center justify-center shrink-0 font-bold">2</div>
+                                                                        <p className="text-[11px] text-gray-700 leading-tight">Send money to the mobile number shown above.</p>
+                                                                    </div>
+                                                                    <div className="flex items-start gap-3">
+                                                                        <div className="w-5 h-5 rounded-full bg-orange-500 text-white text-[10px] flex items-center justify-center shrink-0 font-bold">3</div>
+                                                                        <p className="text-[11px] text-gray-700 leading-tight">Copy the <span className="font-bold">Transaction ID (TID)</span> from the SMS and paste it below.</p>
+                                                                    </div>
+                                                                </div>
+
+                                                                <div className="pt-2">
+                                                                    <input 
+                                                                        type="text" 
+                                                                        value={transactionId}
+                                                                        onChange={(e) => setTransactionId(e.target.value)}
+                                                                        placeholder="Enter 11-digit TID"
+                                                                        className="w-full bg-white border-2 border-orange-200 rounded-xl px-4 py-3 outline-none focus:border-orange-500 text-center font-bold text-gray-900 placeholder:font-normal placeholder:text-gray-400"
+                                                                    />
+                                                                </div>
+                                                                
+                                                                <button 
+                                                                    onClick={() => setPaymentStep('details')}
+                                                                    className="text-[10px] font-bold text-gray-400 hover:text-gray-600"
+                                                                >
+                                                                    ← Change Wallet Number
+                                                                </button>
+                                                            </div>
+                                                        )}
+                                                    </motion.div>
+                                                )}
                                             </div>
                                         </div>
                                     </div>
