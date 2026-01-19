@@ -14,6 +14,13 @@ const protect = async (req, res, next) => {
             // First check User collection
             req.user = await User.findById(decoded.id).select('-password');
 
+            if (req.user && req.user.status === 'suspended') {
+                return res.status(403).json({ 
+                    message: 'Your account has been suspended. Please contact support.',
+                    status: 'suspended'
+                });
+            }
+
             // If not in User, check Admin collection (for common routes like upload)
             if (!req.user) {
                 req.admin = await Admin.findById(decoded.id).select('-password');

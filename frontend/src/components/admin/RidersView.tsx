@@ -96,11 +96,13 @@ export default function RidersView() {
 
             socket.on('rider_registered', handleUpdate);
             socket.on('rider_updated', handleUpdate);
+            socket.on('user_updated', handleUpdate);
             socket.on('order_updated', handleUpdate);
 
             return () => {
                 socket.off('rider_registered', handleUpdate);
                 socket.off('rider_updated', handleUpdate);
+                socket.off('user_updated', handleUpdate);
                 socket.off('order_updated', handleUpdate);
             };
         }

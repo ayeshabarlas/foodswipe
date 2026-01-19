@@ -98,6 +98,7 @@ const approveRider = async (req, res) => {
 
         // Notify admins about status update
         triggerEvent('admin', 'rider_updated', rider);
+        triggerEvent('admin', 'user_updated');
 
         res.json({ message: 'Rider approved successfully', rider });
     } catch (error) {
@@ -123,6 +124,7 @@ const rejectRider = async (req, res) => {
 
         // Notify admins about status update
         triggerEvent('admin', 'rider_updated', rider);
+        triggerEvent('admin', 'user_updated');
 
         res.json({ message: 'Rider rejected', rider });
     } catch (error) {
@@ -142,8 +144,7 @@ const getAllOrders = async (req, res) => {
                 path: 'rider',
                 populate: { path: 'user', select: 'name phone' }
             })
-            .sort({ createdAt: -1 })
-            .limit(100);
+            .sort({ createdAt: -1 });
 
         res.json(orders);
     } catch (error) {
@@ -228,8 +229,8 @@ const getDashboardStats = async (req, res) => {
             {
                 $group: {
                     _id: { $dateToString: { format: "%Y-%m-%d", date: "$createdAt" } },
-                    revenue: { $sum: { $ifNull: ["$subtotal", "$totalPrice"] } },
-                    commission: { $sum: { $ifNull: ["$commissionAmount", { $multiply: [{ $ifNull: ["$subtotal", "$totalPrice"] }, 0.15] }] } }
+                    revenue: { $sum: { $ifNull: ["$totalPrice", 0] } },
+                    commission: { $sum: { $ifNull: ["$commissionAmount", { $multiply: [{ $ifNull: ["$totalPrice", 0] }, 0.15] }] } }
                 }
             },
             { $sort: { _id: 1 } }
@@ -276,7 +277,7 @@ const getDashboardStats = async (req, res) => {
             {
                 $group: {
                     _id: "$restaurant",
-                    revenue: { $sum: { $ifNull: ["$subtotal", "$totalPrice"] } },
+                    revenue: { $sum: { $ifNull: ["$totalPrice", 0] } },
                     orders: { $sum: 1 }
                 }
             },
@@ -875,7 +876,8 @@ const suspendUser = async (req, res) => {
         });
 
         // Notify admins to refresh UI
-        triggerEvent('admin', 'restaurant_updated');
+        triggerEvent('admin', 'rider_updated');
+        triggerEvent('admin', 'user_updated');
         triggerEvent('admin', 'stats_updated');
 
         res.json({ message: 'User suspended successfully', user });
@@ -903,7 +905,8 @@ const unsuspendUser = async (req, res) => {
         });
 
         // Notify admins to refresh UI
-        triggerEvent('admin', 'restaurant_updated');
+        triggerEvent('admin', 'rider_updated');
+        triggerEvent('admin', 'user_updated');
         triggerEvent('admin', 'stats_updated');
 
         res.json({ message: 'User unsuspended successfully', user });
@@ -985,6 +988,8 @@ const deleteRider = async (req, res) => {
 
         // Notify admins
         triggerEvent('admin', 'rider_updated');
+        triggerEvent('admin', 'user_updated');
+        triggerEvent('admin', 'stats_updated');
 
         res.json({ message: 'Rider deleted successfully' });
     } catch (error) {

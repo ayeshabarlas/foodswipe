@@ -47,7 +47,7 @@ const registerUser = async (req, res) => {
         console.log(`User registered: id=${user._id}, role=${user.role}`);
         
         // Trigger real-time event for admin dashboard
-        triggerEvent('admin-channel', 'user_registered', {
+        triggerEvent('admin', 'user_registered', {
             _id: user._id,
             name: user.name,
             email: user.email,
@@ -103,6 +103,13 @@ const loginUser = async (req, res) => {
             return res.status(401).json({ message: 'Invalid role for this account' });
         }
 
+        if (user.status === 'suspended') {
+            return res.status(403).json({ 
+                message: 'Your account has been suspended. Please contact support.',
+                status: 'suspended'
+            });
+        }
+
         // 3. Check if the password matches (if password exists)
         if (user.password && user.password.length > 0) {
             const isMatch = await user.matchPassword(password);
@@ -118,7 +125,7 @@ const loginUser = async (req, res) => {
         await user.save();
 
         // Trigger real-time event for admin dashboard
-        triggerEvent('admin-channel', 'user_logged_in', {
+        triggerEvent('admin', 'user_logged_in', {
             _id: user._id,
             email: user.email,
             role: user.role,
@@ -317,7 +324,7 @@ const verifyOtp = async (req, res) => {
             type = 'signup';
             
             // Trigger real-time event for admin dashboard
-            triggerEvent('admin-channel', 'user_registered', {
+            triggerEvent('admin', 'user_registered', {
                 _id: user._id,
                 name: user.name,
                 email: user.email,
@@ -341,7 +348,7 @@ const verifyOtp = async (req, res) => {
             await user.save();
             
             // Trigger real-time event for admin dashboard
-            triggerEvent('admin-channel', 'user_logged_in', {
+            triggerEvent('admin', 'user_logged_in', {
                 _id: user._id,
                 email: user.email,
                 role: user.role,
@@ -559,7 +566,7 @@ const verifyFirebaseToken = async (req, res) => {
             type = 'signup';
 
             // Trigger real-time event for admin dashboard
-            triggerEvent('admin-channel', 'user_registered', {
+            triggerEvent('admin', 'user_registered', {
                 _id: user._id,
                 name: user.name,
                 email: user.email,
@@ -580,8 +587,9 @@ const verifyFirebaseToken = async (req, res) => {
             
             // Update last login (already handled later but triggering event here)
             // Trigger real-time event for admin dashboard
-            triggerEvent('admin-channel', 'user_logged_in', {
+            triggerEvent('admin', 'user_logged_in', {
                 _id: user._id,
+                name: user.name,
                 email: user.email,
                 role: user.role,
                 lastLogin: new Date()
