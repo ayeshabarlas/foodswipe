@@ -93,13 +93,13 @@ const loginUser = async (req, res) => {
         });
 
         if (!user) {
-            console.log(`Login failed: No user found for ${identifier}`);
+            console.log(`Login failed: No user found for identifier: "${identifier}"`);
             return res.status(401).json({ message: 'Invalid credentials' });
         }
 
         // 2. If role is provided, ensure it matches.
         if (role && user.role !== role && user.role !== 'admin' && user.role !== 'super-admin') {
-            console.log(`Login failed: Role mismatch. Expected ${role}, got ${user.role}`);
+            console.log(`Login failed: Role mismatch for ${user.email}. Expected ${role}, but user is ${user.role}`);
             return res.status(401).json({ message: 'Invalid role for this account' });
         }
 
@@ -114,8 +114,12 @@ const loginUser = async (req, res) => {
         if (user.password && user.password.length > 0) {
             const isMatch = await user.matchPassword(password);
             if (!isMatch) {
+                console.log(`Login failed: Password mismatch for ${user.email}`);
                 return res.status(401).json({ message: 'Invalid credentials' });
             }
+        } else {
+            console.log(`Login failed: User ${user.email} has no password set`);
+            return res.status(401).json({ message: 'No password set for this account. Please use social login or reset password.' });
         }
 
         console.log('User logged in successfully:', { id: user._id, email: user.email, role: user.role });
