@@ -14,7 +14,8 @@ import {
     FaTrashAlt,
     FaWallet,
     FaPercentage,
-    FaStar
+    FaStar,
+    FaCalculator
 } from 'react-icons/fa';
 import {
     LineChart,
@@ -39,9 +40,9 @@ interface Stats {
     totalRevenue: number;
     todayRevenue: number;
     totalCommission: number;
-    netPlatformProfit?: number;
-    totalDeliveryFees?: number;
-    totalRiderEarnings?: number;
+    totalRiderEarnings: number;
+    totalDeliveryFees: number;
+    netPlatformProfit: number;
     totalPendingPayouts: number;
     revenueStats: { date: string; revenue: number }[];
     orderStatusDist: { delivered: number; cancelled: number; inProgress: number };
@@ -88,6 +89,9 @@ export default function DashboardHome({ stats, refreshStats }: DashboardHomeProp
         totalRevenue: 0,
         todayRevenue: 0,
         totalCommission: 0,
+        totalRiderEarnings: 0,
+        totalDeliveryFees: 0,
+        netPlatformProfit: 0,
         totalPendingPayouts: 0,
         revenueStats: [],
         orderStatusDist: { delivered: 0, cancelled: 0, inProgress: 0 },
@@ -103,43 +107,44 @@ export default function DashboardHome({ stats, refreshStats }: DashboardHomeProp
 
     const widgets = [
         {
-            label: 'Today Revenue',
-            value: `Rs. ${(displayStats.todayRevenue || 0).toLocaleString()}`,
-            subValue: `Rs. ${(displayStats.totalRevenue || 0).toLocaleString()}`,
-            subLabel: 'Lifetime',
+            label: 'Total Revenue',
+            value: `Rs. ${(displayStats.totalRevenue || 0).toLocaleString()}`,
+            subValue: `Rs. ${(displayStats.todayRevenue || 0).toLocaleString()}`,
+            subLabel: 'Today Sales',
             icon: FaMoneyBillWave,
-            color: 'bg-gradient-to-br from-emerald-500 to-teal-600 text-white shadow-lg shadow-emerald-500/20',
-            trend: '+12.5%',
-            trendColor: 'text-emerald-500'
+            color: 'bg-gradient-to-br from-gray-900 to-gray-800 text-white shadow-lg shadow-gray-900/20',
+            trend: 'Gross',
+            trendColor: 'text-gray-400'
+        },
+        {
+            label: 'Remaining (Total - Rider)',
+            value: `Rs. ${(displayStats.totalRevenue - (displayStats.totalRiderEarnings || 0)).toLocaleString()}`,
+            subValue: `Rider: Rs. ${(displayStats.totalRiderEarnings || 0).toLocaleString()}`,
+            subLabel: 'Deducted',
+            icon: FaCalculator,
+            color: 'bg-gradient-to-br from-blue-500 to-indigo-600 text-white shadow-lg shadow-blue-500/20',
+            trend: 'Rest',
+            trendColor: 'text-blue-200'
         },
         {
             label: 'Net Platform Profit',
             value: `Rs. ${(displayStats.netPlatformProfit || 0).toLocaleString()}`,
-            subValue: `Rs. ${(displayStats.totalCommission || 0).toLocaleString()}`,
-            subLabel: 'Gross Commission',
+            subValue: `Comm: Rs. ${(displayStats.totalCommission || 0).toLocaleString()}`,
+            subLabel: 'Incl. Delivery Margin',
             icon: FaWallet,
-            color: 'bg-gradient-to-br from-orange-500 to-pink-500 text-white shadow-lg shadow-orange-500/20',
-            trend: 'Net',
-            trendColor: 'text-[#FF6A00]'
-        },
-        {
-            label: 'Rider Earnings',
-            value: `Rs. ${(displayStats.totalRiderEarnings || 0).toLocaleString()}`,
-            subValue: `Rs. ${(displayStats.totalDeliveryFees || 0).toLocaleString()}`,
-            subLabel: 'Delivery Fees',
-            icon: FaMotorcycle,
-            color: 'bg-gradient-to-br from-blue-500 to-indigo-600 text-white shadow-lg shadow-blue-500/20',
-            trend: 'Riders',
-            trendColor: 'text-blue-500'
+            color: 'bg-gradient-to-br from-[#FF6A00] to-pink-500 text-white shadow-lg shadow-orange-500/20',
+            trend: 'Profit',
+            trendColor: 'text-orange-200'
         },
         {
             label: 'Total Orders',
             value: displayStats.totalOrders.toLocaleString(),
             subValue: `${displayStats.todayOrders} new today`,
+            subLabel: 'Order Count',
             icon: FaShoppingBag,
-            color: 'bg-gradient-to-br from-indigo-500 to-purple-600 text-white shadow-lg shadow-indigo-500/20',
+            color: 'bg-gradient-to-br from-emerald-500 to-teal-600 text-white shadow-lg shadow-emerald-500/20',
             trend: 'Orders',
-            trendColor: 'text-indigo-500'
+            trendColor: 'text-emerald-200'
         }
     ];
 
