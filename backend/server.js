@@ -80,13 +80,18 @@ app.get('/health', async (req, res) => {
     const dbStatus = getDbStatus();
     
     // Check Firebase
-    const firebaseConfigured = !!process.env.FIREBASE_SERVICE_ACCOUNT_JSON;
+    const firebaseConfigured = !!process.env.FIREBASE_SERVICE_ACCOUNT_JSON || require('fs').existsSync(require('path').resolve(__dirname, './serviceAccountKey.json'));
     let firebaseProjectId = 'not_configured';
     
     if (firebaseConfigured) {
         try {
-            const sa = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT_JSON);
-            firebaseProjectId = sa.project_id || 'unknown';
+            if (process.env.FIREBASE_SERVICE_ACCOUNT_JSON) {
+                const sa = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT_JSON);
+                firebaseProjectId = sa.project_id || 'unknown';
+            } else {
+                const sa = JSON.parse(require('fs').readFileSync(require('path').resolve(__dirname, './serviceAccountKey.json'), 'utf8'));
+                firebaseProjectId = sa.project_id || 'unknown';
+            }
         } catch (e) {
             firebaseProjectId = 'parse_error';
         }
@@ -143,6 +148,7 @@ try {
     app.use('/api/notifications', require('./routes/notificationRoutes'));
     app.use('/api/admin', require('./routes/adminRoutes'));
     app.use('/api/finance', require('./routes/financeRoutes'));
+    app.use('/api/payments', require('./routes/paymentRoutes'));
     app.use('/api/verifications', require('./routes/verificationRoutes'));
     app.use('/api/tickets', require('./routes/ticketRoutes'));
     console.log('✅ All Routes Loaded');

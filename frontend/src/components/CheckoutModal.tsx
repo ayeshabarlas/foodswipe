@@ -307,8 +307,10 @@ export default function CheckoutModal({ isOpen, onClose, cart, total, subtotal, 
         }
 
         // IMPORTANT: If phone is already verified in state or userInfo, skip phone auth
-        if (phoneVerified || userInfo.phoneVerified === true || userInfo.phoneVerified === 'true') {
-            console.log('Phone already verified, proceeding to place order');
+        const isLocalhost = typeof window !== 'undefined' && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1');
+        
+        if (phoneVerified || userInfo.phoneVerified === true || userInfo.phoneVerified === 'true' || isLocalhost) {
+            console.log(isLocalhost ? 'Localhost detected, bypassing phone verification' : 'Phone already verified, proceeding to place order');
         } else {
             console.log('Phone not verified, showing phone auth modal');
             setShowPhoneAuth(true);
@@ -382,12 +384,6 @@ export default function CheckoutModal({ isOpen, onClose, cart, total, subtotal, 
                 ? `${houseNumber}, ${deliveryAddress}`
                 : deliveryAddress;
 
-            if ((paymentMethod === 'jazzcash' || paymentMethod === 'easypaisa') && !transactionId.trim()) {
-                alert('Please enter the Transaction ID (TID) after sending the payment');
-                setLoading(false);
-                return;
-            }
-
             const orderData = {
                 restaurant: restaurantId,
                 items: items,
@@ -397,7 +393,7 @@ export default function CheckoutModal({ isOpen, onClose, cart, total, subtotal, 
                 deliveryFee: calculatedFee,
                 totalAmount: currentTotal,
                 paymentMethod,
-                transactionId: (paymentMethod === 'jazzcash' || paymentMethod === 'easypaisa') ? transactionId : null,
+                transactionId: null,
                 deliveryInstructions,
                 promoCode: appliedVoucher ? appliedVoucher.code : ''
             };
@@ -408,8 +404,31 @@ export default function CheckoutModal({ isOpen, onClose, cart, total, subtotal, 
                 { headers: { Authorization: `Bearer ${token}` } }
             );
 
+            const order = response.data;
+
+            // Handle Safepay for online payments
+            if (paymentMethod !== 'cod') {
+                try {
+                    const safepayRes = await axios.post(
+                        `${API_BASE_URL}/api/payments/safepay/checkout`,
+                        { orderId: order._id },
+                        { headers: { Authorization: `Bearer ${token}` } }
+                    );
+                    
+                    if (safepayRes.data.url) {
+                        window.location.href = safepayRes.data.url;
+                        return; // Stop execution as we are redirecting
+                    }
+                } catch (err) {
+                    console.error('Safepay initiation failed:', err);
+                    alert('Online payment failed to initialize. Please try COD or try again.');
+                    setLoading(false);
+                    return;
+                }
+            }
+
             setPlacedOrder({
-                id: response.data._id || '#8703',
+                id: order._id || '#8703',
                 estimatedTime: '25-35 min',
                 deliveryAddress: fullAddress,
                 total: currentTotal
@@ -768,154 +787,100 @@ export default function CheckoutModal({ isOpen, onClose, cart, total, subtotal, 
                                             <FaCreditCard className="text-purple-500" /> Payment Method
                                         </h3>
                                         <div className="space-y-2">
-                                            {/* Credit/Debit Card */}
-                                            <label className={`flex items-center justify-between p-4 rounded-xl border-2 cursor-pointer transition ${paymentMethod === 'card' ? 'border-orange-500 bg-orange-50' : 'border-gray-200 hover:border-gray-300'}`}>
-                                                <div className="flex items-center gap-3">
-                                                    <div className="flex items-center gap-1.5">
-                                                        <div className="w-9 h-6 bg-blue-600 rounded flex items-center justify-center text-white text-[10px] font-bold">
-                                                            VISA
-                                                        </div>
-                                                        <div className="w-9 h-6 bg-red-500 rounded flex items-center justify-center">
-                                                            <div className="flex -space-x-1">
-                                                                <div className="w-3 h-3 rounded-full bg-red-500 border border-white"></div>
-                                                                <div className="w-3 h-3 rounded-full bg-orange-400 border border-white"></div>
+                                                {/* Card Selection */}
+                                                <label className={`flex items-center justify-between p-4 rounded-xl border-2 cursor-pointer transition ${paymentMethod === 'card' ? 'border-orange-500 bg-orange-50' : 'border-gray-200 hover:border-gray-300'}`}>
+                                                    <div className="flex items-center gap-3">
+                                                        <div className="flex items-center gap-1.5">
+                                                            <div className="w-9 h-6 bg-blue-600 rounded flex items-center justify-center text-white text-[10px] font-bold">
+                                                                VISA
+                                                            </div>
+                                                            <div className="w-9 h-6 bg-red-500 rounded flex items-center justify-center">
+                                                                <div className="flex -space-x-1">
+                                                                    <div className="w-3 h-3 rounded-full bg-red-500 border border-white"></div>
+                                                                    <div className="w-3 h-3 rounded-full bg-orange-400 border border-white"></div>
+                                                                </div>
                                                             </div>
                                                         </div>
-                                                    </div>
-                                                    <span className="font-medium text-gray-900 text-sm">Credit/Debit Card</span>
-                                                </div>
-                                                <input type="radio" name="payment" value="card" checked={paymentMethod === 'card'} onChange={() => setPaymentMethod('card')} className="w-4 h-4 text-orange-500 border-gray-300" />
-                                            </label>
-
-                                            {/* Cash on Delivery */}
-                                            <label className={`flex items-center justify-between p-4 rounded-xl border-2 cursor-pointer transition ${paymentMethod === 'cod' ? 'border-orange-500 bg-orange-50' : 'border-gray-200 hover:border-gray-300'}`}>
-                                                <div className="flex items-center gap-3">
-                                                    <div className="w-10 h-10 bg-green-50 rounded-lg flex items-center justify-center">
-                                                        <FaMoneyBillWave className="text-green-600" />
-                                                    </div>
-                                                    <span className="font-medium text-gray-900 text-sm">Cash on Delivery</span>
-                                                </div>
-                                                <input type="radio" name="payment" value="cod" checked={paymentMethod === 'cod'} onChange={() => setPaymentMethod('cod')} className="w-4 h-4 text-orange-500 border-gray-300" />
-                                            </label>
-
-                                            {/* Digital Wallets - Expandable */}
-                                            <div className="border-2 border-gray-200 rounded-xl overflow-hidden">
-                                                <div className="flex items-center justify-between p-4 bg-white">
-                                                    <div className="flex items-center gap-3">
-                                                        <div className="w-10 h-10 bg-purple-50 rounded-lg flex items-center justify-center">
-                                                            <FaWallet className="text-purple-600" />
+                                                        <div>
+                                                            <span className="font-medium text-gray-900 text-sm">Credit/Debit Card</span>
+                                                            <p className="text-[10px] text-gray-500">Secure via Safepay</p>
                                                         </div>
-                                                        <span className="font-medium text-gray-900 text-sm">Digital Wallets</span>
                                                     </div>
-                                                    <svg className="w-5 h-5 text-gray-400 transform rotate-90" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                                                    </svg>
-                                                </div>
-
-                                                {/* JazzCash */}
-                                                <label className={`flex items-center justify-between p-4 border-t-2 border-gray-100 cursor-pointer transition ${paymentMethod === 'jazzcash' ? 'bg-orange-50' : 'bg-white hover:bg-gray-50'}`}>
-                                                    <div className="flex items-center gap-3">
-                                                        <div className="w-10 h-10 rounded-lg flex items-center justify-center bg-gradient-to-br from-red-500 to-red-600 text-white font-bold text-xs">
-                                                            JC
-                                                        </div>
-                                                        <span className="font-medium text-gray-900 text-sm">JazzCash</span>
-                                                    </div>
-                                                    <input type="radio" name="payment" value="jazzcash" checked={paymentMethod === 'jazzcash'} onChange={() => { setPaymentMethod('jazzcash'); setPaymentStep('details'); }} className="w-4 h-4 text-orange-500 border-gray-300" />
+                                                    <input type="radio" name="payment" value="card" checked={paymentMethod === 'card'} onChange={() => { setPaymentMethod('card'); setPaymentStep('selection'); }} className="w-4 h-4 text-orange-500 border-gray-300" />
                                                 </label>
 
-                                                {/* EasyPaisa */}
-                                                <label className={`flex items-center justify-between p-4 border-t-2 border-gray-100 cursor-pointer transition ${paymentMethod === 'easypaisa' ? 'bg-orange-50' : 'bg-white hover:bg-gray-50'}`}>
+                                                {/* Cash on Delivery */}
+                                                <label className={`flex items-center justify-between p-4 rounded-xl border-2 cursor-pointer transition ${paymentMethod === 'cod' ? 'border-orange-500 bg-orange-50' : 'border-gray-200 hover:border-gray-300'}`}>
                                                     <div className="flex items-center gap-3">
-                                                        <div className="w-10 h-10 rounded-lg flex items-center justify-center bg-gradient-to-br from-green-500 to-green-600 text-white font-bold text-xs">
-                                                            EP
+                                                        <div className="w-10 h-10 bg-green-50 rounded-lg flex items-center justify-center">
+                                                            <FaMoneyBillWave className="text-green-600" />
                                                         </div>
-                                                        <span className="font-medium text-gray-900 text-sm">EasyPaisa</span>
+                                                        <span className="font-medium text-gray-900 text-sm">Cash on Delivery</span>
                                                     </div>
-                                                    <input type="radio" name="payment" value="easypaisa" checked={paymentMethod === 'easypaisa'} onChange={() => { setPaymentMethod('easypaisa'); setPaymentStep('details'); }} className="w-4 h-4 text-orange-500 border-gray-300" />
+                                                    <input type="radio" name="payment" value="cod" checked={paymentMethod === 'cod'} onChange={() => { setPaymentMethod('cod'); setPaymentStep('selection'); }} className="w-4 h-4 text-orange-500 border-gray-300" />
                                                 </label>
 
-                                                {/* Professional Mock Gateway Flow */}
-                                                {(paymentMethod === 'jazzcash' || paymentMethod === 'easypaisa') && (
-                                                    <motion.div 
-                                                        initial={{ opacity: 0, height: 0 }}
-                                                        animate={{ opacity: 1, height: 'auto' }}
-                                                        className="p-5 bg-white border-t-2 border-orange-100"
-                                                    >
-                                                        {paymentStep === 'details' && (
-                                                            <div className="space-y-4">
-                                                                <div className="flex items-center gap-2 text-orange-600 mb-2">
-                                                                    <div className="w-2 h-2 rounded-full bg-orange-500 animate-pulse"></div>
-                                                                    <span className="text-[10px] font-bold uppercase tracking-wider">Secure Checkout</span>
-                                                                </div>
-                                                                <div>
-                                                                    <label className="text-xs font-bold text-gray-700 mb-1.5 block">Mobile Wallet Number</label>
-                                                                    <input 
-                                                                        type="tel" 
-                                                                        value={walletNumber}
-                                                                        onChange={(e) => setWalletNumber(e.target.value)}
-                                                                        placeholder="03xx xxxxxxx"
-                                                                        className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 outline-none focus:border-orange-500 focus:ring-2 focus:ring-orange-100 transition text-sm font-medium"
-                                                                    />
-                                                                </div>
-                                                                <button 
-                                                                    onClick={() => setPaymentStep('verifying')}
-                                                                    disabled={walletNumber.length < 11}
-                                                                    className="w-full py-3 bg-gray-900 text-white rounded-xl font-bold text-sm shadow-lg active:scale-95 transition disabled:opacity-50"
-                                                                >
-                                                                    Continue to Payment
-                                                                </button>
+                                                {/* Digital Wallets - Expandable */}
+                                                <div className="border-2 border-gray-200 rounded-xl overflow-hidden">
+                                                    <div className="flex items-center justify-between p-4 bg-white">
+                                                        <div className="flex items-center gap-3">
+                                                            <div className="w-10 h-10 bg-purple-50 rounded-lg flex items-center justify-center">
+                                                                <FaWallet className="text-purple-600" />
                                                             </div>
-                                                        )}
+                                                            <span className="font-medium text-gray-900 text-sm">Digital Wallets</span>
+                                                        </div>
+                                                        <svg className="w-5 h-5 text-gray-400 transform rotate-90" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                                                        </svg>
+                                                    </div>
 
-                                                        {paymentStep === 'verifying' && (
-                                                            <div className="space-y-4 text-center py-2">
-                                                                <div className="bg-orange-50 rounded-2xl p-4 border border-orange-100">
-                                                                    <p className="text-xs text-gray-600 mb-2 font-medium">Please send <span className="text-orange-600 font-bold">Rs. {currentTotal}</span> to:</p>
-                                                                    <div className="flex items-center justify-center gap-2 mb-1">
-                                                                        <span className="text-lg font-black text-gray-900">0300 1234567</span>
-                                                                        <span className="text-[10px] bg-white px-2 py-0.5 rounded-full border border-orange-200 text-orange-500 font-bold">COPY</span>
-                                                                    </div>
-                                                                    <p className="text-[10px] text-gray-500 italic">Account Name: FoodSwipe Admin</p>
-                                                                </div>
-
-                                                                <div className="text-left space-y-3">
-                                                                    <div className="flex items-start gap-3">
-                                                                        <div className="w-5 h-5 rounded-full bg-orange-500 text-white text-[10px] flex items-center justify-center shrink-0 font-bold">1</div>
-                                                                        <p className="text-[11px] text-gray-700 leading-tight">Open your {paymentMethod === 'jazzcash' ? 'JazzCash' : 'EasyPaisa'} App or dial *786#</p>
-                                                                    </div>
-                                                                    <div className="flex items-start gap-3">
-                                                                        <div className="w-5 h-5 rounded-full bg-orange-500 text-white text-[10px] flex items-center justify-center shrink-0 font-bold">2</div>
-                                                                        <p className="text-[11px] text-gray-700 leading-tight">Send money to the mobile number shown above.</p>
-                                                                    </div>
-                                                                    <div className="flex items-start gap-3">
-                                                                        <div className="w-5 h-5 rounded-full bg-orange-500 text-white text-[10px] flex items-center justify-center shrink-0 font-bold">3</div>
-                                                                        <p className="text-[11px] text-gray-700 leading-tight">Copy the <span className="font-bold">Transaction ID (TID)</span> from the SMS and paste it below.</p>
-                                                                    </div>
-                                                                </div>
-
-                                                                <div className="pt-2">
-                                                                    <input 
-                                                                        type="text" 
-                                                                        value={transactionId}
-                                                                        onChange={(e) => setTransactionId(e.target.value)}
-                                                                        placeholder="Enter 11-digit TID"
-                                                                        className="w-full bg-white border-2 border-orange-200 rounded-xl px-4 py-3 outline-none focus:border-orange-500 text-center font-bold text-gray-900 placeholder:font-normal placeholder:text-gray-400"
-                                                                    />
-                                                                </div>
-                                                                
-                                                                <button 
-                                                                    onClick={() => setPaymentStep('details')}
-                                                                    className="text-[10px] font-bold text-gray-400 hover:text-gray-600"
-                                                                >
-                                                                    ← Change Wallet Number
-                                                                </button>
+                                                    {/* JazzCash */}
+                                                    <label className={`flex items-center justify-between p-4 border-t-2 border-gray-100 cursor-pointer transition ${paymentMethod === 'jazzcash' ? 'bg-orange-50' : 'bg-white hover:bg-gray-50'}`}>
+                                                        <div className="flex items-center gap-3">
+                                                            <div className="w-10 h-10 rounded-lg flex items-center justify-center bg-gradient-to-br from-red-500 to-red-600 text-white font-bold text-xs">
+                                                                JC
                                                             </div>
-                                                        )}
-                                                    </motion.div>
-                                                )}
+                                                            <div>
+                                                                <span className="font-medium text-gray-900 text-sm">JazzCash</span>
+                                                                <p className="text-[10px] text-gray-500">Secure via Safepay</p>
+                                                            </div>
+                                                        </div>
+                                                        <input type="radio" name="payment" value="jazzcash" checked={paymentMethod === 'jazzcash'} onChange={() => { setPaymentMethod('jazzcash'); setPaymentStep('selection'); }} className="w-4 h-4 text-orange-500 border-gray-300" />
+                                                    </label>
+
+                                                    {/* EasyPaisa */}
+                                                    <label className={`flex items-center justify-between p-4 border-t-2 border-gray-100 cursor-pointer transition ${paymentMethod === 'easypaisa' ? 'bg-orange-50' : 'bg-white hover:bg-gray-50'}`}>
+                                                        <div className="flex items-center gap-3">
+                                                            <div className="w-10 h-10 rounded-lg flex items-center justify-center bg-gradient-to-br from-green-500 to-green-600 text-white font-bold text-xs">
+                                                                EP
+                                                            </div>
+                                                            <div>
+                                                                <span className="font-medium text-gray-900 text-sm">EasyPaisa</span>
+                                                                <p className="text-[10px] text-gray-500">Secure via Safepay</p>
+                                                            </div>
+                                                        </div>
+                                                        <input type="radio" name="payment" value="easypaisa" checked={paymentMethod === 'easypaisa'} onChange={() => { setPaymentMethod('easypaisa'); setPaymentStep('selection'); }} className="w-4 h-4 text-orange-500 border-gray-300" />
+                                                    </label>
+
+                                                    {/* Safepay Redirect Message */}
+                                                    {paymentMethod !== 'cod' && paymentMethod !== 'card' && (
+                                                        <motion.div 
+                                                            initial={{ opacity: 0, height: 0 }}
+                                                            animate={{ opacity: 1, height: 'auto' }}
+                                                            className="p-4 bg-orange-50 border-t-2 border-orange-100 flex items-center gap-3"
+                                                        >
+                                                            <div className="w-8 h-8 rounded-full bg-orange-100 flex items-center justify-center">
+                                                                <FaCheckCircle className="text-orange-600 text-sm" />
+                                                            </div>
+                                                            <div>
+                                                                <p className="text-[11px] font-bold text-gray-800">Professional Gateway</p>
+                                                                <p className="text-[10px] text-gray-500">Redirecting to Safepay for secure payment.</p>
+                                                            </div>
+                                                        </motion.div>
+                                                    )}
+                                                </div>
                                             </div>
                                         </div>
-                                    </div>
 
                                     {/* Promo Code */}
                                     <div className="bg-white rounded-2xl p-5 shadow-sm mb-4 border border-gray-100">

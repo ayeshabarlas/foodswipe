@@ -35,6 +35,10 @@ const settingsSchema = mongoose.Schema(
             isChatEnabled: { type: Boolean, default: true },
             isReviewsEnabled: { type: Boolean, default: true },
             isPromotionsEnabled: { type: Boolean, default: true },
+            isPhoneVerificationEnabled: { type: Boolean, default: true },
+        },
+        safepay: {
+            environment: { type: String, enum: ['sandbox', 'production'], default: 'sandbox' },
         },
         appConfig: {
             currentVersion: { type: String, default: '1.0.0' },

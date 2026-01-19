@@ -21,6 +21,11 @@ export default function SettingsView() {
         isChatEnabled: true,
         isReviewsEnabled: true,
         isPromotionsEnabled: true,
+        isPhoneVerificationEnabled: true,
+    });
+
+    const [safepay, setSafepay] = useState({
+        environment: 'sandbox'
     });
 
     const [appConfig, setAppConfig] = useState({
@@ -56,6 +61,7 @@ export default function SettingsView() {
                 setIsMaintenanceMode(data.isMaintenanceMode || false);
                 if (data.featureToggles) setFeatureToggles(data.featureToggles);
                 if (data.appConfig) setAppConfig(data.appConfig);
+                if (data.safepay) setSafepay(data.safepay);
             }
         } catch (error: any) {
             console.error('Error fetching settings:', error);
@@ -88,7 +94,8 @@ export default function SettingsView() {
                     minimumOrderAmount,
                     isMaintenanceMode,
                     featureToggles,
-                    appConfig
+                    appConfig,
+                    safepay
                 },
                 { headers: { Authorization: `Bearer ${userInfo.token}` } }
             );
@@ -279,7 +286,7 @@ export default function SettingsView() {
                         {Object.entries(featureToggles).map(([key, value]) => (
                             <div key={key} className="flex items-center justify-between p-4 bg-gray-50 rounded-2xl">
                                 <span className="text-[14px] font-bold text-[#374151] capitalize">
-                                    {key.replace('is', '').replace('Enabled', '')} System
+                                    {key.replace('is', '').replace('Enabled', '').replace(/([A-Z])/g, ' $1').trim()}
                                 </span>
                                 <button
                                     onClick={() => setFeatureToggles(prev => ({ ...prev, [key]: !value }))}
@@ -295,6 +302,57 @@ export default function SettingsView() {
                                 </button>
                             </div>
                         ))}
+                    </div>
+                </div>
+
+                {/* Payment Gateway Settings */}
+                <div className="bg-white rounded-[2.5rem] shadow-xl shadow-gray-200/50 border border-gray-100 overflow-hidden group hover:shadow-2xl transition-all duration-500">
+                    <div className="p-10 border-b border-gray-50 bg-gray-50/30">
+                        <div className="flex items-center gap-5">
+                            <div className="w-16 h-16 bg-gradient-to-br from-cyan-500 to-blue-600 rounded-2xl flex items-center justify-center text-white shadow-lg shadow-cyan-500/20 group-hover:scale-110 transition-transform duration-500">
+                                <FaMoneyBillWave className="text-2xl" />
+                            </div>
+                            <div>
+                                <h3 className="text-[20px] font-bold text-[#111827] tracking-tight">Payment Gateway</h3>
+                                <p className="text-[14px] text-[#6B7280] font-medium">Configure Safepay environment</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div className="p-10 space-y-8">
+                        <div className="space-y-4">
+                            <label className="flex items-center gap-2 text-[12px] font-bold text-[#6B7280] uppercase tracking-[0.2em] ml-1">
+                                Safepay Environment
+                            </label>
+                            <div className="grid grid-cols-2 gap-4">
+                                <button
+                                    onClick={() => setSafepay({ environment: 'sandbox' })}
+                                    className={`px-6 py-4 rounded-2xl font-bold transition-all ${
+                                        safepay.environment === 'sandbox'
+                                        ? 'bg-orange-500 text-white shadow-lg shadow-orange-500/20'
+                                        : 'bg-gray-50 text-[#6B7280] border border-gray-100 hover:bg-gray-100'
+                                    }`}
+                                >
+                                    Sandbox
+                                </button>
+                                <button
+                                    onClick={() => setSafepay({ environment: 'production' })}
+                                    className={`px-6 py-4 rounded-2xl font-bold transition-all ${
+                                        safepay.environment === 'production'
+                                        ? 'bg-red-600 text-white shadow-lg shadow-red-600/20'
+                                        : 'bg-gray-50 text-[#6B7280] border border-gray-100 hover:bg-gray-100'
+                                    }`}
+                                >
+                                    Production
+                                </button>
+                            </div>
+                            <p className="text-[13px] text-[#9CA3AF] mt-2 font-medium ml-1 flex items-center gap-2">
+                                <div className={`w-1 h-1 rounded-full ${safepay.environment === 'production' ? 'bg-red-500' : 'bg-orange-500'}`}></div>
+                                {safepay.environment === 'production' 
+                                    ? 'WARNING: Live payments are active. Use with caution.' 
+                                    : 'Test mode is active. No real money will be charged.'}
+                            </p>
+                        </div>
                     </div>
                 </div>
 

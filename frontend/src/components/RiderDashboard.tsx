@@ -57,6 +57,7 @@ const RiderDashboard = ({
         _id: 'loading',
         fullName: userInfo?.name || 'Rider',
         walletBalance: 0,
+        cod_balance: 0,
         rating: '4.8',
         isOnline: false,
         verificationStatus: 'pending',
@@ -478,6 +479,13 @@ const RiderDashboard = ({
                     bgColor="bg-green-50" 
                 />
                 <DashboardStat 
+                    icon={<FaMoneyBillWave size={18} />} 
+                    label="Total COD" 
+                    value={`Rs. ${displayRider.cod_balance || 0}`} 
+                    color="text-red-500" 
+                    bgColor="bg-red-50" 
+                />
+                <DashboardStat 
                     icon={<FaBox size={18} />} 
                     label="Today's Deliveries" 
                     value={orders.filter(o => o.status === 'Delivered').length} 
@@ -490,13 +498,6 @@ const RiderDashboard = ({
                     value={displayRider.rating || '4.8'} 
                     color="text-orange-500" 
                     bgColor="bg-orange-50" 
-                />
-                <DashboardStat 
-                    icon={<FaClock size={18} />} 
-                    label="This Week" 
-                    value={`Rs. ${displayRider.earnings?.thisWeek || 0}`} 
-                    color="text-purple-500" 
-                    bgColor="bg-purple-50" 
                 />
             </div>
 

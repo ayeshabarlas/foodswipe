@@ -12,7 +12,6 @@ async function createMultiRoleUser() {
 
         const email = 'multitest@example.com';
         const password = 'Password123';
-        const hashedPassword = await bcrypt.hash(password, 10);
 
         // Delete existing if any
         await User.deleteMany({ email });
@@ -21,7 +20,7 @@ async function createMultiRoleUser() {
         await User.create({
             name: 'Test Customer',
             email,
-            password: hashedPassword,
+            password: password,
             phone: '3001111111',
             role: 'customer'
         });
@@ -30,7 +29,7 @@ async function createMultiRoleUser() {
         await User.create({
             name: 'Test Restaurant',
             email,
-            password: hashedPassword,
+            password: password,
             phone: '3001111111',
             role: 'restaurant'
         });

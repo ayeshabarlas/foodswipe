@@ -83,44 +83,31 @@ const loginUser = async (req, res) => {
     try {
         console.log(`Login attempt: identifier=${identifier}, role=${role}`);
         
-        // 1. Find the user by email or phone AND strict role match.
+        // 1. Find the user by email or phone.
         const user = await User.findOne({
             $or: [
-                { email: { $regex: new RegExp(`^${identifier}$`, 'i') } },
-                { phone: identifier },
-                { phoneNumber: identifier }
-            ],
-            role: role || 'customer'
+                { email: { $regex: new RegExp(`^${identifier.trim()}$`, 'i') } },
+                { phone: identifier.trim() },
+                { phoneNumber: identifier.trim() }
+            ]
         });
 
         if (!user) {
-            console.log(`Login failed: No user found for ${identifier} with role ${role || 'customer'}`);
-            
-            // Check if account exists with a different role for better user experience
-            const existsAnywhere = await User.findOne({
-                $or: [
-                    { email: { $regex: new RegExp(`^${identifier}$`, 'i') } },
-                    { phone: identifier },
-                    { phoneNumber: identifier }
-                ]
-            });
-
-            if (existsAnywhere) {
-                return res.status(401).json({ 
-                    message: `Account not found for this role. Please ensure you've selected the correct role or sign up.` 
-                });
-            }
-
-            return res.status(401).json({ 
-                message: `Account not found for this role. Please ensure you are logging into the correct section.` 
-            });
+            console.log(`Login failed: No user found for ${identifier}`);
+            return res.status(401).json({ message: 'Invalid credentials' });
         }
 
-        // 2. Check if the password matches (if password exists)
+        // 2. If role is provided, ensure it matches.
+        if (role && user.role !== role && user.role !== 'admin' && user.role !== 'super-admin') {
+            console.log(`Login failed: Role mismatch. Expected ${role}, got ${user.role}`);
+            return res.status(401).json({ message: 'Invalid role for this account' });
+        }
+
+        // 3. Check if the password matches (if password exists)
         if (user.password && user.password.length > 0) {
             const isMatch = await user.matchPassword(password);
             if (!isMatch) {
-                return res.status(400).json({ message: 'Invalid password' });
+                return res.status(401).json({ message: 'Invalid credentials' });
             }
         }
 

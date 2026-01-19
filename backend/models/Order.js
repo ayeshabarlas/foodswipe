@@ -181,6 +181,12 @@ const orderSchema = mongoose.Schema(
             type: mongoose.Schema.Types.ObjectId,
             ref: 'Payout',
         },
+        paymentResult: {
+            id: { type: String },
+            status: { type: String },
+            update_time: { type: String },
+            signature: { type: String },
+        },
     },
     {
         timestamps: true,

@@ -171,7 +171,7 @@ const getDashboardStats = async (req, res) => {
 
         // Calculate Revenue & Commission (Total & Today)
         const totalStatsResult = await Order.aggregate([
-            { $match: { status: { $in: ['Delivered', 'Completed'] } } },
+            { $match: { status: { $nin: ['Cancelled', 'Rejected'] } } },
             {
                 $group: {
                     _id: null,
@@ -196,7 +196,7 @@ const getDashboardStats = async (req, res) => {
         const todayRevenueResult = await Order.aggregate([
             {
                 $match: {
-                    status: { $nin: ['Cancelled'] },
+                    status: { $nin: ['Cancelled', 'Rejected'] },
                     createdAt: { $gte: todayStart }
                 }
             },
@@ -221,7 +221,7 @@ const getDashboardStats = async (req, res) => {
         const revenueStatsRaw = await Order.aggregate([
             {
                 $match: {
-                    status: { $nin: ['Cancelled'] },
+                    status: { $nin: ['Cancelled', 'Rejected'] },
                     createdAt: { $gte: sevenDaysAgo }
                 }
             },
@@ -611,6 +611,7 @@ const updateSystemSettings = async (req, res) => {
             deliveryFee,
             serviceFee,
             featureToggles,
+            safepay,
             appConfig
         } = req.body;
         
@@ -629,6 +630,10 @@ const updateSystemSettings = async (req, res) => {
         
         if (featureToggles) {
             settings.featureToggles = { ...settings.featureToggles, ...featureToggles };
+        }
+
+        if (safepay) {
+            settings.safepay = { ...settings.safepay, ...safepay };
         }
         
         if (appConfig) {

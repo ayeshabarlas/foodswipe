@@ -105,9 +105,9 @@ export default function EnhancedOrdersView() {
 
     const stats = {
         totalOrders: orders?.length || 0,
-        totalRevenue: Array.isArray(orders) ? orders.reduce((acc, curr) => acc + (curr.totalPrice || 0), 0) : 0,
-        commission: Array.isArray(orders) ? orders.reduce((acc, curr) => acc + (curr.adminEarning || curr.commissionAmount || Math.round((curr.totalPrice || 0) * 0.1)), 0) : 0,
-        avgOrderValue: (Array.isArray(orders) && orders.length > 0) ? Math.round(orders.reduce((acc, curr) => acc + (curr.totalPrice || 0), 0) / orders.length) : 0
+        totalRevenue: Array.isArray(orders) ? orders.filter(o => !['Cancelled', 'Rejected'].includes(o.status)).reduce((acc, curr) => acc + (curr.totalPrice || 0), 0) : 0,
+        commission: Array.isArray(orders) ? orders.filter(o => !['Cancelled', 'Rejected'].includes(o.status)).reduce((acc, curr) => acc + (curr.adminEarning || curr.commissionAmount || Math.round((curr.totalPrice || 0) * 0.1)), 0) : 0,
+        avgOrderValue: (Array.isArray(orders) && orders.length > 0) ? Math.round(orders.filter(o => !['Cancelled', 'Rejected'].includes(o.status)).reduce((acc, curr) => acc + (curr.totalPrice || 0), 0) / orders.filter(o => !['Cancelled', 'Rejected'].includes(o.status)).length || 0) : 0
     };
 
     const filteredOrders = Array.isArray(orders) ? orders.filter(o => {
