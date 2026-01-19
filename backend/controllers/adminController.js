@@ -175,10 +175,10 @@ const getDashboardStats = async (req, res) => {
             {
                 $group: {
                     _id: null,
-                    totalRevenue: { $sum: { $ifNull: ['$subtotal', '$totalPrice'] } },
-                    totalCommission: { $sum: { $ifNull: ['$commissionAmount', { $multiply: [{ $ifNull: ['$subtotal', '$totalPrice'] }, 0.15] }] } },
+                    totalRevenue: { $sum: { $ifNull: ['$totalPrice', 0] } },
+                    totalCommission: { $sum: { $ifNull: ['$commissionAmount', 0] } },
                     totalRiderEarnings: { $sum: { $ifNull: ['$riderEarning', 0] } },
-                    totalRestaurantEarnings: { $sum: { $ifNull: ['$restaurantEarning', { $multiply: [{ $ifNull: ['$subtotal', '$totalPrice'] }, 0.85] }] } },
+                    totalRestaurantEarnings: { $sum: { $ifNull: ['$restaurantEarning', 0] } },
                     totalDeliveryFees: { $sum: { $ifNull: ['$deliveryFee', 0] } }
                 }
             }
@@ -200,7 +200,7 @@ const getDashboardStats = async (req, res) => {
                     createdAt: { $gte: todayStart }
                 }
             },
-            { $group: { _id: null, total: { $sum: { $ifNull: ['$subtotal', '$totalPrice'] } } } }
+            { $group: { _id: null, total: { $sum: { $ifNull: ['$totalPrice', 0] } } } }
         ]);
         const todayRevenue = todayRevenueResult[0]?.total || 0;
 
