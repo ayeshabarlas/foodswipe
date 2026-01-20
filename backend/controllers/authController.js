@@ -265,6 +265,49 @@ const getMe = async (req, res) => {
 };
 
 /**
+ * @desc    Check if phone number is already linked to an account
+ * @route   POST /api/auth/check-phone
+ * @access  Public
+ */
+const checkPhoneExists = async (req, res) => {
+    const { phoneNumber } = req.body;
+    
+    if (!phoneNumber) {
+        return res.status(400).json({ message: 'Phone number is required' });
+    }
+
+    try {
+        // Clean the phone number to match how it's stored
+        const cleanedPhone = phoneNumber.replace(/\D/g, '');
+        
+        // Check both 'phone' and 'phoneNumber' fields across ALL roles
+        const existingUser = await User.findOne({
+            $or: [
+                { phone: phoneNumber },
+                { phoneNumber: phoneNumber },
+                { phone: cleanedPhone },
+                { phoneNumber: cleanedPhone }
+            ]
+        });
+
+        if (existingUser) {
+            return res.status(200).json({ 
+                exists: true, 
+                message: 'This number is already linked' 
+            });
+        }
+
+        return res.status(200).json({ 
+            exists: false, 
+            message: 'Number is available' 
+        });
+    } catch (err) {
+        console.error('Check phone error:', err);
+        return res.status(500).json({ message: 'Server error checking phone number' });
+    }
+};
+
+/**
  * @desc    Send OTP for phone verification (used during signup)
  * @route   POST /api/auth/send-otp
  * @access  Public
@@ -689,4 +732,6 @@ const updateProfile = async (req, res) => {
     }
 };
 
-module.exports = { registerUser, loginUser, getMe, sendOtp, verifyOtp, verifyPhone, verifyFirebaseToken, updateProfile };
+module.exports = { registerUser, loginUser, getMe, sendOtp, verifyOtp, verifyPhone, verifyFirebaseToken, updateProfile,
+    checkPhoneExists
+};

@@ -81,6 +81,20 @@ export default function PhoneAuthModal({ isOpen, onClose, onSuccess }: PhoneAuth
         setLoading(true);
 
         try {
+            // NEW: Real-time validation check before sending OTP
+            console.log('🔍 Checking if phone number is already linked:', fullNumber);
+            const checkRes = await axios.post(`${API_BASE_URL}/api/auth/check-phone`, {
+                phoneNumber: fullNumber
+            });
+
+            if (checkRes.data.exists) {
+                const errorMsg = 'This number is already linked';
+                setError(errorMsg);
+                toast.error(errorMsg);
+                setLoading(false);
+                return;
+            }
+
             // Check if user is logged in
             const userInfoStr = localStorage.getItem('userInfo');
             if (!userInfoStr) {
