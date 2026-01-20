@@ -377,7 +377,7 @@ export default function RestaurantDashboard() {
         if (restaurant && restaurant._id !== 'loading' && restaurant._id !== 'error') {
             return {
                 ...restaurant,
-                name: restaurant.name || info.restaurantName || info.name || 'Spice Restaurant',
+                name: restaurant.name || info.restaurantName || info.name || 'New Restaurant',
                 logo: restaurant.logo || info.restaurantLogo || '',
                 isVerified: restaurant.verificationStatus === 'verified' || restaurant.isVerified || true
             };
