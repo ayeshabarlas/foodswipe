@@ -226,7 +226,12 @@ const loginAdmin = async (req, res) => {
     }
 
     try {
-        console.log(`Admin Login attempt: email=${loginEmail}`);
+        const loginEmail = (email || identifier || "").trim().toLowerCase();
+        console.log(`=== ADMIN LOGIN ATTEMPT: ${loginEmail} ===`);
+
+        if (!loginEmail || !password) {
+            return res.status(400).json({ message: 'Email and password are required' });
+        }
 
         // 1. Check Admin Collection first
         let admin = await Admin.findOne({
@@ -234,9 +239,8 @@ const loginAdmin = async (req, res) => {
         });
 
         if (admin) {
+            console.log(`Admin found in Admin collection: ${admin.email}, Role: ${admin.role}`);
             const isMatch = await admin.matchPassword(password);
-            console.log(`Admin (Admin Coll) password match for ${loginEmail}: ${isMatch}`);
-
             if (isMatch) {
                 const userData = {
                     _id: admin._id,

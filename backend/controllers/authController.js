@@ -84,22 +84,27 @@ const loginUser = async (req, res) => {
         console.log(`Login attempt: identifier=${identifier}, role=${role}`);
         
         // 1. Find the user by email or phone.
+        const identifierLower = identifier.trim().toLowerCase();
+        console.log(`Login attempt for: "${identifierLower}" with role: "${role}"`);
+
         const user = await User.findOne({
             $or: [
-                { email: { $regex: new RegExp(`^${identifier.trim()}$`, 'i') } },
+                { email: { $regex: new RegExp(`^${identifierLower}$`, 'i') } },
                 { phone: identifier.trim() },
                 { phoneNumber: identifier.trim() }
             ]
         });
 
         if (!user) {
-            console.log(`Login failed: No user found for identifier: "${identifier}"`);
+            console.log(`Login failed: User NOT found in database for identifier: "${identifierLower}"`);
             return res.status(401).json({ message: 'Invalid credentials' });
         }
 
+        console.log(`User found: ${user.email}, Role: ${user.role}, Status: ${user.status}`);
+
         // 2. If role is provided, ensure it matches.
         if (role && user.role !== role && user.role !== 'admin' && user.role !== 'super-admin') {
-            console.log(`Login failed: Role mismatch for ${user.email}. Expected ${role}, but user is ${user.role}`);
+            console.log(`Login failed: Role mismatch for ${user.email}. Frontend requested "${role}", but DB user is "${user.role}"`);
             return res.status(401).json({ message: 'Invalid role for this account' });
         }
 
