@@ -1,4 +1,5 @@
 const Admin = require('../models/Admin');
+const User = require('../models/User');
 const sendEmail = require('./email');
 const { triggerEvent } = require('../socket');
 
@@ -23,20 +24,30 @@ const notifyAdmins = async (subject, message, type = 'general_notification', dat
         });
 
         // 2. Email Notification
-        const superAdmins = await Admin.find({ 
-            $or: [
-                { role: 'super-admin' },
-                { role: 'admin' }
-            ]
-        });
+        // Fetch from both Admin and User collections
+        const [adminsFromAdminColl, adminsFromUserColl] = await Promise.all([
+            Admin.find({ 
+                $or: [
+                    { role: 'super-admin' },
+                    { role: 'admin' }
+                ]
+            }),
+            User.find({ 
+                role: { $in: ['admin', 'super-admin'] }
+            })
+        ]);
         
-        const adminEmails = superAdmins
-            .map(admin => admin.email)
-            .filter(email => !!email);
+        const adminEmails = [
+            ...adminsFromAdminColl.map(a => a.email),
+            ...adminsFromUserColl.map(u => u.email)
+        ].filter(email => !!email && email.includes('@'));
 
-        if (adminEmails.length > 0) {
+        // Remove duplicates
+        const uniqueEmails = [...new Set(adminEmails)];
+
+        if (uniqueEmails.length > 0) {
             await sendEmail({
-                email: adminEmails.join(','),
+                email: uniqueEmails.join(','),
                 subject: `[FoodSwipe Admin] ${subject}`,
                 message: message,
                 html: `

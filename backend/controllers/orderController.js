@@ -7,6 +7,7 @@ const RestaurantWallet = require('../models/RestaurantWallet');
 const RiderWallet = require('../models/RiderWallet');
 const Transaction = require('../models/Transaction');
 const CODLedger = require('../models/CODLedger');
+const Settings = require('../models/Settings');
 const { calculateRiderEarning, calculateDeliveryFee } = require('../utils/paymentUtils');
 const { calculateDistance } = require('../utils/locationUtils');
 const { triggerEvent } = require('../socket');
@@ -25,10 +26,36 @@ const createOrder = async (req, res) => {
             return res.status(401).json({ message: 'User not authenticated' });
         }
 
-        const { items, restaurant, deliveryAddress, deliveryLocation, totalAmount, paymentMethod, deliveryInstructions, subtotal, deliveryFee } = req.body;
+        const { 
+            items, 
+            restaurant, 
+            deliveryAddress, 
+            deliveryLocation, 
+            totalAmount, 
+            paymentMethod, 
+            deliveryInstructions, 
+            subtotal, 
+            deliveryFee,
+            serviceFee,
+            tax,
+            promoCode
+        } = req.body;
 
         if (!items || items.length === 0) {
             return res.status(400).json({ message: 'No order items' });
+        }
+
+        // Get system settings
+        const settings = await Settings.getSettings();
+
+        // Check for maintenance mode
+        if (settings.isMaintenanceMode) {
+            return res.status(503).json({ message: 'System is currently under maintenance. Please try again later.' });
+        }
+
+        // Check for minimum order amount
+        if (settings.minimumOrderAmount > 0 && subtotal < settings.minimumOrderAmount) {
+            return res.status(400).json({ message: `Minimum order amount is Rs. ${settings.minimumOrderAmount}` });
         }
 
         // Check if restaurant exists and is approved
@@ -80,9 +107,10 @@ const createOrder = async (req, res) => {
         };
 
         // Calculate commission and earnings early for display in dashboard
+        // Use system-wide commission rate if restaurant doesn't have a specific one
         const commissionPercent = (restaurantExists.commissionRate !== undefined && restaurantExists.commissionRate !== null) 
             ? restaurantExists.commissionRate 
-            : (restaurantExists.businessType === 'home-chef' ? 10 : 15);
+            : (settings.commissionRate || (restaurantExists.businessType === 'home-chef' ? 10 : 15));
         
         const subtotalValue = subtotal || (totalAmount - (deliveryFee || 0));
         const commissionAmount = (subtotalValue * commissionPercent) / 100;
@@ -95,17 +123,24 @@ const createOrder = async (req, res) => {
         if (deliveryLocation && restaurantExists.location?.coordinates) {
             const [restLng, restLat] = restaurantExists.location.coordinates;
             distanceKm = calculateDistance(restLat, restLng, deliveryLocation.lat, deliveryLocation.lng);
-            // If distance is extremely small, use a minimum of 0.5km instead of 4.2km fallback
+            // If distance is extremely small, use a minimum of 0.5km
             if (distanceKm < 0.1) distanceKm = 0.5;
-            finalDeliveryFee = calculateDeliveryFee(distanceKm);
+            
+            // Calculate using dynamic settings
+            const baseFee = settings.deliveryFeeBase || 60;
+            const perKmFee = settings.deliveryFeePerKm || 20;
+            const maxFee = settings.deliveryFeeMax || 200;
+            
+            finalDeliveryFee = Math.min(maxFee, Math.round(baseFee + (distanceKm * perKmFee)));
         } else {
-            // Fallback distance if location data is missing - use a more reasonable 2.0km default
-            // instead of 4.2km which was overcharging customers
+            // Fallback distance if location data is missing
             distanceKm = 2.0;
-            finalDeliveryFee = calculateDeliveryFee(distanceKm);
+            finalDeliveryFee = settings.deliveryFeeBase || 60;
         }
 
         const riderEarnings = calculateRiderEarning(distanceKm);
+        const finalServiceFee = serviceFee || settings.serviceFee || 0;
+        const finalTax = tax || Math.round(subtotalValue * 0.08);
 
         const order = await Order.create({
             user: req.user._id,
@@ -117,9 +152,11 @@ const createOrder = async (req, res) => {
                 lng: Number(deliveryLocation.lng)
             } : null,
             paymentMethod: paymentMethod || 'COD',
-            totalPrice: subtotalValue + finalDeliveryFee, // Use recalculated fee
+            totalPrice: subtotalValue + finalDeliveryFee + finalServiceFee + finalTax, 
             subtotal: subtotalValue,
             deliveryFee: finalDeliveryFee,
+            serviceFee: finalServiceFee,
+            tax: finalTax,
             deliveryFeeCustomerPaid: finalDeliveryFee,
             distanceKm: distanceKm,
             grossRiderEarning: riderEarnings.grossEarning,
@@ -129,8 +166,9 @@ const createOrder = async (req, res) => {
             commissionPercent,
             commissionAmount,
             restaurantEarning,
-            adminEarning: commissionAmount,
-            orderAmount: subtotalValue
+            adminEarning: commissionAmount + finalServiceFee,
+            orderAmount: subtotalValue,
+            promoCode: promoCode || ''
         });
 
         // Auto-decrement stock for ordered items

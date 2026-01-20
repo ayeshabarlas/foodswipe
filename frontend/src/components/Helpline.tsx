@@ -2,6 +2,7 @@
 
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useSettings } from '@/hooks/useSettings';
 import {
     FaTimes,
     FaPhone,
@@ -18,17 +19,21 @@ interface HelplineProps {
 }
 
 export default function Helpline({ isOpen, onClose }: HelplineProps) {
+    const { settings } = useSettings();
     const [copiedPhone, setCopiedPhone] = useState(false);
     const [copiedEmail, setCopiedEmail] = useState(false);
 
+    const supportPhone = settings?.supportPhone || '+92 329 5599855';
+    const supportEmail = settings?.supportEmail || 'app.foodswipehelp@gmail.com';
+
     const handleCopyPhone = () => {
-        navigator.clipboard.writeText('+92 329 5599855');
+        navigator.clipboard.writeText(supportPhone);
         setCopiedPhone(true);
         setTimeout(() => setCopiedPhone(false), 2000);
     };
 
     const handleCopyEmail = () => {
-        navigator.clipboard.writeText('app.foodswipehelp@gmail.com');
+        navigator.clipboard.writeText(supportEmail);
         setCopiedEmail(true);
         setTimeout(() => setCopiedEmail(false), 2000);
     };
@@ -38,8 +43,8 @@ export default function Helpline({ isOpen, onClose }: HelplineProps) {
             icon: FaPhone,
             title: 'Call Us',
             description: 'Speak directly with our support team',
-            value: '+92 329 5599855',
-            action: () => window.open('tel:+923295599855'),
+            value: supportPhone,
+            action: () => window.open(`tel:${supportPhone}`),
             secondaryAction: handleCopyPhone,
             secondaryLabel: copiedPhone ? 'Copied!' : 'Copy',
             color: 'from-blue-500 to-blue-600'
@@ -48,16 +53,16 @@ export default function Helpline({ isOpen, onClose }: HelplineProps) {
             icon: FaWhatsapp,
             title: 'WhatsApp',
             description: 'Chat with us on WhatsApp',
-            value: '+92 329 5599855',
-            action: () => window.open('https://wa.me/923295599855', '_blank'),
+            value: supportPhone,
+            action: () => window.open(`https://wa.me/${supportPhone.replace(/\s+/g, '')}`, '_blank'),
             color: 'from-green-500 to-green-600'
         },
         {
             icon: FaEnvelope,
             title: 'Email Support',
             description: 'Send us your queries',
-            value: 'app.foodswipehelp@gmail.com',
-            action: () => window.open('mailto:app.foodswipehelp@gmail.com'),
+            value: supportEmail,
+            action: () => window.open(`mailto:${supportEmail}`),
             secondaryAction: handleCopyEmail,
             secondaryLabel: copiedEmail ? 'Copied!' : 'Copy',
             color: 'from-orange-500 to-pink-600'

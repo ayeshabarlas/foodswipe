@@ -20,9 +20,11 @@ import DashboardSupport from './DashboardSupport';
 import { getImageUrl, getImageFallback } from '../utils/imageUtils';
 import { API_BASE_URL } from '../utils/config';
 import { initSocket, disconnectSocket } from '../utils/socket';
+import { useSettings } from '../hooks/useSettings';
 import ModernLoader from './ModernLoader';
 
 export default function RestaurantDashboard() {
+    const { settings } = useSettings();
     const [restaurant, setRestaurant] = useState<any>(null);
     const [loading, setLoading] = useState(true);
     const [uploadingLogo, setUploadingLogo] = useState(false);
@@ -441,7 +443,7 @@ export default function RestaurantDashboard() {
             {restaurant?.owner?.status === 'suspended' && (
                 <div className="fixed top-0 left-0 right-0 bg-red-600 text-white px-4 py-2 text-center text-xs font-bold z-[9999] shadow-lg flex items-center justify-center gap-2">
                     <FaBan />
-                    <span>YOUR ACCOUNT HAS BEEN SUSPENDED. Please contact support at app.foodswipehelp@gmail.com</span>
+                    <span>YOUR ACCOUNT HAS BEEN SUSPENDED. Please contact support at {settings?.supportEmail || 'app.foodswipehelp@gmail.com'}</span>
                 </div>
             )}
 

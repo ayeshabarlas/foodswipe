@@ -6,6 +6,7 @@ import { FaTimes, FaMinus, FaPlus, FaTrash } from 'react-icons/fa';
 import { useCart } from '../context/CartContext';
 import CheckoutModal from './CheckoutModal';
 import { useSwipeBack } from '../hooks/useSwipeBack';
+import { useSettings } from '../hooks/useSettings';
 
 import { getImageUrl } from '../utils/imageUtils';
 
@@ -17,18 +18,19 @@ interface CartDrawerProps {
 
 export default function CartDrawer({ isOpen, onClose, onTrackOrder }: CartDrawerProps) {
     const { cart, addToCart, removeFromCart, cartTotal, clearCart } = useCart();
+    const { settings } = useSettings();
     const [isCheckoutOpen, setIsCheckoutOpen] = useState(false);
 
     // Enable swipe back gesture
     useSwipeBack({ onSwipeBack: onClose });
 
-    // Delivery fee is now distance-based (60 base + 20/km)
-    // We show a starting fee here and calculate exact amount at checkout
-    const baseDeliveryFee = 60; 
+    // Delivery fee and Service fee from settings
+    const baseDeliveryFee = settings?.deliveryFeeBase || 60; 
+    const serviceFee = settings?.serviceFee || 0;
     const taxRate = 0.08;
     const subtotal = cartTotal;
     const tax = Math.round(subtotal * taxRate);
-    const estimatedTotal = subtotal + baseDeliveryFee + tax;
+    const estimatedTotal = subtotal + baseDeliveryFee + tax + serviceFee;
 
     return (
         <>
@@ -129,8 +131,14 @@ export default function CartDrawer({ isOpen, onClose, onTrackOrder }: CartDrawer
                                         <span className="text-gray-800 font-bold">Subtotal</span>
                                         <span className="font-bold text-gray-900">Rs. {subtotal.toLocaleString()}</span>
                                     </div>
+                                    {serviceFee > 0 && (
+                                        <div className="flex justify-between items-center mb-1">
+                                            <span className="text-gray-800 font-bold">Service Fee</span>
+                                            <span className="font-bold text-gray-900">Rs. {serviceFee.toLocaleString()}</span>
+                                        </div>
+                                    )}
                                     <div className="flex justify-between items-center mb-4">
-                                        <span className="text-gray-700 text-xs italic font-bold">* Delivery fee calculated at checkout</span>
+                                        <span className="text-gray-700 text-xs italic font-bold">* Delivery fee and tax calculated at checkout</span>
                                     </div>
                                     <button
                                         onClick={() => setIsCheckoutOpen(true)}

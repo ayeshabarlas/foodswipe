@@ -624,14 +624,7 @@ const getDailyStats = async (req, res) => {
 // @desc    Get system settings
 const getSystemSettings = async (req, res) => {
     try {
-        let settings = await Settings.findOne();
-        if (!settings) {
-            settings = await Settings.create({
-                commission: 10,
-                supportEmail: 'app.foodswipehelp@gmail.com',
-                announcement: ''
-            });
-        }
+        const settings = await Settings.getSettings();
         res.json(settings);
     } catch (error) {
         res.status(500).json({ message: 'Server error', error: error.message });
@@ -643,28 +636,36 @@ const updateSystemSettings = async (req, res) => {
     try {
         const { 
             commission, 
+            commissionRate,
             supportEmail, 
+            supportPhone,
             announcement, 
             isMaintenanceMode, 
             minimumOrderAmount, 
             deliveryFee,
+            deliveryFeeBase,
+            deliveryFeePerKm,
+            deliveryFeeMax,
             serviceFee,
             featureToggles,
             safepay,
+            appVersion,
             appConfig
         } = req.body;
         
-        let settings = await Settings.findOne();
-        if (!settings) {
-            settings = new Settings();
-        }
+        let settings = await Settings.getSettings();
 
         if (commission !== undefined) settings.commission = commission;
+        if (commissionRate !== undefined) settings.commissionRate = commissionRate;
         if (supportEmail !== undefined) settings.supportEmail = supportEmail;
+        if (supportPhone !== undefined) settings.supportPhone = supportPhone;
         if (announcement !== undefined) settings.announcement = announcement;
         if (isMaintenanceMode !== undefined) settings.isMaintenanceMode = isMaintenanceMode;
         if (minimumOrderAmount !== undefined) settings.minimumOrderAmount = minimumOrderAmount;
         if (deliveryFee !== undefined) settings.deliveryFee = deliveryFee;
+        if (deliveryFeeBase !== undefined) settings.deliveryFeeBase = deliveryFeeBase;
+        if (deliveryFeePerKm !== undefined) settings.deliveryFeePerKm = deliveryFeePerKm;
+        if (deliveryFeeMax !== undefined) settings.deliveryFeeMax = deliveryFeeMax;
         if (serviceFee !== undefined) settings.serviceFee = serviceFee;
         
         if (featureToggles) {
@@ -675,6 +676,10 @@ const updateSystemSettings = async (req, res) => {
             settings.safepay = { ...settings.safepay, ...safepay };
         }
         
+        if (appVersion) {
+            settings.appVersion = { ...settings.appVersion, ...appVersion };
+        }
+
         if (appConfig) {
             settings.appConfig = { ...settings.appConfig, ...appConfig };
         }

@@ -10,6 +10,7 @@ import ModernLoader from './ModernLoader';
 import PhoneAuthModal from './PhoneAuthModal';
 import { API_BASE_URL } from '../utils/config';
 import { calculateDistance } from '../utils/location';
+import { useSettings } from '../hooks/useSettings';
 
 interface CheckoutModalProps {
     isOpen: boolean;
@@ -25,6 +26,7 @@ interface CheckoutModalProps {
 
 export default function CheckoutModal({ isOpen, onClose, cart, total, subtotal, deliveryFee, tax, onSuccess, onTrackOrder }: CheckoutModalProps) {
     const router = useRouter();
+    const { settings } = useSettings();
     const [paymentMethod, setPaymentMethod] = useState<'card' | 'cod' | 'jazzcash' | 'easypaisa'>('card');
     const [paymentStep, setPaymentStep] = useState<'selection' | 'details' | 'verifying'>('selection');
     const [walletNumber, setWalletNumber] = useState('');
@@ -67,13 +69,18 @@ export default function CheckoutModal({ isOpen, onClose, cart, total, subtotal, 
                     const dist = calculateDistance(restLat, restLng, deliveryLocation.lat, deliveryLocation.lng);
                     setDistance(dist);
                     
-                    // MVP Logic: 60 + (distance * 20)
-                    const newFee = 60 + (dist * 20);
-                    // Cap delivery fee at Rs. 200 as requested
-                    setCalculatedFee(Math.min(200, Math.round(newFee)));
+                    // Dynamic Logic from Settings
+                    const baseFee = settings?.deliveryFeeBase || 60;
+                    const perKmFee = settings?.deliveryFeePerKm || 20;
+                    const maxFee = settings?.deliveryFeeMax || 200;
+
+                    const newFee = baseFee + (dist * perKmFee);
+                    // Cap delivery fee based on settings
+                    setCalculatedFee(Math.min(maxFee, Math.round(newFee)));
                 } else if (!deliveryLocation) {
                     // Fallback to base fee if no location selected yet
-                    setCalculatedFee(Math.min(200, deliveryFee));
+                    const maxFee = settings?.deliveryFeeMax || 200;
+                    setCalculatedFee(Math.min(maxFee, deliveryFee));
                     setDistance(null);
                 }
             } catch (err) {
@@ -101,6 +108,24 @@ export default function CheckoutModal({ isOpen, onClose, cart, total, subtotal, 
             }
         }
     }, [isOpen]);
+
+    // Use settings for payment toggles
+    const availablePaymentMethods = [
+        { id: 'card', label: 'Credit/Debit Card', sub: 'Secure via Safepay', icon: 'VISA', enabled: settings?.featureToggles?.enableSafepay !== false },
+        { id: 'cod', label: 'Cash on Delivery', sub: 'Pay when you receive', icon: <FaMoneyBillWave className="text-green-600" />, enabled: settings?.featureToggles?.enableCOD !== false },
+        { id: 'jazzcash', label: 'JazzCash', sub: 'Secure via Safepay', icon: 'JC', enabled: settings?.featureToggles?.enableJazzCash !== false },
+        { id: 'easypaisa', label: 'EasyPaisa', sub: 'Secure via Safepay', icon: 'EP', enabled: settings?.featureToggles?.enableEasyPaisa !== false },
+    ].filter(m => m.enabled);
+
+    // Update payment method if current one is disabled
+    useEffect(() => {
+        if (settings && !loading && availablePaymentMethods.length > 0) {
+            const currentMethodEnabled = availablePaymentMethods.some(m => m.id === paymentMethod);
+            if (!currentMethodEnabled) {
+                setPaymentMethod(availablePaymentMethods[0].id as any);
+            }
+        }
+    }, [settings, loading]);
 
     const handleTrackOrder = () => {
         if (placedOrder && onTrackOrder) {
@@ -292,8 +317,11 @@ export default function CheckoutModal({ isOpen, onClose, cart, total, subtotal, 
         ? Math.round((subtotal * appliedVoucher.discount) / 100)
         : 0;
     
-    // Recalculate total with dynamic delivery fee
-    const currentTotal = subtotal + calculatedFee + tax - discountAmount;
+    // Service Fee from settings
+    const serviceFee = settings?.serviceFee || 0;
+    
+    // Recalculate total with dynamic delivery fee and service fee
+    const currentTotal = subtotal + calculatedFee + tax + serviceFee - discountAmount;
 
     const handlePlaceOrder = async () => {
         console.log('handlePlaceOrder initiated');
@@ -392,6 +420,8 @@ export default function CheckoutModal({ isOpen, onClose, cart, total, subtotal, 
                 deliveryLocation: deliveryLocation,
                 subtotal: subtotal,
                 deliveryFee: calculatedFee,
+                serviceFee: serviceFee,
+                tax: tax,
                 totalAmount: currentTotal,
                 paymentMethod,
                 transactionId: null,
@@ -789,79 +819,90 @@ export default function CheckoutModal({ isOpen, onClose, cart, total, subtotal, 
                                         </h3>
                                         <div className="space-y-2">
                                                 {/* Card Selection */}
-                                                <label className={`flex items-center justify-between p-4 rounded-xl border-2 cursor-pointer transition ${paymentMethod === 'card' ? 'border-orange-500 bg-orange-50' : 'border-gray-200 hover:border-gray-300'}`}>
-                                                    <div className="flex items-center gap-3">
-                                                        <div className="flex items-center gap-1.5">
-                                                            <div className="w-9 h-6 bg-blue-600 rounded flex items-center justify-center text-white text-[10px] font-bold">
-                                                                VISA
-                                                            </div>
-                                                            <div className="w-9 h-6 bg-red-500 rounded flex items-center justify-center">
-                                                                <div className="flex -space-x-1">
-                                                                    <div className="w-3 h-3 rounded-full bg-red-500 border border-white"></div>
-                                                                    <div className="w-3 h-3 rounded-full bg-orange-400 border border-white"></div>
+                                                {settings?.featureToggles?.enableSafepay !== false && (
+                                                    <label className={`flex items-center justify-between p-4 rounded-xl border-2 cursor-pointer transition ${paymentMethod === 'card' ? 'border-orange-500 bg-orange-50' : 'border-gray-200 hover:border-gray-300'}`}>
+                                                        <div className="flex items-center gap-3">
+                                                            <div className="flex items-center gap-1.5">
+                                                                <div className="w-9 h-6 bg-blue-600 rounded flex items-center justify-center text-white text-[10px] font-bold">
+                                                                    VISA
+                                                                </div>
+                                                                <div className="w-9 h-6 bg-red-500 rounded flex items-center justify-center">
+                                                                    <div className="flex -space-x-1">
+                                                                        <div className="w-3 h-3 rounded-full bg-red-500 border border-white"></div>
+                                                                        <div className="w-3 h-3 rounded-full bg-orange-400 border border-white"></div>
+                                                                    </div>
                                                                 </div>
                                                             </div>
+                                                            <div>
+                                                                <span className="font-medium text-gray-900 text-sm">Credit/Debit Card</span>
+                                                                <p className="text-[10px] text-gray-500">Secure via Safepay</p>
+                                                            </div>
                                                         </div>
-                                                        <div>
-                                                            <span className="font-medium text-gray-900 text-sm">Credit/Debit Card</span>
-                                                            <p className="text-[10px] text-gray-500">Secure via Safepay</p>
-                                                        </div>
-                                                    </div>
-                                                    <input type="radio" name="payment" value="card" checked={paymentMethod === 'card'} onChange={() => { setPaymentMethod('card'); setPaymentStep('selection'); }} className="w-4 h-4 text-orange-500 border-gray-300" />
-                                                </label>
+                                                        <input type="radio" name="payment" value="card" checked={paymentMethod === 'card'} onChange={() => { setPaymentMethod('card'); setPaymentStep('selection'); }} className="w-4 h-4 text-orange-500 border-gray-300" />
+                                                    </label>
+                                                )}
 
                                                 {/* Cash on Delivery */}
-                                                <label className={`flex items-center justify-between p-4 rounded-xl border-2 cursor-pointer transition ${paymentMethod === 'cod' ? 'border-orange-500 bg-orange-50' : 'border-gray-200 hover:border-gray-300'}`}>
-                                                    <div className="flex items-center gap-3">
-                                                        <div className="w-10 h-10 bg-green-50 rounded-lg flex items-center justify-center">
-                                                            <FaMoneyBillWave className="text-green-600" />
+                                                {settings?.featureToggles?.enableCOD !== false && (
+                                                    <label className={`flex items-center justify-between p-4 rounded-xl border-2 cursor-pointer transition ${paymentMethod === 'cod' ? 'border-orange-500 bg-orange-50' : 'border-gray-200 hover:border-gray-300'}`}>
+                                                        <div className="flex items-center gap-3">
+                                                            <div className="w-10 h-10 bg-green-50 rounded-lg flex items-center justify-center">
+                                                                <FaMoneyBillWave className="text-green-600" />
+                                                            </div>
+                                                            <span className="font-medium text-gray-900 text-sm">Cash on Delivery</span>
                                                         </div>
-                                                        <span className="font-medium text-gray-900 text-sm">Cash on Delivery</span>
-                                                    </div>
-                                                    <input type="radio" name="payment" value="cod" checked={paymentMethod === 'cod'} onChange={() => { setPaymentMethod('cod'); setPaymentStep('selection'); }} className="w-4 h-4 text-orange-500 border-gray-300" />
-                                                </label>
+                                                        <input type="radio" name="payment" value="cod" checked={paymentMethod === 'cod'} onChange={() => { setPaymentMethod('cod'); setPaymentStep('selection'); }} className="w-4 h-4 text-orange-500 border-gray-300" />
+                                                    </label>
+                                                )}
 
                                                 {/* Digital Wallets - Expandable */}
-                                                <div className="border-2 border-gray-200 rounded-xl overflow-hidden">
-                                                    <div className="flex items-center justify-between p-4 bg-white">
-                                                        <div className="flex items-center gap-3">
-                                                            <div className="w-10 h-10 bg-purple-50 rounded-lg flex items-center justify-center">
-                                                                <FaWallet className="text-purple-600" />
+                                                {(settings?.featureToggles?.enableJazzCash !== false || settings?.featureToggles?.enableEasyPaisa !== false) && (
+                                                    <div className="border-2 border-gray-200 rounded-xl overflow-hidden">
+                                                        <div className="flex items-center justify-between p-4 bg-white">
+                                                            <div className="flex items-center gap-3">
+                                                                <div className="w-10 h-10 bg-purple-50 rounded-lg flex items-center justify-center">
+                                                                    <FaWallet className="text-purple-600" />
+                                                                </div>
+                                                                <span className="font-medium text-gray-900 text-sm">Digital Wallets</span>
                                                             </div>
-                                                            <span className="font-medium text-gray-900 text-sm">Digital Wallets</span>
+                                                            <svg className="w-5 h-5 text-gray-400 transform rotate-90" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                                                            </svg>
                                                         </div>
-                                                        <svg className="w-5 h-5 text-gray-400 transform rotate-90" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                                                        </svg>
+
+                                                        {/* JazzCash */}
+                                                        {settings?.featureToggles?.enableJazzCash !== false && (
+                                                            <label className={`flex items-center justify-between p-4 border-t-2 border-gray-100 cursor-pointer transition ${paymentMethod === 'jazzcash' ? 'bg-orange-50' : 'bg-white hover:bg-gray-50'}`}>
+                                                                <div className="flex items-center gap-3">
+                                                                    <div className="w-10 h-10 rounded-lg flex items-center justify-center bg-gradient-to-br from-red-500 to-red-600 text-white font-bold text-xs">
+                                                                        JC
+                                                                    </div>
+                                                                    <div>
+                                                                        <span className="font-medium text-gray-900 text-sm">JazzCash</span>
+                                                                        <p className="text-[10px] text-gray-500">Secure via Safepay</p>
+                                                                    </div>
+                                                                </div>
+                                                                <input type="radio" name="payment" value="jazzcash" checked={paymentMethod === 'jazzcash'} onChange={() => { setPaymentMethod('jazzcash'); setPaymentStep('selection'); }} className="w-4 h-4 text-orange-500 border-gray-300" />
+                                                            </label>
+                                                        )}
+
+                                                        {/* EasyPaisa */}
+                                                        {settings?.featureToggles?.enableEasyPaisa !== false && (
+                                                            <label className={`flex items-center justify-between p-4 border-t-2 border-gray-100 cursor-pointer transition ${paymentMethod === 'easypaisa' ? 'bg-orange-50' : 'bg-white hover:bg-gray-50'}`}>
+                                                                <div className="flex items-center gap-3">
+                                                                    <div className="w-10 h-10 rounded-lg flex items-center justify-center bg-gradient-to-br from-green-500 to-green-600 text-white font-bold text-xs">
+                                                                        EP
+                                                                    </div>
+                                                                    <div>
+                                                                        <span className="font-medium text-gray-900 text-sm">EasyPaisa</span>
+                                                                        <p className="text-[10px] text-gray-500">Secure via Safepay</p>
+                                                                    </div>
+                                                                </div>
+                                                                <input type="radio" name="payment" value="easypaisa" checked={paymentMethod === 'easypaisa'} onChange={() => { setPaymentMethod('easypaisa'); setPaymentStep('selection'); }} className="w-4 h-4 text-orange-500 border-gray-300" />
+                                                            </label>
+                                                        )}
                                                     </div>
-
-                                                    {/* JazzCash */}
-                                                    <label className={`flex items-center justify-between p-4 border-t-2 border-gray-100 cursor-pointer transition ${paymentMethod === 'jazzcash' ? 'bg-orange-50' : 'bg-white hover:bg-gray-50'}`}>
-                                                        <div className="flex items-center gap-3">
-                                                            <div className="w-10 h-10 rounded-lg flex items-center justify-center bg-gradient-to-br from-red-500 to-red-600 text-white font-bold text-xs">
-                                                                JC
-                                                            </div>
-                                                            <div>
-                                                                <span className="font-medium text-gray-900 text-sm">JazzCash</span>
-                                                                <p className="text-[10px] text-gray-500">Secure via Safepay</p>
-                                                            </div>
-                                                        </div>
-                                                        <input type="radio" name="payment" value="jazzcash" checked={paymentMethod === 'jazzcash'} onChange={() => { setPaymentMethod('jazzcash'); setPaymentStep('selection'); }} className="w-4 h-4 text-orange-500 border-gray-300" />
-                                                    </label>
-
-                                                    {/* EasyPaisa */}
-                                                    <label className={`flex items-center justify-between p-4 border-t-2 border-gray-100 cursor-pointer transition ${paymentMethod === 'easypaisa' ? 'bg-orange-50' : 'bg-white hover:bg-gray-50'}`}>
-                                                        <div className="flex items-center gap-3">
-                                                            <div className="w-10 h-10 rounded-lg flex items-center justify-center bg-gradient-to-br from-green-500 to-green-600 text-white font-bold text-xs">
-                                                                EP
-                                                            </div>
-                                                            <div>
-                                                                <span className="font-medium text-gray-900 text-sm">EasyPaisa</span>
-                                                                <p className="text-[10px] text-gray-500">Secure via Safepay</p>
-                                                            </div>
-                                                        </div>
-                                                        <input type="radio" name="payment" value="easypaisa" checked={paymentMethod === 'easypaisa'} onChange={() => { setPaymentMethod('easypaisa'); setPaymentStep('selection'); }} className="w-4 h-4 text-orange-500 border-gray-300" />
-                                                    </label>
+                                                )}
 
                                                     {/* Safepay Redirect Message */}
                                                     {paymentMethod !== 'cod' && paymentMethod !== 'card' && (
@@ -966,6 +1007,12 @@ export default function CheckoutModal({ isOpen, onClose, cart, total, subtotal, 
                                                 </div>
                                                 <span>Rs. {calculatedFee.toLocaleString()}</span>
                                             </div>
+                                            {serviceFee > 0 && (
+                                                <div className="flex justify-between text-gray-800 font-medium">
+                                                    <span>Service Fee</span>
+                                                    <span>Rs. {serviceFee.toLocaleString()}</span>
+                                                </div>
+                                            )}
                                             <div className="flex justify-between text-gray-800 font-medium">
                                                 <span>Tax (8%)</span>
                                                 <span>Rs. {tax.toLocaleString()}</span>

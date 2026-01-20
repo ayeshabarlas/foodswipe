@@ -1,5 +1,6 @@
 'use client';
 import { useState } from 'react';
+import { useSettings } from '@/hooks/useSettings';
 import {
     FaChartLine,
     FaStore,
@@ -31,6 +32,7 @@ interface SidebarProps {
 }
 
 export default function Sidebar({ activeTab, setActiveTab, onLogout, notificationCounts }: SidebarProps) {
+    const { settings } = useSettings();
     const [expandedMenus, setExpandedMenus] = useState<string[]>(['restaurants', 'riders', 'orders']);
     const [isMobileOpen, setIsMobileOpen] = useState(false);
     const [userRole] = useState<string>(() => {
@@ -233,10 +235,10 @@ export default function Sidebar({ activeTab, setActiveTab, onLogout, notificatio
                     <div className="px-4 py-3 bg-gray-50 rounded-xl mb-2">
                         <p className="text-[11px] text-[#9CA3AF] font-semibold uppercase tracking-wider mb-1">Support</p>
                         <a 
-                            href="mailto:app.foodswipehelp@gmail.com" 
+                            href={`mailto:${settings?.supportEmail || 'app.foodswipehelp@gmail.com'}`}
                             className="text-[12px] font-medium text-[#6B7280] hover:text-[#FF6A00] transition-colors truncate block"
                         >
-                            app.foodswipehelp@gmail.com
+                            {settings?.supportEmail || 'app.foodswipehelp@gmail.com'}
                         </a>
                     </div>
                     

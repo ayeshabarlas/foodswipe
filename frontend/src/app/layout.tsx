@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Poppins, Plus_Jakarta_Sans, Inter } from "next/font/google";
 import "./globals.css";
 import { CartProvider } from "../context/CartContext";
+import SystemWrapper from "../components/SystemWrapper";
 
 const inter = Inter({
   variable: "--font-inter",
@@ -38,9 +39,11 @@ export default function RootLayout({
       <body
         className={`${inter.variable} ${poppins.variable} ${plusJakartaSans.variable} antialiased`}
       >
-        <CartProvider>
-          {children}
-        </CartProvider>
+        <SystemWrapper>
+          <CartProvider>
+            {children}
+          </CartProvider>
+        </SystemWrapper>
       </body>
     </html>
   );

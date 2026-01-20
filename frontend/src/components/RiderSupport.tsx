@@ -2,14 +2,19 @@
 
 import React from 'react';
 import { FaPhoneAlt, FaComments, FaExclamationCircle, FaMapMarkerAlt, FaUserSlash, FaClock } from 'react-icons/fa';
+import { useSettings } from '@/hooks/useSettings';
 
 export default function RiderSupport() {
+    const { settings } = useSettings();
+
     const handleEmergencyCall = () => {
-        window.location.href = 'tel:+923295599855';
+        const phone = settings?.supportPhone || '+923295599855';
+        window.location.href = `tel:${phone}`;
     };
 
     const handleEmailSupport = () => {
-        window.location.href = 'mailto:app.foodswipehelp@gmail.com';
+        const email = settings?.supportEmail || 'app.foodswipehelp@gmail.com';
+        window.location.href = `mailto:${email}`;
     };
 
     return (
@@ -23,7 +28,7 @@ export default function RiderSupport() {
             {/* Emergency Support */}
             <div className="px-6 py-6">
                 <button
-                    onClick={() => window.location.href = 'tel:+923295599855'}
+                    onClick={handleEmergencyCall}
                     className="w-full bg-gradient-to-r from-red-500 to-red-600 rounded-2xl p-6 flex items-center gap-4 text-white shadow-lg hover:from-red-600 hover:to-red-700 transition"
                 >
                     <div className="w-14 h-14 bg-white/20 rounded-full flex items-center justify-center">
@@ -55,7 +60,7 @@ export default function RiderSupport() {
             {/* Call Support */}
             <div className="px-6 mb-4">
                 <button
-                    onClick={() => window.location.href = 'tel:+923295599855'}
+                    onClick={handleEmergencyCall}
                     className="w-full bg-white rounded-2xl p-4 flex items-center gap-4 shadow-sm hover:shadow-md transition border border-gray-100"
                 >
                     <div className="w-12 h-12 bg-green-100 rounded-xl flex items-center justify-center">
@@ -63,7 +68,7 @@ export default function RiderSupport() {
                     </div>
                     <div className="flex-1 text-left">
                         <h3 className="font-semibold text-gray-900">Call Support</h3>
-                        <p className="text-sm text-gray-600">+92 329 5599855</p>
+                        <p className="text-sm text-gray-600">{settings?.supportPhone || '+92 329 5599855'}</p>
                     </div>
                     <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
@@ -82,7 +87,7 @@ export default function RiderSupport() {
                     </div>
                     <div className="flex-1 text-left">
                         <h3 className="font-semibold text-gray-900">Email Support</h3>
-                        <p className="text-sm text-gray-600">app.foodswipehelp@gmail.com</p>
+                        <p className="text-sm text-gray-600">{settings?.supportEmail || 'app.foodswipehelp@gmail.com'}</p>
                     </div>
                     <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />

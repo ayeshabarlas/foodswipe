@@ -2,6 +2,7 @@
 
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useSettings } from '@/hooks/useSettings';
 import { FaTimes, FaLock, FaCreditCard, FaMapMarkerAlt, FaGlobe, FaChevronRight, FaFileContract, FaShieldAlt, FaInfoCircle, FaPlus, FaTrash, FaCheck } from 'react-icons/fa';
 
 interface SettingsProps {
@@ -10,6 +11,7 @@ interface SettingsProps {
 }
 
 export default function Settings({ isOpen, onClose }: SettingsProps) {
+    const { settings } = useSettings();
     const [selectedLanguage, setSelectedLanguage] = useState('English');
     const [showAboutModal, setShowAboutModal] = useState<string | null>(null);
     const [showAccountModal, setShowAccountModal] = useState<string | null>(null);
@@ -172,8 +174,8 @@ To revolutionize food delivery by providing a seamless experience that brings yo
 We're a passionate team of food lovers and tech enthusiasts dedicated to making your dining experience exceptional.
 
 📧 Contact Us:
-   Email: app.foodswipehelp@gmail.com
-   Phone: +92 329 5599855
+   Email: {settings?.supportEmail || 'app.foodswipehelp@gmail.com'}
+   Phone: {settings?.supportPhone || '+92 329 5599855'}
 
 Follow us on social media:
    Instagram: @foodswipe

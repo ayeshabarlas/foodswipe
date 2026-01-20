@@ -74,7 +74,7 @@ app.use((req, res, next) => {
 });
 
 // 🚀 3. HEALTH & ROOT
-// Force deployment trigger - v1.0.7 - 2026-01-20 18:37
+// Force deployment trigger - v1.0.9 - 2026-01-20 19:35
 app.get('/health', async (req, res) => {
     console.log('💓 Health check requested');
     const dbStatus = getDbStatus();
@@ -118,7 +118,7 @@ app.get('/health', async (req, res) => {
         firebase: firebaseConfigured ? 'configured' : 'missing_env_var',
         firebaseProject: firebaseProjectId,
         timestamp: new Date().toISOString(),
-        version: '1.0.7',
+        version: '1.0.9',
         env: process.env.NODE_ENV,
         vercel: !!process.env.VERCEL || !!process.env.NOW_REGION || !!process.env.VERCEL_URL
     });
@@ -152,6 +152,7 @@ try {
     app.use('/api/payments', require('./routes/paymentRoutes'));
     app.use('/api/verifications', require('./routes/verificationRoutes'));
     app.use('/api/tickets', require('./routes/ticketRoutes'));
+    app.use('/api/settings', require('./routes/settingsRoutes'));
     console.log('✅ All Routes Loaded');
 } catch (routeErr) {
     console.error('🔥 ROUTE LOADING ERROR:', routeErr.message);
