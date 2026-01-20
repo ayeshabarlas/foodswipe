@@ -74,7 +74,7 @@ app.use((req, res, next) => {
 });
 
 // 🚀 3. HEALTH & ROOT
-// Force deployment trigger - 2026-01-15 18:50 - Fixing package.json paths
+// Force deployment trigger - 2026-01-20 19:25 - Super Nuclear Reset Complete
 app.get('/health', async (req, res) => {
     console.log('💓 Health check requested');
     const dbStatus = getDbStatus();
