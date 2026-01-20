@@ -118,6 +118,7 @@ app.get('/health', async (req, res) => {
         firebase: firebaseConfigured ? 'configured' : 'missing_env_var',
         firebaseProject: firebaseProjectId,
         timestamp: new Date().toISOString(),
+        commit: '48bd447',
         env: process.env.NODE_ENV,
         vercel: !!process.env.VERCEL || !!process.env.NOW_REGION || !!process.env.VERCEL_URL
     });
