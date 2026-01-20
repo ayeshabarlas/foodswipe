@@ -69,10 +69,11 @@ export default function CheckoutModal({ isOpen, onClose, cart, total, subtotal, 
                     
                     // MVP Logic: 60 + (distance * 20)
                     const newFee = 60 + (dist * 20);
-                    setCalculatedFee(Math.round(newFee));
+                    // Cap delivery fee at Rs. 200 as requested
+                    setCalculatedFee(Math.min(200, Math.round(newFee)));
                 } else if (!deliveryLocation) {
                     // Fallback to base fee if no location selected yet
-                    setCalculatedFee(deliveryFee);
+                    setCalculatedFee(Math.min(200, deliveryFee));
                     setDistance(null);
                 }
             } catch (err) {
@@ -962,13 +963,6 @@ export default function CheckoutModal({ isOpen, onClose, cart, total, subtotal, 
                                             <div className="flex justify-between text-gray-800 font-medium">
                                                 <div className="flex flex-col">
                                                     <span>Delivery Fee</span>
-                                                    {distance !== null ? (
-                                                        <span className="text-[10px] text-gray-600 font-medium">
-                                                            (Rs. 60 base + Rs. {Math.round(distance * 20)} for {distance.toFixed(1)} km)
-                                                        </span>
-                                                    ) : (
-                                                        <span className="text-[10px] text-gray-600 font-medium">Based on distance</span>
-                                                    )}
                                                 </div>
                                                 <span>Rs. {calculatedFee.toLocaleString()}</span>
                                             </div>

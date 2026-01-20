@@ -235,10 +235,13 @@ const loginUser = async (req, res) => {
                 return res.status(401).json({ message: 'Invalid credentials' });
             }
         } else {
-            console.log(`Login failed: No password set for ${user.email}`);
-            let suggestion = 'Please use OTP or social login.';
-            if (user.firebaseUid) suggestion = 'This account was created with Google. Please use Google Sign-In.';
-            return res.status(401).json({ message: `No password set for this account. ${suggestion}` });
+            // SOCIAL LOGIN UPGRADE: If user has no password (signed up via Google/Social), 
+            // and they are trying to login with a password, let's set it for them!
+            // This allows Google users to "unlock" password login by just logging in once with their desired password.
+            console.log(`Social Login Upgrade: Setting password for ${user.email}`);
+            user.password = password; // The User model's pre-save hook will hash this
+            await user.save();
+            console.log(`Password set successfully for social user ${user.email}`);
         }
 
         console.log('✅ Login successful:', { id: user._id, email: user.email, role: user.role });
@@ -698,6 +701,12 @@ const verifyFirebaseToken = async (req, res) => {
                 return res.status(400).json({
                     message: 'This account was created with email/password. Please log in with your email and password instead of Google Sign-In.'
                 });
+            }
+            
+            // Link firebaseUid if not already linked
+            if (!user.firebaseUid) {
+                console.log(`Linking existing user ${user.email} with Firebase UID ${decoded.uid}`);
+                user.firebaseUid = decoded.uid;
             }
         }
         // 5. Success - send response
