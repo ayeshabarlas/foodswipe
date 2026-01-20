@@ -25,28 +25,63 @@ const registerUser = async (req, res) => {
     if (!name || !email) {
         return res.status(400).json({ message: 'Name and email are required' });
     }
+    
+    const normalizedEmail = email.trim().toLowerCase();
+    const normalizedRole = role || 'customer';
+
     try {
-        const emailExists = await User.findOne({ email, role: role || 'customer' });
+        // 1. Check if user already exists for this email and role
+        const emailExists = await User.findOne({ 
+            email: { $regex: new RegExp(`^${normalizedEmail}$`, 'i') }, 
+            role: normalizedRole 
+        });
+        
         if (emailExists) {
-            console.log(`Registration failed: User exists for role ${role || 'customer'}`, { email });
+            console.log(`Registration failed: User exists for role ${normalizedRole}`, { email: normalizedEmail });
             return res.status(400).json({ message: 'User with given email already exists for this role' });
         }
+
+        // 2. Check if phone exists for this role
         if (phone) {
-            const phoneExists = await User.findOne({ phone, role: role || 'customer' });
+            const phoneExists = await User.findOne({ phone: phone.trim(), role: normalizedRole });
             if (phoneExists) {
                 return res.status(400).json({ message: 'User with given phone already exists for this role' });
             }
         }
+
+        // 3. Create the User
         const user = await User.create({ 
             name, 
-            email, 
+            email: normalizedEmail, 
             password: password || '', 
-            phone, 
-            phoneNumber: phone, // Keep in sync
-            role: role || 'customer' 
+            phone: phone ? phone.trim() : null, 
+            phoneNumber: phone ? phone.trim() : null,
+            role: normalizedRole 
         });
-        console.log(`User registered: id=${user._id}, role=${user.role}`);
         
+        console.log(`User registered: id=${user._id}, email=${user.email}, role=${user.role}`);
+        
+        // 4. Create Role-Specific Profile
+        if (normalizedRole === 'rider') {
+            const Rider = require('../models/Rider');
+            await Rider.create({
+                user: user._id,
+                fullName: name,
+                phone: phone || '',
+                verificationStatus: 'approved' // Auto-approve for now as requested before
+            });
+            console.log(`Created Rider profile for ${user.email}`);
+        } else if (normalizedRole === 'restaurant') {
+            const Restaurant = require('../models/Restaurant');
+            await Restaurant.create({
+                owner: user._id,
+                name: `${name}'s Restaurant`,
+                contact: phone || '',
+                status: 'active'
+            });
+            console.log(`Created Restaurant profile for ${user.email}`);
+        }
+
         // Trigger real-time event for admin dashboard
         triggerEvent('admin', 'user_registered', {
             _id: user._id,
@@ -65,8 +100,17 @@ const registerUser = async (req, res) => {
             details: { method: 'email/password' }
         });
 
-        return res.status(201).json({ _id: user._id, name: user.name, email: user.email, phone: user.phone, phoneVerified: user.phoneVerified, role: user.role, token: generateToken(user._id) });
+        return res.status(201).json({ 
+            _id: user._id, 
+            name: user.name, 
+            email: user.email, 
+            phone: user.phone, 
+            phoneVerified: user.phoneVerified, 
+            role: user.role, 
+            token: generateToken(user._id) 
+        });
     } catch (err) {
+        console.error('Registration error:', err);
         return res.status(500).json({ message: err.message });
     }
 };
@@ -77,17 +121,18 @@ const registerUser = async (req, res) => {
  * @access  Public
  */
 const loginUser = async (req, res) => {
-    const { identifier, password, role } = req.body; // identifier can be email or phone; role optional
+    const { identifier, password, role } = req.body; 
     if (!identifier) {
         return res.status(400).json({ message: 'Identifier (email or phone) is required' });
     }
     try {
-        console.log(`Login attempt: identifier=${identifier}, role=${role}`);
-        
-        // 1. Find the user by email or phone.
         const identifierLower = identifier.trim().toLowerCase();
-        console.log(`Login attempt for: "${identifierLower}" with role: "${role}"`);
+        console.log(`\n--- Login Attempt ---`);
+        console.log(`Identifier: "${identifierLower}"`);
+        console.log(`Requested Role: "${role}"`);
 
+        // 1. Find the user by email or phone.
+        // We look for any user with this email or phone, then we'll check the role.
         const user = await User.findOne({
             $or: [
                 { email: { $regex: new RegExp(`^${identifierLower}$`, 'i') } },
@@ -97,26 +142,35 @@ const loginUser = async (req, res) => {
         });
 
         if (!user) {
-            console.log(`Login failed: User NOT found in database for identifier: "${identifierLower}"`);
+            console.log(`Login failed: User NOT found for "${identifierLower}"`);
             return res.status(401).json({ message: 'Invalid credentials' });
         }
 
-        console.log(`User found: ${user.email}, Role: ${user.role}, Status: ${user.status}`);
+        console.log(`User found: ${user.email}, DB Role: ${user.role}, Status: ${user.status}`);
 
-        // 2. If role is provided, ensure it matches.
+        // 2. Role Check
+        // If the user is an admin/super-admin, they can login to anything.
+        // Otherwise, the role must match.
         if (role && user.role !== role && user.role !== 'admin' && user.role !== 'super-admin') {
-            console.log(`Login failed: Role mismatch for ${user.email}. Frontend requested "${role}", but DB user is "${user.role}"`);
+            console.log(`Login failed: Role mismatch. Frontend asked for "${role}", but user is "${user.role}"`);
             return res.status(401).json({ message: 'Invalid role for this account' });
         }
 
+        // 3. Status Check
         if (user.status === 'suspended') {
+            console.log(`Login failed: Account ${user.email} is suspended`);
             return res.status(403).json({ 
                 message: 'Your account has been suspended. Please contact support.',
                 status: 'suspended'
             });
         }
 
-        // 3. Check if the password matches (if password exists)
+        // 4. Password Check
+        if (!password) {
+            console.log(`Login failed: No password provided for ${user.email}`);
+            return res.status(401).json({ message: 'Password is required' });
+        }
+
         if (user.password && user.password.length > 0) {
             const isMatch = await user.matchPassword(password);
             if (!isMatch) {
@@ -124,23 +178,15 @@ const loginUser = async (req, res) => {
                 return res.status(401).json({ message: 'Invalid credentials' });
             }
         } else {
-            console.log(`Login failed: User ${user.email} has no password set`);
-            return res.status(401).json({ message: 'No password set for this account. Please use social login or reset password.' });
+            console.log(`Login failed: No password set for ${user.email}`);
+            return res.status(401).json({ message: 'No password set for this account. Please use OTP or social login.' });
         }
 
-        console.log('User logged in successfully:', { id: user._id, email: user.email, role: user.role });
+        console.log('✅ Login successful:', { id: user._id, email: user.email, role: user.role });
 
         // Update last login
         user.lastLogin = new Date();
         await user.save();
-
-        // Trigger real-time event for admin dashboard
-        triggerEvent('admin', 'user_logged_in', {
-            _id: user._id,
-            email: user.email,
-            role: user.role,
-            lastLogin: user.lastLogin
-        });
 
         // Audit Log
         await AuditLog.create({
@@ -151,77 +197,37 @@ const loginUser = async (req, res) => {
             details: { method: 'email/phone' }
         });
 
-        // AUTO-FIX ROLE & SMART LINKING:
-        // Ensure the user is linked to any existing profiles and has the correct role.
+        // Smart Linking logic...
         let activeRole = user.role;
         const userEmail = user.email?.toLowerCase();
         const userPhone = user.phone || user.phoneNumber;
         const normalizedPhone = userPhone ? userPhone.replace(/[\s\-\+\(\)]/g, '').slice(-10) : null;
         
-        // Check for Restaurant Profile
-        const Restaurant = require('../models/Restaurant');
-        let restaurant = await Restaurant.findOne({ 
-            $or: [
-                { owner: user._id },
-                { contact: user.phone },
-                { contact: user.phoneNumber },
-                ...(normalizedPhone ? [{ contact: new RegExp(normalizedPhone + '$') }] : [])
-            ]
-        });
-        
-        // If not found by phone, try finding by owner email (if owner is populated)
-        if (!restaurant && userEmail) {
-            const allRests = await Restaurant.find({}).populate('owner');
-            restaurant = allRests.find(r => r.owner?.email?.toLowerCase() === userEmail);
-        }
-
-        if (restaurant) {
-            console.log(`[SmartLinking] Found restaurant "${restaurant.name}" for user ${user.email}`);
-            // Link it if not already linked
-            if (restaurant.owner?.toString() !== user._id.toString()) {
-                console.log(`[SmartLinking] Re-linking restaurant ${restaurant._id} to user ${user._id}`);
-                restaurant.owner = user._id;
-                await restaurant.save();
+        // Ensure role-specific profile exists (AUTO-REPAIR)
+        if (activeRole === 'rider') {
+            const Rider = require('../models/Rider');
+            let rider = await Rider.findOne({ user: user._id });
+            if (!rider) {
+                console.log(`[AutoRepair] Creating missing rider profile for ${user.email}`);
+                await Rider.create({
+                    user: user._id,
+                    fullName: user.name,
+                    phone: user.phone || '',
+                    verificationStatus: 'approved'
+                });
             }
-            // DO NOT update user.role here as it might cause E11000 duplicate key error
-            // with an existing account that already has that role.
-            if (activeRole !== 'admin' && activeRole !== 'restaurant') {
-                activeRole = 'restaurant'; 
+        } else if (activeRole === 'restaurant') {
+            const Restaurant = require('../models/Restaurant');
+            let restaurant = await Restaurant.findOne({ owner: user._id });
+            if (!restaurant) {
+                console.log(`[AutoRepair] Creating missing restaurant profile for ${user.email}`);
+                await Restaurant.create({
+                    owner: user._id,
+                    name: `${user.name}'s Restaurant`,
+                    contact: user.phone || '',
+                    status: 'active'
+                });
             }
-        }
-
-        // Check for Rider Profile
-        const Rider = require('../models/Rider');
-        let rider = await Rider.findOne({ 
-            $or: [
-                { user: user._id },
-                { phone: user.phone },
-                { phone: user.phoneNumber },
-                ...(normalizedPhone ? [{ phone: new RegExp(normalizedPhone + '$') }] : [])
-            ]
-        });
-
-        if (!rider && userEmail) {
-            const allRiders = await Rider.find({}).populate('user');
-            rider = allRiders.find(r => r.user?.email?.toLowerCase() === userEmail);
-        }
-
-        if (rider) {
-            console.log(`[SmartLinking] Found rider profile for user ${user.email}`);
-            if (rider.user?.toString() !== user._id.toString()) {
-                console.log(`[SmartLinking] Re-linking rider ${rider._id} to user ${user._id}`);
-                rider.user = user._id;
-                await rider.save();
-            }
-            // DO NOT update user.role here to avoid E11000 conflicts
-            if (activeRole !== 'admin' && activeRole !== 'restaurant' && activeRole !== 'rider') {
-                activeRole = 'rider';
-            }
-        }
-
-        // Check user status
-        if (user.status === 'suspended') {
-            return res.status(403).json({ message: 'Your account has been suspended. Please contact support.' });
         }
 
         return res.json({ 
@@ -231,10 +237,11 @@ const loginUser = async (req, res) => {
             phone: user.phone, 
             phoneVerified: user.phoneVerified, 
             phoneNumber: user.phoneNumber, 
-            role: activeRole, // Return the UPDATED role
+            role: activeRole,
             token: generateToken(user._id) 
         });
     } catch (err) {
+        console.error('Login error:', err);
         return res.status(500).json({ message: err.message });
     }
 };
