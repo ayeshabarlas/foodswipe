@@ -8,6 +8,7 @@ const User = require('../models/User');
 const Otp = require('../models/Otp');
 const { admin } = require('../config/firebase');
 const { triggerEvent } = require('../socket');
+const { notifyAdmins } = require('../utils/adminNotifier');
 const AuditLog = require('../models/AuditLog');
 
 // Helper to generate a JWT token for a user id
@@ -96,6 +97,14 @@ const registerUser = async (req, res) => {
         });
         
         console.log(`User registered: id=${user._id}, email=${user.email}, role=${user.role}`);
+        
+        // Notify Admins
+        await notifyAdmins(
+            'New User Registration',
+            `A new user "${name}" (${normalizedRole}) has registered.`,
+            'new_user',
+            { userId: user._id, email: user.email, role: user.role }
+        );
         
         // 4. Create Role-Specific Profile
         if (normalizedRole === 'rider') {

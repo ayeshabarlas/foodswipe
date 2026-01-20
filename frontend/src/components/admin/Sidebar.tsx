@@ -21,9 +21,16 @@ interface SidebarProps {
     activeTab: string;
     setActiveTab: (tab: string) => void;
     onLogout: () => void;
+    notificationCounts?: {
+        pendingRestaurants: number;
+        pendingRiders: number;
+        newOrders: number;
+        newUsers: number;
+        totalNotifications: number;
+    };
 }
 
-export default function Sidebar({ activeTab, setActiveTab, onLogout }: SidebarProps) {
+export default function Sidebar({ activeTab, setActiveTab, onLogout, notificationCounts }: SidebarProps) {
     const [expandedMenus, setExpandedMenus] = useState<string[]>(['restaurants', 'riders', 'orders']);
     const [isMobileOpen, setIsMobileOpen] = useState(false);
     const [userRole] = useState<string>(() => {
@@ -153,6 +160,23 @@ export default function Sidebar({ activeTab, setActiveTab, onLogout }: SidebarPr
                                                 ? 'text-[#111827]'
                                                 : 'text-[#6B7280]'
                                         }`}>{item.label}</span>
+                                        
+                                        {/* Main Badge for Parents */}
+                                        {item.id === 'restaurants' && (notificationCounts?.pendingRestaurants || 0) > 0 && (
+                                            <span className="ml-2 px-1.5 py-0.5 text-[10px] font-bold bg-orange-500 text-white rounded-full">
+                                                {notificationCounts?.pendingRestaurants}
+                                            </span>
+                                        )}
+                                        {item.id === 'riders' && (notificationCounts?.pendingRiders || 0) > 0 && (
+                                            <span className="ml-2 px-1.5 py-0.5 text-[10px] font-bold bg-orange-500 text-white rounded-full">
+                                                {notificationCounts?.pendingRiders}
+                                            </span>
+                                        )}
+                                        {item.id === 'orders' && (notificationCounts?.newOrders || 0) > 0 && (
+                                            <span className="ml-2 px-1.5 py-0.5 text-[10px] font-bold bg-orange-500 text-white rounded-full">
+                                                {notificationCounts?.newOrders}
+                                            </span>
+                                        )}
                                     </div>
                                     {item.subItems && (
                                         <div className={`transition-transform duration-300 ${expandedMenus.includes(item.id) ? 'rotate-180' : ''}`}>
@@ -171,13 +195,30 @@ export default function Sidebar({ activeTab, setActiveTab, onLogout }: SidebarPr
                                             <button
                                                 key={sub.id}
                                                 onClick={() => setActiveTab(sub.id)}
-                                                className={`w-full text-left px-4 py-2.5 rounded-xl text-[13px] font-bold transition-all duration-200
+                                                className={`w-full flex items-center justify-between px-4 py-2.5 rounded-xl text-[13px] font-bold transition-all duration-200
                                                     ${activeTab === sub.id
                                                         ? 'text-[#FF6A00] bg-orange-50/50 shadow-sm shadow-orange-500/5'
                                                         : 'text-[#9CA3AF] hover:text-[#6B7280] hover:bg-gray-50'
                                                     }`}
                                             >
-                                                {sub.label}
+                                                <span>{sub.label}</span>
+                                                
+                                                {/* Sub-item Badges */}
+                                                {sub.id === 'restaurants-pending' && (notificationCounts?.pendingRestaurants || 0) > 0 && (
+                                                    <span className="px-1.5 py-0.5 text-[9px] bg-orange-100 text-orange-600 rounded-full">
+                                                        {notificationCounts?.pendingRestaurants}
+                                                    </span>
+                                                )}
+                                                {sub.id === 'riders-pending' && (notificationCounts?.pendingRiders || 0) > 0 && (
+                                                    <span className="px-1.5 py-0.5 text-[9px] bg-orange-100 text-orange-600 rounded-full">
+                                                        {notificationCounts?.pendingRiders}
+                                                    </span>
+                                                )}
+                                                {sub.id === 'orders-live' && (notificationCounts?.newOrders || 0) > 0 && (
+                                                    <span className="px-1.5 py-0.5 text-[9px] bg-orange-100 text-orange-600 rounded-full">
+                                                        {notificationCounts?.newOrders}
+                                                    </span>
+                                                )}
                                             </button>
                                         ))}
                                     </div>

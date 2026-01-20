@@ -9,6 +9,7 @@ const { calculateDistance } = require('../utils/locationUtils');
 const { createNotification } = require('./notificationController');
 
 const { triggerEvent } = require('../socket');
+const { notifyAdmins } = require('../utils/adminNotifier');
 
 /**
  * Normalizes image/video paths to store only the relative path
@@ -70,6 +71,12 @@ const registerRider = async (req, res) => {
 
         // Notify admins about new registration
         triggerEvent('admin', 'rider_registered', rider);
+        await notifyAdmins(
+            'New Rider Registration',
+            `A new rider "${fullName}" has registered and is pending approval.`,
+            'new_rider',
+            { riderId: rider._id, name: fullName }
+        );
 
         res.status(201).json(rider);
     } catch (error) {

@@ -57,6 +57,13 @@ interface Stats {
 export default function AdminDashboard() {
     const [activeTab, setActiveTab] = useState('dashboard');
     const [stats, setStats] = useState<Stats | null>(null);
+    const [notificationCounts, setNotificationCounts] = useState({
+        pendingRestaurants: 0,
+        pendingRiders: 0,
+        newOrders: 0,
+        newUsers: 0,
+        totalNotifications: 0
+    });
     const [loading, setLoading] = useState(true);
     const [mounted, setMounted] = useState(false);
     const router = useRouter();
@@ -152,6 +159,16 @@ export default function AdminDashboard() {
                 updateStats();
             });
 
+            socket.on('notification_received', (data) => {
+                console.log('Admin notification received:', data);
+                playNotificationSound();
+                toast(data.message, {
+                    icon: data.type === 'new_order' ? '🛒' : data.type === 'new_restaurant' ? '🏪' : '👤',
+                    duration: 5000,
+                });
+                updateStats();
+            });
+
             socket.on('notification', (data) => {
                 if (data.type === 'success') toast.success(data.message);
                 else if (data.type === 'error') toast.error(data.message);
@@ -191,9 +208,15 @@ export default function AdminDashboard() {
             };
 
             console.log('Fetching stats from:', `${API_BASE_URL}/api/admin/stats`);
-            const res = await axios.get(`${API_BASE_URL}/api/admin/stats`, config);
-            console.log('Stats received:', res.data);
-            setStats(res.data);
+            const [statsRes, countsRes] = await Promise.all([
+                axios.get(`${API_BASE_URL}/api/admin/stats`, config),
+                axios.get(`${API_BASE_URL}/api/admin/notifications/counts`, config)
+            ]);
+
+            console.log('Stats received:', statsRes.data);
+            console.log('Counts received:', countsRes.data);
+            setStats(statsRes.data);
+            setNotificationCounts(countsRes.data);
         } catch (error: any) {
             console.error('Error fetching admin stats:', error);
             if (!error.response) {
@@ -296,7 +319,7 @@ export default function AdminDashboard() {
                 <div className="absolute top-[20%] left-[-5%] w-[25%] h-[25%] bg-gradient-to-br from-orange-500/5 to-pink-500/5 blur-[60px] rounded-full"></div>
             </div>
 
-            <Sidebar activeTab={activeTab} setActiveTab={handleTabChange} onLogout={handleLogout} />
+            <Sidebar activeTab={activeTab} setActiveTab={handleTabChange} onLogout={handleLogout} notificationCounts={notificationCounts} />
             
             <div className="flex-1 w-full md:ml-64 pt-16 md:pt-0 h-screen overflow-y-auto relative z-10 custom-scrollbar">
                 {renderView()}

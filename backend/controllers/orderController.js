@@ -10,6 +10,7 @@ const CODLedger = require('../models/CODLedger');
 const { calculateRiderEarning, calculateDeliveryFee } = require('../utils/paymentUtils');
 const { calculateDistance } = require('../utils/locationUtils');
 const { triggerEvent } = require('../socket');
+const { notifyAdmins } = require('../utils/adminNotifier');
 const { createNotification } = require('./notificationController');
 
 // @desc    Create new order
@@ -157,10 +158,14 @@ const createOrder = async (req, res) => {
         triggerEvent(`restaurant-${restaurant}`, 'newOrder', populatedOrder);
         triggerEvent('admin', 'order_created', populatedOrder);
         triggerEvent('admin', 'stats_updated', { type: 'order_created', orderId: populatedOrder._id });
-        triggerEvent('admin', 'notification', {
-            type: 'info',
-            message: `New order #${populatedOrder._id.toString().slice(-5)} placed for Rs. ${populatedOrder.totalPrice}`
-        });
+        
+        // Detailed admin notification (Email + Socket)
+        await notifyAdmins(
+            'New Order Placed',
+            `A new order #${populatedOrder._id.toString().slice(-5)} has been placed for Rs. ${populatedOrder.totalPrice}.`,
+            'new_order',
+            { orderId: populatedOrder._id, amount: populatedOrder.totalPrice }
+        );
 
         res.status(201).json(populatedOrder);
     } catch (error) {

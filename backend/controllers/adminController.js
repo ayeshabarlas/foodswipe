@@ -13,6 +13,28 @@ const Payout = require('../models/Payout');
 const { triggerEvent } = require('../socket');
 const AuditLog = require('../models/AuditLog');
 const Admin = require('../models/Admin');
+const sendEmail = require('../utils/email');
+
+// Helper to notify admin
+const notifyAdmin = async (subject, message) => {
+    try {
+        // Find super admins
+        const superAdmins = await Admin.find({ role: 'super-admin' });
+        const adminEmails = superAdmins.map(admin => admin.email);
+
+        if (adminEmails.length > 0) {
+            await sendEmail({
+                email: adminEmails.join(','),
+                subject: `[FoodSwipe Admin Alert] ${subject}`,
+                message: message,
+                html: `<h3>FoodSwipe Admin Alert</h3><p>${message}</p>`
+            });
+            console.log(`Admin alert sent to: ${adminEmails.join(',')}`);
+        }
+    } catch (error) {
+        console.error('Error sending admin notification:', error);
+    }
+};
 
 // @desc    Get all pending restaurants
 // @route   GET /api/admin/restaurants/pending
@@ -1129,6 +1151,38 @@ const blockRider = async (req, res) => {
 };
 
 /**
+ * @desc    Get counts for admin dashboard badges
+ * @route   GET /api/admin/notification-counts
+ */
+const getNotificationCounts = async (req, res) => {
+    try {
+        const [
+            pendingRestaurants,
+            pendingRiders,
+            newOrders,
+            newUsers
+        ] = await Promise.all([
+            Restaurant.countDocuments({ status: 'pending' }),
+            Rider.countDocuments({ status: 'pending' }),
+            Order.countDocuments({ orderStatus: 'placed' }),
+            User.countDocuments({ 
+                createdAt: { $gte: new Date(Date.now() - 24 * 60 * 60 * 1000) } 
+            })
+        ]);
+
+        res.json({
+            pendingRestaurants,
+            pendingRiders,
+            newOrders,
+            newUsers,
+            totalNotifications: pendingRestaurants + pendingRiders + newOrders
+        });
+    } catch (error) {
+        res.status(500).json({ message: 'Error fetching notification counts', error: error.message });
+    }
+};
+
+/**
  * @desc    NUCLEAR WIPE - DANGER!
  * @route   GET /api/admin/nuclear-wipe
  */
@@ -1195,5 +1249,6 @@ module.exports = {
     getCODLedger,
     settleRider,
     blockRider,
+    getNotificationCounts,
     nuclearWipe
 };

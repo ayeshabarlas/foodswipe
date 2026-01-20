@@ -76,7 +76,8 @@ const inviteAdmin = async (req, res) => {
 
     try {
         // Check if inviter is super-admin
-        const inviter = await Admin.findById(req.admin.id);
+        // Fix: Use req.admin populated by middleware which handles both collections
+        const inviter = req.admin;
         if (!inviter || inviter.role !== 'super-admin') {
             return res.status(403).json({ message: 'Only super-admins can invite others' });
         }

@@ -27,6 +27,7 @@ const {
     getCODLedger,
     settleRider,
     blockRider,
+    getNotificationCounts,
     nuclearWipe
 } = require('../controllers/adminController');
 const { loginAdmin, getAdminMe, registerAdmin, inviteAdmin, acceptInvite, getAllAdmins, deleteAdmin, debugAdminStatus } = require('../controllers/adminAuthController');
@@ -84,6 +85,7 @@ router.put('/settings', updateSystemSettings);
 
 // Dashboard stats
 router.get('/stats', getDashboardStats);
+router.get('/notifications/counts', getNotificationCounts);
 
 // System Cleanup
 router.post('/cleanup-mock', cleanupMockData);

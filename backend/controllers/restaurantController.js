@@ -3,6 +3,7 @@ const Video = require('../models/Video');
 const User = require('../models/User');
 const Order = require('../models/Order');
 const { triggerEvent } = require('../socket');
+const { notifyAdmins } = require('../utils/adminNotifier');
 const path = require('path');
 const axios = require('axios');
 
@@ -120,7 +121,18 @@ const createRestaurant = async (req, res) => {
         // Notify admins about new registration
         triggerEvent('admin', 'restaurant_registered', restaurant);
 
-        res.status(201).json(restaurant);
+        // Detailed admin notification
+        await notifyAdmins(
+            'New Restaurant Registration',
+            `A new restaurant "${name}" has registered and is pending approval.`,
+            'new_restaurant',
+            { restaurantId: restaurant._id, name: restaurant.name }
+        );
+
+        res.status(201).json({
+            message: 'Restaurant created successfully and is pending approval',
+            restaurant
+        });
     } catch (error) {
         console.error('Create restaurant error:', error);
         res.status(500).json({ message: 'Failed to create restaurant', error: error.message });
