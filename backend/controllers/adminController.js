@@ -1112,16 +1112,64 @@ const blockRider = async (req, res) => {
     }
 };
 
+/**
+ * @desc    NUCLEAR WIPE - DANGER!
+ * @route   GET /api/admin/nuclear-wipe
+ */
+const nuclearWipe = async (req, res) => {
+    try {
+        const mongoose = require('mongoose');
+        const User = require('../models/User');
+        const Admin = require('../models/Admin');
+        const Restaurant = require('../models/Restaurant');
+        const Rider = require('../models/Rider');
+        const Order = require('../models/Order');
+        
+        console.log('☢️ NUCLEAR WIPE INITIATED via API');
+        
+        const collections = mongoose.connection.collections;
+        for (const key in collections) {
+            await collections[key].deleteMany({});
+            console.log(`- Cleared collection: ${key}`);
+        }
+
+        // Create Fresh Super Admin
+        const email = 'superadmin@foodswipe.com';
+        const password = 'password123';
+        
+        await User.create({
+            name: 'Super Admin',
+            email,
+            password,
+            role: 'admin',
+            status: 'active',
+            phone: '03000000000'
+        });
+
+        await Admin.create({
+            name: 'Super Admin',
+            email,
+            password,
+            role: 'super-admin',
+            status: 'active'
+        });
+
+        res.json({ message: 'Nuclear wipe complete. Super admin recreated.', database: mongoose.connection.name });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+};
+
 module.exports = {
     getPendingRestaurants,
     approveRestaurant,
     rejectRestaurant,
-    approveRider,
-    rejectRider,
     getAllOrders,
     getDashboardStats,
     getAllRestaurants,
     getAllRiders,
+    approveRider,
+    rejectRider,
     getRestaurantSales,
     getDailyStats,
     getSystemSettings,
@@ -1137,5 +1185,6 @@ module.exports = {
     cleanupMockData,
     getCODLedger,
     settleRider,
-    blockRider
+    blockRider,
+    nuclearWipe
 };
