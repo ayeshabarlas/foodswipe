@@ -222,20 +222,28 @@ const loginAdmin = async (req, res) => {
 
     try {
         const loginEmail = (email || identifier || "").trim().toLowerCase();
-        console.log(`=== ADMIN LOGIN ATTEMPT: ${loginEmail} ===`);
+        console.log(`\n=== [DEBUG] ADMIN LOGIN ATTEMPT ===`);
+        console.log(`- Raw Email: "${email}"`);
+        console.log(`- Raw Identifier: "${identifier}"`);
+        console.log(`- Processed Email: "${loginEmail}"`);
+        console.log(`- Password Provided: ${password ? 'YES' : 'NO'}`);
 
         if (!loginEmail || !password) {
+            console.log('❌ Login failed: Missing email or password');
             return res.status(400).json({ message: 'Email and password are required' });
         }
 
-        // 1. Check Admin Collection first
+        // 1. Check Admin Collection
+        console.log(`- Searching Admin collection for: ${loginEmail}`);
         let admin = await Admin.findOne({
-            email: { $regex: new RegExp(`^${loginEmail}$`, 'i') }
+            email: { $regex: new RegExp(`^${loginEmail.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}$`, 'i') }
         });
 
         if (admin) {
-            console.log(`Admin found in Admin collection: ${admin.email}, Role: ${admin.role}`);
+            console.log(`- ✅ Found in Admin collection: ${admin.email}, Role: ${admin.role}`);
             const isMatch = await admin.matchPassword(password);
+            console.log(`- Password Match: ${isMatch}`);
+            
             if (isMatch) {
                 const userData = {
                     _id: admin._id,
@@ -245,50 +253,75 @@ const loginAdmin = async (req, res) => {
                     isAdmin: true,
                     token: generateToken(admin._id),
                 };
-                console.log('Sending admin login response:', JSON.stringify(userData, null, 2));
+                console.log('- ✅ Admin login successful');
                 return res.json(userData);
             } else {
+                console.log('- ❌ Password mismatch in Admin collection');
                 return res.status(401).json({ message: 'Invalid admin credentials' });
             }
         }
 
-        // 2. Check User Collection if not found in Admin collection
-        console.log(`Checking User collection for ${loginEmail}...`);
+        // 2. Check User Collection
+        console.log(`- Not found in Admin collection. Searching User collection for: ${loginEmail}`);
         const user = await User.findOne({
-            email: { $regex: new RegExp(`^${loginEmail}$`, 'i') },
+            email: { $regex: new RegExp(`^${loginEmail.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}$`, 'i') },
             role: { $in: ['admin', 'super-admin', 'finance-admin', 'support-admin', 'restaurant-manager'] }
         });
 
         if (user) {
-            // User model uses matchPassword or bcrypt.compare?
-            // Usually User model has matchPassword method too.
+            console.log(`- ✅ Found in User collection: ${user.email}, Role: ${user.role}`);
             const isMatch = await user.matchPassword(password);
-            console.log(`Admin (User Coll) password match for ${loginEmail}: ${isMatch}`);
+            console.log(`- Password Match: ${isMatch}`);
 
             if (isMatch) {
                 const userData = {
                     _id: user._id,
                     name: user.name,
                     email: user.email,
-                    role: 'admin',
+                    role: user.role === 'admin' ? 'admin' : user.role, // Use their actual role
                     isAdmin: true,
                     token: generateToken(user._id),
                 };
-                console.log('Sending user-as-admin login response:', JSON.stringify(userData, null, 2));
+                console.log('- ✅ User-as-admin login successful');
                 return res.json(userData);
             } else {
+                console.log('- ❌ Password mismatch in User collection');
                 return res.status(401).json({ message: 'Invalid admin credentials' });
             }
         }
 
-        console.log(`Admin login failed: No admin/user-admin found for ${loginEmail}`);
+        console.log(`- ❌ No admin found in either collection for: ${loginEmail}`);
         return res.status(401).json({ 
-            message: "Account not registered as Admin. Please check your credentials." 
+            message: `Account not registered as Admin (${loginEmail}). Please check your credentials.` 
         });
 
     } catch (err) {
-        console.error('Admin login error:', err);
+        console.error('❌ Admin login error:', err);
         return res.status(500).json({ message: err.message });
+    }
+};
+
+/**
+ * @desc    Debug endpoint to check if an admin exists
+ */
+const debugAdminStatus = async (req, res) => {
+    try {
+        const adminCount = await Admin.countDocuments();
+        const userAdminCount = await User.countDocuments({ 
+            role: { $in: ['admin', 'super-admin', 'finance-admin', 'support-admin', 'restaurant-manager'] } 
+        });
+        
+        const superAdmin = await Admin.findOne({ email: 'superadmin@foodswipe.com' });
+        
+        res.json({
+            adminCount,
+            userAdminCount,
+            superAdminExists: !!superAdmin,
+            superAdminRole: superAdmin?.role,
+            timestamp: new Date()
+        });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
     }
 };
 

@@ -28,9 +28,10 @@ const {
     settleRider,
     blockRider
 } = require('../controllers/adminController');
-const { loginAdmin, getAdminMe, registerAdmin, inviteAdmin, acceptInvite, getAllAdmins, deleteAdmin } = require('../controllers/adminAuthController');
+const { loginAdmin, getAdminMe, registerAdmin, inviteAdmin, acceptInvite, getAllAdmins, deleteAdmin, debugAdminStatus } = require('../controllers/adminAuthController');
 
 // Public routes
+router.get('/debug-status', debugAdminStatus);
 router.post('/register', registerAdmin);
 router.post('/login', loginAdmin);
 router.post('/accept-invite', acceptInvite);
