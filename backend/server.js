@@ -204,8 +204,5 @@ const startServer = async () => {
         console.error('🔥 STARTUP ERROR:', err);
     }
 };
-
-startServer();
-
-// For Vercel Serverless Functions
- module.exports = app;
+ 
+ startServer();
