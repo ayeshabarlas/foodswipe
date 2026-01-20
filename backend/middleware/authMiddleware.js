@@ -25,7 +25,13 @@ const protect = async (req, res, next) => {
             if (!req.user) {
                 req.admin = await Admin.findById(decoded.id).select('-password');
                 if (req.admin) {
-                    req.user = { _id: req.admin._id, role: req.admin.role, name: req.admin.name };
+                    // Populate req.user as well for compatibility
+                    req.user = { 
+                        _id: req.admin._id, 
+                        role: req.admin.role, 
+                        name: req.admin.name,
+                        email: req.admin.email
+                    };
                 }
             }
 

@@ -423,6 +423,11 @@ const verifyOtp = async (req, res) => {
                 role: user.role,
                 createdAt: user.createdAt
             });
+            triggerEvent('admin', 'stats_updated');
+            triggerEvent('admin', 'notification', {
+                type: 'info',
+                message: `New ${user.role} registered: ${user.name}`
+            });
 
             // Audit Log
             await AuditLog.create({
@@ -664,6 +669,11 @@ const verifyFirebaseToken = async (req, res) => {
                 email: user.email,
                 role: user.role,
                 createdAt: user.createdAt
+            });
+            triggerEvent('admin', 'stats_updated');
+            triggerEvent('admin', 'notification', {
+                type: 'info',
+                message: `New ${user.role} registered: ${user.name}`
             });
 
             // Audit Log

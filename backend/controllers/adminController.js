@@ -48,6 +48,11 @@ const approveRestaurant = async (req, res) => {
 
         // Notify admins about status update
         triggerEvent('admin', 'restaurant_updated', restaurant);
+        triggerEvent('admin', 'stats_updated');
+        triggerEvent('admin', 'notification', {
+            type: 'info',
+            message: `Restaurant ${restaurant.name} approved`
+        });
 
         res.json({ message: 'Restaurant approved successfully', restaurant });
     } catch (error) {
@@ -76,6 +81,11 @@ const rejectRestaurant = async (req, res) => {
 
         // Notify admins about status update
         triggerEvent('admin', 'restaurant_updated', restaurant);
+        triggerEvent('admin', 'stats_updated');
+        triggerEvent('admin', 'notification', {
+            type: 'warning',
+            message: `Restaurant ${restaurant.name} rejected: ${reason || 'No reason provided'}`
+        });
 
         res.json({ message: 'Restaurant rejected', restaurant });
     } catch (error) {
@@ -100,6 +110,11 @@ const approveRider = async (req, res) => {
         // Notify admins about status update
         triggerEvent('admin', 'rider_updated', rider);
         triggerEvent('admin', 'user_updated');
+        triggerEvent('admin', 'stats_updated');
+        triggerEvent('admin', 'notification', {
+            type: 'info',
+            message: `Rider ${rider.fullName} approved`
+        });
 
         res.json({ message: 'Rider approved successfully', rider });
     } catch (error) {
