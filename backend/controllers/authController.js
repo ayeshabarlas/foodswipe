@@ -3,6 +3,7 @@
 
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs'); // used by User model for hashing
+// Auth Controller - Version 2.0.1 (Force Redeploy)
 const User = require('../models/User');
 const Otp = require('../models/Otp');
 const { admin } = require('../config/firebase');
