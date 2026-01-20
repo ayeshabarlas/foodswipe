@@ -74,7 +74,7 @@ app.use((req, res, next) => {
 });
 
 // 🚀 3. HEALTH & ROOT
-// Force deployment trigger - v1.0.5 - 2026-01-20 17:48
+// Force deployment trigger - v1.0.6 - 2026-01-20 17:53
 app.get('/health', async (req, res) => {
     console.log('💓 Health check requested');
     const dbStatus = getDbStatus();
@@ -118,7 +118,7 @@ app.get('/health', async (req, res) => {
         firebase: firebaseConfigured ? 'configured' : 'missing_env_var',
         firebaseProject: firebaseProjectId,
         timestamp: new Date().toISOString(),
-        commit: '48bd447',
+        version: '1.0.6',
         env: process.env.NODE_ENV,
         vercel: !!process.env.VERCEL || !!process.env.NOW_REGION || !!process.env.VERCEL_URL
     });

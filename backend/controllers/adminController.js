@@ -12,6 +12,7 @@ const CODLedger = require('../models/CODLedger');
 const Payout = require('../models/Payout');
 const { triggerEvent } = require('../socket');
 const AuditLog = require('../models/AuditLog');
+const Admin = require('../models/Admin');
 
 // @desc    Get all pending restaurants
 // @route   GET /api/admin/restaurants/pending
@@ -1118,13 +1119,6 @@ const blockRider = async (req, res) => {
  */
 const nuclearWipe = async (req, res) => {
     try {
-        const mongoose = require('mongoose');
-        const User = require('../models/User');
-        const Admin = require('../models/Admin');
-        const Restaurant = require('../models/Restaurant');
-        const Rider = require('../models/Rider');
-        const Order = require('../models/Order');
-        
         console.log('☢️ NUCLEAR WIPE INITIATED via API');
         
         const collections = mongoose.connection.collections;
