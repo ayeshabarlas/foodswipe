@@ -357,5 +357,6 @@ module.exports = {
     inviteAdmin, 
     acceptInvite, 
     getAllAdmins, 
-    deleteAdmin 
+    deleteAdmin,
+    debugAdminStatus
 };
