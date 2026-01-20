@@ -219,11 +219,6 @@ const deleteAdmin = async (req, res) => {
  */
 const loginAdmin = async (req, res) => {
     const { identifier, email, password } = req.body;
-    const loginEmail = email || identifier;
-
-    if (!loginEmail || !password) {
-        return res.status(400).json({ message: 'Email and password are required' });
-    }
 
     try {
         const loginEmail = (email || identifier || "").trim().toLowerCase();
