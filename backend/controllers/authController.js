@@ -16,6 +16,42 @@ const generateToken = (id) => {
 };
 
 /**
+ * @desc    Helper to ensure role-specific profiles exist
+ */
+const ensureRoleProfile = async (user) => {
+    try {
+        const activeRole = user.role;
+        if (activeRole === 'rider') {
+            const Rider = require('../models/Rider');
+            let rider = await Rider.findOne({ user: user._id });
+            if (!rider) {
+                console.log(`[AutoRepair] Creating missing rider profile for ${user.email}`);
+                await Rider.create({
+                    user: user._id,
+                    fullName: user.name,
+                    phone: user.phone || '',
+                    verificationStatus: 'approved'
+                });
+            }
+        } else if (activeRole === 'restaurant') {
+            const Restaurant = require('../models/Restaurant');
+            let restaurant = await Restaurant.findOne({ owner: user._id });
+            if (!restaurant) {
+                console.log(`[AutoRepair] Creating missing restaurant profile for ${user.email}`);
+                await Restaurant.create({
+                    owner: user._id,
+                    name: `${user.name}'s Restaurant`,
+                    contact: user.phone || '',
+                    status: 'active'
+                });
+            }
+        }
+    } catch (err) {
+        console.error('Error in ensureRoleProfile:', err);
+    }
+};
+
+/**
  * @desc    Register a new user (email must be unique per role, phone unique globally)
  * @route   POST /api/auth/register
  * @access  Public
@@ -131,18 +167,39 @@ const loginUser = async (req, res) => {
         console.log(`Identifier: "${identifierLower}"`);
         console.log(`Requested Role: "${role}"`);
 
-        // 1. Find the user by email or phone.
-        // We look for any user with this email or phone, then we'll check the role.
-        const user = await User.findOne({
+        // 1. Find the user by email or phone, AND role if provided.
+        const query = {
             $or: [
                 { email: { $regex: new RegExp(`^${identifierLower}$`, 'i') } },
                 { phone: identifier.trim() },
                 { phoneNumber: identifier.trim() }
             ]
-        });
+        };
+        
+        // If role is provided, we must match it because a single email can have multiple accounts with different roles
+        if (role && role !== 'admin' && role !== 'super-admin') {
+            query.role = role;
+        }
+
+        const user = await User.findOne(query);
 
         if (!user) {
-            console.log(`Login failed: User NOT found for "${identifierLower}"`);
+            console.log(`Login failed: User NOT found for "${identifierLower}" with role "${role}"`);
+            
+            // Check if user exists with ANY role to give a better error message
+            const existingAnyRole = await User.findOne({
+                $or: [
+                    { email: { $regex: new RegExp(`^${identifierLower}$`, 'i') } },
+                    { phone: identifier.trim() }
+                ]
+            });
+            
+            if (existingAnyRole) {
+                return res.status(401).json({ 
+                    message: `Account found as "${existingAnyRole.role}", but you are trying to login as "${role}". Please select the correct role.` 
+                });
+            }
+            
             return res.status(401).json({ message: 'Invalid credentials' });
         }
 
@@ -179,7 +236,9 @@ const loginUser = async (req, res) => {
             }
         } else {
             console.log(`Login failed: No password set for ${user.email}`);
-            return res.status(401).json({ message: 'No password set for this account. Please use OTP or social login.' });
+            let suggestion = 'Please use OTP or social login.';
+            if (user.firebaseUid) suggestion = 'This account was created with Google. Please use Google Sign-In.';
+            return res.status(401).json({ message: `No password set for this account. ${suggestion}` });
         }
 
         console.log('✅ Login successful:', { id: user._id, email: user.email, role: user.role });
@@ -197,38 +256,8 @@ const loginUser = async (req, res) => {
             details: { method: 'email/phone' }
         });
 
-        // Smart Linking logic...
-        let activeRole = user.role;
-        const userEmail = user.email?.toLowerCase();
-        const userPhone = user.phone || user.phoneNumber;
-        const normalizedPhone = userPhone ? userPhone.replace(/[\s\-\+\(\)]/g, '').slice(-10) : null;
-        
         // Ensure role-specific profile exists (AUTO-REPAIR)
-        if (activeRole === 'rider') {
-            const Rider = require('../models/Rider');
-            let rider = await Rider.findOne({ user: user._id });
-            if (!rider) {
-                console.log(`[AutoRepair] Creating missing rider profile for ${user.email}`);
-                await Rider.create({
-                    user: user._id,
-                    fullName: user.name,
-                    phone: user.phone || '',
-                    verificationStatus: 'approved'
-                });
-            }
-        } else if (activeRole === 'restaurant') {
-            const Restaurant = require('../models/Restaurant');
-            let restaurant = await Restaurant.findOne({ owner: user._id });
-            if (!restaurant) {
-                console.log(`[AutoRepair] Creating missing restaurant profile for ${user.email}`);
-                await Restaurant.create({
-                    owner: user._id,
-                    name: `${user.name}'s Restaurant`,
-                    contact: user.phone || '',
-                    status: 'active'
-                });
-            }
-        }
+        await ensureRoleProfile(user);
 
         return res.json({ 
             _id: user._id, 
@@ -237,7 +266,7 @@ const loginUser = async (req, res) => {
             phone: user.phone, 
             phoneVerified: user.phoneVerified, 
             phoneNumber: user.phoneNumber, 
-            role: activeRole,
+            role: user.role,
             token: generateToken(user._id) 
         });
     } catch (err) {
@@ -677,6 +706,9 @@ const verifyFirebaseToken = async (req, res) => {
         // Update last login timestamp
         user.lastLogin = new Date();
         await user.save();
+
+        // Ensure role-specific profile exists (AUTO-REPAIR)
+        await ensureRoleProfile(user);
 
         return res.json({ verified: true, type, token: generateToken(user._id), user: { _id: user._id, name: user.name, email: user.email, phone: user.phone, phoneVerified: user.phoneVerified, role: user.role } });
     } catch (err) {

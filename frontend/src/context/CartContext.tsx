@@ -38,6 +38,13 @@ export const CartProvider = ({ children }: { children: React.ReactNode }) => {
         if (savedCart) {
             setCart(JSON.parse(savedCart));
         }
+
+        const handleCartCleared = () => {
+            setCart([]);
+            setAppliedVoucher(null);
+        };
+        window.addEventListener('cartCleared', handleCartCleared);
+        return () => window.removeEventListener('cartCleared', handleCartCleared);
     }, []);
 
     // Save cart to local storage whenever it changes

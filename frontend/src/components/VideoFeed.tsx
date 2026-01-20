@@ -504,6 +504,17 @@ export default function VideoFeed() {
             
             if (res.data && res.data.videos) {
                 setDishes(res.data.videos);
+                
+                // If we have items in cart, but the feed is empty and no filters are active,
+                // it means there are no restaurants in the system. Clear the cart to avoid stale items.
+                if (res.data.videos.length === 0 && !activeSearch && activeCategory === 'All') {
+                    console.log('🧹 No restaurants found in system. Clearing stale cart.');
+                    const savedCart = localStorage.getItem('foodswipe_cart');
+                    if (savedCart && JSON.parse(savedCart).length > 0) {
+                        localStorage.removeItem('foodswipe_cart');
+                        window.dispatchEvent(new Event('cartCleared'));
+                    }
+                }
             } else {
                 console.warn('No videos found in feed response:', res.data);
                 setDishes([]);
