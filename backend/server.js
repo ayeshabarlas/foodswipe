@@ -74,7 +74,7 @@ app.use((req, res, next) => {
 });
 
 // 🚀 3. HEALTH & ROOT
-// Force deployment trigger - 2026-01-20 17:42 - Re-forcing build for new routes
+// Force deployment trigger - v1.0.5 - 2026-01-20 17:48
 app.get('/health', async (req, res) => {
     console.log('💓 Health check requested');
     const dbStatus = getDbStatus();
