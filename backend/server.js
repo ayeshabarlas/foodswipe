@@ -201,11 +201,11 @@ const startServer = async () => {
             }
         }
     } catch (err) {
-        console.error('🔥 Initialization Error:', err);
+        console.error('🔥 STARTUP ERROR:', err);
     }
 };
 
-console.log('🚀 Calling startServer()...');
 startServer();
 
-module.exports = app;
+// For Vercel Serverless Functions
+ module.exports = app;
