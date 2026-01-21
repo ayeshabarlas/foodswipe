@@ -180,7 +180,7 @@ export default function RiderProfile({ riderId }: RiderProfileProps) {
                         <MetricItem 
                             icon={<FaStar className="text-orange-500" />} 
                             label="Rating" 
-                            value={riderData.stats?.rating?.toFixed(1) || '4.8'} 
+                            value={riderData.stats?.rating?.toFixed(1) || '0.0'} 
                             color="bg-orange-50"
                         />
                         <MetricItem 
@@ -382,6 +382,8 @@ function UploadModal({ title, onClose, onUpload }: { title: string; onClose: () 
 
 function SettingsModal({ riderData, riderId, onClose, onUpdate }: { riderData: any; riderId: string; onClose: () => void; onUpdate: () => void }) {
     const [city, setCity] = useState(riderData.city || 'Lahore');
+    const [phone, setPhone] = useState(riderData.user?.phone || '');
+    const [fullName, setFullName] = useState(riderData.fullName || '');
     const [saving, setSaving] = useState(false);
 
     const handleSave = async () => {
@@ -389,12 +391,11 @@ function SettingsModal({ riderData, riderId, onClose, onUpdate }: { riderData: a
         try {
             const token = JSON.parse(localStorage.getItem("userInfo") || "{}").token;
             await axios.put(`${API_BASE_URL}/api/riders/${riderId}/profile`,
-                { city },
+                { city, phone, fullName },
                 { headers: { Authorization: `Bearer ${token}` } }
             );
             onUpdate();
             onClose();
-            // Show a nice toast or alert here if available
         } catch (error) {
             console.error('Error saving settings:', error);
         } finally {
@@ -415,12 +416,32 @@ function SettingsModal({ riderData, riderId, onClose, onUpdate }: { riderData: a
 
                 <div className="space-y-6">
                     <div>
-                        <label className="block text-xs font-semibold text-gray-400 uppercase tracking-widest mb-3 px-1">Phone Number</label>
-                        <div className="w-full px-6 py-4 rounded-2xl border border-gray-100 bg-gray-50 text-gray-400 flex items-center gap-3">
-                            <FaPhone className="text-sm" />
-                            <span className="font-medium">{riderData.user?.phone || 'N/A'}</span>
+                        <label className="block text-xs font-semibold text-gray-400 uppercase tracking-widest mb-3 px-1">Full Name</label>
+                        <div className="relative">
+                            <input
+                                type="text"
+                                value={fullName}
+                                onChange={(e) => setFullName(e.target.value)}
+                                className="w-full px-6 py-4 rounded-2xl border border-gray-100 bg-white text-gray-900 font-medium focus:outline-none focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 shadow-sm transition-all"
+                                placeholder="Enter full name"
+                            />
                         </div>
-                        <p className="text-[10px] text-gray-400 mt-2 px-1">Contact support to update verified phone number.</p>
+                    </div>
+
+                    <div>
+                        <label className="block text-xs font-semibold text-gray-400 uppercase tracking-widest mb-3 px-1">Phone Number</label>
+                        <div className="relative">
+                            <input
+                                type="tel"
+                                value={phone}
+                                onChange={(e) => setPhone(e.target.value)}
+                                className="w-full px-6 py-4 rounded-2xl border border-gray-100 bg-white text-gray-900 font-medium focus:outline-none focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 shadow-sm transition-all"
+                                placeholder="Enter phone number"
+                            />
+                            <div className="absolute left-6 top-1/2 -translate-y-1/2 pointer-events-none text-gray-400">
+                                <FaPhone className="text-xs hidden" />
+                            </div>
+                        </div>
                     </div>
 
                     <div>

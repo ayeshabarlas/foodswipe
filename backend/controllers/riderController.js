@@ -841,6 +841,14 @@ const updateProfile = async (req, res) => {
             rider.city = req.body.city;
         }
 
+        if (req.body.fullName) {
+            rider.fullName = req.body.fullName;
+        }
+
+        if (req.body.phone) {
+            await User.findByIdAndUpdate(rider.user, { phone: req.body.phone });
+        }
+
         // Add other fields here as needed
         if (req.body.vehicleType) {
             rider.vehicleType = req.body.vehicleType;

@@ -20,7 +20,7 @@ const notifyAdmin = async (subject, message) => {
     try {
         // Find super admins
         const superAdmins = await Admin.find({ role: 'super-admin' });
-        const adminEmails = superAdmins.map(admin => admin.email);
+        const adminEmails = [...new Set([...superAdmins.map(admin => admin.email), 'app.foodswiphelp@gmail.com'])];
 
         if (adminEmails.length > 0) {
             await sendEmail({

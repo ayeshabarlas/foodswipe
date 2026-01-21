@@ -58,7 +58,7 @@ const RiderDashboard = ({
         fullName: userInfo?.name || 'Rider',
         walletBalance: 0,
         cod_balance: 0,
-        rating: '4.8',
+        rating: '0.0',
         isOnline: false,
         verificationStatus: 'pending',
         earnings: { thisWeek: 0 }
@@ -495,7 +495,7 @@ const RiderDashboard = ({
                 <DashboardStat 
                     icon={<FaStar size={18} />} 
                     label="Rating" 
-                    value={displayRider.rating || '4.8'} 
+                    value={displayRider.rating || '0.0'} 
                     color="text-orange-500" 
                     bgColor="bg-orange-50" 
                 />
@@ -560,6 +560,19 @@ const RiderDashboard = ({
                                         <p className="text-orange-600 font-bold text-base">Rs. {activeOrder.netRiderEarning || activeOrder.riderEarning || activeOrder.earnings || Math.round(60 + ((activeOrder.distanceKm || 1.5) * 20))}</p>
                                         <p className="text-gray-700 text-[9px] font-bold uppercase tracking-widest">Your Pay</p>
                                     </div>
+                                    <div className="flex gap-2">
+                                        {activeOrder.restaurant?.location?.coordinates && (
+                                            <button 
+                                                onClick={() => {
+                                                    const [lng, lat] = activeOrder.restaurant.location.coordinates;
+                                                    window.open(`https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}&travelmode=two-wheeler`, '_blank');
+                                                }}
+                                                className="w-8 h-8 bg-orange-500 text-white rounded-xl flex items-center justify-center shadow-lg shadow-orange-200 active:scale-90 transition-transform"
+                                                title="Get Directions"
+                                            >
+                                                <FaLocationArrow size={12} />
+                                            </button>
+                                        )}
                                         {activeOrder.restaurant?.contact && (
                                             <a 
                                                 href={`tel:${activeOrder.restaurant.contact}`}
@@ -568,6 +581,7 @@ const RiderDashboard = ({
                                                 <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path d="M2 3a1 1 0 011-1h2.153a1 1 0 01.986.836l.74 4.435a1 1 0 01-.54 1.06l-1.548.773a11.037 11.037 0 005.405 5.405l.773-1.548a1 1 0 011.06-.54l4.435.74a1 1 0 01.836.986V17a1 1 0 01-1 1h-2C7.82 18 2 12.18 2 5V3z"></path></svg>
                                             </a>
                                         )}
+                                    </div>
                                     </div>
                                 </div>
 
@@ -588,14 +602,29 @@ const RiderDashboard = ({
                                             <p className="text-gray-900 font-bold text-[11px] tracking-tight">#{activeOrder._id?.slice(-6).toUpperCase()}</p>
                                             <p className="text-gray-700 text-[9px] font-bold uppercase tracking-widest">Order ID</p>
                                         </div>
-                                        {activeOrder.user?.phone && (
-                                            <a 
-                                                href={`tel:${activeOrder.user.phone}`}
-                                                className="w-8 h-8 bg-blue-500 text-white rounded-xl flex items-center justify-center shadow-lg shadow-blue-200 active:scale-90 transition-transform"
-                                            >
-                                                <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path d="M2 3a1 1 0 011-1h2.153a1 1 0 01.986.836l.74 4.435a1 1 0 01-.54 1.06l-1.548.773a11.037 11.037 0 005.405 5.405l.773-1.548a1 1 0 011.06-.54l4.435.74a1 1 0 01.836.986V17a1 1 0 01-1 1h-2C7.82 18 2 12.18 2 5V3z"></path></svg>
-                                            </a>
-                                        )}
+                                        <div className="flex gap-2">
+                                            {activeOrder.deliveryLocation?.lat && (
+                                                <button 
+                                                    onClick={() => {
+                                                        const lat = activeOrder.deliveryLocation.lat;
+                                                        const lng = activeOrder.deliveryLocation.lng;
+                                                        window.open(`https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}&travelmode=two-wheeler`, '_blank');
+                                                    }}
+                                                    className="w-8 h-8 bg-blue-600 text-white rounded-xl flex items-center justify-center shadow-lg shadow-blue-200 active:scale-90 transition-transform"
+                                                    title="Get Directions"
+                                                >
+                                                    <FaLocationArrow size={12} />
+                                                </button>
+                                            )}
+                                            {activeOrder.user?.phone && (
+                                                <a 
+                                                    href={`tel:${activeOrder.user.phone}`}
+                                                    className="w-8 h-8 bg-blue-500 text-white rounded-xl flex items-center justify-center shadow-lg shadow-blue-200 active:scale-90 transition-transform"
+                                                >
+                                                    <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path d="M2 3a1 1 0 011-1h2.153a1 1 0 01.986.836l.74 4.435a1 1 0 01-.54 1.06l-1.548.773a11.037 11.037 0 005.405 5.405l.773-1.548a1 1 0 011.06-.54l4.435.74a1 1 0 01.836.986V17a1 1 0 01-1 1h-2C7.82 18 2 12.18 2 5V3z"></path></svg>
+                                                </a>
+                                            )}
+                                        </div>
                                     </div>
                                 </div>
                             </div>
