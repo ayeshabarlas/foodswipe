@@ -320,8 +320,12 @@ export default function CheckoutModal({ isOpen, onClose, cart, total, subtotal, 
     // Service Fee from settings
     const serviceFee = settings?.serviceFee || 0;
     
-    // Recalculate total with dynamic delivery fee and service fee
-    const currentTotal = subtotal + calculatedFee + tax + serviceFee - discountAmount;
+    // Recalculate tax based on settings
+    const taxRate = settings?.isTaxEnabled ? (settings?.taxRate || 8) : 0;
+    const calculatedTax = Math.round((subtotal * taxRate) / 100);
+    
+    // Recalculate total with dynamic delivery fee, service fee, and dynamic tax
+    const currentTotal = subtotal + calculatedFee + calculatedTax + serviceFee - discountAmount;
 
     const handlePlaceOrder = async () => {
         console.log('handlePlaceOrder initiated');
@@ -1012,10 +1016,12 @@ export default function CheckoutModal({ isOpen, onClose, cart, total, subtotal, 
                                                     <span>Rs. {serviceFee.toLocaleString()}</span>
                                                 </div>
                                             )}
-                                            <div className="flex justify-between text-gray-800 font-medium">
-                                                <span>Tax (8%)</span>
-                                                <span>Rs. {tax.toLocaleString()}</span>
-                                            </div>
+                                            {taxRate > 0 && (
+                                                <div className="flex justify-between text-gray-800 font-medium">
+                                                    <span>Tax ({taxRate}%)</span>
+                                                    <span>Rs. {calculatedTax.toLocaleString()}</span>
+                                                </div>
+                                            )}
                                             {appliedVoucher && (
                                                 <div className="flex justify-between text-green-700 font-bold">
                                                     <span>Discount ({appliedVoucher.discount}%)</span>

@@ -16,7 +16,7 @@ export default function SystemWrapper({ children }: SystemWrapperProps) {
     // Check for app version
     useEffect(() => {
         if (settings?.appVersion) {
-            const currentAppVersion = process.env.NEXT_PUBLIC_APP_VERSION || '0.1.4';
+            const currentAppVersion = '1.0.0'; // Manually set to match settings default for now
             const minVersion = settings.appVersion.minVersion;
             
             if (isVersionLower(currentAppVersion, minVersion)) {

@@ -13,6 +13,10 @@ const settingsSchema = new mongoose.Schema({
     commission: { type: Number, default: 10 }, // Percentage
     commissionRate: { type: Number, default: 15 }, // New field for clearer naming
     
+    // Tax
+    taxRate: { type: Number, default: 8 }, // Percentage
+    isTaxEnabled: { type: Boolean, default: true },
+    
     // General
     supportEmail: { type: String, default: 'app.foodswipehelp@gmail.com' },
     supportPhone: { type: String, default: '+920000000000' },

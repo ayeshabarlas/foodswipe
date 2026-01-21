@@ -10,6 +10,8 @@ export default function SettingsView() {
     const [settings, setSettings] = useState<any>({
         commission: 10,
         commissionRate: 15,
+        taxRate: 8,
+        isTaxEnabled: true,
         supportEmail: 'app.foodswipehelp@gmail.com',
         supportPhone: '+920000000000',
         announcement: '',
@@ -221,6 +223,42 @@ export default function SettingsView() {
                                     className="w-full pl-10 pr-4 py-4 bg-gray-50 border border-gray-100 rounded-2xl outline-none focus:border-orange-500 transition-all font-bold"
                                 />
                             </div>
+                        </div>
+
+                        {/* Tax Configuration */}
+                        <div className="p-6 bg-purple-50 rounded-3xl border border-purple-100 space-y-4">
+                            <div className="flex items-center justify-between">
+                                <div className="flex items-center gap-3">
+                                    <div className="w-10 h-10 bg-purple-500 text-white rounded-xl flex items-center justify-center">
+                                        <FaPercentage />
+                                    </div>
+                                    <div>
+                                        <p className="font-bold text-purple-900">Tax Settings</p>
+                                        <p className="text-xs text-purple-700">Enable/Disable and set tax percentage</p>
+                                    </div>
+                                </div>
+                                <div 
+                                    className={`w-12 h-6 rounded-full p-1 transition-all duration-300 cursor-pointer ${settings.isTaxEnabled ? 'bg-purple-600' : 'bg-gray-300'}`}
+                                    onClick={() => setSettings({...settings, isTaxEnabled: !settings.isTaxEnabled})}
+                                >
+                                    <div className={`w-4 h-4 bg-white rounded-full transition-all duration-300 transform ${settings.isTaxEnabled ? 'translate-x-6' : 'translate-x-0'}`}></div>
+                                </div>
+                            </div>
+                            
+                            {settings.isTaxEnabled && (
+                                <div className="space-y-2 pt-2 border-t border-purple-100">
+                                    <label className="text-xs font-bold text-purple-700 uppercase ml-1">Tax Percentage (%)</label>
+                                    <div className="relative">
+                                        <FaPercentage className="absolute left-4 top-1/2 -translate-y-1/2 text-purple-400 text-sm" />
+                                        <input
+                                            type="number"
+                                            value={settings.taxRate}
+                                            onChange={(e) => setSettings({...settings, taxRate: Number(e.target.value)})}
+                                            className="w-full pl-10 pr-4 py-3 bg-white border border-purple-100 rounded-xl outline-none focus:border-purple-500 transition-all font-bold text-purple-900"
+                                        />
+                                    </div>
+                                </div>
+                            )}
                         </div>
                     </div>
                 </motion.div>
