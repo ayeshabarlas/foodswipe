@@ -219,19 +219,19 @@ const getDashboardStats = async (req, res) => {
                     totalRiderEarnings: { 
                         $sum: { 
                             $cond: [
-                                { $gt: [{ $ifNull: ['$riderEarning', 0] }, 200] },
+                                { $gt: [{ $toDouble: { $ifNull: ['$riderEarning', 0] } }, 200] },
                                 200,
-                                { $ifNull: ['$riderEarning', 0] }
+                                { $toDouble: { $ifNull: ['$riderEarning', 0] } }
                             ]
                         } 
                     },
-                    totalRestaurantEarnings: { $sum: { $ifNull: ['$restaurantEarning', 0] } },
+                    totalRestaurantEarnings: { $sum: { $toDouble: { $ifNull: ['$restaurantEarning', 0] } } },
                     totalDeliveryFees: { 
                         $sum: { 
                             $cond: [
-                                { $gt: [{ $ifNull: ['$deliveryFee', 0] }, 200] },
+                                { $gt: [{ $toDouble: { $ifNull: ['$deliveryFee', 0] } }, 200] },
                                 200,
-                                { $ifNull: ['$deliveryFee', 0] }
+                                { $toDouble: { $ifNull: ['$deliveryFee', 0] } }
                             ]
                         } 
                     }
@@ -1066,18 +1066,48 @@ const deleteRider = async (req, res) => {
 const cleanupMockData = async (req, res) => {
     try {
         console.log('🧹 Manual cleanup triggered by admin...');
+        
+        // 1. Run fixInflatedOrders logic first to clean up any bad historical data
+        console.log('🛠️ FIXING INFLATED ORDERS AS PART OF CLEANUP');
+        const ordersToFix = await Order.find({ 
+            $or: [
+                { riderEarning: { $gt: 200 } },
+                { deliveryFee: { $gt: 200 } }
+            ]
+        });
+        
+        for (let order of ordersToFix) {
+            if (order.riderEarning > 200) order.riderEarning = 200;
+            if (order.deliveryFee > 200) order.deliveryFee = 200;
+            await order.save();
+        }
+
+        // 2. Fix RiderWallets
+        const wallets = await RiderWallet.find({});
+        for (let wallet of wallets) {
+            const riderOrders = await Order.find({
+                rider: wallet.rider,
+                status: { $in: ['Delivered', 'Completed'] }
+            });
+            const correctTotalEarnings = riderOrders.reduce((sum, o) => sum + (o.riderEarning || 0), 0);
+            wallet.totalEarnings = correctTotalEarnings;
+            wallet.availableWithdraw = correctTotalEarnings;
+            await wallet.save();
+        }
+
+        // 3. Run original seeder if needed (optional, but let's keep it safe)
         const seedData = require('../seederFunction');
-        await seedData();
+        // await seedData(); // Commented out to avoid wiping everything, just fixing data
         
         // Notify all admins to refresh their dashboards
         triggerEvent('admin', 'restaurant_updated');
         triggerEvent('admin', 'stats_updated');
         triggerEvent('admin', 'notification', {
             type: 'success',
-            message: 'System cleanup completed successfully'
+            message: 'Data cleanup and inflation fix completed successfully'
         });
         
-        res.json({ message: 'Mock data cleanup triggered successfully. All dashboards will refresh.' });
+        res.json({ message: 'Data cleanup and inflation fix completed successfully. All dashboards will refresh.' });
     } catch (error) {
         console.error('Cleanup failed:', error);
         res.status(500).json({ message: 'Cleanup failed', error: error.message });
