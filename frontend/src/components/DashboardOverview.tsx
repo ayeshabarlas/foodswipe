@@ -103,7 +103,7 @@ export default function DashboardOverview({ stats, restaurant }: DashboardOvervi
                         </div>
                         <span className="text-[10px] font-bold text-white bg-white/20 px-2 py-1 rounded-lg uppercase tracking-wider backdrop-blur-md">Rating</span>
                     </div>
-                    <h3 className="text-3xl font-bold text-white mb-1 relative z-10">{restaurant?.rating || '4.8'}</h3>
+                    <h3 className="text-3xl font-bold text-white mb-1 relative z-10">{restaurant?.rating?.toFixed(1) || '0.0'}</h3>
                     <p className="text-xs font-bold text-white/80 uppercase tracking-widest relative z-10">Avg Review</p>
                 </motion.div>
             </motion.div>

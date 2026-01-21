@@ -28,8 +28,8 @@ const orderSchema = mongoose.Schema(
         shippingAddress: {
             address: { type: String, required: true },
             city: { type: String, required: true },
-            postalCode: { type: String, required: true },
-            country: { type: String, required: true },
+            postalCode: { type: String, required: false, default: '' },
+            country: { type: String, required: true, default: 'Pakistan' },
         },
         deliveryLocation: {
             lat: { type: Number },
@@ -111,10 +111,6 @@ const orderSchema = mongoose.Schema(
         gatewayFee: {
             type: Number,
             default: 0,
-        },
-        transactionId: {
-            type: String,
-            default: null,
         },
         isPaid: {
             type: Boolean,

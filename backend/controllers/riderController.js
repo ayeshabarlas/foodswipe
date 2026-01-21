@@ -138,6 +138,17 @@ const getMyProfile = async (req, res) => {
             await User.findByIdAndUpdate(req.user._id, { role: 'rider' });
         }
 
+        // SYNC COD BALANCE: Ensure rider sees correct COD balance from pending ledger
+        const CODLedger = require('../models/CODLedger');
+        const pendingTx = await CODLedger.find({ rider: rider._id, status: 'pending' });
+        const totalCod = pendingTx.reduce((sum, tx) => sum + (tx.cod_collected || 0), 0);
+        
+        if (rider.cod_balance !== totalCod) {
+            console.log(`[Rider] Syncing COD balance for ${rider.fullName}: ${rider.cod_balance} -> ${totalCod}`);
+            rider.cod_balance = totalCod;
+            await rider.save();
+        }
+
         res.json(rider);
     } catch (error) {
         console.error('[Rider] Error in getMyProfile:', error);

@@ -495,7 +495,7 @@ const RiderDashboard = ({
                 <DashboardStat 
                     icon={<FaStar size={18} />} 
                     label="Rating" 
-                    value="4.8" 
+                    value={displayRider.stats?.rating?.toFixed(1) || '0.0'} 
                     color="text-orange-500" 
                     bgColor="bg-orange-50" 
                 />

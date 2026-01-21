@@ -1,3 +1,4 @@
+const mongoose = require('mongoose');
 const Order = require('../models/Order');
 const User = require('../models/User');
 const Restaurant = require('../models/Restaurant');
@@ -78,6 +79,13 @@ const createOrder = async (req, res) => {
                 dishId = dishId.split('-')[0];
             }
 
+            // VALIDATION: Ensure dishId is a valid MongoDB ObjectId
+            if (!mongoose.Types.ObjectId.isValid(dishId)) {
+                console.error(`[Order] Invalid Dish ID detected: ${dishId}. Item name: ${item.name}`);
+                // We can't easily skip here inside Promise.all map without changing logic, 
+                // but let's at least log it. The Order.create will still fail if this is required.
+            }
+
             // If image is missing, try to fetch it from the Dish model
             if (!itemImage && dishId) {
                 try {
@@ -144,6 +152,13 @@ const createOrder = async (req, res) => {
         // Calculate tax based on dynamic settings
         const taxRate = settings.isTaxEnabled ? (settings.taxRate || 8) : 0;
         const finalTax = tax !== undefined ? tax : Math.round(subtotalValue * taxRate / 100);
+
+        console.log('[Order] Creating order with data:', {
+            user: req.user._id,
+            restaurant,
+            totalPrice: subtotalValue + finalDeliveryFee + finalServiceFee + finalTax,
+            paymentMethod: paymentMethod || 'COD'
+        });
 
         const order = await Order.create({
             user: req.user._id,

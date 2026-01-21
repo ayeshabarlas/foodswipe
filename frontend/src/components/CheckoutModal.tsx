@@ -263,8 +263,8 @@ export default function CheckoutModal({ isOpen, onClose, cart, total, subtotal, 
                         service.getPlacePredictions({
                             input: val,
                             componentRestrictions: { country: 'pk' },
-                            // Bias towards Pakistan center or remove bias if searching nationwide
-                            locationBias: { radius: 500000, center: { lat: 30.3753, lng: 69.3451 } }, // Center of Pakistan
+                            // Bias towards Lahore
+                            locationBias: { radius: 50000, center: { lat: 31.5204, lng: 74.3587 } }, // Lahore Center
                             sessionToken: (window as any).googleMapsSessionToken
                         }, async (predictions: any, status: any) => {
                             if (status === google.maps.places.PlacesServiceStatus.OK && predictions && predictions.length > 0) {
@@ -304,8 +304,8 @@ export default function CheckoutModal({ isOpen, onClose, cart, total, subtotal, 
                 params: {
                     q: `${val}, Pakistan`,
                     limit: 10,
-                    lat: 30.3753,
-                    lon: 69.3451,
+                    lat: 31.5204,
+                    lon: 74.3587,
                     location_bias_scale: 0.1,
                     lang: 'en'
                 }
@@ -337,8 +337,8 @@ export default function CheckoutModal({ isOpen, onClose, cart, total, subtotal, 
                         params: {
                             q: `${deliveryAddress}, Pakistan`,
                             limit: 1,
-                            lat: 30.3753,
-                            lon: 69.3451
+                            lat: 31.5204,
+                            lon: 74.3587
                         }
                     });
                     
@@ -737,8 +737,8 @@ export default function CheckoutModal({ isOpen, onClose, cart, total, subtotal, 
                                             <h3 className="font-semibold text-gray-900 flex items-center gap-2 text-base">
                                                 <FaMapMarkerAlt className="text-orange-500" /> Delivery Address
                                             </h3>
-                                            <span className="text-xs bg-green-50 text-green-600 px-2.5 py-1 rounded-full font-medium border border-green-100">
-                                                Nationwide Delivery
+                                            <span className="text-xs bg-orange-50 text-orange-600 px-2.5 py-1 rounded-full font-medium border border-orange-100">
+                                                Lahore Only
                                             </span>
                                         </div>
 
@@ -1076,14 +1076,7 @@ export default function CheckoutModal({ isOpen, onClose, cart, total, subtotal, 
                                                 <span>Rs. {subtotal.toLocaleString()}</span>
                                             </div>
                                             <div className="flex justify-between text-gray-800 font-medium">
-                                                <div className="flex flex-col">
-                                                    <span>Delivery Fee</span>
-                                                    {distance !== null && (
-                                                        <span className="text-[10px] text-gray-500 font-normal">
-                                                            Distance: {distance.toFixed(1)} km
-                                                        </span>
-                                                    )}
-                                                </div>
+                                                <span>Delivery Fee</span>
                                                 <span>Rs. {calculatedFee.toLocaleString()}</span>
                                             </div>
                                             {serviceFee > 0 && (

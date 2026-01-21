@@ -536,7 +536,7 @@ export default function RidersView() {
                                             </span>
                                             <div className="flex items-center gap-1.5 text-white bg-white/10 backdrop-blur-md px-3 py-1 rounded-full text-[13px] font-bold border border-white/10">
                                                 <FaStar className="text-yellow-400" />
-                                                4.8
+                                                {selectedRider.stats?.rating?.toFixed(1) || '0.0'}
                                             </div>
                                         </div>
                                     </div>

@@ -225,10 +225,11 @@ export default function CODSettlementView() {
                             ) : (
                                 filteredRiders.map((rider) => {
                                     // Calculate breakdown for this rider from pending transactions
-                                    const riderPendingTx = pendingTransactions.filter(tx => 
-                                        (typeof tx.rider === 'object' && tx.rider?._id === rider._id) || 
-                                        (typeof tx.rider === 'string' && tx.rider === rider._id)
-                                    );
+                                    const riderPendingTx = pendingTransactions.filter(tx => {
+                                        const txRiderId = typeof tx.rider === 'object' ? tx.rider?._id : tx.rider;
+                                        const currentRiderId = typeof rider._id === 'object' ? rider._id.toString() : rider._id;
+                                        return txRiderId === currentRiderId;
+                                    });
                                     const totalRiderFee = riderPendingTx.reduce((acc, tx) => acc + (tx.rider_earning || 0), 0);
                                     const totalAdminNet = riderPendingTx.reduce((acc, tx) => acc + (tx.admin_balance || 0), 0);
 

@@ -1119,6 +1119,19 @@ const cleanupMockData = async (req, res) => {
 // @access  Private/Admin
 const getCODLedger = async (req, res) => {
     try {
+        // 1. First, let's sync rider cod_balance from pending ledger entries to be sure
+        const allRiders = await Rider.find();
+        for (let rider of allRiders) {
+            const pendingTx = await CODLedger.find({ rider: rider._id, status: 'pending' });
+            const totalCod = pendingTx.reduce((sum, tx) => sum + (tx.cod_collected || 0), 0);
+            
+            // If there's a mismatch, update the rider's cod_balance
+            if (rider.cod_balance !== totalCod) {
+                rider.cod_balance = totalCod;
+                await rider.save();
+            }
+        }
+
         const riders = await Rider.find()
             .populate('user', 'name email phone')
             .select('fullName cod_balance earnings_balance settlementStatus lastSettlementDate user');
