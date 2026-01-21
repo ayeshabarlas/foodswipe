@@ -76,11 +76,13 @@ export default function CheckoutModal({ isOpen, onClose, cart, total, subtotal, 
 
                     const newFee = baseFee + (dist * perKmFee);
                     // Cap delivery fee based on settings
-                    setCalculatedFee(Math.min(maxFee, Math.round(newFee)));
+                    const finalFee = Math.min(maxFee, Math.round(newFee));
+                    setCalculatedFee(finalFee);
                 } else if (!deliveryLocation) {
                     // Fallback to base fee if no location selected yet
+                    const baseFee = settings?.deliveryFeeBase || 60;
                     const maxFee = settings?.deliveryFeeMax || 200;
-                    setCalculatedFee(Math.min(maxFee, deliveryFee));
+                    setCalculatedFee(Math.min(maxFee, baseFee));
                     setDistance(null);
                 }
             } catch (err) {
@@ -321,8 +323,9 @@ export default function CheckoutModal({ isOpen, onClose, cart, total, subtotal, 
     const serviceFee = settings?.serviceFee || 0;
     
     // Recalculate tax based on settings
-    const taxRate = settings?.isTaxEnabled ? (settings?.taxRate || 8) : 0;
-    const calculatedTax = Math.round((subtotal * taxRate) / 100);
+    const isTaxEnabled = settings?.isTaxEnabled === true;
+    const taxRate = isTaxEnabled ? (settings?.taxRate || 8) : 0;
+    const calculatedTax = isTaxEnabled ? Math.round((subtotal * taxRate) / 100) : 0;
     
     // Recalculate total with dynamic delivery fee, service fee, and dynamic tax
     const currentTotal = subtotal + calculatedFee + calculatedTax + serviceFee - discountAmount;
@@ -1007,6 +1010,11 @@ export default function CheckoutModal({ isOpen, onClose, cart, total, subtotal, 
                                             <div className="flex justify-between text-gray-800 font-medium">
                                                 <div className="flex flex-col">
                                                     <span>Delivery Fee</span>
+                                                    {distance !== null && (
+                                                        <span className="text-[10px] text-gray-500 font-normal">
+                                                            Distance: {distance.toFixed(1)} km
+                                                        </span>
+                                                    )}
                                                 </div>
                                                 <span>Rs. {calculatedFee.toLocaleString()}</span>
                                             </div>
@@ -1016,7 +1024,7 @@ export default function CheckoutModal({ isOpen, onClose, cart, total, subtotal, 
                                                     <span>Rs. {serviceFee.toLocaleString()}</span>
                                                 </div>
                                             )}
-                                            {taxRate > 0 && (
+                                            {isTaxEnabled && (
                                                 <div className="flex justify-between text-gray-800 font-medium">
                                                     <span>Tax ({taxRate}%)</span>
                                                     <span>Rs. {calculatedTax.toLocaleString()}</span>
