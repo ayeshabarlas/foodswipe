@@ -17,9 +17,10 @@ export default function SettingsView() {
         announcement: '',
         deliveryFeeBase: 40,
         deliveryFeePerKm: 20,
-        deliveryFeeMax: 200,
+        deliveryFeeMax: 100,
         minimumOrderAmount: 0,
         serviceFee: 0,
+        announcement: '',
         isMaintenanceMode: false,
         featureToggles: {
             isOrderingEnabled: true,
@@ -282,8 +283,53 @@ export default function SettingsView() {
                     </div>
                 </motion.div>
 
-                {/* 3. App Version & Maintenance */}
+                {/* 3. Support & Announcements */}
                 <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }} className="bg-white p-6 rounded-[2rem] shadow-xl border border-gray-50">
+                    <h3 className="text-lg font-bold mb-4 flex items-center gap-2 text-gray-800">
+                        <FaBullhorn className="text-orange-500 text-sm" /> Support & Announcements
+                    </h3>
+                    <div className="space-y-4">
+                        <div className="space-y-1">
+                            <label className="text-[10px] font-bold text-gray-400 uppercase ml-1">Support Email</label>
+                            <div className="relative">
+                                <FaEnvelope className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-xs" />
+                                <input
+                                    type="email"
+                                    value={settings.supportEmail}
+                                    onChange={(e) => setSettings({...settings, supportEmail: e.target.value})}
+                                    className="w-full pl-8 pr-3 py-2 bg-gray-50 border border-gray-100 rounded-lg outline-none focus:border-orange-500 font-medium text-sm text-gray-700"
+                                />
+                            </div>
+                        </div>
+                        <div className="space-y-1">
+                            <label className="text-[10px] font-bold text-gray-400 uppercase ml-1">Support Phone</label>
+                            <div className="relative">
+                                <FaPhone className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-xs" />
+                                <input
+                                    type="text"
+                                    value={settings.supportPhone}
+                                    onChange={(e) => setSettings({...settings, supportPhone: e.target.value})}
+                                    className="w-full pl-8 pr-3 py-2 bg-gray-50 border border-gray-100 rounded-lg outline-none focus:border-orange-500 font-medium text-sm text-gray-700"
+                                />
+                            </div>
+                        </div>
+                        <div className="space-y-1">
+                            <label className="text-[10px] font-bold text-gray-400 uppercase ml-1">App Announcement (Scroll Bar)</label>
+                            <div className="relative">
+                                <FaBullhorn className="absolute left-3 top-3 text-gray-400 text-xs" />
+                                <textarea
+                                    value={settings.announcement}
+                                    onChange={(e) => setSettings({...settings, announcement: e.target.value})}
+                                    placeholder="Enter announcement to show in customer app..."
+                                    className="w-full pl-8 pr-3 py-2 bg-gray-50 border border-gray-100 rounded-lg outline-none focus:border-orange-500 font-medium text-sm text-gray-700 h-20 resize-none"
+                                />
+                            </div>
+                        </div>
+                    </div>
+                </motion.div>
+
+                {/* 4. App Version & Maintenance */}
+                <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }} className="bg-white p-6 rounded-[2rem] shadow-xl border border-gray-50">
                     <h3 className="text-lg font-bold mb-4 flex items-center gap-2 text-gray-800">
                         <FaMobileAlt className="text-blue-500 text-sm" /> App Version & Maintenance
                     </h3>

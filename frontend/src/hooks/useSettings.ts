@@ -51,10 +51,10 @@ const DEFAULT_SETTINGS: SystemSettings = {
     announcement: '',
     isMaintenanceMode: false,
     minimumOrderAmount: 0,
-    deliveryFee: 60,
-    deliveryFeeBase: 60,
+    deliveryFee: 40,
+    deliveryFeeBase: 40,
     deliveryFeePerKm: 20,
-    deliveryFeeMax: 200,
+    deliveryFeeMax: 100,
     serviceFee: 0,
     featureToggles: {
         enableWallet: true,
