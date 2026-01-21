@@ -86,23 +86,28 @@ export function useSettings() {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
 
-    useEffect(() => {
-        const fetchSettings = async () => {
-            try {
-                const { data } = await axios.get(`${API_BASE_URL}/api/settings`);
-                if (data) {
-                    setSettings(data);
-                }
-            } catch (err: any) {
-                console.error('Error fetching system settings:', err);
-                setError(err.message || 'Failed to fetch settings');
-            } finally {
-                setLoading(false);
+    const fetchSettings = async () => {
+        try {
+            // Add timestamp to bypass potential browser cache
+            const { data } = await axios.get(`${API_BASE_URL}/api/settings?t=${Date.now()}`);
+            if (data) {
+                setSettings(data);
             }
-        };
+        } catch (err: any) {
+            console.error('Error fetching system settings:', err);
+            setError(err.message || 'Failed to fetch settings');
+        } finally {
+            setLoading(false);
+        }
+    };
 
+    useEffect(() => {
         fetchSettings();
+
+        // Optional: Polling to keep settings synced (every 30 seconds)
+        const interval = setInterval(fetchSettings, 30000);
+        return () => clearInterval(interval);
     }, []);
 
-    return { settings, loading, error };
+    return { settings, loading, error, refetch: fetchSettings };
 }

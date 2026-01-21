@@ -34,6 +34,10 @@ export default function CartDrawer({ isOpen, onClose, onTrackOrder }: CartDrawer
     const minOrderAmount = settings?.minimumOrderAmount || 0;
     const isBelowMinimum = subtotal < minOrderAmount;
 
+    // We no longer calculate estimatedTotal here for the modal, 
+    // the modal does its own dynamic calculation.
+    // We just pass the base values.
+
     return (
         <>
             <AnimatePresence>
