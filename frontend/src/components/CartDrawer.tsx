@@ -27,10 +27,12 @@ export default function CartDrawer({ isOpen, onClose, onTrackOrder }: CartDrawer
     // Delivery fee and Service fee from settings
     const baseDeliveryFee = settings?.deliveryFeeBase || 60; 
     const serviceFee = settings?.serviceFee || 0;
-    const taxRate = 0.08;
+    const taxRate = settings?.isTaxEnabled ? (settings?.taxRate || 8) : 0;
     const subtotal = cartTotal;
-    const tax = Math.round(subtotal * taxRate);
+    const tax = Math.round((subtotal * taxRate) / 100);
     const estimatedTotal = subtotal + baseDeliveryFee + tax + serviceFee;
+    const minOrderAmount = settings?.minimumOrderAmount || 0;
+    const isBelowMinimum = subtotal < minOrderAmount;
 
     return (
         <>
@@ -140,11 +142,26 @@ export default function CartDrawer({ isOpen, onClose, onTrackOrder }: CartDrawer
                                     <div className="flex justify-between items-center mb-4">
                                         <span className="text-gray-700 text-xs italic font-bold">* Delivery fee and tax calculated at checkout</span>
                                     </div>
+                                    
+                                    {isBelowMinimum && (
+                                        <div className="mb-4 p-3 bg-red-50 border border-red-100 rounded-xl">
+                                            <p className="text-red-600 text-xs font-bold text-center">
+                                                Minimum order amount is Rs. {minOrderAmount.toLocaleString()}. 
+                                                Add Rs. {(minOrderAmount - subtotal).toLocaleString()} more to checkout.
+                                            </p>
+                                        </div>
+                                    )}
+
                                     <button
-                                        onClick={() => setIsCheckoutOpen(true)}
-                                        className="w-full py-4 bg-gradient-orange-red rounded-full text-white font-bold text-base shadow-lg hover:shadow-xl transition active:scale-95"
+                                        onClick={() => !isBelowMinimum && setIsCheckoutOpen(true)}
+                                        disabled={isBelowMinimum}
+                                        className={`w-full py-4 rounded-full text-white font-bold text-base shadow-lg transition active:scale-95 ${
+                                            isBelowMinimum 
+                                            ? 'bg-gray-400 cursor-not-allowed shadow-none' 
+                                            : 'bg-gradient-orange-red hover:shadow-xl'
+                                        }`}
                                     >
-                                        Proceed to Checkout
+                                        {isBelowMinimum ? 'Below Minimum Amount' : 'Proceed to Checkout'}
                                     </button>
                                 </div>
                             )}

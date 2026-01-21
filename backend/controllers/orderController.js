@@ -140,7 +140,10 @@ const createOrder = async (req, res) => {
 
         const riderEarnings = calculateRiderEarning(distanceKm);
         const finalServiceFee = serviceFee || settings.serviceFee || 0;
-        const finalTax = tax || Math.round(subtotalValue * 0.08);
+        
+        // Calculate tax based on dynamic settings
+        const taxRate = settings.isTaxEnabled ? (settings.taxRate || 8) : 0;
+        const finalTax = tax !== undefined ? tax : Math.round(subtotalValue * taxRate / 100);
 
         const order = await Order.create({
             user: req.user._id,
