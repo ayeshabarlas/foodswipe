@@ -25,6 +25,27 @@ export default function SystemWrapper({ children }: SystemWrapperProps) {
         }
     }, [settings]);
 
+    // Global Google Maps Script Loading
+    useEffect(() => {
+        if (settings?.googleMapsApiKey && !(window as any).google) {
+            console.log('🌐 Loading Google Maps Script globally...');
+            const script = document.createElement('script');
+            script.src = `https://maps.googleapis.com/maps/api/js?key=${settings.googleMapsApiKey}&libraries=places`;
+            script.async = true;
+            script.defer = true;
+            script.id = 'google-maps-sdk';
+            document.head.appendChild(script);
+            
+            script.onload = () => {
+                console.log('✅ Google Maps Script loaded successfully');
+            };
+            
+            script.onerror = () => {
+                console.error('❌ Failed to load Google Maps Script');
+            };
+        }
+    }, [settings?.googleMapsApiKey]);
+
     function isVersionLower(current: string, min: string) {
         const cParts = current.split('.').map(Number);
         const mParts = min.split('.').map(Number);

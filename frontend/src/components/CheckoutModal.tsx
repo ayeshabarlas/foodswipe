@@ -51,17 +51,6 @@ export default function CheckoutModal({ isOpen, onClose, cart, total, subtotal, 
     const [calculatedFee, setCalculatedFee] = useState(deliveryFee);
     const [distance, setDistance] = useState<number | null>(null);
 
-    // Load Google Maps Script
-    useEffect(() => {
-        if (settings?.googleMapsApiKey && !(window as any).google) {
-            const script = document.createElement('script');
-            script.src = `https://maps.googleapis.com/maps/api/js?key=${settings.googleMapsApiKey}&libraries=places`;
-            script.async = true;
-            script.defer = true;
-            document.head.appendChild(script);
-        }
-    }, [settings?.googleMapsApiKey]);
-
     // Fetch restaurant location and calculate fee
     useEffect(() => {
         const fetchRestaurantAndCalculateFee = async () => {
@@ -249,7 +238,6 @@ export default function CheckoutModal({ isOpen, onClose, cart, total, subtotal, 
     const handleAddressSearch = async (val: string) => {
         setDeliveryAddress(val);
         // Clear previous location when user starts typing a new address
-        // This ensures the delivery fee recalculates for the new address
         if (deliveryLocation) {
             setDeliveryLocation(null);
             setDistance(null);
@@ -262,74 +250,81 @@ export default function CheckoutModal({ isOpen, onClose, cart, total, subtotal, 
 
         if (val.length > 2) {
             setLoadingAddress(true);
+            setShowSuggestions(true);
 
             // Debounce search (300ms)
             (window as any).addressSearchTimeout = setTimeout(async () => {
                 try {
-                    // IF GOOGLE MAPS API KEY EXISTS, USE GOOGLE PLACES
-                    if (settings?.googleMapsApiKey) {
-                        const google = (window as any).google;
-                        if (google && google.maps && google.maps.places) {
-                            const service = new google.maps.places.AutocompleteService();
-                            service.getPlacePredictions({
-                                input: val,
-                                componentRestrictions: { country: 'pk' },
-                                locationBias: new google.maps.LatLng(31.5204, 74.3587), // Bias towards Lahore
-                                radius: 20000
-                            }, (predictions: any, status: any) => {
-                                if (status === google.maps.places.PlacesServiceStatus.OK && predictions) {
-                                    const formatted = predictions.map((p: any) => ({
-                                        properties: {
-                                            name: p.structured_formatting.main_text,
-                                            street: p.structured_formatting.secondary_text,
-                                            display_name: p.description
-                                        },
-                                        googlePlaceId: p.place_id
-                                    }));
-                                    setSuggestions(formatted);
-                                    setShowSuggestions(true);
-                                }
+                    const google = (window as any).google;
+                    if (google && google.maps && google.maps.places) {
+                        const service = new google.maps.places.AutocompleteService();
+                        
+                        if (!(window as any).googleMapsSessionToken) {
+                            (window as any).googleMapsSessionToken = new google.maps.places.AutocompleteSessionToken();
+                        }
+
+                        service.getPlacePredictions({
+                            input: val,
+                            componentRestrictions: { country: 'pk' },
+                            locationBias: { radius: 15000, center: { lat: 31.5204, lng: 74.3587 } },
+                            sessionToken: (window as any).googleMapsSessionToken
+                        }, async (predictions: any, status: any) => {
+                            if (status === google.maps.places.PlacesServiceStatus.OK && predictions && predictions.length > 0) {
+                                const formatted = predictions.map((p: any) => ({
+                                    properties: {
+                                        name: p.structured_formatting.main_text,
+                                        street: p.structured_formatting.secondary_text,
+                                        display_name: p.description
+                                    },
+                                    googlePlaceId: p.place_id
+                                }));
+                                setSuggestions(formatted);
                                 setLoadingAddress(false);
-                            });
-                            return;
-                        }
+                            } else {
+                                console.log('⚠️ Google Maps returned no results, falling back to Photon...');
+                                await fetchPhotonSuggestions(val);
+                            }
+                        });
+                    } else {
+                        await fetchPhotonSuggestions(val);
                     }
-
-                    // FALLBACK TO PHOTON (CURRENT)
-                    const res = await axios.get(`https://photon.komoot.io/api/`, {
-                        params: {
-                            q: `${val}, Lahore, Pakistan`,
-                            limit: 30,
-                            lat: 31.5204,
-                            lon: 74.3587,
-                            location_bias_scale: 0.3,
-                            lang: 'en'
-                        }
-                    });
-
-                    // More permissive filtering
-                    const lahoreResults = res.data.features.filter((feature: any) => {
-                        const props = feature.properties;
-                        const coords = feature.geometry.coordinates;
-
-                        const isLahoreCity = props.city === 'Lahore' || props.county === 'Lahore';
-                        const isPunjab = props.state === 'Punjab' || props.country === 'Pakistan';
-                        const isNearLahore = coords[1] >= 31.3 && coords[1] <= 31.7 &&
-                            coords[0] >= 74.1 && coords[0] <= 74.6;
-
-                        return isLahoreCity || (isPunjab && isNearLahore);
-                    });
-
-                    setSuggestions(lahoreResults);
-                    setShowSuggestions(true);
                 } catch (err) {
-                    console.error("Address fetch error", err);
-                } finally {
-                    setLoadingAddress(false);
+                    console.error("Address search error:", err);
+                    await fetchPhotonSuggestions(val);
                 }
             }, 300);
         } else {
             setShowSuggestions(false);
+            setLoadingAddress(false);
+            setSuggestions([]);
+        }
+    };
+
+    const fetchPhotonSuggestions = async (val: string) => {
+        try {
+            const res = await axios.get(`https://photon.komoot.io/api/`, {
+                params: {
+                    q: `${val}, Lahore, Pakistan`,
+                    limit: 10,
+                    lat: 31.5204,
+                    lon: 74.3587,
+                    location_bias_scale: 0.3,
+                    lang: 'en'
+                }
+            });
+
+            const lahoreResults = res.data.features.filter((feature: any) => {
+                const props = feature.properties;
+                const coords = feature.geometry.coordinates;
+                const isLahoreCity = props.city === 'Lahore' || props.county === 'Lahore' || props.state === 'Punjab';
+                const isNearLahore = coords[1] >= 31.3 && coords[1] <= 31.7 && coords[0] >= 74.1 && coords[0] <= 74.6;
+                return isLahoreCity || isNearLahore;
+            });
+
+            setSuggestions(lahoreResults);
+        } catch (err) {
+            console.error("Photon fallback error:", err);
+        } finally {
             setLoadingAddress(false);
         }
     };
