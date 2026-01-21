@@ -922,7 +922,6 @@ export default function CheckoutModal({ isOpen, onClose, cart, total, subtotal, 
                                                     )}
                                                 </div>
                                             </div>
-                                        </div>
 
                                     {/* Promo Code */}
                                     <div className="bg-white rounded-2xl p-5 shadow-sm mb-4 border border-gray-100">
