@@ -634,14 +634,16 @@ const getSystemSettings = async (req, res) => {
 // @desc    Update system settings
 const updateSystemSettings = async (req, res) => {
     try {
-        const { 
-            commission, 
+        const {
+            commission,
             commissionRate,
-            supportEmail, 
+            taxRate,
+            isTaxEnabled,
+            supportEmail,
             supportPhone,
-            announcement, 
-            isMaintenanceMode, 
-            minimumOrderAmount, 
+            announcement,
+            isMaintenanceMode,
+            minimumOrderAmount,
             deliveryFee,
             deliveryFeeBase,
             deliveryFeePerKm,
@@ -657,6 +659,8 @@ const updateSystemSettings = async (req, res) => {
 
         if (commission !== undefined) settings.commission = commission;
         if (commissionRate !== undefined) settings.commissionRate = commissionRate;
+        if (taxRate !== undefined) settings.taxRate = taxRate;
+        if (isTaxEnabled !== undefined) settings.isTaxEnabled = isTaxEnabled;
         if (supportEmail !== undefined) settings.supportEmail = supportEmail;
         if (supportPhone !== undefined) settings.supportPhone = supportPhone;
         if (announcement !== undefined) settings.announcement = announcement;

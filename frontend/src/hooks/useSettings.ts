@@ -17,6 +17,8 @@ export interface SystemSettings {
     deliveryFeePerKm: number;
     deliveryFeeMax: number;
     serviceFee: number;
+    taxRate: number;
+    isTaxEnabled: boolean;
     featureToggles: {
         enableWallet: boolean;
         enableReferrals: boolean;
@@ -56,6 +58,8 @@ const DEFAULT_SETTINGS: SystemSettings = {
     deliveryFeePerKm: 20,
     deliveryFeeMax: 100,
     serviceFee: 0,
+    taxRate: 8,
+    isTaxEnabled: true,
     featureToggles: {
         enableWallet: true,
         enableReferrals: true,

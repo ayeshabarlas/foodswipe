@@ -85,11 +85,17 @@ export default function SettingsView() {
                 return;
             }
 
-            await axios.put(
+            const response = await axios.put(
                 `${API_BASE_URL}/api/admin/settings`,
                 settings,
                 { headers: { Authorization: `Bearer ${userInfo.token}` } }
             );
+            
+            // Sync with local state to ensure UI is fresh
+            if (response.data.settings) {
+                setSettings(response.data.settings);
+            }
+            
             toast.success('Settings updated successfully', { id: toastId });
         } catch (error: any) {
             toast.error(error.response?.data?.message || 'Failed to update settings', { id: toastId });
@@ -273,7 +279,7 @@ export default function SettingsView() {
                         {Object.entries(settings.featureToggles).map(([key, value]) => (
                             <div key={key} className="flex items-center justify-between p-3 bg-gray-50 rounded-xl hover:bg-gray-100 transition-colors cursor-pointer group" onClick={() => toggleFeature(key)}>
                                 <span className="text-[11px] font-bold text-gray-600 capitalize group-hover:text-orange-500 transition-colors">
-                                    {key.replace('is', '').replace(/([A-Z])/g, ' $1').trim()}
+                                    {key.replace('is', '').replace('enable', '').replace(/([A-Z])/g, ' $1').trim()}
                                 </span>
                                 <div className={`w-9 h-4.5 rounded-full p-0.5 transition-all duration-300 ${value ? 'bg-green-500' : 'bg-gray-300'}`}>
                                     <div className={`w-3.5 h-3.5 bg-white rounded-full transition-all duration-300 transform ${value ? 'translate-x-4.5' : 'translate-x-0'}`}></div>
