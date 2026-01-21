@@ -33,6 +33,7 @@ export default function CheckoutModal({ isOpen, onClose, cart, total, subtotal, 
     const [transactionId, setTransactionId] = useState('');
     const [deliveryInstructions, setDeliveryInstructions] = useState('');
     const [deliveryAddress, setDeliveryAddress] = useState('');
+    const [city, setCity] = useState('');
     const [deliveryLocation, setDeliveryLocation] = useState<{ lat: number, lng: number } | null>(null);
     const [houseNumber, setHouseNumber] = useState('');
     const [promoCode, setPromoCode] = useState('');
@@ -60,9 +61,9 @@ export default function CheckoutModal({ isOpen, onClose, cart, total, subtotal, 
             if (!resId) return;
 
             const updateCalculatedFee = (dist: number) => {
-                const baseFee = settings?.deliveryFeeBase ?? 40;
-                const perKmFee = settings?.deliveryFeePerKm ?? 20;
-                const maxFee = settings?.deliveryFeeMax ?? 100;
+                const baseFee = 60; // Hardcoded base fee
+                const perKmFee = 20; // Hardcoded per km fee
+                const maxFee = 200; // Hardcoded max fee
                 const newFee = baseFee + (dist * perKmFee);
                 setCalculatedFee(Math.min(maxFee, Math.round(newFee)));
             };
@@ -104,8 +105,8 @@ export default function CheckoutModal({ isOpen, onClose, cart, total, subtotal, 
                     }
                 } else if (!deliveryLocation) {
                     // Fallback to base fee if no location selected yet
-                    const baseFee = settings?.deliveryFeeBase ?? 40;
-                    const maxFee = settings?.deliveryFeeMax ?? 100;
+                    const baseFee = 60;
+                    const maxFee = 200;
                     setCalculatedFee(Math.min(maxFee, baseFee));
                     setDistance(null);
                 }
@@ -160,7 +161,7 @@ export default function CheckoutModal({ isOpen, onClose, cart, total, subtotal, 
         onClose();
     };
 
-    // Initialize address and reset success state from userInfo when modal opens/closes
+    // Initialize address and reset success state from userInfo ONLY when modal is first opened
     useEffect(() => {
         if (isOpen) {
             // Reset success states for a fresh checkout experience
@@ -177,12 +178,8 @@ export default function CheckoutModal({ isOpen, onClose, cart, total, subtotal, 
                     console.error('Error parsing userInfo for address:', e);
                 }
             }
-        } else {
-            // Also reset when closing to be absolutely sure
-            setOrderSuccess(false);
-            setPlacedOrder(null);
         }
-    }, [isOpen]);
+    }, [isOpen]); // Only depend on isOpen to prevent resets during active session
 
     // Stop confetti after 3 seconds
     useEffect(() => {
@@ -266,7 +263,8 @@ export default function CheckoutModal({ isOpen, onClose, cart, total, subtotal, 
                         service.getPlacePredictions({
                             input: val,
                             componentRestrictions: { country: 'pk' },
-                            locationBias: { radius: 15000, center: { lat: 31.5204, lng: 74.3587 } },
+                            // Bias towards Pakistan center or remove bias if searching nationwide
+                            locationBias: { radius: 500000, center: { lat: 30.3753, lng: 69.3451 } }, // Center of Pakistan
                             sessionToken: (window as any).googleMapsSessionToken
                         }, async (predictions: any, status: any) => {
                             if (status === google.maps.places.PlacesServiceStatus.OK && predictions && predictions.length > 0) {
@@ -304,24 +302,22 @@ export default function CheckoutModal({ isOpen, onClose, cart, total, subtotal, 
         try {
             const res = await axios.get(`https://photon.komoot.io/api/`, {
                 params: {
-                    q: `${val}, Lahore, Pakistan`,
+                    q: `${val}, Pakistan`,
                     limit: 10,
-                    lat: 31.5204,
-                    lon: 74.3587,
-                    location_bias_scale: 0.3,
+                    lat: 30.3753,
+                    lon: 69.3451,
+                    location_bias_scale: 0.1,
                     lang: 'en'
                 }
             });
 
-            const lahoreResults = res.data.features.filter((feature: any) => {
+            // Filter for results in Pakistan
+            const pakistanResults = res.data.features.filter((feature: any) => {
                 const props = feature.properties;
-                const coords = feature.geometry.coordinates;
-                const isLahoreCity = props.city === 'Lahore' || props.county === 'Lahore' || props.state === 'Punjab';
-                const isNearLahore = coords[1] >= 31.3 && coords[1] <= 31.7 && coords[0] >= 74.1 && coords[0] <= 74.6;
-                return isLahoreCity || isNearLahore;
+                return props.country === 'Pakistan' || props.state === 'Punjab' || props.state === 'Sindh' || props.state === 'Khyber Pakhtunkhwa' || props.state === 'Balochistan' || props.state === 'Gilgit-Baltistan' || props.state === 'Azad Kashmir';
             });
 
-            setSuggestions(lahoreResults);
+            setSuggestions(pakistanResults);
         } catch (err) {
             console.error("Photon fallback error:", err);
         } finally {
@@ -339,10 +335,10 @@ export default function CheckoutModal({ isOpen, onClose, cart, total, subtotal, 
                 try {
                     const res = await axios.get(`https://photon.komoot.io/api/`, {
                         params: {
-                            q: `${deliveryAddress}, Lahore, Pakistan`,
+                            q: `${deliveryAddress}, Pakistan`,
                             limit: 1,
-                            lat: 31.5204,
-                            lon: 74.3587
+                            lat: 30.3753,
+                            lon: 69.3451
                         }
                     });
                     
@@ -472,6 +468,7 @@ export default function CheckoutModal({ isOpen, onClose, cart, total, subtotal, 
                 restaurant: restaurantId,
                 items: items,
                 deliveryAddress: fullAddress,
+                city: city,
                 deliveryLocation: deliveryLocation,
                 subtotal: subtotal,
                 deliveryFee: calculatedFee,
@@ -502,6 +499,7 @@ export default function CheckoutModal({ isOpen, onClose, cart, total, subtotal, 
                     );
                     
                     if (safepayRes.data.url) {
+                        clearCart(); // Clear cart before redirecting
                         window.location.href = safepayRes.data.url;
                         return; // Stop execution as we are redirecting
                     }
@@ -739,8 +737,8 @@ export default function CheckoutModal({ isOpen, onClose, cart, total, subtotal, 
                                             <h3 className="font-semibold text-gray-900 flex items-center gap-2 text-base">
                                                 <FaMapMarkerAlt className="text-orange-500" /> Delivery Address
                                             </h3>
-                                            <span className="text-xs bg-orange-50 text-orange-600 px-2.5 py-1 rounded-full font-medium border border-orange-100">
-                                                Lahore Only
+                                            <span className="text-xs bg-green-50 text-green-600 px-2.5 py-1 rounded-full font-medium border border-green-100">
+                                                Nationwide Delivery
                                             </span>
                                         </div>
 
@@ -819,6 +817,7 @@ export default function CheckoutModal({ isOpen, onClose, cart, total, subtotal, 
                                                                         onMouseDown={(e) => {
                                                                             e.preventDefault();
                                                                             setDeliveryAddress(displayAddress);
+                                                                            setCity(props.city || props.county || props.district || '');
                                                                             
                                                                             // Handle Google Place Selection
                                                                             if (feature.googlePlaceId) {
@@ -826,6 +825,14 @@ export default function CheckoutModal({ isOpen, onClose, cart, total, subtotal, 
                                                                                 const geocoder = new google.maps.Geocoder();
                                                                                 geocoder.geocode({ placeId: feature.googlePlaceId }, (results: any, status: any) => {
                                                                                     if (status === 'OK' && results[0]) {
+                                                                                        // Try to extract city from Google results
+                                                                                        const addressComponents = results[0].address_components;
+                                                                                        const cityComp = addressComponents.find((c: any) => 
+                                                                                            c.types.includes('locality') || 
+                                                                                            c.types.includes('administrative_area_level_2')
+                                                                                        );
+                                                                                        if (cityComp) setCity(cityComp.long_name);
+
                                                                                         setDeliveryLocation({
                                                                                             lat: results[0].geometry.location.lat(),
                                                                                             lng: results[0].geometry.location.lng()

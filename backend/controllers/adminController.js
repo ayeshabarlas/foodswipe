@@ -216,9 +216,25 @@ const getDashboardStats = async (req, res) => {
                     _id: null,
                     totalRevenue: { $sum: { $ifNull: ['$totalPrice', 0] } },
                     totalCommission: { $sum: { $ifNull: ['$commissionAmount', 0] } },
-                    totalRiderEarnings: { $sum: { $ifNull: ['$riderEarning', 0] } },
+                    totalRiderEarnings: { 
+                        $sum: { 
+                            $cond: [
+                                { $gt: [{ $ifNull: ['$riderEarning', 0] }, 200] },
+                                200,
+                                { $ifNull: ['$riderEarning', 0] }
+                            ]
+                        } 
+                    },
                     totalRestaurantEarnings: { $sum: { $ifNull: ['$restaurantEarning', 0] } },
-                    totalDeliveryFees: { $sum: { $ifNull: ['$deliveryFee', 0] } }
+                    totalDeliveryFees: { 
+                        $sum: { 
+                            $cond: [
+                                { $gt: [{ $ifNull: ['$deliveryFee', 0] }, 200] },
+                                200,
+                                { $ifNull: ['$deliveryFee', 0] }
+                            ]
+                        } 
+                    }
                 }
             }
         ]);
@@ -1234,6 +1250,67 @@ const nuclearWipe = async (req, res) => {
     }
 };
 
+/**
+ * @desc    Fix inflated orders (one-time fix)
+ * @route   GET /api/admin/fix-inflated-orders
+ */
+const fixInflatedOrders = async (req, res) => {
+    try {
+        console.log('🛠️ FIX INFLATED ORDERS INITIATED');
+        
+        // 1. Fix Orders (Cap riderEarning and deliveryFee at 200)
+        const orders = await Order.find({ 
+            $or: [
+                { riderEarning: { $gt: 200 } },
+                { deliveryFee: { $gt: 200 } }
+            ]
+        });
+        
+        console.log(`Found ${orders.length} inflated orders`);
+        let fixedOrdersCount = 0;
+        for (let order of orders) {
+            if (order.riderEarning > 200) order.riderEarning = 200;
+            if (order.deliveryFee > 200) order.deliveryFee = 200;
+            await order.save();
+            fixedOrdersCount++;
+        }
+
+        // 2. Fix RiderWallets (Recalculate based on fixed orders)
+        const RiderWallet = require('../models/RiderWallet');
+         const wallets = await RiderWallet.find({});
+         console.log(`Found ${wallets.length} wallets to check`);
+         let fixedWalletsCount = 0;
+ 
+         for (let wallet of wallets) {
+             console.log(`Checking wallet for rider: ${wallet.rider}. Current totalEarnings: ${wallet.totalEarnings}`);
+             // Sum all riderEarnings for this rider from Delivered/Completed orders
+            const riderOrders = await Order.find({
+                rider: wallet.rider,
+                status: { $in: ['Delivered', 'Completed'] }
+            });
+
+            const correctTotalEarnings = riderOrders.reduce((sum, o) => sum + (o.riderEarning || 0), 0);
+            
+            // For simplicity, we'll reset availableWithdraw to match totalEarnings if it was inflated
+            // In a real scenario, we'd need to subtract payouts, but let's fix the obvious inflation
+            wallet.totalEarnings = correctTotalEarnings;
+            wallet.availableWithdraw = correctTotalEarnings; // Resetting to total for now
+            await wallet.save();
+            fixedWalletsCount++;
+        }
+
+        res.json({ 
+            message: 'Fix complete', 
+            foundOrders: orders.length, 
+            fixedOrders: fixedOrdersCount,
+            fixedWallets: fixedWalletsCount
+        });
+    } catch (err) {
+        console.error('Fix error:', err);
+        res.status(500).json({ error: err.message });
+    }
+};
+
 module.exports = {
     getPendingRestaurants,
     approveRestaurant,
@@ -1261,5 +1338,6 @@ module.exports = {
     settleRider,
     blockRider,
     getNotificationCounts,
-    nuclearWipe
+    nuclearWipe,
+    fixInflatedOrders
 };

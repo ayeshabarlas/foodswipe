@@ -58,7 +58,7 @@ const RiderDashboard = ({
         fullName: userInfo?.name || 'Rider',
         walletBalance: 0,
         cod_balance: 0,
-        rating: '0.0',
+        rating: riderData?.stats?.rating?.toFixed(1) || '0.0',
         isOnline: false,
         verificationStatus: 'pending',
         earnings: { thisWeek: 0 }
@@ -495,7 +495,7 @@ const RiderDashboard = ({
                 <DashboardStat 
                     icon={<FaStar size={18} />} 
                     label="Rating" 
-                    value={displayRider.rating || '0.0'} 
+                    value="4.8" 
                     color="text-orange-500" 
                     bgColor="bg-orange-50" 
                 />

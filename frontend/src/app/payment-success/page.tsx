@@ -6,12 +6,14 @@ import axios from 'axios';
 import { FaCheckCircle, FaHome, FaShoppingBag } from 'react-icons/fa';
 import Link from 'next/link';
 import ModernLoader from '@/components/ModernLoader';
+import { useCart } from '@/context/CartContext';
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
 
 function PaymentSuccessContent() {
     const searchParams = useSearchParams();
     const router = useRouter();
+    const { clearCart } = useCart();
     const [verifying, setVerifying] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [orderId, setOrderId] = useState<string | null>(null);
@@ -42,6 +44,7 @@ function PaymentSuccessContent() {
                     sig
                 });
                 
+                clearCart(); // Clear cart after successful payment verification
                 setVerifying(false);
             } catch (err: any) {
                 console.error('Verification failed:', err);

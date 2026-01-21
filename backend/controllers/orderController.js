@@ -101,9 +101,9 @@ const createOrder = async (req, res) => {
 
         const shippingAddress = {
             address: (deliveryAddress || 'No address provided') + (deliveryInstructions ? ` (Note: ${deliveryInstructions})` : ''),
-            city: 'Lahore', // Default for now
-            postalCode: '54000', // Default for now
-            country: 'Pakistan' // Default for now
+            city: req.body.city || 'Pakistan', // Use provided city or default
+            postalCode: req.body.postalCode || '',
+            country: 'Pakistan'
         };
 
         // Calculate commission and earnings early for display in dashboard
@@ -134,7 +134,7 @@ const createOrder = async (req, res) => {
             finalDeliveryFee = Math.min(maxFee, Math.round(baseFee + (distanceKm * perKmFee)));
         } else {
             // Fallback distance if location data is missing
-            distanceKm = 2.0;
+            distanceKm = 1.5; // Reduced from 2.0 to be more realistic for unknown locations
             finalDeliveryFee = settings.deliveryFeeBase || 60;
         }
 
@@ -162,6 +162,7 @@ const createOrder = async (req, res) => {
             tax: finalTax,
             deliveryFeeCustomerPaid: finalDeliveryFee,
             distanceKm: distanceKm,
+            riderEarning: riderEarnings.netEarning, // Added missing field
             grossRiderEarning: riderEarnings.grossEarning,
             netRiderEarning: riderEarnings.netEarning,
             platformFee: riderEarnings.platformFee,
@@ -173,6 +174,25 @@ const createOrder = async (req, res) => {
             orderAmount: subtotalValue,
             promoCode: promoCode || ''
         });
+
+        // Save address to user profile if not already set or first order
+        try {
+            const user = await User.findById(req.user._id);
+            if (user && (!user.address || user.address === '')) {
+                user.address = deliveryAddress;
+                user.city = req.body.city || '';
+                if (deliveryLocation && deliveryLocation.lat && deliveryLocation.lng) {
+                    user.location = {
+                        lat: Number(deliveryLocation.lat),
+                        lng: Number(deliveryLocation.lng)
+                    };
+                }
+                await user.save();
+                console.log(`[User] Address and location saved for user ${user._id}`);
+            }
+        } catch (addrErr) {
+            console.error('[User] Error saving address:', addrErr);
+        }
 
         // Auto-decrement stock for ordered items
         for (const item of items) {
@@ -295,6 +315,11 @@ const updateOrderStatus = async (req, res) => {
             return res.status(404).json({ message: 'Order not found' });
         }
 
+        // Prevent status updates for already delivered or cancelled orders
+        if (order.status === 'Delivered' || order.status === 'Cancelled') {
+            return res.status(400).json({ message: `Order already ${order.status.toLowerCase()}` });
+        }
+
         order.status = status;
         if (status === 'Cancelled' && cancellationReason) {
             order.cancellationReason = cancellationReason;
@@ -399,6 +424,12 @@ const processOrderCompletion = async (order, distanceKm, req = null) => {
     try {
         console.log(`[Finance] Processing completion for Order: ${order._id}, Status: ${order.status}`);
         
+        // IDEMPOTENCY CHECK: Don't process if already paid or delivered
+        if (order.isPaid && order.riderEarning > 0) {
+            console.log(`[Finance] Order ${order._id} already processed. Skipping...`);
+            return;
+        }
+        
         // If distanceKm is not provided or 0, try to calculate it
         let finalDistance = distanceKm || order.distanceKm || 0;
         if ((!finalDistance || finalDistance === 0) && order.restaurant?.location?.coordinates && order.deliveryLocation?.lat) {
@@ -406,8 +437,8 @@ const processOrderCompletion = async (order, distanceKm, req = null) => {
             finalDistance = calculateDistance(restLat, restLng, order.deliveryLocation.lat, order.deliveryLocation.lng);
         }
         
-        // Fallback if still 0
-        if (!finalDistance || finalDistance === 0) finalDistance = 4.2;
+        // Fallback if still 0 - reduced from 4.2 to 1.5 to prevent overpayment
+        if (!finalDistance || finalDistance === 0) finalDistance = 1.5;
 
         if (!order.rider) {
             console.error(`[Finance] Order ${order._id} completion attempted without rider assigned.`);
@@ -448,8 +479,13 @@ const processOrderCompletion = async (order, distanceKm, req = null) => {
         order.grossRiderEarning = riderPayCalc.grossEarning;
         order.platformFee = 0;
         order.netRiderEarning = riderEarning;
-        order.adminEarning = commissionAmount; 
-        order.platformRevenue = commissionAmount;
+        
+        // Calculate Net Platform Profit for this order: Commission + (Delivery Fee - Rider Pay)
+        const deliveryFee = order.deliveryFee || 0;
+        const netProfit = commissionAmount + (deliveryFee - riderEarning);
+        
+        order.adminEarning = netProfit; 
+        order.platformRevenue = netProfit;
         order.distanceKm = finalDistance;
         
         order.isPaid = true; 
@@ -700,6 +736,64 @@ const cancelOrder = async (req, res) => {
     }
 };
 
+// @desc    Rate rider for an order
+// @route   POST /api/orders/:id/rate-rider
+// @access  Private
+const rateRider = async (req, res) => {
+    try {
+        const { rating, review } = req.body;
+        const order = await Order.findById(req.params.id);
+
+        if (!order) {
+            return res.status(404).json({ message: 'Order not found' });
+        }
+
+        if (order.user.toString() !== req.user._id.toString()) {
+            return res.status(403).json({ message: 'Not authorized to rate this order' });
+        }
+
+        if (order.status !== 'Delivered') {
+            return res.status(400).json({ message: 'Cannot rate rider until order is delivered' });
+        }
+
+        if (order.riderRating > 0) {
+            return res.status(400).json({ message: 'You have already rated the rider for this order' });
+        }
+
+        order.riderRating = rating;
+        order.riderReview = review || '';
+        await order.save();
+
+        if (order.rider) {
+            const rider = await Rider.findById(order.rider);
+            if (rider) {
+                const totalRatings = rider.stats.rating * rider.stats.reviewCount;
+                rider.stats.reviewCount += 1;
+                rider.stats.rating = (totalRatings + rating) / rider.stats.reviewCount;
+                await rider.save();
+
+                // Notify rider about new rating
+                const riderUserId = rider.user?._id || rider.user;
+                if (riderUserId) {
+                    const notification = await createNotification(
+                        riderUserId,
+                        'New Rating Received',
+                        `A customer rated you ${rating} stars for order #${order.orderNumber || order._id.toString().slice(-6)}`,
+                        'rating',
+                        { orderId: order._id, rating }
+                    );
+                    triggerEvent(`user-${riderUserId}`, 'notification', notification);
+                }
+            }
+        }
+
+        res.json({ message: 'Rating submitted successfully', order });
+    } catch (error) {
+        console.error('Rate rider error:', error);
+        res.status(500).json({ message: 'Server error', error: error.message });
+    }
+};
+
 // @desc    Complete order and process payments
 // @route   POST /api/orders/:id/complete
 // @access  Private (Rider/Admin)
@@ -853,5 +947,6 @@ module.exports = {
     completeOrder,
     getRestaurantOrders,
     cancelOrder,
-    updateOrderLocation
+    updateOrderLocation,
+    rateRider
 };

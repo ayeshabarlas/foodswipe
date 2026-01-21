@@ -195,6 +195,14 @@ const orderSchema = mongoose.Schema(
             update_time: { type: String },
             signature: { type: String },
         },
+        riderRating: {
+            type: Number,
+            default: 0,
+        },
+        riderReview: {
+            type: String,
+            default: '',
+        },
     },
     {
         timestamps: true,

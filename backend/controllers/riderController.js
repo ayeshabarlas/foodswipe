@@ -839,13 +839,19 @@ const updateProfile = async (req, res) => {
 
         if (req.body.city) {
             rider.city = req.body.city;
+            // Also update city in User model if rider.user exists
+            if (rider.user) {
+                await User.findByIdAndUpdate(rider.user, { city: req.body.city });
+            }
         }
 
+        // Allow updating full name
         if (req.body.fullName) {
             rider.fullName = req.body.fullName;
         }
-
-        if (req.body.phone) {
+        
+        // Also update the associated User model if phone is provided
+        if (req.body.phone && rider.user) {
             await User.findByIdAndUpdate(rider.user, { phone: req.body.phone });
         }
 

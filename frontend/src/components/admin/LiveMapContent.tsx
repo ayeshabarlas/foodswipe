@@ -93,7 +93,7 @@ export default function LiveMapContent({ riders, center = [31.5204, 74.3587] }: 
                                                 {rider.status}
                                             </span>
                                             <span className="flex items-center gap-1 text-[9px] font-bold text-amber-600 bg-amber-50 px-2 py-0.5 rounded-lg uppercase tracking-wider">
-                                                <FaStar size={8} /> {rider.rating || 4.5}
+                                                <FaStar size={8} /> {rider.rating?.toFixed(1) || '0.0'}
                                             </span>
                                         </div>
                                     </div>

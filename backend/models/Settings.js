@@ -18,7 +18,7 @@ const settingsSchema = new mongoose.Schema({
     isTaxEnabled: { type: Boolean, default: true },
     
     // General
-    supportEmail: { type: String, default: 'app.foodswipehelp@gmail.com' },
+    supportEmail: { type: String, default: 'app.foodswiphelp@gmail.com' },
     supportPhone: { type: String, default: '+920000000000' },
     announcement: { type: String, default: '' },
     isMaintenanceMode: { type: Boolean, default: false },

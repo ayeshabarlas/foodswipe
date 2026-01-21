@@ -58,6 +58,14 @@ const userSchema = mongoose.Schema(
             type: String,
             default: '',
         },
+        city: {
+            type: String,
+            default: '',
+        },
+        location: {
+            lat: { type: Number },
+            lng: { type: Number },
+        },
         houseNumber: {
             type: String,
             default: '',

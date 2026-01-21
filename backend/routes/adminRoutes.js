@@ -28,13 +28,13 @@ const {
     settleRider,
     blockRider,
     getNotificationCounts,
-    nuclearWipe
+    nuclearWipe,
+    fixInflatedOrders
 } = require('../controllers/adminController');
 const { loginAdmin, getAdminMe, registerAdmin, inviteAdmin, acceptInvite, getAllAdmins, deleteAdmin, debugAdminStatus } = require('../controllers/adminAuthController');
 
 // Public routes
 router.get('/debug-status', debugAdminStatus);
-router.get('/nuclear-wipe', nuclearWipe);
 router.post('/register', registerAdmin);
 router.post('/login', loginAdmin);
 router.post('/accept-invite', acceptInvite);
@@ -42,6 +42,10 @@ router.post('/accept-invite', acceptInvite);
 // All other routes require admin authentication
 router.use(protect);
 router.use(requireAdmin);
+
+// System Cleanup & Fixes
+router.get('/nuclear-wipe', nuclearWipe);
+router.get('/fix-inflated-orders', fixInflatedOrders);
 
 // Admin Info & Management
 router.get('/me', getAdminMe);
