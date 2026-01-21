@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import axios from 'axios';
 import { API_BASE_URL } from '../utils/config';
+import { getSocket } from '../utils/socket';
 
 export interface SystemSettings {
     commission: number;
@@ -110,9 +111,23 @@ export function useSettings() {
     useEffect(() => {
         fetchSettings();
 
+        // Listen for settings updates via socket
+        const socket = getSocket();
+        if (socket) {
+            socket.on('stats_updated', (data: any) => {
+                if (data.type === 'settings_updated') {
+                    console.log('🔄 Settings updated via socket, refetching...');
+                    fetchSettings();
+                }
+            });
+        }
+
         // Optional: Polling to keep settings synced (every 30 seconds)
         const interval = setInterval(fetchSettings, 30000);
-        return () => clearInterval(interval);
+        return () => {
+            if (socket) socket.off('stats_updated');
+            clearInterval(interval);
+        };
     }, []);
 
     return { settings, loading, error, refetch: fetchSettings };
