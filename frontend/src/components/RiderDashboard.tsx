@@ -699,7 +699,20 @@ const RiderDashboard = ({
                         icon={<FaLocationArrow size={16} />} 
                         label="Navigate to Order" 
                         sublabel="Get directions to pickup location" 
-                        onClick={() => {}} 
+                        onClick={() => {
+                            const activeOrder = orders.find(o => o.rider && ['Accepted', 'Preparing', 'Ready', 'Picked Up', 'Arrived'].includes(o.status));
+                            if (activeOrder) {
+                                const lat = activeOrder.status === 'Picked Up' ? activeOrder.deliveryLocation?.lat : activeOrder.restaurant?.location?.coordinates[1];
+                                const lng = activeOrder.status === 'Picked Up' ? activeOrder.deliveryLocation?.lng : activeOrder.restaurant?.location?.coordinates[0];
+                                if (lat && lng) {
+                                    window.open(`https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}`, '_blank');
+                                } else {
+                                    toast.error('Location data not available');
+                                }
+                            } else {
+                                toast.error('No active order to navigate to');
+                            }
+                        }} 
                     />
                     <ActionItem 
                         icon={<FaWallet size={16} />} 

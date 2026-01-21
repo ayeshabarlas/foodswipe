@@ -44,13 +44,23 @@ export default function CheckoutModal({ isOpen, onClose, cart, total, subtotal, 
     const [suggestions, setSuggestions] = useState<any[]>([]);
     const [showSuggestions, setShowSuggestions] = useState(false);
     const [loadingAddress, setLoadingAddress] = useState(false);
-    // const [appliedVoucher, setAppliedVoucher] = useState<any>(null); // Removed local state
     const [voucherError, setVoucherError] = useState('');
     const [applyingVoucher, setApplyingVoucher] = useState(false);
     const [showPhoneAuth, setShowPhoneAuth] = useState(false);
     const [phoneVerified, setPhoneVerified] = useState(false);
     const [calculatedFee, setCalculatedFee] = useState(deliveryFee);
     const [distance, setDistance] = useState<number | null>(null);
+
+    // Load Google Maps Script
+    useEffect(() => {
+        if (settings?.googleMapsApiKey && !(window as any).google) {
+            const script = document.createElement('script');
+            script.src = `https://maps.googleapis.com/maps/api/js?key=${settings.googleMapsApiKey}&libraries=places`;
+            script.async = true;
+            script.defer = true;
+            document.head.appendChild(script);
+        }
+    }, [settings?.googleMapsApiKey]);
 
     // Fetch restaurant location and calculate fee
     useEffect(() => {
@@ -60,24 +70,49 @@ export default function CheckoutModal({ isOpen, onClose, cart, total, subtotal, 
             const resId = cart[0].restaurantId || cart[0].restaurant?._id || cart[0].restaurant;
             if (!resId) return;
 
+            const updateCalculatedFee = (dist: number) => {
+                const baseFee = settings?.deliveryFeeBase ?? 40;
+                const perKmFee = settings?.deliveryFeePerKm ?? 20;
+                const maxFee = settings?.deliveryFeeMax ?? 100;
+                const newFee = baseFee + (dist * perKmFee);
+                setCalculatedFee(Math.min(maxFee, Math.round(newFee)));
+            };
+
+            const useHaversineFallback = (restLat: number, restLng: number) => {
+                const dist = calculateDistance(restLat, restLng, deliveryLocation!.lat, deliveryLocation!.lng);
+                setDistance(dist);
+                updateCalculatedFee(dist);
+            };
+
             try {
                 const response = await axios.get(`${API_BASE_URL}/api/restaurants/${resId}`);
                 const restaurant = response.data;
                 
                 if (restaurant?.location?.coordinates && deliveryLocation) {
                     const [restLng, restLat] = restaurant.location.coordinates;
-                    const dist = calculateDistance(restLat, restLng, deliveryLocation.lat, deliveryLocation.lng);
-                    setDistance(dist);
                     
-                    // Dynamic Logic from Settings
-                    const baseFee = settings?.deliveryFeeBase ?? 40;
-                    const perKmFee = settings?.deliveryFeePerKm ?? 20;
-                    const maxFee = settings?.deliveryFeeMax ?? 100;
-
-                    const newFee = baseFee + (dist * perKmFee);
-                    // Cap delivery fee based on settings
-                    const finalFee = Math.min(maxFee, Math.round(newFee));
-                    setCalculatedFee(finalFee);
+                    // TRY GOOGLE DISTANCE MATRIX FIRST
+                    const google = (window as any).google;
+                    if (google && google.maps && settings?.googleMapsApiKey) {
+                        const service = new google.maps.DistanceMatrixService();
+                        service.getDistanceMatrix({
+                            origins: [new google.maps.LatLng(restLat, restLng)],
+                            destinations: [new google.maps.LatLng(deliveryLocation.lat, deliveryLocation.lng)],
+                            travelMode: google.maps.TravelMode.DRIVING,
+                        }, (response: any, status: any) => {
+                            if (status === 'OK' && response.rows[0].elements[0].status === 'OK') {
+                                const distInKm = response.rows[0].elements[0].distance.value / 1000;
+                                setDistance(distInKm);
+                                updateCalculatedFee(distInKm);
+                            } else {
+                                // Fallback to Haversine if Google fails
+                                useHaversineFallback(restLat, restLng);
+                            }
+                        });
+                    } else {
+                        // USE HAVERSINE (CURRENT)
+                        useHaversineFallback(restLat, restLng);
+                    }
                 } else if (!deliveryLocation) {
                     // Fallback to base fee if no location selected yet
                     const baseFee = settings?.deliveryFeeBase ?? 40;
@@ -231,7 +266,36 @@ export default function CheckoutModal({ isOpen, onClose, cart, total, subtotal, 
             // Debounce search (300ms)
             (window as any).addressSearchTimeout = setTimeout(async () => {
                 try {
-                    // Use Photon with context for better results
+                    // IF GOOGLE MAPS API KEY EXISTS, USE GOOGLE PLACES
+                    if (settings?.googleMapsApiKey) {
+                        const google = (window as any).google;
+                        if (google && google.maps && google.maps.places) {
+                            const service = new google.maps.places.AutocompleteService();
+                            service.getPlacePredictions({
+                                input: val,
+                                componentRestrictions: { country: 'pk' },
+                                locationBias: new google.maps.LatLng(31.5204, 74.3587), // Bias towards Lahore
+                                radius: 20000
+                            }, (predictions: any, status: any) => {
+                                if (status === google.maps.places.PlacesServiceStatus.OK && predictions) {
+                                    const formatted = predictions.map((p: any) => ({
+                                        properties: {
+                                            name: p.structured_formatting.main_text,
+                                            street: p.structured_formatting.secondary_text,
+                                            display_name: p.description
+                                        },
+                                        googlePlaceId: p.place_id
+                                    }));
+                                    setSuggestions(formatted);
+                                    setShowSuggestions(true);
+                                }
+                                setLoadingAddress(false);
+                            });
+                            return;
+                        }
+                    }
+
+                    // FALLBACK TO PHOTON (CURRENT)
                     const res = await axios.get(`https://photon.komoot.io/api/`, {
                         params: {
                             q: `${val}, Lahore, Pakistan`,
@@ -258,17 +322,6 @@ export default function CheckoutModal({ isOpen, onClose, cart, total, subtotal, 
 
                     setSuggestions(lahoreResults);
                     setShowSuggestions(true);
-
-                    // If we have results, and deliveryLocation is null, pick the first one as a tentative location
-                    if (lahoreResults.length > 0 && !deliveryLocation) {
-                        const first = lahoreResults[0];
-                        if (first.geometry && first.geometry.coordinates) {
-                            setDeliveryLocation({
-                                lat: first.geometry.coordinates[1],
-                                lng: first.geometry.coordinates[0]
-                            });
-                        }
-                    }
                 } catch (err) {
                     console.error("Address fetch error", err);
                 } finally {
@@ -757,14 +810,13 @@ export default function CheckoutModal({ isOpen, onClose, cart, total, subtotal, 
                                                         <>
                                                             {suggestions.map((feature: any, idx: number) => {
                                                                 const props = feature.properties;
-                                                                const addressParts = [
+                                                                const displayAddress = props.display_name || [
                                                                     props.name,
                                                                     props.street,
                                                                     props.district,
                                                                     props.city || props.county,
                                                                     props.state
-                                                                ].filter(Boolean);
-                                                                const displayAddress = addressParts.join(', ');
+                                                                ].filter(Boolean).join(', ');
 
                                                                 return (
                                                                     <div
@@ -772,8 +824,22 @@ export default function CheckoutModal({ isOpen, onClose, cart, total, subtotal, 
                                                                         onMouseDown={(e) => {
                                                                             e.preventDefault();
                                                                             setDeliveryAddress(displayAddress);
-                                                                            // Save coordinates
-                                                                            if (feature.geometry && feature.geometry.coordinates) {
+                                                                            
+                                                                            // Handle Google Place Selection
+                                                                            if (feature.googlePlaceId) {
+                                                                                const google = (window as any).google;
+                                                                                const geocoder = new google.maps.Geocoder();
+                                                                                geocoder.geocode({ placeId: feature.googlePlaceId }, (results: any, status: any) => {
+                                                                                    if (status === 'OK' && results[0]) {
+                                                                                        setDeliveryLocation({
+                                                                                            lat: results[0].geometry.location.lat(),
+                                                                                            lng: results[0].geometry.location.lng()
+                                                                                        });
+                                                                                    }
+                                                                                });
+                                                                            } 
+                                                                            // Handle Photon Selection
+                                                                            else if (feature.geometry && feature.geometry.coordinates) {
                                                                                 setDeliveryLocation({
                                                                                     lat: feature.geometry.coordinates[1],
                                                                                     lng: feature.geometry.coordinates[0]

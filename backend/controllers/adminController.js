@@ -651,6 +651,7 @@ const updateSystemSettings = async (req, res) => {
             serviceFee,
             featureToggles,
             safepay,
+            googleMapsApiKey,
             appVersion,
             appConfig
         } = req.body;
@@ -671,6 +672,7 @@ const updateSystemSettings = async (req, res) => {
         if (deliveryFeePerKm !== undefined) settings.deliveryFeePerKm = deliveryFeePerKm;
         if (deliveryFeeMax !== undefined) settings.deliveryFeeMax = deliveryFeeMax;
         if (serviceFee !== undefined) settings.serviceFee = serviceFee;
+        if (googleMapsApiKey !== undefined) settings.googleMapsApiKey = googleMapsApiKey;
         
         if (featureToggles) {
             settings.featureToggles = { ...settings.featureToggles, ...featureToggles };

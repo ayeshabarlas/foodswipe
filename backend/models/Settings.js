@@ -60,6 +60,9 @@ const settingsSchema = new mongoose.Schema({
         v1Secret: { type: String, default: '' },
         webhookSecret: { type: String, default: '' }
     },
+
+    // Maps Config
+    googleMapsApiKey: { type: String, default: 'AIzaSyBBwurPdZPLvTupX_YGiHYZRG3-ct3NWKU' },
     
     updatedBy: {
         type: mongoose.Schema.Types.ObjectId,

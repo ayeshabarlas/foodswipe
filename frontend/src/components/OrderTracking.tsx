@@ -168,12 +168,31 @@ export default function OrderTracking({ order: initialOrder, userRole = 'user', 
             >
                 {/* Header - Screenshot Style */}
                 <div className="bg-gradient-to-r from-orange-500 to-red-600 p-6 pt-12 text-white relative">
-                    <button 
-                        onClick={onClose}
-                        className="absolute top-10 right-6 w-10 h-10 bg-white/20 backdrop-blur-md rounded-full flex items-center justify-center hover:bg-white/30 transition-all"
-                    >
-                        <FaTimes />
-                    </button>
+                    <div className="absolute top-10 right-6 flex gap-2">
+                        {userRole === 'rider' && (
+                            <button 
+                                onClick={() => {
+                                    const lat = order.status === 'Picked Up' ? order.deliveryLocation?.lat : order.restaurant?.location?.coordinates[1];
+                                    const lng = order.status === 'Picked Up' ? order.deliveryLocation?.lng : order.restaurant?.location?.coordinates[0];
+                                    if (lat && lng) {
+                                        window.open(`https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}`, '_blank');
+                                    } else {
+                                        toast.error('Location data not available');
+                                    }
+                                }}
+                                className="w-10 h-10 bg-white/20 backdrop-blur-md rounded-full flex items-center justify-center hover:bg-white/30 transition-all"
+                                title="Open in Google Maps"
+                            >
+                                <FaRoute />
+                            </button>
+                        )}
+                        <button 
+                            onClick={onClose}
+                            className="w-10 h-10 bg-white/20 backdrop-blur-md rounded-full flex items-center justify-center hover:bg-white/30 transition-all"
+                        >
+                            <FaTimes />
+                        </button>
+                    </div>
                     <h2 className="text-xl font-bold mb-1">Order Tracking</h2>
                     <p className="text-sm font-bold opacity-90">
                         Order #{order.orderNumber || order._id.slice(-6).toUpperCase()} • {order.restaurant?.name || 'Restaurant'}

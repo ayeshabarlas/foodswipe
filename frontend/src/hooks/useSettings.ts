@@ -19,6 +19,7 @@ export interface SystemSettings {
     serviceFee: number;
     taxRate: number;
     isTaxEnabled: boolean;
+    googleMapsApiKey: string;
     featureToggles: {
         enableWallet: boolean;
         enableReferrals: boolean;
@@ -60,6 +61,7 @@ const DEFAULT_SETTINGS: SystemSettings = {
     serviceFee: 0,
     taxRate: 8,
     isTaxEnabled: true,
+    googleMapsApiKey: 'AIzaSyBBwurPdZPLvTupX_YGiHYZRG3-ct3NWKU',
     featureToggles: {
         enableWallet: true,
         enableReferrals: true,

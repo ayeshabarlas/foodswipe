@@ -20,6 +20,7 @@ export default function SettingsView() {
         deliveryFeeMax: 100,
         minimumOrderAmount: 0,
         serviceFee: 0,
+        googleMapsApiKey: '',
         announcement: '',
         isMaintenanceMode: false,
         featureToggles: {
@@ -303,7 +304,7 @@ export default function SettingsView() {
                                     type="email"
                                     value={settings.supportEmail}
                                     onChange={(e) => setSettings({...settings, supportEmail: e.target.value})}
-                                    className="w-full pl-8 pr-3 py-2 bg-gray-50 border border-gray-100 rounded-lg outline-none focus:border-orange-500 font-medium text-sm text-gray-700"
+                                    className="w-full pl-8 pr-3 py-2.5 bg-gray-50 border border-gray-100 rounded-xl outline-none focus:border-orange-500 transition-all font-medium text-sm text-gray-700"
                                 />
                             </div>
                         </div>
@@ -315,20 +316,86 @@ export default function SettingsView() {
                                     type="text"
                                     value={settings.supportPhone}
                                     onChange={(e) => setSettings({...settings, supportPhone: e.target.value})}
-                                    className="w-full pl-8 pr-3 py-2 bg-gray-50 border border-gray-100 rounded-lg outline-none focus:border-orange-500 font-medium text-sm text-gray-700"
+                                    className="w-full pl-8 pr-3 py-2.5 bg-gray-50 border border-gray-100 rounded-xl outline-none focus:border-orange-500 transition-all font-medium text-sm text-gray-700"
                                 />
                             </div>
                         </div>
                         <div className="space-y-1">
-                            <label className="text-[10px] font-bold text-gray-400 uppercase ml-1">App Announcement (Scroll Bar)</label>
+                            <label className="text-[10px] font-bold text-gray-400 uppercase ml-1">Announcement Bar</label>
                             <div className="relative">
-                                <FaBullhorn className="absolute left-3 top-3 text-gray-400 text-xs" />
-                                <textarea
+                                <FaBullhorn className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-xs" />
+                                <input
+                                    type="text"
                                     value={settings.announcement}
                                     onChange={(e) => setSettings({...settings, announcement: e.target.value})}
-                                    placeholder="Enter announcement to show in customer app..."
-                                    className="w-full pl-8 pr-3 py-2 bg-gray-50 border border-gray-100 rounded-lg outline-none focus:border-orange-500 font-medium text-sm text-gray-700 h-20 resize-none"
+                                    className="w-full pl-8 pr-3 py-2.5 bg-gray-50 border border-gray-100 rounded-xl outline-none focus:border-orange-500 transition-all font-medium text-sm text-gray-700"
+                                    placeholder="Enter app-wide announcement"
                                 />
+                            </div>
+                        </div>
+
+                        {/* Notification Settings */}
+                        <div className="p-4 bg-orange-50 rounded-2xl border border-orange-100 space-y-3 mt-4">
+                            <div className="flex items-center justify-between">
+                                <div className="flex items-center gap-2">
+                                    <div className="w-8 h-8 bg-orange-500 text-white rounded-lg flex items-center justify-center text-xs">
+                                        <FaBullhorn />
+                                    </div>
+                                    <div>
+                                        <p className="text-sm font-bold text-orange-900">App Notifications</p>
+                                        <p className="text-[10px] text-orange-700">Enable/Disable app-wide announcement</p>
+                                    </div>
+                                </div>
+                                <div 
+                                    className={`w-10 h-5 rounded-full p-0.5 transition-all duration-300 cursor-pointer ${settings.featureToggles.enableNotifications ? 'bg-orange-600' : 'bg-gray-300'}`}
+                                    onClick={() => setSettings({
+                                        ...settings, 
+                                        featureToggles: {
+                                            ...settings.featureToggles, 
+                                            enableNotifications: !settings.featureToggles.enableNotifications
+                                        }
+                                    })}
+                                >
+                                    <div className={`w-4 h-4 bg-white rounded-full transition-all duration-300 transform ${settings.featureToggles.enableNotifications ? 'translate-x-5' : 'translate-x-0'}`}></div>
+                                </div>
+                            </div>
+                            {settings.featureToggles.enableNotifications && (
+                                <div className="space-y-1 pt-2 border-t border-orange-100">
+                                    <label className="text-[10px] font-bold text-orange-700 uppercase ml-1">Announcement Message</label>
+                                    <textarea
+                                        value={settings.announcement}
+                                        onChange={(e) => setSettings({...settings, announcement: e.target.value})}
+                                        className="w-full p-3 bg-white border border-orange-100 rounded-xl outline-none focus:border-orange-500 transition-all font-medium text-sm text-orange-900 h-20 resize-none"
+                                        placeholder="Enter message for customers..."
+                                    />
+                                </div>
+                            )}
+                        </div>
+
+                        {/* Google Maps Integration */}
+                        <div className="p-4 bg-blue-50 rounded-2xl border border-blue-100 space-y-3">
+                            <div className="flex items-center gap-2">
+                                <div className="w-8 h-8 bg-blue-500 text-white rounded-lg flex items-center justify-center text-xs">
+                                    <FaGlobe />
+                                </div>
+                                <div>
+                                    <p className="text-sm font-bold text-blue-900">Google Maps API</p>
+                                    <p className="text-[10px] text-blue-700">For precise location and distance calculation</p>
+                                </div>
+                            </div>
+                            <div className="space-y-1">
+                                <label className="text-[10px] font-bold text-blue-700 uppercase ml-1">Google Maps API Key</label>
+                                <div className="relative">
+                                    <FaKey className="absolute left-3 top-1/2 -translate-y-1/2 text-blue-400 text-xs" />
+                                    <input
+                                        type="password"
+                                        value={settings.googleMapsApiKey}
+                                        onChange={(e) => setSettings({...settings, googleMapsApiKey: e.target.value})}
+                                        className="w-full pl-8 pr-3 py-2 bg-white border border-blue-100 rounded-lg outline-none focus:border-blue-500 transition-all font-medium text-sm text-blue-900"
+                                        placeholder="AIzaSy..."
+                                    />
+                                </div>
+                                <p className="text-[9px] text-blue-500 mt-1 italic">* Requires billing enabled in Google Cloud Console</p>
                             </div>
                         </div>
                     </div>
