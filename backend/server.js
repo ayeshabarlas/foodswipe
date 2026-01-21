@@ -21,7 +21,9 @@ const allowedOrigins = [
     'http://localhost:3001',
     'https://foodswipe-one.vercel.app',
     'https://foodswipe-6178.onrender.com',
-    'https://foodswipeadmin.vercel.app'
+    'https://foodswipeadmin.vercel.app',
+    'https://foodswipe.pk',
+    'https://www.foodswipe.pk'
 ];
 
 app.use(cors({
