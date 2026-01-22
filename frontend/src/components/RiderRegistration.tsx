@@ -37,6 +37,24 @@ export default function RiderRegistration({ onComplete }: RiderRegistrationProps
         setError('');
 
         try {
+            if (!formData.fullName || !formData.cnicNumber || !formData.dateOfBirth) {
+                setError('Please fill all fields');
+                setLoading(false);
+                return;
+            }
+            const cnicDigits = formData.cnicNumber.replace(/\D/g, '');
+            if (cnicDigits.length !== 13) {
+                setError('Invalid CNIC number');
+                setLoading(false);
+                return;
+            }
+            const dob = new Date(formData.dateOfBirth);
+            const now = new Date();
+            if (isNaN(dob.getTime()) || dob > now) {
+                setError('Invalid date of birth');
+                setLoading(false);
+                return;
+            }
             const userInfo = JSON.parse(localStorage.getItem("userInfo") || "{}");
             const token = userInfo.token;
 
@@ -48,7 +66,8 @@ export default function RiderRegistration({ onComplete }: RiderRegistrationProps
             }
 
             const res = await axios.post(`${API_BASE_URL}/api/riders/register`, formData, {
-                headers: { Authorization: `Bearer ${token}` }
+                headers: { Authorization: `Bearer ${token}` },
+                timeout: 30000
             });
 
             onComplete(res.data._id);

@@ -40,7 +40,8 @@ export default function RiderPortal() {
 
         try {
             const res = await axios.get(`${API_BASE_URL}/api/riders/my-profile`, {
-                headers: { Authorization: `Bearer ${userInfo.token}` }
+                headers: { Authorization: `Bearer ${userInfo.token}` },
+                timeout: 20000
             });
 
             if (res.data) {

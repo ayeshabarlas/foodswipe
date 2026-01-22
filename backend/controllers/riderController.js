@@ -71,12 +71,12 @@ const registerRider = async (req, res) => {
 
         // Notify admins about new registration
         triggerEvent('admin', 'rider_registered', rider);
-        await notifyAdmins(
+        notifyAdmins(
             'New Rider Registration',
             `A new rider "${fullName}" has registered and is pending approval.`,
             'new_rider',
             { riderId: rider._id, name: fullName }
-        );
+        ).catch(err => console.error('[Rider] Background notification error:', err));
 
         res.status(201).json(rider);
     } catch (error) {
