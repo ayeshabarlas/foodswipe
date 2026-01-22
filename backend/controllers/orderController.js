@@ -135,7 +135,7 @@ const createOrder = async (req, res) => {
             if (distanceKm < 0.1) distanceKm = 0.5;
             
             // Calculate using dynamic settings
-            const baseFee = settings.deliveryFeeBase || 60;
+            const baseFee = settings.deliveryFeeBase || 40;
             const perKmFee = settings.deliveryFeePerKm || 20;
             const maxFee = settings.deliveryFeeMax || 200;
             
@@ -143,7 +143,7 @@ const createOrder = async (req, res) => {
         } else {
             // Fallback distance if location data is missing
             distanceKm = 1.5; // Reduced from 2.0 to be more realistic for unknown locations
-            finalDeliveryFee = settings.deliveryFeeBase || 60;
+            finalDeliveryFee = settings.deliveryFeeBase || 40;
         }
 
         const riderEarnings = calculateRiderEarning(distanceKm, settings);
@@ -156,7 +156,7 @@ const createOrder = async (req, res) => {
         console.log('[Order] Creating order with data:', {
             user: req.user._id,
             restaurant,
-            totalPrice: subtotalValue + finalDeliveryFee + finalServiceFee + finalTax,
+            totalPrice: subtotalValue + finalDeliveryFee + finalServiceFee + finalTax - (discount || 0),
             paymentMethod: paymentMethod || 'COD'
         });
 
@@ -170,11 +170,12 @@ const createOrder = async (req, res) => {
                 lng: Number(deliveryLocation.lng)
             } : null,
             paymentMethod: paymentMethod || 'COD',
-            totalPrice: subtotalValue + finalDeliveryFee + finalServiceFee + finalTax, 
+            totalPrice: Math.max(0, subtotalValue + finalDeliveryFee + finalServiceFee + finalTax - (discount || 0)), 
             subtotal: subtotalValue,
             deliveryFee: finalDeliveryFee,
             serviceFee: finalServiceFee,
             tax: finalTax,
+            discount: discount || 0,
             deliveryFeeCustomerPaid: finalDeliveryFee,
             distanceKm: distanceKm,
             riderEarning: riderEarnings.netEarning, // Added missing field
@@ -185,7 +186,8 @@ const createOrder = async (req, res) => {
             commissionPercent,
             commissionAmount,
             restaurantEarning,
-            adminEarning: commissionAmount + finalServiceFee,
+            gatewayFee: (req.body.paymentMethod !== 'COD' && req.body.paymentMethod !== 'CASH') ? (subtotalValue * 0.025) : 0,
+            adminEarning: commissionAmount + (finalDeliveryFee - riderEarnings.netEarning) + finalServiceFee + finalTax - ((req.body.paymentMethod !== 'COD' && req.body.paymentMethod !== 'CASH') ? (subtotalValue * 0.025) : 0) - (discount || 0),
             orderAmount: subtotalValue,
             promoCode: promoCode || ''
         });
@@ -510,10 +512,19 @@ const processOrderCompletion = async (order, distanceKm, req = null) => {
         order.platformFee = 0;
         order.netRiderEarning = riderEarning;
         
-        // Calculate Net Platform Profit for this order: Commission + (Delivery Fee - Rider Pay)
+        // Calculate Net Platform Profit for this order: Commission + (Delivery Fee - Rider Pay) + Service Fee + Tax - Gateway Fee
         const deliveryFee = order.deliveryFee || 0;
-        const netProfit = commissionAmount + (deliveryFee - riderEarning);
+        const serviceFee = order.serviceFee || 0;
+        const tax = order.tax || 0;
+        const gatewayFee = order.paymentMethod !== 'COD' ? (subtotal * 0.025) : 0;
         
+        // Handle discounts - usually platform bears voucher costs in early stage, 
+        // but if it's a large discount we should track it.
+        const discount = order.discount || 0;
+        
+        const netProfit = commissionAmount + (deliveryFee - riderEarning) + serviceFee + tax - gatewayFee - discount;
+        
+        order.gatewayFee = gatewayFee;
         order.adminEarning = netProfit; 
         order.platformRevenue = netProfit;
         order.distanceKm = finalDistance;
@@ -629,7 +640,7 @@ const processOrderCompletion = async (order, distanceKm, req = null) => {
                 description: `Earning for order #${order.orderNumber || order._id.toString().slice(-6)}`,
                 metadata: { 
                     distanceKm: finalDistance, 
-                    basePay: settings.deliveryFeeBase || 60, 
+                    basePay: settings.deliveryFeeBase || 40, 
                     kmRate: settings.deliveryFeePerKm || 20 
                 }
             });
@@ -663,12 +674,24 @@ const processOrderCompletion = async (order, distanceKm, req = null) => {
         }
 
         restaurantWallet.availableBalance = (restaurantWallet.availableBalance || 0) + restaurantEarning;
+        restaurantWallet.pendingPayout = (restaurantWallet.pendingPayout || 0) + restaurantEarning;
         restaurantWallet.totalEarnings = (restaurantWallet.totalEarnings || 0) + restaurantEarning;
         restaurantWallet.totalCommissionCollected = (restaurantWallet.totalCommissionCollected || 0) + commissionAmount;
         await restaurantWallet.save();
 
+        // Notify restaurant about wallet update
+        triggerEvent(`restaurant-${order.restaurant}`, 'wallet_updated', {
+            availableBalance: restaurantWallet.availableBalance,
+            totalEarnings: restaurantWallet.totalEarnings
+        });
+
         // Notify admin about restaurant wallet/stats update
         triggerEvent('admin', 'restaurant_updated', { _id: order.restaurant });
+        triggerEvent('admin', 'stats_updated', { 
+            type: 'order_completed',
+            orderId: order._id,
+            adminEarning: order.adminEarning
+        });
 
         // Transaction for Restaurant
         await Transaction.create({

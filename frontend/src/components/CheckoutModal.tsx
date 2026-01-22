@@ -67,7 +67,7 @@ export default function CheckoutModal({ isOpen, onClose, cart, total, subtotal, 
             if (!resId) return;
 
             const updateCalculatedFee = (dist: number) => {
-                const baseFee = settings?.deliveryFeeBase || 60; 
+                const baseFee = settings?.deliveryFeeBase || 40; 
                 const perKmFee = settings?.deliveryFeePerKm || 20; 
                 const maxFee = settings?.deliveryFeeMax || 200; 
                 const newFee = baseFee + (dist * perKmFee);
@@ -111,7 +111,7 @@ export default function CheckoutModal({ isOpen, onClose, cart, total, subtotal, 
                     }
                 } else if (!deliveryLocation) {
                     // Fallback to base fee if no location selected yet
-                    const baseFee = settings?.deliveryFeeBase || 60;
+                    const baseFee = settings?.deliveryFeeBase || 40;
                     const maxFee = settings?.deliveryFeeMax || 200;
                     setCalculatedFee(Math.min(maxFee, baseFee));
                     setDistance(null);

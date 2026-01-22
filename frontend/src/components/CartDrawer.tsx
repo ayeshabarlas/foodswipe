@@ -25,7 +25,7 @@ export default function CartDrawer({ isOpen, onClose, onTrackOrder }: CartDrawer
     useSwipeBack({ onSwipeBack: onClose });
 
     // Delivery fee and Service fee from settings
-    const baseDeliveryFee = settings?.deliveryFeeBase || 60; 
+    const baseDeliveryFee = settings?.deliveryFeeBase || 40; 
     const serviceFee = settings?.serviceFee || 0;
     const taxRate = settings?.isTaxEnabled ? (settings?.taxRate || 8) : 0;
     const subtotal = cartTotal;

@@ -25,8 +25,10 @@ const calculateCommission = (subtotal, rate = 15) => {
  * @returns {Object} Payment split details
  */
 const splitPayment = async (order) => {
-    const subtotal = order.subtotal || 0;
+    const subtotal = order.subtotal || order.totalPrice || 0;
     const deliveryFee = order.deliveryFee || 0;
+    const serviceFee = order.serviceFee || 0;
+    const tax = order.tax || 0;
     const discount = order.discount || 0;
     
     // Get commission rate from order or fetch from restaurant
@@ -39,23 +41,22 @@ const splitPayment = async (order) => {
 
     const gatewayFee = order.paymentMethod !== 'COD' ? subtotal * 0.025 : 0; // 2.5% gateway fee for online payments
 
-    const commissionAmount = calculateCommission(subtotal, commissionRate);
+    const commissionAmount = (subtotal * commissionRate) / 100;
     const restaurantEarning = subtotal - commissionAmount;
     
-    // Use the distance from the order if available to calculate capped rider earning
-    // otherwise fallback to the deliveryFee but cap it at 200
     let riderEarning = deliveryFee;
     if (order.distanceKm) {
-        riderEarning = calculateRiderEarning(order.distanceKm).netEarning;
-    } else if (riderEarning > 200) {
-        riderEarning = 200;
+        const settings = await require('../models/Settings').getSettings();
+        riderEarning = calculateRiderEarning(order.distanceKm, settings).netEarning;
     }
 
-    const platformRevenue = commissionAmount - gatewayFee;
+    const platformRevenue = commissionAmount + (deliveryFee - riderEarning) + serviceFee + tax - gatewayFee - discount;
 
     return {
         subtotal,
         deliveryFee,
+        serviceFee,
+        tax,
         discount,
         commissionRate,
         commissionAmount,
@@ -63,7 +64,7 @@ const splitPayment = async (order) => {
         riderEarning,
         platformRevenue,
         gatewayFee,
-        totalPrice: subtotal + deliveryFee - discount,
+        totalPrice: subtotal + deliveryFee + serviceFee + tax - discount,
     };
 };
 
@@ -77,45 +78,49 @@ const getFinanceOverview = async (req, res) => {
         const today = new Date();
         today.setHours(0, 0, 0, 0);
 
-        // Today's orders
-        const todayOrders = await Order.find({
-            createdAt: { $gte: today },
-            status: { $in: ['Delivered', 'Completed'] },
-        });
+    // Today's orders
+    const todayOrders = await Order.find({
+        createdAt: { $gte: today },
+        status: { $in: ['Delivered', 'Completed'] },
+    });
 
-        // Calculate today's stats
-        const todayRevenue = todayOrders.reduce((sum, order) => sum + (order.totalPrice || 0), 0);
-        const todayCommission = todayOrders.reduce((sum, order) => sum + (order.commissionAmount || 0), 0);
-        const todayGatewayFees = todayOrders.reduce((sum, order) => sum + (order.gatewayFee || 0), 0);
+    // Calculate today's stats
+    const todayRevenue = todayOrders.reduce((sum, order) => sum + (order.totalPrice || 0), 0);
+    const todayCommission = todayOrders.reduce((sum, order) => sum + (order.commissionAmount || 0), 0);
+    const todayAdminEarning = todayOrders.reduce((sum, order) => sum + (order.adminEarning || 0), 0);
+    const todayGatewayFees = todayOrders.reduce((sum, order) => sum + (order.gatewayFee || 0), 0);
 
-        // All-time stats
-        const allOrders = await Order.find({ status: { $in: ['Delivered', 'Completed'] } });
-        const totalRevenue = allOrders.reduce((sum, order) => sum + (order.totalPrice || 0), 0);
-        const totalCommission = allOrders.reduce((sum, order) => sum + (order.commissionAmount || 0), 0);
-        const totalGatewayFees = allOrders.reduce((sum, order) => sum + (order.gatewayFee || 0), 0);
+    // All-time stats
+    const allOrders = await Order.find({ status: { $in: ['Delivered', 'Completed'] } });
+    const totalRevenue = allOrders.reduce((sum, order) => sum + (order.totalPrice || 0), 0);
+    const totalCommission = allOrders.reduce((sum, order) => sum + (order.commissionAmount || 0), 0);
+    const totalAdminEarning = allOrders.reduce((sum, order) => sum + (order.adminEarning || 0), 0);
+    const totalGatewayFees = allOrders.reduce((sum, order) => sum + (order.gatewayFee || 0), 0);
 
-        // Pending payouts
-        const restaurantWallets = await RestaurantWallet.find();
-        const riderWallets = await RiderWallet.find();
+    // Pending payouts
+    const restaurantWallets = await RestaurantWallet.find();
+    const riderWallets = await RiderWallet.find();
 
-        const pendingRestaurantPayouts = restaurantWallets.reduce((sum, wallet) => sum + wallet.pendingPayout, 0);
-        const pendingRiderPayouts = riderWallets.reduce((sum, wallet) => sum + wallet.availableWithdraw, 0);
+    const pendingRestaurantPayouts = restaurantWallets.reduce((sum, wallet) => sum + wallet.pendingPayout, 0);
+    const pendingRiderPayouts = riderWallets.reduce((sum, wallet) => sum + wallet.availableWithdraw, 0);
 
-        res.json({
-            today: {
-                revenue: todayRevenue,
-                commission: todayCommission,
-                gatewayFees: todayGatewayFees,
-                platformRevenue: todayCommission - todayGatewayFees,
-                orders: todayOrders.length,
-            },
-            allTime: {
-                revenue: totalRevenue,
-                commission: totalCommission,
-                gatewayFees: totalGatewayFees,
-                platformRevenue: totalCommission - totalGatewayFees,
-                orders: allOrders.length,
-            },
+    res.json({
+        today: {
+            revenue: todayRevenue,
+            commission: todayCommission,
+            adminEarning: todayAdminEarning,
+            gatewayFees: todayGatewayFees,
+            platformRevenue: todayAdminEarning - todayGatewayFees,
+            orders: todayOrders.length,
+        },
+        allTime: {
+            revenue: totalRevenue,
+            commission: totalCommission,
+            adminEarning: totalAdminEarning,
+            gatewayFees: totalGatewayFees,
+            platformRevenue: totalAdminEarning - totalGatewayFees,
+            orders: allOrders.length,
+        },
             pendingPayouts: {
                 restaurants: pendingRestaurantPayouts,
                 riders: pendingRiderPayouts,
@@ -298,27 +303,174 @@ const processRefund = async (req, res) => {
             return res.status(404).json({ message: 'Order not found' });
         }
 
-        // Record refund transaction
+        // 1. Update order status
+        const oldStatus = order.status;
+        order.status = 'Refunded';
+        order.cancellationReason = reason;
+        await order.save();
+
+        // 2. If order was already completed/delivered, we might need to deduct from restaurant/rider
+        // For now, we mainly record the transaction and update status.
+        // If a real wallet deduction is needed, it would happen here:
+        if (oldStatus === 'Delivered' || oldStatus === 'Completed') {
+            const restaurantWallet = await RestaurantWallet.findOne({ restaurant: order.restaurant });
+            if (restaurantWallet && order.restaurantEarning > 0) {
+                restaurantWallet.availableBalance = Math.max(0, restaurantWallet.availableBalance - order.restaurantEarning);
+                await restaurantWallet.save();
+
+                // Transaction for Restaurant deduction
+                await Transaction.create({
+                    entityType: 'restaurant',
+                    entityId: order.restaurant,
+                    entityModel: 'Restaurant',
+                    order: orderId,
+                    type: 'refund_deduction',
+                    amount: order.restaurantEarning,
+                    balanceAfter: restaurantWallet.availableBalance,
+                    description: `Deduction for refunded order ${orderId}`,
+                });
+
+                triggerEvent(`restaurant-${order.restaurant}`, 'wallet_updated', {
+                    availableBalance: restaurantWallet.availableBalance
+                });
+            }
+        }
+
+        // 3. Record refund transaction for customer
         const transaction = await Transaction.create({
             entityType: 'customer',
             entityId: order.user,
             entityModel: 'User',
             order: orderId,
             type: 'refund',
-            amount: amount,
+            amount: amount || order.totalPrice,
             balanceAfter: 0,
             description: `Refund for order ${orderId}: ${reason}`,
         });
 
-        // Emit socket event for admin real-time update
+        // 4. Emit socket event for admin real-time update
         triggerEvent('admin', 'stats_updated', { 
             type: 'refund_processed',
-            orderId 
+            orderId,
+            amount: amount || order.totalPrice
+        });
+
+        // 5. Notify user
+        triggerEvent(`user-${order.user}`, 'orderRefunded', {
+            orderId: order._id,
+            amount: amount || order.totalPrice,
+            reason
         });
 
         res.json({
             message: 'Refund processed successfully',
             transaction,
+            order
+        });
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};
+
+/**
+ * @desc    Update payout status (mark as paid)
+ * @route   PUT /api/finance/payout/:id
+ * @access  Private/Admin
+ */
+const updatePayoutStatus = async (req, res) => {
+    try {
+        const { status, bankReference, transactionId } = req.body;
+        const payout = await Payout.findById(req.params.id);
+
+        if (!payout) {
+            return res.status(404).json({ message: 'Payout not found' });
+        }
+
+        if (payout.status === 'paid' || payout.status === 'completed') {
+            return res.status(400).json({ message: 'Payout already processed' });
+        }
+
+        payout.status = status || 'paid';
+        if (bankReference) payout.bankReference = bankReference;
+        if (transactionId) payout.transactionId = transactionId;
+        payout.processedBy = req.user.id;
+        payout.processedAt = new Date();
+
+        await payout.save();
+
+        // If marked as paid, deduct from wallet
+        if (payout.status === 'paid' || payout.status === 'completed') {
+            if (payout.type === 'restaurant') {
+                const wallet = await RestaurantWallet.findOne({ restaurant: payout.entityId });
+                if (wallet) {
+                    wallet.pendingPayout = Math.max(0, wallet.pendingPayout - payout.totalAmount);
+                    wallet.availableBalance = Math.max(0, wallet.availableBalance - payout.totalAmount);
+                    wallet.lastPayoutDate = new Date();
+                    await wallet.save();
+
+                    // Record Transaction
+                    await Transaction.create({
+                        entityType: 'restaurant',
+                        entityId: payout.entityId,
+                        entityModel: 'Restaurant',
+                        type: 'payout',
+                        amount: payout.totalAmount,
+                        balanceAfter: wallet.availableBalance,
+                        description: `Payout processed: ${payout.bankReference || payout._id}`,
+                    });
+
+                    // Socket Update
+                    triggerEvent(`restaurant-${payout.entityId}`, 'wallet_updated', {
+                        availableBalance: wallet.availableBalance,
+                        pendingPayout: wallet.pendingPayout
+                    });
+                }
+            } else if (payout.type === 'rider') {
+                const wallet = await RiderWallet.findOne({ rider: payout.entityId });
+                if (wallet) {
+                    wallet.availableWithdraw = Math.max(0, wallet.availableWithdraw - payout.totalAmount);
+                    wallet.lastWithdrawDate = new Date();
+                    await wallet.save();
+
+                    // Also update Rider profile balance if it exists there
+                    const { Rider: RiderModel } = require('../models/Rider');
+                    if (RiderModel) {
+                        const rider = await RiderModel.findOne({ user: payout.entityId });
+                        if (rider) {
+                            rider.earnings_balance = Math.max(0, (rider.earnings_balance || 0) - payout.totalAmount);
+                            await rider.save();
+                        }
+                    }
+
+                    // Record Transaction
+                    await Transaction.create({
+                        entityType: 'rider',
+                        entityId: payout.entityId,
+                        entityModel: 'User',
+                        type: 'payout',
+                        amount: payout.totalAmount,
+                        balanceAfter: wallet.availableWithdraw,
+                        description: `Payout processed: ${payout.bankReference || payout._id}`,
+                    });
+
+                    // Socket Update
+                    triggerEvent(`rider-${payout.entityId}`, 'wallet_updated', {
+                        availableWithdraw: wallet.availableWithdraw
+                    });
+                }
+            }
+        }
+
+        // Emit socket event for admin real-time update
+        triggerEvent('admin', 'stats_updated', { 
+            type: 'payout_updated',
+            payoutId: payout._id,
+            status: payout.status
+        });
+
+        res.json({
+            message: `Payout marked as ${payout.status}`,
+            payout,
         });
     } catch (error) {
         res.status(500).json({ message: error.message });
@@ -335,5 +487,6 @@ module.exports = {
     getAllRiderWallets,
     createPayoutBatch,
     getPayoutHistory,
+    updatePayoutStatus,
     processRefund,
 };
