@@ -1,4 +1,4 @@
-// Deploy Trigger: 2026-01-21 21:30 - Update Google Maps integration
+// Deploy Trigger: 2026-01-23 23:45 - Update for Video Scaling and Admin Fixes
 const getApiUrl = () => {
   // Priority 1: Use Environment variable if provided (from .env.local)
   let url = process.env.NEXT_PUBLIC_API_URL;
