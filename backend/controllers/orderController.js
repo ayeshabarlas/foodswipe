@@ -39,7 +39,8 @@ const createOrder = async (req, res) => {
             deliveryFee,
             serviceFee,
             tax,
-            promoCode
+            promoCode,
+            discount
         } = req.body;
 
         if (!items || items.length === 0) {

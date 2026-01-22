@@ -226,6 +226,10 @@ const getDashboardStats = async (req, res) => {
                         } 
                     },
                     totalRestaurantEarnings: { $sum: { $toDouble: { $ifNull: ['$restaurantEarning', 0] } } },
+                    totalServiceFees: { $sum: { $toDouble: { $ifNull: ['$serviceFee', 0] } } },
+                    totalTax: { $sum: { $toDouble: { $ifNull: ['$tax', 0] } } },
+                    totalGatewayFees: { $sum: { $toDouble: { $ifNull: ['$gatewayFee', 0] } } },
+                    totalDiscounts: { $sum: { $toDouble: { $ifNull: ['$discount', 0] } } },
                     totalDeliveryFees: { 
                         $sum: { 
                             $cond: [
@@ -244,9 +248,13 @@ const getDashboardStats = async (req, res) => {
         const totalRiderEarnings = totalStatsResult[0]?.totalRiderEarnings || 0;
         const totalRestaurantEarnings = totalStatsResult[0]?.totalRestaurantEarnings || 0;
         const totalDeliveryFees = totalStatsResult[0]?.totalDeliveryFees || 0;
+        const totalServiceFees = totalStatsResult[0]?.totalServiceFees || 0;
+        const totalTax = totalStatsResult[0]?.totalTax || 0;
+        const totalGatewayFees = totalStatsResult[0]?.totalGatewayFees || 0;
+        const totalDiscounts = totalStatsResult[0]?.totalDiscounts || 0;
         
-        // Calculate Net Platform Profit: Commission + (Delivery Fees - Rider Earnings)
-        const netPlatformProfit = totalCommission + (totalDeliveryFees - totalRiderEarnings);
+        // Calculate Net Platform Profit: Commission + (Delivery Fees - Rider Earnings) + Service Fees + Tax - Gateway Fees - Discounts
+        const netPlatformProfit = totalCommission + (totalDeliveryFees - totalRiderEarnings) + totalServiceFees + totalTax - totalGatewayFees - totalDiscounts;
 
         const todayRevenueResult = await Order.aggregate([
             {

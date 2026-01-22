@@ -388,7 +388,12 @@ export default function CheckoutModal({ isOpen, onClose, cart, total, subtotal, 
     const currentTotal = Math.max(0, (Number(subtotal) || 0) + (Number(calculatedFee) || 0) + (Number(calculatedTax) || 0) + (Number(serviceFee) || 0) - (Number(discountAmount) || 0));
 
     const handlePlaceOrder = async () => {
-        console.log('handlePlaceOrder initiated');
+        console.log('🚀 handlePlaceOrder: Initiated');
+        
+        if (loading) {
+            console.log('⚠️ handlePlaceOrder: Already loading, ignoring duplicate call');
+            return;
+        }
 
         // Check phone verification directly from localStorage and state to avoid state sync issues
         const userInfoStr = localStorage.getItem('userInfo');
@@ -396,7 +401,7 @@ export default function CheckoutModal({ isOpen, onClose, cart, total, subtotal, 
         try {
             userInfo = userInfoStr ? JSON.parse(userInfoStr) : {};
         } catch (e) {
-            console.error('Error parsing userInfo:', e);
+            console.error('❌ handlePlaceOrder: Error parsing userInfo:', e);
         }
 
         // IMPORTANT: If phone is already verified in state or userInfo, skip phone auth
@@ -409,14 +414,15 @@ export default function CheckoutModal({ isOpen, onClose, cart, total, subtotal, 
                           userInfo.is_phone_verified === 'true';
 
         if (isVerified || isLocalhost) {
-            console.log(isLocalhost ? 'Localhost detected, bypassing phone verification' : 'Phone already verified, proceeding to place order');
+            console.log(isLocalhost ? '✅ handlePlaceOrder: Localhost detected, bypassing phone verification' : '✅ handlePlaceOrder: Phone already verified, proceeding');
         } else {
-            console.log('Phone not verified, showing phone auth modal');
+            console.log('📱 handlePlaceOrder: Phone not verified, showing phone auth modal');
             setShowPhoneAuth(true);
             return;
         }
 
         try {
+            console.log('⏳ handlePlaceOrder: Setting loading state to true');
             setLoading(true);
             let token = localStorage.getItem('token');
 
@@ -426,25 +432,29 @@ export default function CheckoutModal({ isOpen, onClose, cart, total, subtotal, 
                     if (parsedUser.token) {
                         token = parsedUser.token;
                         localStorage.setItem('token', token || '');
+                        console.log('🔑 handlePlaceOrder: Token recovered from userInfo');
                     }
                 } catch (e) {
-                    console.error('Error parsing userInfo:', e);
+                    console.error('❌ handlePlaceOrder: Error parsing userInfo for token:', e);
                 }
             }
 
             if (!token) {
+                console.error('❌ handlePlaceOrder: No authentication token found');
                 alert('Please login to place an order');
                 setLoading(false);
                 return;
             }
 
             if (!deliveryAddress.trim()) {
+                console.warn('⚠️ handlePlaceOrder: No delivery address provided');
                 alert('Please enter a delivery address');
                 setLoading(false);
                 return;
             }
 
             if (!cart || cart.length === 0) {
+                console.warn('⚠️ handlePlaceOrder: Cart is empty');
                 alert('Cart is empty');
                 setLoading(false);
                 return;
@@ -464,12 +474,13 @@ export default function CheckoutModal({ isOpen, onClose, cart, total, subtotal, 
             }
 
             if (!restaurantId) {
-                console.error('No restaurant ID found in cart items:', cart);
+                console.error('❌ handlePlaceOrder: No restaurant ID found in cart items:', cart);
                 alert('System Error: Could not identify the restaurant. Please try adding items to cart again.');
                 setLoading(false);
                 return;
             }
 
+            console.log(`🛒 handlePlaceOrder: Preparing order data for restaurant ${restaurantId}`);
             const items = cart.map(item => ({
                 dish: item._id,
                 name: item.name,
@@ -500,19 +511,23 @@ export default function CheckoutModal({ isOpen, onClose, cart, total, subtotal, 
                 promoCode: appliedVoucher ? appliedVoucher.code : ''
             };
 
+            console.log('📡 handlePlaceOrder: Sending order request to API...', orderData);
             const response = await axios.post(
                 `${API_BASE_URL}/api/orders`,
                 orderData,
-                { headers: { Authorization: `Bearer ${token}` } }
+                { 
+                    headers: { Authorization: `Bearer ${token}` },
+                    timeout: 30000 // 30 second timeout
+                }
             );
 
             const order = response.data;
-            console.log('Order created successfully:', order);
+            console.log('✅ handlePlaceOrder: Order created successfully:', order);
 
             // Handle Safepay for online payments
             if (paymentMethod !== 'cod') {
                 try {
-                    console.log('Initiating Safepay for order:', order._id);
+                    console.log('💳 handlePlaceOrder: Initiating Safepay for order:', order._id);
                     const safepayRes = await axios.post(
                         `${API_BASE_URL}/api/payments/safepay/checkout`,
                         { orderId: order._id },
@@ -520,14 +535,14 @@ export default function CheckoutModal({ isOpen, onClose, cart, total, subtotal, 
                     );
                     
                     if (safepayRes.data.url) {
-                        console.log('Redirecting to Safepay:', safepayRes.data.url);
+                        console.log('🔗 handlePlaceOrder: Redirecting to Safepay:', safepayRes.data.url);
                         clearCart(); // Clear cart before redirecting
                         window.dispatchEvent(new Event('cartCleared'));
                         window.location.href = safepayRes.data.url;
                         return; // Stop execution as we are redirecting
                     }
                 } catch (err) {
-                    console.error('Safepay initiation failed:', err);
+                    console.error('❌ handlePlaceOrder: Safepay initiation failed:', err);
                     alert('Online payment failed to initialize. Please try COD or try again.');
                     setLoading(false);
                     return;
@@ -543,7 +558,7 @@ export default function CheckoutModal({ isOpen, onClose, cart, total, subtotal, 
                 total: currentTotal
             };
 
-            console.log('Order processed, setting success states:', orderId);
+            console.log('✨ handlePlaceOrder: Order processed, setting success states:', orderId);
             
             // Set order info first
             setPlacedOrder(orderInfo);
@@ -562,7 +577,7 @@ export default function CheckoutModal({ isOpen, onClose, cart, total, subtotal, 
                 try {
                     onSuccess();
                 } catch (e) {
-                    console.error('onSuccess callback failed:', e);
+                    console.error('❌ handlePlaceOrder: onSuccess callback failed:', e);
                 }
             }
 
@@ -588,15 +603,15 @@ export default function CheckoutModal({ isOpen, onClose, cart, total, subtotal, 
                                 houseNumber: houseNumber 
                             },
                             { headers: { Authorization: `Bearer ${token}` } }
-                        ).catch(err => console.error('Background address sync failed:', err));
+                        ).catch(err => console.error('❌ handlePlaceOrder: Background address sync failed:', err));
                     }
                 }
             } catch (err) {
-                console.error('Failed to initiate background address sync:', err);
+                console.error('❌ handlePlaceOrder: Failed to initiate background address sync:', err);
             }
 
         } catch (error: any) {
-            console.error('Order placement failed:', error);
+            console.error('❌ handlePlaceOrder: Order placement failed:', error);
             setLoading(false); // Ensure loading is false on error
             if (error.response && error.response.status === 401) {
                 alert('Session expired. Please login again.');
@@ -605,7 +620,7 @@ export default function CheckoutModal({ isOpen, onClose, cart, total, subtotal, 
                 alert(`Order Failed: ${errorMessage}`);
             }
         } finally {
-            // This is a safety net, though we call setLoading(false) above too
+            console.log('🏁 handlePlaceOrder: Finally block reached, setting loading to false');
             setLoading(false);
         }
     };
@@ -1175,7 +1190,7 @@ export default function CheckoutModal({ isOpen, onClose, cart, total, subtotal, 
                 isOpen={showPhoneAuth}
                 onClose={() => setShowPhoneAuth(false)}
                 onSuccess={async () => {
-                    console.log('Phone verification successful, proceeding with order...');
+                    console.log('📱 Phone verification successful, updating state...');
                     setPhoneVerified(true);
                     setShowPhoneAuth(false);
 
@@ -1184,9 +1199,15 @@ export default function CheckoutModal({ isOpen, onClose, cart, total, subtotal, 
                     userInfo.phoneVerified = true;
                     localStorage.setItem('userInfo', JSON.stringify(userInfo));
 
-                    // Wait a moment for state to update, then place order
-                    await new Promise(resolve => setTimeout(resolve, 300));
-                    handlePlaceOrder();
+                    // Wait for modal transition to finish
+                    await new Promise(resolve => setTimeout(resolve, 500));
+                    
+                    if (!loading) {
+                        console.log('🚀 Proceeding with handlePlaceOrder after verification');
+                        handlePlaceOrder();
+                    } else {
+                        console.log('⚠️ Already loading, skipping duplicate handlePlaceOrder');
+                    }
                 }}
             />
         </AnimatePresence>

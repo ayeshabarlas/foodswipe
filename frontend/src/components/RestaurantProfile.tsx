@@ -161,6 +161,13 @@ export default function RestaurantProfile({ restaurant: initialRestaurant, onBac
                     const userLat = position.coords.latitude;
                     const userLon = position.coords.longitude;
                     const [restLon, restLat] = restaurantData.location!.coordinates;
+                    
+                    console.log('📍 Distance Calculation Debug:', {
+                        user: { lat: userLat, lon: userLon },
+                        restaurant: { lat: restLat, lon: restLon },
+                        restaurantAddress: restaurantData.address
+                    });
+
                     const dist = calculateDistance(userLat, userLon, restLat, restLon);
                     setDistance(dist);
                 },

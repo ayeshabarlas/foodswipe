@@ -10,11 +10,20 @@ const axios = require('axios');
 // Geocoding utility function
 const geocodeAddress = async (address) => {
     try {
-        console.log(`Geocoding address: ${address}`);
+        // Append context if missing to avoid ambiguous results (e.g., Allama Iqbal Town in other cities)
+        let query = address;
+        if (!address.toLowerCase().includes('lahore')) {
+            query = `${address}, Lahore, Pakistan`;
+        } else if (!address.toLowerCase().includes('pakistan')) {
+            query = `${address}, Pakistan`;
+        }
+
+        console.log(`📡 Geocoding address: "${address}" using query: "${query}"`);
+        
         const response = await axios.get(`https://nominatim.openstreetmap.org/search`, {
             params: {
                 format: 'json',
-                q: address,
+                q: query,
                 limit: 1
             },
             headers: {
@@ -23,14 +32,32 @@ const geocodeAddress = async (address) => {
         });
 
         if (response.data && response.data.length > 0) {
-            const { lat, lon } = response.data[0];
+            const { lat, lon, display_name } = response.data[0];
+            console.log(`✅ Geocoding success: ${display_name} -> [${lat}, ${lon}]`);
             return {
                 lat: parseFloat(lat),
-                lng: parseFloat(lon)
+                lng: parseFloat(lon),
+                description: display_name
             };
+        } else {
+            console.warn(`⚠️ Geocoding returned no results for: "${query}"`);
+            
+            // Fallback: try without the appended context if we added it and it failed
+            if (query !== address) {
+                console.log(`🔄 Retrying geocode with original address: "${address}"`);
+                const fallbackRes = await axios.get(`https://nominatim.openstreetmap.org/search`, {
+                    params: { format: 'json', q: address, limit: 1 },
+                    headers: { 'User-Agent': 'FoodSwipe-App' }
+                });
+                
+                if (fallbackRes.data && fallbackRes.data.length > 0) {
+                    const { lat, lon, display_name } = fallbackRes.data[0];
+                    return { lat: parseFloat(lat), lng: parseFloat(lon), description: display_name };
+                }
+            }
         }
     } catch (error) {
-        console.error('Geocoding error:', error.message);
+        console.error('❌ Geocoding error:', error.message);
     }
     return null;
 };
