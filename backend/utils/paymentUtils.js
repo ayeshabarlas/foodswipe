@@ -4,21 +4,26 @@
  */
 
 // 1. Core Rules
-const BASE_RIDER_PAY = 60;
+const BASE_RIDER_PAY = 40;
 const PER_KM_RATE = 20;
 const MAX_RIDER_PAY = 200; // Added cap to prevent inflated earnings (matched with settings default)
 
 /**
  * Calculates rider earnings based on distance
  * @param {number} distanceKm - Distance in kilometers
+ * @param {object} settings - Optional system settings to use for rates
  * @returns {object} - grossEarning, platformFee (0), netEarning
  */
-const calculateRiderEarning = (distanceKm) => {
-    let gross = BASE_RIDER_PAY + (distanceKm * PER_KM_RATE);
+const calculateRiderEarning = (distanceKm, settings = null) => {
+    const basePay = settings?.deliveryFeeBase || BASE_RIDER_PAY;
+    const perKmRate = settings?.deliveryFeePerKm || PER_KM_RATE;
+    const maxPay = settings?.deliveryFeeMax || MAX_RIDER_PAY;
+
+    let gross = basePay + (distanceKm * perKmRate);
     
-    // Cap the earnings to prevent extreme cases (e.g. 100km distance)
-    if (gross > MAX_RIDER_PAY) {
-        gross = MAX_RIDER_PAY;
+    // Cap the earnings to prevent extreme cases
+    if (gross > maxPay) {
+        gross = maxPay;
     }
 
     const net = gross; 
@@ -32,17 +37,20 @@ const calculateRiderEarning = (distanceKm) => {
 
 /**
  * Calculates delivery fee for the customer
- * MVP Logic: Customer pays exactly what the rider gets (Rs 60 Base + Rs 20/km)
  * @param {number} distanceKm - Distance in kilometers
+ * @param {object} settings - Optional system settings to use for rates
  * @returns {number} - Delivery fee in Rs.
  */
-const calculateDeliveryFee = (distanceKm) => {
-    // Ensuring it matches calculateRiderEarning's gross logic
-    let fee = BASE_RIDER_PAY + (distanceKm * PER_KM_RATE);
+const calculateDeliveryFee = (distanceKm, settings = null) => {
+    const basePay = settings?.deliveryFeeBase || BASE_RIDER_PAY;
+    const perKmRate = settings?.deliveryFeePerKm || PER_KM_RATE;
+    const maxPay = settings?.deliveryFeeMax || MAX_RIDER_PAY;
+
+    let fee = basePay + (distanceKm * perKmRate);
     
-    // Cap the delivery fee to match rider pay cap
-    if (fee > MAX_RIDER_PAY) {
-        fee = MAX_RIDER_PAY;
+    // Cap the delivery fee
+    if (fee > maxPay) {
+        fee = maxPay;
     }
     
     return Math.round(fee);

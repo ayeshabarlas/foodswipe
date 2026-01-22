@@ -146,7 +146,7 @@ const createOrder = async (req, res) => {
             finalDeliveryFee = settings.deliveryFeeBase || 60;
         }
 
-        const riderEarnings = calculateRiderEarning(distanceKm);
+        const riderEarnings = calculateRiderEarning(distanceKm, settings);
         const finalServiceFee = serviceFee || settings.serviceFee || 0;
         
         // Calculate tax based on dynamic settings
@@ -457,6 +457,8 @@ const processOrderCompletion = async (order, distanceKm, req = null) => {
             console.log(`[Finance] Order ${order._id} already processed. Skipping...`);
             return;
         }
+
+        const settings = await Settings.getSettings();
         
         // If distanceKm is not provided or 0, try to calculate it
         let finalDistance = distanceKm || order.distanceKm || 0;
@@ -465,7 +467,7 @@ const processOrderCompletion = async (order, distanceKm, req = null) => {
             finalDistance = calculateDistance(restLat, restLng, order.deliveryLocation.lat, order.deliveryLocation.lng);
         }
         
-        // Fallback if still 0 - reduced from 4.2 to 1.5 to prevent overpayment
+        // Fallback if still 0
         if (!finalDistance || finalDistance === 0) finalDistance = 1.5;
 
         if (!order.rider) {
@@ -492,8 +494,8 @@ const processOrderCompletion = async (order, distanceKm, req = null) => {
         const commissionAmount = (subtotal * commissionPercent) / 100;
         const restaurantEarning = subtotal - commissionAmount;
         
-        // Rider Pay: Rs 60 Base + Rs 20/km
-        const riderPayCalc = calculateRiderEarning(finalDistance);
+        // Rider Pay: Uses dynamic settings from system
+        const riderPayCalc = calculateRiderEarning(finalDistance, settings);
         const riderEarning = riderPayCalc.netEarning;
 
         console.log(`[Finance] Split: Subtotal=${subtotal}, Commission=${commissionAmount}, RestEarning=${restaurantEarning}, RiderEarning=${riderEarning}`);
@@ -548,10 +550,12 @@ const processOrderCompletion = async (order, distanceKm, req = null) => {
                          (order.paymentMethod.toUpperCase() === 'COD' || 
                           order.paymentMethod.toUpperCase() === 'CASH');
             
+            const codAmount = order.totalPrice || 0;
+            
             if (isCOD) {
-                rider.cod_balance = (rider.cod_balance || 0) + (order.totalPrice || 0);
+                rider.cod_balance = (rider.cod_balance || 0) + codAmount;
                 
-                console.log(`[Finance] COD Order detected. Updating rider.cod_balance by ${order.totalPrice}. New balance: ${rider.cod_balance}`);
+                console.log(`[Finance] COD Order detected. Updating rider.cod_balance by ${codAmount}. New balance: ${rider.cod_balance}`);
                 
                 // Check if COD balance exceeds limit (e.g., 20,000)
                 if (rider.cod_balance > 20000) {
@@ -562,9 +566,9 @@ const processOrderCompletion = async (order, distanceKm, req = null) => {
                 await CODLedger.create({
                     rider: rider._id,
                     order: order._id,
-                    cod_collected: order.totalPrice || 0,
+                    cod_collected: codAmount,
                     rider_earning: riderEarning,
-                    admin_balance: (order.totalPrice || 0) - riderEarning,
+                    admin_balance: codAmount - riderEarning,
                     status: 'pending'
                 });
             } else {
@@ -594,9 +598,24 @@ const processOrderCompletion = async (order, distanceKm, req = null) => {
             riderWallet.availableWithdraw = (riderWallet.availableWithdraw || 0) + riderEarning;
             
             if (isCOD) {
-                riderWallet.cashCollected = (riderWallet.cashCollected || 0) + (order.totalPrice || 0);
+                riderWallet.cashCollected = (riderWallet.cashCollected || 0) + codAmount;
             }
             await riderWallet.save();
+
+            // Real-time update for Rider Wallet
+            triggerEvent(`rider-${rider._id}`, 'wallet_updated', {
+                cod_balance: rider.cod_balance,
+                earnings_balance: rider.earnings_balance,
+                walletBalance: rider.walletBalance,
+                stats: rider.stats
+            });
+
+            // Real-time update for Admin COD Settlement
+            triggerEvent('admin', 'cod_updated', {
+                riderId: rider._id,
+                cod_balance: rider.cod_balance,
+                orderId: order._id
+            });
 
             // Transaction for Rider
             await Transaction.create({
@@ -607,8 +626,12 @@ const processOrderCompletion = async (order, distanceKm, req = null) => {
                 type: 'earning',
                 amount: riderEarning,
                 balanceAfter: rider.walletBalance,
-                description: `Earning for order #${order.orderNumber || order._id.toString().slice(-6)} (Base 60 + ${finalDistance}km x 20)`,
-                metadata: { distanceKm: finalDistance, basePay: 60, kmRate: 20 }
+                description: `Earning for order #${order.orderNumber || order._id.toString().slice(-6)}`,
+                metadata: { 
+                    distanceKm: finalDistance, 
+                    basePay: settings.deliveryFeeBase || 60, 
+                    kmRate: settings.deliveryFeePerKm || 20 
+                }
             });
 
             const riderUserId = rider.user?._id || rider.user;

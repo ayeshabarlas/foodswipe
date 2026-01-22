@@ -29,9 +29,24 @@ export default function RiderRatingModal({ isOpen, onClose, orderId, riderName, 
 
         setLoading(true);
         try {
+            // Robust token retrieval
+            let token = localStorage.getItem('token');
             const userInfoStr = localStorage.getItem('userInfo');
-            if (!userInfoStr) return;
-            const token = JSON.parse(userInfoStr).token;
+            
+            if (!token && userInfoStr) {
+                try {
+                    const userInfo = JSON.parse(userInfoStr);
+                    token = userInfo.token;
+                } catch (e) {
+                    console.error('Error parsing userInfo for token:', e);
+                }
+            }
+
+            if (!token) {
+                toast.error('Session expired. Please login again.');
+                setLoading(false);
+                return;
+            }
 
             await axios.post(
                 `${API_BASE_URL}/api/orders/${orderId}/rate-rider`,

@@ -543,17 +543,20 @@ export default function CheckoutModal({ isOpen, onClose, cart, total, subtotal, 
                 total: currentTotal
             };
 
-            console.log('Setting success state for order:', orderId);
+            console.log('Order processed, setting success states:', orderId);
             
-            // Set order info first, then success state
+            // Set order info first
             setPlacedOrder(orderInfo);
-            setOrderSuccess(true);
-            setShowConfetti(true);
-            setLoading(false);
             
-            // Clear cart and notify other components
+            // Clear cart and notify other components BEFORE showing success screen
+            // to ensure state is clean
             clearCart();
             window.dispatchEvent(new Event('cartCleared'));
+
+            // Show success screen and stop loading
+            setOrderSuccess(true);
+            setLoading(false);
+            setShowConfetti(true);
 
             if (onSuccess) {
                 try {
@@ -672,7 +675,7 @@ export default function CheckoutModal({ isOpen, onClose, cart, total, subtotal, 
                                                     </div>
                                                     <p className="text-xs text-gray-800 font-medium">Order Number</p>
                                                 </div>
-                                                <p className="font-semibold text-orange-500 text-sm">#{(placedOrder.id?.toString() || '').slice(-4).toUpperCase()}</p>
+                                                <p className="font-semibold text-orange-500 text-sm">#{placedOrder && placedOrder.id ? (placedOrder.id.toString() || '').slice(-4).toUpperCase() : '8703'}</p>
                                             </div>
 
                                             <div className="flex items-center justify-between">
