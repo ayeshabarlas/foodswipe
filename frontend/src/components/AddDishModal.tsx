@@ -50,7 +50,6 @@ export default function AddDishModal({ isOpen, onClose, onSubmit, editingDish, c
         videoUrl: '',
     });
 
-    // Update form when editingDish changes
     useEffect(() => {
         if (editingDish) {
             setFormData({
@@ -66,23 +65,14 @@ export default function AddDishModal({ isOpen, onClose, onSubmit, editingDish, c
             setAddOns(editingDish.addOns || []);
             setDrinks(editingDish.drinks || []);
             setCombos(editingDish.combos || []);
-        } else {
-            // Reset form for new dish
-            setFormData({
-                name: '',
-                description: '',
-                price: 0,
-                category: categories[0] || '',
-                ingredients: '',
-                imageUrl: '',
-                videoUrl: '',
-            });
-            setVariants([]);
-            setAddOns([]);
-            setDrinks([]);
-            setCombos([]);
         }
-    }, [editingDish, categories]);
+    }, [editingDish]);
+
+    useEffect(() => {
+        if (!editingDish && !formData.category && categories[0]) {
+            setFormData(prev => ({ ...prev, category: categories[0] }));
+        }
+    }, [categories, editingDish, formData.category]);
 
     const [variants, setVariants] = useState<Variant[]>([]);
     const [addOns, setAddOns] = useState<AddOn[]>([]);
@@ -122,9 +112,13 @@ export default function AddDishModal({ isOpen, onClose, onSubmit, editingDish, c
                     Authorization: `Bearer ${token}`,
                 },
                 onUploadProgress: (progressEvent: any) => {
-                    const percentCompleted = Math.round((progressEvent.loaded * 100) / progressEvent.total);
-                    setUploadProgress(percentCompleted);
-                }
+                    const total = progressEvent.total || progressEvent.loaded || 0;
+                    if (total > 0) {
+                        const percentCompleted = Math.round((progressEvent.loaded * 100) / total);
+                        setUploadProgress(percentCompleted);
+                    }
+                },
+                timeout: 30000
             };
 
             const { data } = await axios.post(`${API_BASE_URL}/api/upload`, uploadData, config);
