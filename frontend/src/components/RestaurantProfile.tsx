@@ -168,6 +168,7 @@ export default function RestaurantProfile({ restaurant: initialRestaurant, onBac
                         restaurantAddress: restaurantData.address
                     });
 
+                    // Ensure we are passing coordinates in the correct order: lat1, lon1, lat2, lon2
                     const dist = calculateDistance(userLat, userLon, restLat, restLon);
                     setDistance(dist);
                 },

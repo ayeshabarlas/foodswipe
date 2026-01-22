@@ -290,15 +290,19 @@ const updateRestaurant = async (req, res) => {
             return res.status(403).json({ message: 'Not authorized to update this restaurant' });
         }
 
-        // Geocode if address changed OR if coordinates are [0, 0]
+        // Geocode if:
+        // 1. Address changed
+        // 2. coordinates are [0, 0]
+        // 3. Address is provided but location is NOT provided in request (explicit request to re-geocode)
         const addressChanged = req.body.address && req.body.address !== restaurant.address;
         const hasNoCoordinates = !restaurant.location || 
                                 !restaurant.location.coordinates || 
                                 (restaurant.location.coordinates[0] === 0 && restaurant.location.coordinates[1] === 0);
+        const explicitGeocodeRequest = req.body.address && req.body.location === undefined;
         
-        // If address changed or we have no coordinates, we should re-geocode
-        if (addressChanged || hasNoCoordinates) {
-            console.log(`🔄 ${addressChanged ? 'Address changed' : 'Missing coordinates'}. Re-geocoding "${req.body.address || restaurant.address}"...`);
+        // If address changed or we have no coordinates, or explicitly requested, we should re-geocode
+        if (addressChanged || hasNoCoordinates || explicitGeocodeRequest) {
+            console.log(`🔄 ${addressChanged ? 'Address changed' : (hasNoCoordinates ? 'Missing coordinates' : 'Explicit geocode request')}. Re-geocoding "${req.body.address || restaurant.address}"...`);
             const addressToGeocode = req.body.address || restaurant.address;
             if (addressToGeocode) {
                 const coords = await geocodeAddress(addressToGeocode);
@@ -319,8 +323,8 @@ const updateRestaurant = async (req, res) => {
             'cuisineTypes', 'priceRange', 'socialMedia', 'openingHours', 'coverImage', 'isActive', 'deliveryZones', 'bankDetails', 'deliveryTime'
         ];
 
-        // Only allow updating location if we didn't just geocode it
-        if (!(addressChanged || hasNoCoordinates) && req.body.location !== undefined) {
+        // Only allow updating location if we didn't just geocode it AND it was provided
+        if (!(addressChanged || hasNoCoordinates || explicitGeocodeRequest) && req.body.location !== undefined) {
             restaurant.location = req.body.location;
         }
 

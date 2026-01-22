@@ -132,13 +132,11 @@ export default function SettingsTab({ restaurant, onUpdate }: SettingsTabProps) 
         try {
             const token = JSON.parse(localStorage.getItem("userInfo") || "{}").token;
             
-            // Filter out location from formData if it's [0,0] to let backend re-geocode
+            // Force re-geocoding by omitting location from updateData.
+            // This ensures that the backend refreshes the coordinates from the address
+            // whenever the user saves their settings, fixing any previous geocoding errors.
             const updateData = { ...formData };
-            if (updateData.location && 
-                updateData.location.coordinates[0] === 0 && 
-                updateData.location.coordinates[1] === 0) {
-                delete updateData.location;
-            }
+            delete updateData.location;
 
             // We send the filtered updateData. The backend will handle geocoding 
             // the address into coordinates if the address has changed or location is missing.
