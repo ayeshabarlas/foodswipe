@@ -53,7 +53,7 @@ app.use(express.urlencoded({ extended: true }));
 // 🚀 2. DB CONNECTION CHECK MIDDLEWARE
 app.use((req, res, next) => {
     // Skip health check and root to allow them to report status
-    if (req.url === '/health' || req.url === '/') {
+    if (req.url === '/health' || req.url === '/' || req.url.startsWith('/api/upload')) {
         return next();
     }
 

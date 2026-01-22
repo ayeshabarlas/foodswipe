@@ -4,6 +4,7 @@ const multer = require('multer');
 const { bucket } = require('../config/firebase');
 const path = require('path');
 const crypto = require('crypto');
+const fs = require('fs');
 
 // Configure multer for memory storage (we'll upload to Firebase)
 const storage = multer.memoryStorage();
@@ -27,6 +28,7 @@ router.post('/', upload.single('file'), async (req, res) => {
         const file = req.file;
         const fileName = `${Date.now()}-${crypto.randomUUID()}${path.extname(file.originalname)}`;
         const blob = bucket.file(fileName);
+        let responded = false;
         
         const blobStream = blob.createWriteStream({
             metadata: {
@@ -36,30 +38,38 @@ router.post('/', upload.single('file'), async (req, res) => {
         });
 
         blobStream.on('error', (err) => {
-            console.error('❌ Firebase Upload Stream Error:', err);
-            // More descriptive error for common Firebase issues
-            let errorMsg = 'Upload failed';
-            if (err.code === 403) errorMsg = 'Permission denied (Firebase). Check if service account has Storage Admin role.';
-            if (err.code === 404) errorMsg = `Storage bucket not found (${bucket.name}). Check FIREBASE_STORAGE_BUCKET env var.`;
-            
-            res.status(500).json({ 
-                message: errorMsg, 
-                error: err.message,
-                details: err.code || 'No code',
-                bucket: bucket.name
-            });
+            if (responded) return;
+            const uploadsDir = path.join(__dirname, '..', 'uploads');
+            try {
+                if (!fs.existsSync(uploadsDir)) fs.mkdirSync(uploadsDir, { recursive: true });
+                const localPath = path.join(uploadsDir, fileName);
+                fs.writeFileSync(localPath, file.buffer);
+                responded = true;
+                return res.status(200).json({
+                    imageUrl: `uploads/${fileName}`,
+                    videoUrl: `uploads/${fileName}`,
+                    fileName,
+                    success: true,
+                    storage: 'local'
+                });
+            } catch (fallbackErr) {
+                responded = true;
+                return res.status(500).json({
+                    message: 'Upload failed',
+                    error: fallbackErr.message,
+                    details: err.code || 'No code',
+                    bucket: bucket.name
+                });
+            }
         });
 
         blobStream.on('finish', async () => {
             try {
-                // Try to make public, but don't fail if it doesn't work
                 try {
                     await blob.makePublic();
                 } catch (pErr) {
-                    console.warn('⚠️ Could not make file public (using signed URL instead):', pErr.message);
                 }
 
-                // Always provide a signed URL as fallback/primary if public fails
                 const [signedUrl] = await blob.getSignedUrl({
                     action: 'read',
                     expires: '03-09-2491'
@@ -67,12 +77,12 @@ router.post('/', upload.single('file'), async (req, res) => {
 
                 const publicUrl = `https://storage.googleapis.com/${bucket.name}/${blob.name}`;
                 
-                // Return BOTH imageUrl and videoUrl for frontend compatibility
                 const responseData = {
                     imageUrl: signedUrl || publicUrl,
                     videoUrl: signedUrl || publicUrl,
                     fileName: fileName,
-                    success: true
+                    success: true,
+                    storage: 'firebase'
                 };
 
                 console.log('✅ File uploaded to Firebase:', fileName);
