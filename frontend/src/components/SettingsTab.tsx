@@ -132,9 +132,17 @@ export default function SettingsTab({ restaurant, onUpdate }: SettingsTabProps) 
         try {
             const token = JSON.parse(localStorage.getItem("userInfo") || "{}").token;
             
-            // We send the formData as is. The backend will handle geocoding 
-            // the address into coordinates if the address has changed.
-            await axios.put(`${API_BASE_URL}/api/restaurants/${restaurant._id}`, formData, {
+            // Filter out location from formData if it's [0,0] to let backend re-geocode
+            const updateData = { ...formData };
+            if (updateData.location && 
+                updateData.location.coordinates[0] === 0 && 
+                updateData.location.coordinates[1] === 0) {
+                delete updateData.location;
+            }
+
+            // We send the filtered updateData. The backend will handle geocoding 
+            // the address into coordinates if the address has changed or location is missing.
+            await axios.put(`${API_BASE_URL}/api/restaurants/${restaurant._id}`, updateData, {
                 headers: { Authorization: `Bearer ${token}` }
             });
             onUpdate();

@@ -148,7 +148,6 @@ export default function CreateRestaurant({ onRestaurantCreated }: CreateRestaura
                     iban: formData.iban,
                 },
                 cuisineTypes: formData.foodCategory ? [formData.foodCategory] : [],
-                location: { type: 'Point', coordinates: [0, 0] },
                 verificationStatus: 'pending',
             };
 

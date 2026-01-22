@@ -290,26 +290,39 @@ const updateRestaurant = async (req, res) => {
             return res.status(403).json({ message: 'Not authorized to update this restaurant' });
         }
 
-        // Geocode if address changed and location not provided
+        // Geocode if address changed OR if coordinates are [0, 0]
         const addressChanged = req.body.address && req.body.address !== restaurant.address;
-        const locationProvided = req.body.location !== undefined;
-
-        if (addressChanged && !locationProvided) {
-            const coords = await geocodeAddress(req.body.address);
-            if (coords) {
-                restaurant.location = {
-                    type: 'Point',
-                    coordinates: [coords.lng, coords.lat],
-                    description: req.body.address
-                };
+        const hasNoCoordinates = !restaurant.location || 
+                                !restaurant.location.coordinates || 
+                                (restaurant.location.coordinates[0] === 0 && restaurant.location.coordinates[1] === 0);
+        
+        // If address changed or we have no coordinates, we should re-geocode
+        if (addressChanged || hasNoCoordinates) {
+            console.log(`🔄 ${addressChanged ? 'Address changed' : 'Missing coordinates'}. Re-geocoding "${req.body.address || restaurant.address}"...`);
+            const addressToGeocode = req.body.address || restaurant.address;
+            if (addressToGeocode) {
+                const coords = await geocodeAddress(addressToGeocode);
+                if (coords) {
+                    restaurant.location = {
+                        type: 'Point',
+                        coordinates: [coords.lng, coords.lat],
+                        description: addressToGeocode
+                    };
+                    console.log(`✅ New coordinates: [${coords.lng}, ${coords.lat}]`);
+                }
             }
         }
 
         // Update fields
         const allowedUpdates = [
-            'name', 'address', 'contact', 'description', 'logo', 'location',
+            'name', 'address', 'contact', 'description', 'logo',
             'cuisineTypes', 'priceRange', 'socialMedia', 'openingHours', 'coverImage', 'isActive', 'deliveryZones', 'bankDetails', 'deliveryTime'
         ];
+
+        // Only allow updating location if we didn't just geocode it
+        if (!(addressChanged || hasNoCoordinates) && req.body.location !== undefined) {
+            restaurant.location = req.body.location;
+        }
 
         allowedUpdates.forEach(field => {
             if (req.body[field] !== undefined) {
