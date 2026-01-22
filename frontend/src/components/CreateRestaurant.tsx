@@ -67,7 +67,8 @@ export default function CreateRestaurant({ onRestaurantCreated }: CreateRestaura
                     headers: {
                         'Content-Type': 'multipart/form-data',
                         Authorization: `Bearer ${token}`
-                    }
+                    },
+                    timeout: 30000
                 });
                 return res.data.imageUrl;
             });
@@ -152,7 +153,8 @@ export default function CreateRestaurant({ onRestaurantCreated }: CreateRestaura
             };
 
             await axios.post(`${API_BASE_URL}/api/restaurants/create`, payload, {
-                headers: { Authorization: `Bearer ${token}` }
+                headers: { Authorization: `Bearer ${token}` },
+                timeout: 30000
             });
 
             onRestaurantCreated();

@@ -149,12 +149,12 @@ const createRestaurant = async (req, res) => {
         triggerEvent('admin', 'restaurant_registered', restaurant);
 
         // Detailed admin notification
-        await notifyAdmins(
+        notifyAdmins(
             'New Restaurant Registration',
             `A new restaurant "${name}" has registered and is pending approval.`,
             'new_restaurant',
             { restaurantId: restaurant._id, name: restaurant.name }
-        );
+        ).catch(err => console.error('[Restaurant] Background notification error:', err));
 
         res.status(201).json({
             message: 'Restaurant created successfully and is pending approval',

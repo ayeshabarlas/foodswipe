@@ -322,7 +322,7 @@ const RiderDashboard = ({
             const userInfo = JSON.parse(userStr);
             const config = { headers: { Authorization: `Bearer ${userInfo.token}` } };
 
-            const { data } = await axios.post(`${API_BASE_URL}/api/riders/${riderData._id}/accept-order`, { orderId }, config);
+            const { data } = await axios.post(`${API_BASE_URL}/api/riders/${riderData._id}/accept-order`, { orderId }, { ...config, timeout: 20000 });
             
             toast.success('Order accepted successfully!');
             fetchRiderData(); // Refresh to show in active orders
@@ -358,7 +358,7 @@ const RiderDashboard = ({
             const userInfo = JSON.parse(userStr);
             const config = { headers: { Authorization: `Bearer ${userInfo.token}` } };
             
-            await axios.put(`${API_BASE_URL}/api/riders/${riderData._id}/status`, { isOnline: !isOnline }, config);
+            await axios.put(`${API_BASE_URL}/api/riders/${riderData._id}/status`, { isOnline: !isOnline }, { ...config, timeout: 20000 });
             setIsOnline(!isOnline);
         } catch (err) {
             console.error('Status update failed', err);

@@ -30,7 +30,8 @@ export default function RiderDocumentUpload({ riderId, onVerified }: RiderDocume
             try {
                 const token = JSON.parse(localStorage.getItem("userInfo") || "{}").token;
                 const res = await axios.get(`${API_BASE_URL}/api/riders/${riderId}`, {
-                    headers: { Authorization: `Bearer ${token}` }
+                    headers: { Authorization: `Bearer ${token}` },
+                    timeout: 20000
                 });
 
                 if (res.data.documents) {
@@ -70,7 +71,8 @@ export default function RiderDocumentUpload({ riderId, onVerified }: RiderDocume
             formData.append('file', file);
 
             const uploadRes = await axios.post(`${API_BASE_URL}/api/upload`, formData, {
-                headers: { 'Content-Type': 'multipart/form-data' }
+                headers: { 'Content-Type': 'multipart/form-data' },
+                timeout: 30000
             });
 
             const imageUrl = uploadRes.data.imageUrl;
@@ -79,7 +81,8 @@ export default function RiderDocumentUpload({ riderId, onVerified }: RiderDocume
             await axios.put(`${API_BASE_URL}/api/riders/${riderId}/documents`, {
                 [field]: imageUrl
             }, {
-                headers: { Authorization: `Bearer ${token}` }
+                headers: { Authorization: `Bearer ${token}` },
+                timeout: 20000
             });
 
             setDocuments(prev => ({ ...prev, [field]: imageUrl }));
@@ -105,7 +108,8 @@ export default function RiderDocumentUpload({ riderId, onVerified }: RiderDocume
         try {
             const token = JSON.parse(localStorage.getItem("userInfo") || "{}").token;
             await axios.put(`${API_BASE_URL}/api/riders/${riderId}/submit-verification`, {}, {
-                headers: { Authorization: `Bearer ${token}` }
+                headers: { Authorization: `Bearer ${token}` },
+                timeout: 30000
             });
 
             setVerificationStatus('pending');
