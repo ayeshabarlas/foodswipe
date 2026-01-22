@@ -9,7 +9,7 @@ const RiderWallet = require('../models/RiderWallet');
 const Transaction = require('../models/Transaction');
 const CODLedger = require('../models/CODLedger');
 const Settings = require('../models/Settings');
-const { calculateRiderEarning, calculateDeliveryFee } = require('../utils/paymentUtils');
+const { calculateRiderEarning, calculateDeliveryFee, updateRiderEarningsWithReset } = require('../utils/paymentUtils');
 const { calculateDistance } = require('../utils/locationUtils');
 const { triggerEvent } = require('../socket');
 const { notifyAdmins } = require('../utils/adminNotifier');
@@ -193,20 +193,33 @@ const createOrder = async (req, res) => {
         // Save address to user profile if not already set or first order
         try {
             const user = await User.findById(req.user._id);
-            if (user && (!user.address || user.address === '')) {
-                user.address = deliveryAddress;
-                user.city = req.body.city || '';
-                if (deliveryLocation && deliveryLocation.lat && deliveryLocation.lng) {
-                    user.location = {
-                        lat: Number(deliveryLocation.lat),
-                        lng: Number(deliveryLocation.lng)
-                    };
+            if (user) {
+                // Check if this is their first order
+                const orderCount = await Order.countDocuments({ user: user._id });
+                
+                // Save address if user has no address OR if this is their first order
+                if (!user.address || user.address === '' || orderCount <= 1) {
+                    user.address = deliveryAddress;
+                    user.city = req.body.city || user.city || 'Pakistan';
+                    
+                    if (deliveryLocation && deliveryLocation.lat && deliveryLocation.lng) {
+                        user.location = {
+                            lat: Number(deliveryLocation.lat),
+                            lng: Number(deliveryLocation.lng)
+                        };
+                    }
+                    
+                    // Also update phone if provided and not set
+                    if (req.body.phone && !user.phone) {
+                        user.phone = req.body.phone;
+                    }
+
+                    await user.save();
+                    console.log(`[User] Address and location auto-saved for user ${user._id} (Order count: ${orderCount})`);
                 }
-                await user.save();
-                console.log(`[User] Address and location saved for user ${user._id}`);
             }
         } catch (addrErr) {
-            console.error('[User] Error saving address:', addrErr);
+            console.error('[User] Error auto-saving address:', addrErr);
         }
 
         // Auto-decrement stock for ordered items
@@ -521,20 +534,14 @@ const processOrderCompletion = async (order, distanceKm, req = null) => {
 
         if (rider) {
             console.log(`[Finance] Updating Rider Wallet: ${rider.fullName} (${rider._id})`);
-            // Ensure earnings and stats objects exist
-            if (!rider.earnings) {
-                rider.earnings = { today: 0, thisWeek: 0, thisMonth: 0, total: 0 };
-            }
+            
+            // Use helper to handle date-based resets and update earnings
+            rider = updateRiderEarningsWithReset(rider, riderEarning);
+            
+            // Stats updates
             if (!rider.stats) {
                 rider.stats = { totalDeliveries: 0, completedDeliveries: 0, cancelledDeliveries: 0 };
             }
-
-            rider.walletBalance = (rider.walletBalance || 0) + riderEarning;
-            rider.earnings.total = (rider.earnings.total || 0) + riderEarning;
-            rider.earnings.today = (rider.earnings.today || 0) + riderEarning;
-            
-            // COD System Fields
-            rider.earnings_balance = (rider.earnings_balance || 0) + riderEarning;
             
             // Robust check for COD (case-insensitive)
             const isCOD = order.paymentMethod && 

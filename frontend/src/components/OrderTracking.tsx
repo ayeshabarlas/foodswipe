@@ -9,6 +9,7 @@ import dynamic from 'next/dynamic';
 import OrderChat from './OrderChat';
 import { motion, AnimatePresence } from 'framer-motion';
 import toast from 'react-hot-toast';
+import RiderRatingModal from './RiderRatingModal';
 
 // Dynamically import MapComponent to avoid SSR and module instantiation issues
 const MapComponent = dynamic(() => import('./MapComponent'), {
@@ -34,6 +35,14 @@ export default function OrderTracking({ order: initialOrder, userRole = 'user', 
     const [eta, setEta] = useState<string>('25-35 mins');
     const [isChatOpen, setIsChatOpen] = useState(false);
     const [userInfo, setUserInfo] = useState<any>(null);
+    const [showRatingModal, setShowRatingModal] = useState(false);
+    const [hasRated, setHasRated] = useState(order?.riderRating > 0);
+
+    useEffect(() => {
+        if (order?.riderRating > 0) {
+            setHasRated(true);
+        }
+    }, [order?.riderRating]);
 
     useEffect(() => {
         if (typeof window !== 'undefined') {
@@ -54,6 +63,11 @@ export default function OrderTracking({ order: initialOrder, userRole = 'user', 
                         headers: { Authorization: `Bearer ${token}` }
                     });
                     setOrder(data);
+                    
+                    // Show rating modal if already delivered but not rated
+                    if (data.status === 'Delivered' && !data.riderRating && userRole === 'user') {
+                        setShowRatingModal(true);
+                    }
                 } catch (error) {
                     console.error('Error fetching order for tracking:', error);
                 } finally {
@@ -84,8 +98,19 @@ export default function OrderTracking({ order: initialOrder, userRole = 'user', 
             });
 
             userChannel.bind('orderStatusUpdate', (updatedOrder: any) => {
-                if (updatedOrder._id === order._id) {
+                console.log('Order status update received:', updatedOrder.status);
+                if (updatedOrder._id === order?._id || updatedOrder._id === targetOrderId) {
                     setOrder(updatedOrder);
+                    
+                    // Show rating modal if delivered and not already rated
+                    if (updatedOrder.status === 'Delivered' && !hasRated && userRole === 'user') {
+                        console.log('Showing rating modal in 1.5s...');
+                        setTimeout(() => {
+                            setShowRatingModal(true);
+                            // Also ensure the order object in state is updated
+                            setOrder(prev => ({ ...prev, status: 'Delivered' }));
+                        }, 1500);
+                    }
                 }
             });
 
@@ -325,6 +350,14 @@ export default function OrderTracking({ order: initialOrder, userRole = 'user', 
                     />
                 </div>
             )}
+
+            <RiderRatingModal 
+                isOpen={showRatingModal}
+                onClose={() => setShowRatingModal(false)}
+                orderId={order._id}
+                riderName={order.rider?.fullName || 'your rider'}
+                onSuccess={() => setHasRated(true)}
+            />
         </AnimatePresence>
     );
 }

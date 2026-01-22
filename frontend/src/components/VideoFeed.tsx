@@ -11,11 +11,14 @@ import NavDrawer from './NavDrawer';
 import dynamic from 'next/dynamic';
 
 const OrderTracking = dynamic(() => import('./OrderTracking'), { ssr: false });
+const RiderRatingModal = dynamic(() => import('./RiderRatingModal'), { ssr: false });
 import LocationPermission from './LocationPermission';
 import ProfileModal from './ProfileModal';
 import { getImageUrl, getImageFallback } from '../utils/imageUtils';
 import { useCart } from '@/context/CartContext';
 import { API_BASE_URL } from '../utils/config';
+import { initSocket, subscribeToChannel, unsubscribeFromChannel } from '../utils/socket';
+import toast from 'react-hot-toast';
 
 interface Dish {
     _id: string;
@@ -442,7 +445,9 @@ export default function VideoFeed() {
     const [showLocationPrompt, setShowLocationPrompt] = useState(false);
     const { cartCount } = useCart();
     const [showTrackingModal, setShowTrackingModal] = useState(false);
-    const [selectedOrderId, setSelectedOrderId] = useState<string | undefined>();
+    const [selectedOrderId, setSelectedOrderId] = useState<string | null>(null);
+    const [showRatingModal, setShowRatingModal] = useState(false);
+    const [ratingOrderId, setRatingOrderId] = useState<string | null>(null);
     const [activeOrder, setActiveOrder] = useState<any>(null);
     const [searchTerm, setSearchTerm] = useState('');
     const [selectedCategory, setSelectedCategory] = useState('All');
@@ -474,6 +479,49 @@ export default function VideoFeed() {
         fetchActiveOrder();
         // Poll for active orders every 30 seconds
         const interval = setInterval(fetchActiveOrder, 30000);
+        
+        // Real-time listener for order updates
+        const userInfoStr = localStorage.getItem('userInfo');
+        if (userInfoStr) {
+            try {
+                const userInfo = JSON.parse(userInfoStr);
+                if (userInfo._id) {
+                    initSocket(userInfo._id, 'user');
+                    const channelName = `user-${userInfo._id}`;
+                    const userChannel = subscribeToChannel(channelName);
+                    
+                    if (userChannel) {
+                        userChannel.bind('orderStatusUpdate', (updatedOrder: any) => {
+                            console.log('📦 Real-time order update:', updatedOrder.status);
+                            
+                            // If order is delivered, show rating modal
+                            if (updatedOrder.status === 'Delivered') {
+                                console.log('✅ Order delivered! Showing rating modal...');
+                                setRatingOrderId(updatedOrder._id);
+                                setTimeout(() => {
+                                    setShowRatingModal(true);
+                                }, 2000);
+                            }
+                            
+                            // Refresh active orders list
+                            fetchActiveOrder();
+                        });
+
+                        userChannel.bind('riderArrived', (data: any) => {
+                            toast.success('📍 Your rider has arrived!');
+                        });
+                    }
+
+                    return () => {
+                        unsubscribeFromChannel(channelName);
+                        clearInterval(interval);
+                    };
+                }
+            } catch (e) {
+                console.error('Error setting up real-time listener:', e);
+            }
+        }
+        
         return () => clearInterval(interval);
     }, []);
 
@@ -820,7 +868,14 @@ export default function VideoFeed() {
                 activeOrderId={activeOrder?._id}
             />
             <ProfileModal isOpen={isUserProfileOpen} onClose={() => setIsUserProfileOpen(false)} user={user} />
-            <OrderTracking isOpen={showTrackingModal} onClose={() => setShowTrackingModal(false)} orderId={selectedOrderId} />
+            <OrderTracking isOpen={showTrackingModal} onClose={() => setShowTrackingModal(false)} orderId={selectedOrderId || ''} />
+            {showRatingModal && ratingOrderId && (
+                <RiderRatingModal 
+                    isOpen={showRatingModal}
+                    onClose={() => setShowRatingModal(false)}
+                    orderId={ratingOrderId}
+                />
+            )}
             {showLocationPrompt && <LocationPermission onAllow={handleAllowLocation} onDeny={handleDenyLocation} />}
         </div>
     );

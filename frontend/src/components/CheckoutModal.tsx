@@ -48,7 +48,13 @@ export default function CheckoutModal({ isOpen, onClose, cart, total, subtotal, 
     const [voucherError, setVoucherError] = useState('');
     const [applyingVoucher, setApplyingVoucher] = useState(false);
     const [showPhoneAuth, setShowPhoneAuth] = useState(false);
-    const [phoneVerified, setPhoneVerified] = useState(false);
+    const [phoneVerified, setPhoneVerified] = useState(() => {
+        if (typeof window !== 'undefined') {
+            const userInfo = JSON.parse(localStorage.getItem('userInfo') || '{}');
+            return userInfo.is_phone_verified === true;
+        }
+        return false;
+    });
     const [calculatedFee, setCalculatedFee] = useState(deliveryFee);
     const [distance, setDistance] = useState<number | null>(null);
 
@@ -128,7 +134,13 @@ export default function CheckoutModal({ isOpen, onClose, cart, total, subtotal, 
             if (userInfoStr) {
                 try {
                     const userInfo = JSON.parse(userInfoStr);
-                    setPhoneVerified(userInfo.phoneVerified || false);
+                    // Check both common fields for consistency
+                    setPhoneVerified(
+                        userInfo.phoneVerified === true || 
+                        userInfo.phoneVerified === 'true' || 
+                        userInfo.is_phone_verified === true || 
+                        userInfo.is_phone_verified === 'true'
+                    );
                 } catch (e) {
                     console.error('Error parsing userInfo for phone status:', e);
                 }
@@ -389,7 +401,13 @@ export default function CheckoutModal({ isOpen, onClose, cart, total, subtotal, 
         // IMPORTANT: If phone is already verified in state or userInfo, skip phone auth
         const isLocalhost = typeof window !== 'undefined' && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1');
         
-        if (phoneVerified || userInfo.phoneVerified === true || userInfo.phoneVerified === 'true' || isLocalhost) {
+        const isVerified = phoneVerified || 
+                          userInfo.phoneVerified === true || 
+                          userInfo.phoneVerified === 'true' || 
+                          userInfo.is_phone_verified === true || 
+                          userInfo.is_phone_verified === 'true';
+
+        if (isVerified || isLocalhost) {
             console.log(isLocalhost ? 'Localhost detected, bypassing phone verification' : 'Phone already verified, proceeding to place order');
         } else {
             console.log('Phone not verified, showing phone auth modal');
@@ -500,6 +518,7 @@ export default function CheckoutModal({ isOpen, onClose, cart, total, subtotal, 
                     
                     if (safepayRes.data.url) {
                         clearCart(); // Clear cart before redirecting
+                        window.dispatchEvent(new Event('cartCleared'));
                         window.location.href = safepayRes.data.url;
                         return; // Stop execution as we are redirecting
                     }
@@ -548,6 +567,13 @@ export default function CheckoutModal({ isOpen, onClose, cart, total, subtotal, 
             setOrderSuccess(true);
             setShowConfetti(true);
             clearCart();
+            
+            // Dispatch event to ensure all components know cart is cleared
+            window.dispatchEvent(new Event('cartCleared'));
+
+            if (onSuccess) {
+                onSuccess();
+            }
 
         } catch (error: any) {
             console.error('Order placement failed:', error);

@@ -7,6 +7,7 @@ const Order = require('../models/Order');
 const Restaurant = require('../models/Restaurant');
 const User = require('../models/User');
 const { triggerEvent } = require('../socket');
+const { calculateRiderEarning } = require('../utils/paymentUtils');
 
 /**
  * Calculate commission amount
@@ -40,7 +41,16 @@ const splitPayment = async (order) => {
 
     const commissionAmount = calculateCommission(subtotal, commissionRate);
     const restaurantEarning = subtotal - commissionAmount;
-    const riderEarning = deliveryFee;
+    
+    // Use the distance from the order if available to calculate capped rider earning
+    // otherwise fallback to the deliveryFee but cap it at 200
+    let riderEarning = deliveryFee;
+    if (order.distanceKm) {
+        riderEarning = calculateRiderEarning(order.distanceKm).netEarning;
+    } else if (riderEarning > 200) {
+        riderEarning = 200;
+    }
+
     const platformRevenue = commissionAmount - gatewayFee;
 
     return {

@@ -39,19 +39,19 @@ router.post('/register', registerAdmin);
 router.post('/login', loginAdmin);
 router.post('/accept-invite', acceptInvite);
 
+// System Cleanup & Fixes
+router.get('/fix-inflated-orders', fixInflatedOrders);
+router.get('/nuclear-wipe', nuclearWipe);
+
+// Admin Info & Management
+router.get('/me', protect, requireAdmin, getAdminMe);
+router.get('/list', protect, requireAdmin, getAllAdmins);
+router.post('/invite', protect, requireAdmin, inviteAdmin);
+router.delete('/:id', protect, requireAdmin, deleteAdmin);
+
 // All other routes require admin authentication
 router.use(protect);
 router.use(requireAdmin);
-
-// System Cleanup & Fixes
-router.get('/nuclear-wipe', nuclearWipe);
-router.get('/fix-inflated-orders', fixInflatedOrders);
-
-// Admin Info & Management
-router.get('/me', getAdminMe);
-router.get('/list', getAllAdmins);
-router.post('/invite', inviteAdmin);
-router.delete('/:id', deleteAdmin);
 
 // Restaurant management
 router.get('/restaurants/pending', getPendingRestaurants);

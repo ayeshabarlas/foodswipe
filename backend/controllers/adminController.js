@@ -1077,7 +1077,20 @@ const cleanupMockData = async (req, res) => {
         });
         
         for (let order of ordersToFix) {
-            if (order.riderEarning > 200) order.riderEarning = 200;
+            const oldEarning = order.riderEarning;
+            const newEarning = 200; // Cap it to 200
+            
+            if (order.riderEarning > 200) {
+                order.riderEarning = newEarning;
+                order.netRiderEarning = newEarning;
+                order.grossRiderEarning = newEarning;
+                
+                // Recalculate admin earning for this order
+                const commissionAmount = order.commissionAmount || 0;
+                const deliveryFee = order.deliveryFee || 0;
+                order.adminEarning = commissionAmount + (deliveryFee - newEarning);
+            }
+
             if (order.deliveryFee > 200) order.deliveryFee = 200;
             await order.save();
         }
@@ -1312,33 +1325,63 @@ const fixInflatedOrders = async (req, res) => {
         console.log(`Found ${orders.length} inflated orders`);
         let fixedOrdersCount = 0;
         for (let order of orders) {
-            if (order.riderEarning > 200) order.riderEarning = 200;
+            const oldEarning = order.riderEarning;
+            const newEarning = 200;
+            
+            if (order.riderEarning > 200) {
+                order.riderEarning = newEarning;
+                order.netRiderEarning = newEarning;
+                order.grossRiderEarning = newEarning;
+                
+                // Recalculate admin earning for this order
+                const commissionAmount = order.commissionAmount || 0;
+                const deliveryFee = order.deliveryFee || 0;
+                const actualDeliveryFee = deliveryFee > 200 ? 200 : deliveryFee;
+                order.deliveryFee = actualDeliveryFee;
+                order.adminEarning = commissionAmount + (actualDeliveryFee - newEarning);
+            }
+
             if (order.deliveryFee > 200) order.deliveryFee = 200;
             await order.save();
             fixedOrdersCount++;
         }
 
-        // 2. Fix RiderWallets (Recalculate based on fixed orders)
+        // 2. Fix RiderWallets and Rider Profiles (Recalculate based on fixed orders)
         const RiderWallet = require('../models/RiderWallet');
-         const wallets = await RiderWallet.find({});
-         console.log(`Found ${wallets.length} wallets to check`);
-         let fixedWalletsCount = 0;
- 
-         for (let wallet of wallets) {
-             console.log(`Checking wallet for rider: ${wallet.rider}. Current totalEarnings: ${wallet.totalEarnings}`);
-             // Sum all riderEarnings for this rider from Delivered/Completed orders
+        const CODLedger = require('../models/CODLedger');
+        const wallets = await RiderWallet.find({});
+        console.log(`Found ${wallets.length} wallets to check`);
+        let fixedWalletsCount = 0;
+
+        for (let wallet of wallets) {
+            const riderId = wallet.rider;
             const riderOrders = await Order.find({
-                rider: wallet.rider,
+                rider: riderId,
                 status: { $in: ['Delivered', 'Completed'] }
             });
 
             const correctTotalEarnings = riderOrders.reduce((sum, o) => sum + (o.riderEarning || 0), 0);
             
-            // For simplicity, we'll reset availableWithdraw to match totalEarnings if it was inflated
-            // In a real scenario, we'd need to subtract payouts, but let's fix the obvious inflation
+            // Fix Wallet
             wallet.totalEarnings = correctTotalEarnings;
-            wallet.availableWithdraw = correctTotalEarnings; // Resetting to total for now
+            wallet.availableWithdraw = correctTotalEarnings; // Resetting to total for simplicity in cleanup
             await wallet.save();
+
+            // Fix Rider Profile
+            const rider = await Rider.findById(riderId);
+            if (rider) {
+                rider.walletBalance = correctTotalEarnings;
+                rider.earnings_balance = correctTotalEarnings;
+                if (!rider.earnings) rider.earnings = {};
+                rider.earnings.total = correctTotalEarnings;
+                
+                // Recalculate COD balance from ledger
+                const pendingLedger = await CODLedger.find({ rider: riderId, status: 'pending' });
+                const correctCodBalance = pendingLedger.reduce((sum, tx) => sum + (tx.cod_collected || 0), 0);
+                rider.cod_balance = correctCodBalance;
+                
+                await rider.save();
+            }
             fixedWalletsCount++;
         }
 

@@ -48,7 +48,62 @@ const calculateDeliveryFee = (distanceKm) => {
     return Math.round(fee);
 };
 
+/**
+ * Updates rider earnings and stats, handling date-based resets for today/week/month
+ * @param {object} rider - The rider document
+ * @param {number} earningAmount - The amount to add to earnings
+ * @returns {object} - Updated rider document
+ */
+const updateRiderEarningsWithReset = (rider, earningAmount) => {
+    const now = new Date();
+    const lastUpdate = rider.updatedAt ? new Date(rider.updatedAt) : new Date();
+
+    if (!rider.earnings) {
+        rider.earnings = { today: 0, thisWeek: 0, thisMonth: 0, total: 0 };
+    }
+
+    // 1. Reset check: Today
+    const isSameDay = now.getDate() === lastUpdate.getDate() &&
+                     now.getMonth() === lastUpdate.getMonth() &&
+                     now.getFullYear() === lastUpdate.getFullYear();
+    
+    if (!isSameDay) {
+        console.log(`[Finance] Resetting today's earnings for ${rider.fullName}`);
+        rider.earnings.today = 0;
+    }
+
+    // 2. Reset check: This Week (Assuming week starts on Sunday)
+    const startOfWeek = new Date(now);
+    startOfWeek.setDate(now.getDate() - now.getDay());
+    startOfWeek.setHours(0, 0, 0, 0);
+    
+    if (lastUpdate < startOfWeek) {
+        console.log(`[Finance] Resetting weekly earnings for ${rider.fullName}`);
+        rider.earnings.thisWeek = 0;
+    }
+
+    // 3. Reset check: This Month
+    const isSameMonth = now.getMonth() === lastUpdate.getMonth() &&
+                       now.getFullYear() === lastUpdate.getFullYear();
+    
+    if (!isSameMonth) {
+        console.log(`[Finance] Resetting monthly earnings for ${rider.fullName}`);
+        rider.earnings.thisMonth = 0;
+    }
+
+    // 4. Apply Earnings
+    rider.walletBalance = (rider.walletBalance || 0) + earningAmount;
+    rider.earnings_balance = (rider.earnings_balance || 0) + earningAmount;
+    rider.earnings.total = (rider.earnings.total || 0) + earningAmount;
+    rider.earnings.today = (rider.earnings.today || 0) + earningAmount;
+    rider.earnings.thisWeek = (rider.earnings.thisWeek || 0) + earningAmount;
+    rider.earnings.thisMonth = (rider.earnings.thisMonth || 0) + earningAmount;
+
+    return rider;
+};
+
 module.exports = {
     calculateRiderEarning,
-    calculateDeliveryFee
+    calculateDeliveryFee,
+    updateRiderEarningsWithReset
 };

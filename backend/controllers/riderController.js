@@ -863,7 +863,10 @@ const updateProfile = async (req, res) => {
         
         // Also update the associated User model if phone is provided
         if (req.body.phone && rider.user) {
-            await User.findByIdAndUpdate(rider.user, { phone: req.body.phone });
+            await User.findByIdAndUpdate(rider.user, { 
+                phone: req.body.phone,
+                phoneNumber: req.body.phone // Sync both fields
+            });
         }
 
         // Add other fields here as needed

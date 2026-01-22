@@ -531,6 +531,7 @@ const verifyPhone = async (req, res) => {
         user.phoneNumber = verifiedPhone;
         user.phone = verifiedPhone; // Sync both fields
         user.phoneVerified = true;
+        user.is_phone_verified = true; // Sync both verification fields
         user.phoneVerifiedAt = new Date();
         user.firebaseUid = decoded.uid; // Store Firebase UID for consistency
         await user.save();
@@ -766,6 +767,7 @@ const updateProfile = async (req, res) => {
                 user.phone = req.body.phone;
                 user.phoneNumber = req.body.phone; // Keep in sync
                 user.phoneVerified = false;
+                user.is_phone_verified = false; // Sync both verification fields
                 user.phoneVerifiedAt = null;
             } else {
                 user.phone = req.body.phone || user.phone;

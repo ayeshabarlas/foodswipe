@@ -382,7 +382,7 @@ function UploadModal({ title, onClose, onUpload }: { title: string; onClose: () 
 
 function SettingsModal({ riderData, riderId, onClose, onUpdate }: { riderData: any; riderId: string; onClose: () => void; onUpdate: () => void }) {
     const [city, setCity] = useState(riderData.city || 'Lahore');
-    const [phone, setPhone] = useState(riderData.user?.phone || '');
+    const [phone, setPhone] = useState(riderData.user?.phone || riderData.user?.phoneNumber || '');
     const [fullName, setFullName] = useState(riderData.fullName || '');
     const [saving, setSaving] = useState(false);
 

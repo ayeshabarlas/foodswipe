@@ -167,6 +167,7 @@ export default function PhoneAuthModal({ isOpen, onClose, onSuccess }: PhoneAuth
             const updatedUserInfo = { 
                 ...userInfo, 
                 phoneVerified: true, 
+                is_phone_verified: true,
                 phoneNumber: data.phoneNumber 
             };
             localStorage.setItem('userInfo', JSON.stringify(updatedUserInfo));

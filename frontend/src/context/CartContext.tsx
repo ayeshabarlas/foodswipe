@@ -69,8 +69,10 @@ export const CartProvider = ({ children }: { children: React.ReactNode }) => {
     };
 
     const clearCart = () => {
+        console.log('🛒 CartContext: clearCart called');
         setCart([]);
         setAppliedVoucher(null);
+        localStorage.removeItem('foodswipe_cart');
     };
 
     const applyVoucher = (voucher: { code: string; discount: number; type?: 'percentage' | 'fixed'; minimumAmount?: number }) => {
