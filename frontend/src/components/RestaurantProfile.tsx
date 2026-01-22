@@ -132,6 +132,11 @@ export default function RestaurantProfile({ restaurant: initialRestaurant, onBac
 
     // Calculate distance from user's location to restaurant
     const calculateDistance = (lat1: number, lon1: number, lat2: number, lon2: number) => {
+        // Debug distance calculation
+        if (window.location.hostname !== 'localhost' || process.env.NODE_ENV === 'development') {
+            console.log(`📐 Distance Debug (Profile): User[${lat1.toFixed(4)}, ${lon1.toFixed(4)}] Rest[${lat2.toFixed(4)}, ${lon2.toFixed(4)}]`);
+        }
+
         // If restaurant location is 0,0 or very far, it's likely not set
         if ((lat2 === 0 && lon2 === 0) || (Math.abs(lat2) < 0.1 && Math.abs(lon2) < 0.1)) {
             return 'Location not set';

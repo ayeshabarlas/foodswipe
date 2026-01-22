@@ -251,17 +251,18 @@ const createOrder = async (req, res) => {
         triggerEvent('admin', 'order_created', populatedOrder);
         triggerEvent('admin', 'stats_updated', { type: 'order_created', orderId: populatedOrder._id });
         
-        // Detailed admin notification (Email + Socket)
-        await notifyAdmins(
+        // Detailed admin notification (Email + Socket) - Do NOT await to avoid timeout
+        notifyAdmins(
             'New Order Placed',
             `A new order #${populatedOrder._id.toString().slice(-5)} has been placed for Rs. ${populatedOrder.totalPrice}.`,
             'new_order',
             { orderId: populatedOrder._id, amount: populatedOrder.totalPrice }
-        );
+        ).catch(err => console.error('[Order] Background notification error:', err));
 
+        console.log(`✅ Order ${populatedOrder._id} created successfully`);
         res.status(201).json(populatedOrder);
     } catch (error) {
-        console.error('createOrder Error:', error);
+        console.error('❌ createOrder Error:', error);
         res.status(500).json({ message: 'Server error', error: error.message });
     }
 };
