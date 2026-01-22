@@ -818,10 +818,24 @@ export default function VideoFeed() {
             <div className="h-full w-full overflow-y-scroll snap-y snap-mandatory scroll-smooth no-scrollbar" onScroll={handleScroll}>
                 {filteredDishes.map((dish, index) => {
                     let distance: string | undefined;
-                    if (userLocation && dish.restaurant?.location?.coordinates) {
-                        const [restLng, restLat] = dish.restaurant.location.coordinates;
-                        distance = calculateDistance(userLocation.latitude, userLocation.longitude, restLat, restLng);
-                    }
+                    const normalizeCoords = (coords?: [number, number]) => {
+                        if (!coords || coords.length < 2) return null;
+                        const a = coords[0], b = coords[1];
+                        if (Math.abs(b) <= 90 && Math.abs(a) <= 180) return { lat: b, lon: a }; // GeoJSON -> lat,lon
+                        if (Math.abs(a) <= 90 && Math.abs(b) <= 180) return { lat: a, lon: b }; // Already lat,lon
+                        return null;
+                    };
+                    const compute = (ul?: { latitude: number, longitude: number }) => {
+                        if (!ul || !dish.restaurant?.location?.coordinates) return undefined;
+                        const norm = normalizeCoords(dish.restaurant.location.coordinates as any);
+                        if (!norm) return 'Location not set';
+                        const km = calculateDistance(ul.latitude, ul.longitude, norm.lat, norm.lon);
+                        if (!km || km === 'Location not set') return km as any;
+                        const num = typeof km === 'string' && km.endsWith(' km') ? parseFloat(km) : undefined;
+                        if (typeof num === 'number' && num > 1000) return 'Distance unavailable';
+                        return km as any;
+                    };
+                    distance = compute(userLocation || (typeof window !== 'undefined' ? JSON.parse(localStorage.getItem('userLocation') || 'null') : null));
                     return (
                         <VideoCard 
                             key={dish._id} 

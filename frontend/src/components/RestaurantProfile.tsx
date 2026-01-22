@@ -152,10 +152,27 @@ export default function RestaurantProfile({ restaurant: initialRestaurant, onBac
         const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
         const distance = R * c;
 
+        if (!isFinite(distance) || distance < 0) return 'Distance unavailable';
+        if (distance > 1000) return 'Distance unavailable';
+
         if (distance >= 1) {
             return distance.toFixed(1) + ' km';
         }
         return (distance * 1000).toFixed(0) + ' m';
+    };
+
+    const normalizeCoords = (coords?: number[]) => {
+        if (!coords || coords.length < 2) return null;
+        const a = coords[0], b = coords[1];
+        // If looks like [lon, lat] (GeoJSON), swap to [lat, lon]
+        if (Math.abs(b) <= 90 && Math.abs(a) <= 180) {
+            return { lat: b, lon: a };
+        }
+        // If looks like [lat, lon]
+        if (Math.abs(a) <= 90 && Math.abs(b) <= 180) {
+            return { lat: a, lon: b };
+        }
+        return null;
     };
 
     // Get user's location and calculate distance
@@ -165,20 +182,37 @@ export default function RestaurantProfile({ restaurant: initialRestaurant, onBac
                 (position) => {
                     const userLat = position.coords.latitude;
                     const userLon = position.coords.longitude;
-                    const [restLon, restLat] = restaurantData.location!.coordinates;
+                    const norm = normalizeCoords(restaurantData.location!.coordinates);
+                    
+                    if (!norm) {
+                        setDistance('Location not set');
+                        return;
+                    }
                     
                     console.log('📍 Distance Calculation Debug:', {
                         user: { lat: userLat, lon: userLon },
-                        restaurant: { lat: restLat, lon: restLon },
+                        restaurant: { lat: norm.lat, lon: norm.lon },
                         restaurantAddress: restaurantData.address
                     });
 
                     // Ensure we are passing coordinates in the correct order: lat1, lon1, lat2, lon2
-                    const dist = calculateDistance(userLat, userLon, restLat, restLon);
+                    const dist = calculateDistance(userLat, userLon, norm.lat, norm.lon);
                     setDistance(dist);
                 },
                 (error) => {
                     console.error('Error getting location:', error);
+                    try {
+                        const saved = localStorage.getItem('userLocation');
+                        if (saved) {
+                            const parsed = JSON.parse(saved);
+                            const norm = normalizeCoords(restaurantData.location!.coordinates);
+                            if (norm && parsed?.latitude && parsed?.longitude) {
+                                const dist = calculateDistance(parsed.latitude, parsed.longitude, norm.lat, norm.lon);
+                                setDistance(dist);
+                                return;
+                            }
+                        }
+                    } catch (_) {}
                     setDistance('Distance unavailable');
                 }
             );
