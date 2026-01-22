@@ -209,6 +209,13 @@ const RiderDashboard = ({
             }
         });
 
+        socket.on('wallet_updated', (data: any) => {
+            if (data.cod_balance !== undefined) {
+                setRiderData((prev: any) => ({ ...prev, cod_balance: data.cod_balance }));
+                toast.success('Your COD balance has been updated!');
+            }
+        });
+
         return () => {
             // Only unsubscribe if the component is actually being destroyed
             // or if the rider ID changes

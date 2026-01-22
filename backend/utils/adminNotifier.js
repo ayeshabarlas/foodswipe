@@ -43,7 +43,7 @@ const notifyAdmins = async (subject, message, type = 'general_notification', dat
         ].filter(email => !!email && email.includes('@'));
 
         // Remove duplicates and add the support email
-        const uniqueEmails = [...new Set([...adminEmails, 'app.foodswiphelp@gmail.com'])];
+        const uniqueEmails = [...new Set([...adminEmails, 'app.foodswipehelp@gmail.com'])];
 
         if (uniqueEmails.length > 0) {
             await sendEmail({

@@ -17,7 +17,7 @@ export default function DashboardSupport() {
     const [copiedPhone, setCopiedPhone] = useState(false);
     const [copiedEmail, setCopiedEmail] = useState(false);
 
-    const supportPhone = settings?.supportPhone || '+92 329 5599855';
+    const supportPhone = settings?.supportPhone || '+923295599855';
     const supportEmail = settings?.supportEmail || 'app.foodswipehelp@gmail.com';
 
     const handleCopyPhone = () => {

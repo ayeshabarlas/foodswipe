@@ -487,8 +487,8 @@ export default function VideoFeed() {
                 const userInfo = JSON.parse(userInfoStr);
                 if (userInfo._id) {
                     initSocket(userInfo._id, 'user');
-                    const channelName = `user-${userInfo._id}`;
-                    const userChannel = subscribeToChannel(channelName);
+                    const userChannelName = `user-${userInfo._id}`;
+                    const userChannel = subscribeToChannel(userChannelName);
                     
                     if (userChannel) {
                         userChannel.bind('orderStatusUpdate', (updatedOrder: any) => {
@@ -512,8 +512,23 @@ export default function VideoFeed() {
                         });
                     }
 
+                    // Real-time feed updates
+                    const feedChannelName = 'public-feed';
+                    const feedChannel = subscribeToChannel(feedChannelName);
+                    if (feedChannel) {
+                        feedChannel.bind('new_dish', (newDish: Dish) => {
+                            console.log('✨ New dish received via socket:', newDish.name);
+                            setDishes(prev => [newDish, ...prev]);
+                        });
+                        feedChannel.bind('dish_updated', (updatedDish: Dish) => {
+                            console.log('🔄 Dish updated via socket:', updatedDish.name);
+                            setDishes(prev => prev.map(d => d._id === updatedDish._id ? updatedDish : d));
+                        });
+                    }
+
                     return () => {
-                        unsubscribeFromChannel(channelName);
+                        unsubscribeFromChannel(userChannelName);
+                        unsubscribeFromChannel(feedChannelName);
                         clearInterval(interval);
                     };
                 }
@@ -524,6 +539,16 @@ export default function VideoFeed() {
         
         return () => clearInterval(interval);
     }, []);
+
+    useEffect(() => {
+        // Fallback polling to refresh dishes every 30 seconds
+        const interval = setInterval(() => {
+            // We don't pass arguments, so it uses the current state for search/category
+            fetchDishes(); 
+        }, 30000);
+
+        return () => clearInterval(interval);
+    }, [fetchDishes]); // Rerun if fetchDishes changes (e.g., due to filter changes)
 
     const handleTrackOrder = (orderId: string) => {
         setSelectedOrderId(orderId);

@@ -98,13 +98,13 @@ const registerUser = async (req, res) => {
         
         console.log(`User registered: id=${user._id}, email=${user.email}, role=${user.role}`);
         
-        // Notify Admins
-        await notifyAdmins(
+        // Notify Admins (non-blocking)
+        notifyAdmins(
             'New User Registration',
             `A new user "${name}" (${normalizedRole}) has registered.`,
             'new_user',
             { userId: user._id, email: user.email, role: user.role }
-        );
+        ).catch(err => console.error('[Auth] Background notification error:', err));
         
         // 4. Create Role-Specific Profile
         if (normalizedRole === 'rider') {

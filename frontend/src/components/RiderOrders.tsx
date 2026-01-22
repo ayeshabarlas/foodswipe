@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { API_BASE_URL } from '../utils/config';
+import { useSettings } from '../hooks/useSettings';
 import { FaBox, FaCheckCircle, FaClock, FaTimes, FaMapMarkerAlt, FaPhone, FaCommentDots, FaBell, FaWallet, FaMotorcycle, FaRoute } from 'react-icons/fa';
 import { initSocket, disconnectSocket, getSocket, subscribeToChannel } from '../utils/socket';
 import toast, { Toaster } from 'react-hot-toast';
@@ -21,6 +22,7 @@ interface RiderOrdersProps {
 }
 
 export default function RiderOrders({ riderId, setShowNotifications, unreadCount: dashboardUnreadCount }: RiderOrdersProps) {
+    const { settings } = useSettings();
     const [orders, setOrders] = useState<any[]>([]);
     const [filter, setFilter] = useState<'active' | 'completed' | 'all'>('active');
     const [availableFilter, setAvailableFilter] = useState<'all' | 'nearby' | 'high_pay'>('all');
@@ -479,18 +481,18 @@ export default function RiderOrders({ riderId, setShowNotifications, unreadCount
                                                             <div className="flex items-center gap-2 text-gray-800 font-bold text-xs">
                                                                 <span>Rs.</span> Total Earning
                                                             </div>
-                                                            <span className="text-[#FF4D00] font-semibold text-lg">Rs. {activeDelivery.netRiderEarning || activeDelivery.riderEarning || activeDelivery.earnings || Math.round(60 + ((activeDelivery.distanceKm || 4.2) * 20))}</span>
+                                                            <span className="text-[#FF4D00] font-semibold text-lg">Rs. {activeDelivery.netRiderEarning || activeDelivery.riderEarning || activeDelivery.earnings || Math.round((settings.deliveryFeeBase || 40) + ((activeDelivery.distanceKm || 4.2) * (settings.deliveryFeePerKm || 20)))}</span>
                                                         </div>
                                                     
                                                     {/* MVP Earnings Breakdown */}
                                                     <div className="bg-gray-50/80 rounded-2xl p-3 space-y-2">
                                                         <div className="flex justify-between items-center text-[10px]">
                                                             <span className="text-gray-800 font-bold">Base Pay</span>
-                                                            <span className="font-bold text-gray-800">Rs. 60</span>
+                                                            <span className="font-bold text-gray-800">Rs. {settings.deliveryFeeBase || 40}</span>
                                                         </div>
                                                         <div className="flex justify-between items-center text-[10px]">
-                                                            <span className="text-gray-800 font-bold">Distance ({activeDelivery.distanceKm || 4.2} km x 20)</span>
-                                                            <span className="font-bold text-gray-800">Rs. {Math.round((activeDelivery.distanceKm || 4.2) * 20)}</span>
+                                                            <span className="text-gray-800 font-bold">Distance ({activeDelivery.distanceKm || 4.2} km x {settings.deliveryFeePerKm || 20})</span>
+                                                            <span className="font-bold text-gray-800">Rs. {Math.round((activeDelivery.distanceKm || 4.2) * (settings.deliveryFeePerKm || 20))}</span>
                                                         </div>
                                                     </div>
 
