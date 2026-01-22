@@ -1,4 +1,4 @@
-// Deploy Trigger: 2026-01-24 00:15 - Final Production Sync After Repo Reconnection
+// Deploy Trigger: 2026-01-24 00:30 - Final Production Sync (Repo Public)
 const getApiUrl = () => {
   // Priority 1: Use Environment variable if provided (from .env.local)
   let url = process.env.NEXT_PUBLIC_API_URL;
