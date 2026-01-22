@@ -254,7 +254,7 @@ const VideoCard = React.memo(({
                         <video
                             ref={videoRef}
                             src={getImageUrl(dish.videoUrl)}
-                            className="w-full h-full object-cover"
+                            className="w-full h-full object-contain"
                             loop
                             muted={isMuted}
                             playsInline
