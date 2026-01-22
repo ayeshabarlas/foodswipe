@@ -67,9 +67,9 @@ export default function CheckoutModal({ isOpen, onClose, cart, total, subtotal, 
             if (!resId) return;
 
             const updateCalculatedFee = (dist: number) => {
-                const baseFee = 60; // Hardcoded base fee
-                const perKmFee = 20; // Hardcoded per km fee
-                const maxFee = 200; // Hardcoded max fee
+                const baseFee = settings?.deliveryFeeBase || 60; 
+                const perKmFee = settings?.deliveryFeePerKm || 20; 
+                const maxFee = settings?.deliveryFeeMax || 200; 
                 const newFee = baseFee + (dist * perKmFee);
                 setCalculatedFee(Math.min(maxFee, Math.round(newFee)));
             };
@@ -111,8 +111,8 @@ export default function CheckoutModal({ isOpen, onClose, cart, total, subtotal, 
                     }
                 } else if (!deliveryLocation) {
                     // Fallback to base fee if no location selected yet
-                    const baseFee = 60;
-                    const maxFee = 200;
+                    const baseFee = settings?.deliveryFeeBase || 60;
+                    const maxFee = settings?.deliveryFeeMax || 200;
                     setCalculatedFee(Math.min(maxFee, baseFee));
                     setDistance(null);
                 }
@@ -372,19 +372,20 @@ export default function CheckoutModal({ isOpen, onClose, cart, total, subtotal, 
 
     // Calculate discount and dynamic totals
     const discountAmount = appliedVoucher
-        ? Math.round((subtotal * appliedVoucher.discount) / 100)
+        ? Math.round((subtotal * (appliedVoucher.discount || 0)) / 100)
         : 0;
     
     // Service Fee from settings
-    const serviceFee = settings?.serviceFee || 0;
+    const serviceFee = Number(settings?.serviceFee || 0);
     
     // Recalculate tax based on settings
     const isTaxEnabled = settings?.isTaxEnabled === true;
-    const taxRate = isTaxEnabled ? (settings?.taxRate || 8) : 0;
+    const taxRate = isTaxEnabled ? (Number(settings?.taxRate) || 8) : 0;
     const calculatedTax = isTaxEnabled ? Math.round((subtotal * taxRate) / 100) : 0;
     
     // Recalculate total with dynamic delivery fee, service fee, and dynamic tax
-    const currentTotal = subtotal + calculatedFee + calculatedTax + serviceFee - discountAmount;
+    // Ensure all values are numbers to avoid NaN
+    const currentTotal = Math.max(0, (Number(subtotal) || 0) + (Number(calculatedFee) || 0) + (Number(calculatedTax) || 0) + (Number(serviceFee) || 0) - (Number(discountAmount) || 0));
 
     const handlePlaceOrder = async () => {
         console.log('handlePlaceOrder initiated');
@@ -506,10 +507,12 @@ export default function CheckoutModal({ isOpen, onClose, cart, total, subtotal, 
             );
 
             const order = response.data;
+            console.log('Order created successfully:', order);
 
             // Handle Safepay for online payments
             if (paymentMethod !== 'cod') {
                 try {
+                    console.log('Initiating Safepay for order:', order._id);
                     const safepayRes = await axios.post(
                         `${API_BASE_URL}/api/payments/safepay/checkout`,
                         { orderId: order._id },
@@ -517,6 +520,7 @@ export default function CheckoutModal({ isOpen, onClose, cart, total, subtotal, 
                     );
                     
                     if (safepayRes.data.url) {
+                        console.log('Redirecting to Safepay:', safepayRes.data.url);
                         clearCart(); // Clear cart before redirecting
                         window.dispatchEvent(new Event('cartCleared'));
                         window.location.href = safepayRes.data.url;
@@ -530,53 +534,67 @@ export default function CheckoutModal({ isOpen, onClose, cart, total, subtotal, 
                 }
             }
 
-            setPlacedOrder({
-                id: order._id || '#8703',
+            // For COD orders, prepare the success data
+            const orderId = order._id || order.id || '#8703';
+            const orderInfo = {
+                id: orderId,
                 estimatedTime: '25-35 min',
                 deliveryAddress: fullAddress,
                 total: currentTotal
-            });
+            };
 
-            // Sync address to user profile if changed
-            try {
-                const currentUser = JSON.parse(localStorage.getItem('userInfo') || '{}');
-                if (currentUser && (currentUser.address !== deliveryAddress || currentUser.houseNumber !== houseNumber)) {
-                    // Update local storage first for immediate feedback
-                    const updatedUser = { 
-                        ...currentUser, 
-                        address: deliveryAddress,
-                        houseNumber: houseNumber 
-                    };
-                    localStorage.setItem('userInfo', JSON.stringify(updatedUser));
-
-                    // Update backend
-                    await axios.put(
-                        `${API_BASE_URL}/api/auth/profile`,
-                        { 
-                            address: deliveryAddress,
-                            houseNumber: houseNumber 
-                        },
-                        { headers: { Authorization: `Bearer ${token}` } }
-                    );
-                }
-            } catch (err) {
-                console.error('Failed to sync address to profile:', err);
-                // Don't block order success for this
-            }
-
+            console.log('Setting success state for order:', orderId);
+            
+            // Set order info first, then success state
+            setPlacedOrder(orderInfo);
             setOrderSuccess(true);
             setShowConfetti(true);
-            clearCart();
+            setLoading(false);
             
-            // Dispatch event to ensure all components know cart is cleared
+            // Clear cart and notify other components
+            clearCart();
             window.dispatchEvent(new Event('cartCleared'));
 
             if (onSuccess) {
-                onSuccess();
+                try {
+                    onSuccess();
+                } catch (e) {
+                    console.error('onSuccess callback failed:', e);
+                }
+            }
+
+            // Sync address to user profile in the background (NON-BLOCKING)
+            try {
+                const currentUserStr = localStorage.getItem('userInfo');
+                if (currentUserStr) {
+                    const currentUser = JSON.parse(currentUserStr);
+                    if (currentUser.address !== deliveryAddress || currentUser.houseNumber !== houseNumber) {
+                        // Update local storage first for immediate feedback
+                        const updatedUser = { 
+                            ...currentUser, 
+                            address: deliveryAddress,
+                            houseNumber: houseNumber 
+                        };
+                        localStorage.setItem('userInfo', JSON.stringify(updatedUser));
+
+                        // Update backend - don't await this to avoid blocking the UI
+                        axios.put(
+                            `${API_BASE_URL}/api/auth/profile`,
+                            { 
+                                address: deliveryAddress,
+                                houseNumber: houseNumber 
+                            },
+                            { headers: { Authorization: `Bearer ${token}` } }
+                        ).catch(err => console.error('Background address sync failed:', err));
+                    }
+                }
+            } catch (err) {
+                console.error('Failed to initiate background address sync:', err);
             }
 
         } catch (error: any) {
             console.error('Order placement failed:', error);
+            setLoading(false); // Ensure loading is false on error
             if (error.response && error.response.status === 401) {
                 alert('Session expired. Please login again.');
             } else {
@@ -584,6 +602,7 @@ export default function CheckoutModal({ isOpen, onClose, cart, total, subtotal, 
                 alert(`Order Failed: ${errorMessage}`);
             }
         } finally {
+            // This is a safety net, though we call setLoading(false) above too
             setLoading(false);
         }
     };
@@ -653,7 +672,7 @@ export default function CheckoutModal({ isOpen, onClose, cart, total, subtotal, 
                                                     </div>
                                                     <p className="text-xs text-gray-800 font-medium">Order Number</p>
                                                 </div>
-                                                <p className="font-semibold text-orange-500 text-sm">#{placedOrder.id.slice(-4).toUpperCase()}</p>
+                                                <p className="font-semibold text-orange-500 text-sm">#{(placedOrder.id?.toString() || '').slice(-4).toUpperCase()}</p>
                                             </div>
 
                                             <div className="flex items-center justify-between">
