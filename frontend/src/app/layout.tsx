@@ -1,10 +1,7 @@
 import type { Metadata } from "next";
 import { Poppins, Plus_Jakarta_Sans, Inter } from "next/font/google";
 import "./globals.css";
-import { CartProvider } from "../context/CartContext";
-import dynamic from "next/dynamic";
-const SystemWrapper = dynamic(() => import("../components/SystemWrapper"), { ssr: false });
-const Toaster = dynamic(() => import("react-hot-toast").then((m) => m.Toaster), { ssr: false });
+import ClientProviders from "../components/ClientProviders";
 
 const inter = Inter({
   variable: "--font-inter",
@@ -41,12 +38,9 @@ export default function RootLayout({
       <body
         className={`${inter.variable} ${poppins.variable} ${plusJakartaSans.variable} antialiased`}
       >
-        <SystemWrapper>
-          <CartProvider>
-            {children}
-            <Toaster position="top-center" reverseOrder={false} />
-          </CartProvider>
-        </SystemWrapper>
+        <ClientProviders>
+          {children}
+        </ClientProviders>
       </body>
     </html>
   );
