@@ -1,5 +1,11 @@
 // Deploy Trigger: 2026-01-24 00:30 - Final Production Sync (Repo Public)
+// Lazy-loaded constants to avoid TDZ (Temporal Dead Zone) errors
+let cachedApiUrl: string | null = null;
+let cachedSocketUrl: string | null = null;
+
 export function getApiUrl() {
+  if (cachedApiUrl) return cachedApiUrl;
+  
   // Priority 1: Use Environment variable if provided (from .env.local)
   let url = process.env.NEXT_PUBLIC_API_URL;
 
@@ -12,59 +18,47 @@ export function getApiUrl() {
     window.location.hostname.startsWith('172.') ||
     window.location.hostname.endsWith('.trae.app') // Support Trae preview
   )) {
-    // If we're on a local network IP, use that IP for the backend too
     if (window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1' && !window.location.hostname.endsWith('.trae.app')) {
-      return `http://${window.location.hostname}:5000`;
+      cachedApiUrl = `http://${window.location.hostname}:5000`;
+      return cachedApiUrl;
     }
-    return 'http://localhost:5000';
+    cachedApiUrl = 'http://localhost:5000';
+    return cachedApiUrl;
   }
 
-  // Priority 3: Use Render URL as the MAIN production backend
   const RENDER_URL = process.env.NEXT_PUBLIC_API_URL || 'https://foodswipe-6178.onrender.com';
   
-  // Force Render URL for specific Vercel production domains or if not on localhost
   if (typeof window !== 'undefined') {
     const isLocal = window.location.hostname === 'localhost' || 
                    window.location.hostname === '127.0.0.1' ||
                    window.location.hostname.startsWith('192.168.');
                    
     if (!isLocal || window.location.hostname.includes('vercel.app')) {
-      console.log('🌐 Remote Environment: Using Backend', RENDER_URL);
-      return RENDER_URL;
+      cachedApiUrl = RENDER_URL;
+      return cachedApiUrl;
     }
   }
   
   if (process.env.NODE_ENV === 'production') {
-    return RENDER_URL;
+    cachedApiUrl = RENDER_URL;
+    return cachedApiUrl;
   }
   
-  // Priority 4: Localhost fallback
-  if (!url) {
-    url = 'http://localhost:5000';
-  }
+  if (!url) url = 'http://localhost:5000';
+  if (!url.startsWith('http')) url = `https://${url}`;
   
-  // Ensure protocol
-  if (!url.startsWith('http')) {
-    url = `https://${url}`;
-  }
-  
-  // Strip trailing slash
   url = url.endsWith('/') ? url.slice(0, -1) : url;
-
-  // IMPORTANT: Strip /api from the end if it exists, 
-  // because components add /api/ themselves in their axios calls
-  if (url.endsWith('/api')) {
-    url = url.slice(0, -4);
-  }
+  if (url.endsWith('/api')) url = url.slice(0, -4);
   
+  cachedApiUrl = url;
   return url;
 }
 
 export function getSocketUrl() {
-  // Priority 1: Environment variable
+  if (cachedSocketUrl) return cachedSocketUrl;
+
   let url = process.env.NEXT_PUBLIC_SOCKET_URL;
   
-  // Priority 2: Force localhost/local IP if we are on a local network in browser
   if (typeof window !== 'undefined' && (
     window.location.hostname === 'localhost' || 
     window.location.hostname === '127.0.0.1' ||
@@ -73,37 +67,25 @@ export function getSocketUrl() {
     window.location.hostname.startsWith('172.') ||
     window.location.hostname.endsWith('.trae.app')
   )) {
-    // If we're on a local network IP, use that IP for the backend too
     if (window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1' && !window.location.hostname.endsWith('.trae.app')) {
-      return `http://${window.location.hostname}:5000`;
+      cachedSocketUrl = `http://${window.location.hostname}:5000`;
+      return cachedSocketUrl;
     }
-    return 'http://localhost:5000';
+    cachedSocketUrl = 'http://localhost:5000';
+    return cachedSocketUrl;
   }
 
-  // Override if pointing to old Vercel backend
-  if (url && url.includes('vercel.app')) {
-    url = 'https://foodswipe-6178.onrender.com';
-  }
+  if (url && url.includes('vercel.app')) url = 'https://foodswipe-6178.onrender.com';
+  if (!url && process.env.NODE_ENV === 'production') url = 'https://foodswipe-6178.onrender.com';
+  if (!url) url = 'http://localhost:5000';
+
+  if (!url.startsWith('http')) url = `https://${url}`;
   
-  // Priority 3: Production fallback (Hardcoded Render URL)
-  if (!url && process.env.NODE_ENV === 'production') {
-    url = 'https://foodswipe-6178.onrender.com';
-  }
-
-  // Priority 4: Localhost fallback
-  if (!url) {
-    url = 'http://localhost:5000';
-  }
-
-  // Ensure protocol
-  if (!url.startsWith('http')) {
-    url = `https://${url}`;
-  }
-
+  cachedSocketUrl = url;
   return url;
 }
 
-export const API_BASE_URL = getApiUrl();
-export const SOCKET_URL = getSocketUrl();
-
-console.log('🌐 Frontend Config:', { API_BASE_URL, SOCKET_URL });
+// These are now legacy exports to prevent breaking other files, 
+// but they call the safe functions
+export const API_BASE_URL = 'https://foodswipe-6178.onrender.com'; // Hardcoded for safety in TDZ
+export const SOCKET_URL = 'https://foodswipe-6178.onrender.com';   // Hardcoded for safety in TDZ

@@ -2,14 +2,23 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 import Pusher from 'pusher-js';
 
-let pusher: Pusher | null = null;
-const activeChannels: Set<string> = new Set();
-type SocketCallback = (data: any) => void;
-
-const eventListeners = new Map<string, Set<SocketCallback>>();
+// Initialize these as null/empty and only use them inside functions
+let pusher: any = null;
+let activeChannels: Set<string> | null = null;
+let eventListeners: Map<string, Set<SocketCallback>> | null = null;
 
 function getPusherKey() { return process.env.NEXT_PUBLIC_PUSHER_KEY || ''; }
 function getPusherCluster() { return process.env.NEXT_PUBLIC_PUSHER_CLUSTER || 'ap2'; }
+
+function getActiveChannels() {
+    if (!activeChannels) activeChannels = new Set();
+    return activeChannels;
+}
+
+function getEventListeners() {
+    if (!eventListeners) eventListeners = new Map();
+    return eventListeners;
+}
 
 function createEmptySocket() {
     return {
@@ -27,37 +36,35 @@ function createEmptySocket() {
 function createSocketWrapper() {
     const wrapper = {
         on: (event: string, callback: (data: any) => void) => {
-            // Register global listener
-            if (!eventListeners.has(event)) {
-                eventListeners.set(event, new Set());
+            const listeners = getEventListeners();
+            if (!listeners.has(event)) {
+                listeners.set(event, new Set());
             }
-            eventListeners.get(event)?.add(callback);
+            listeners.get(event)?.add(callback);
 
-            // Bind to all active channels
-            activeChannels.forEach(channelName => {
+            getActiveChannels().forEach(channelName => {
                 const channel = pusher?.channel(channelName);
                 if (channel) channel.bind(event, callback);
             });
         },
         off: (event: string, callback?: (data: any) => void) => {
+            const listeners = getEventListeners();
             if (callback) {
-                // Remove specific listener
-                eventListeners.get(event)?.delete(callback);
-                activeChannels.forEach(channelName => {
+                listeners.get(event)?.delete(callback);
+                getActiveChannels().forEach(channelName => {
                     const channel = pusher?.channel(channelName);
                     if (channel) channel.unbind(event, callback);
                 });
             } else {
-                // Remove all listeners for this event
-                const listeners = eventListeners.get(event);
-                if (listeners) {
-                    activeChannels.forEach(channelName => {
+                const eventCallbacks = listeners.get(event);
+                if (eventCallbacks) {
+                    getActiveChannels().forEach(channelName => {
                         const channel = pusher?.channel(channelName);
                         if (channel) {
-                            listeners.forEach(cb => channel.unbind(event, cb));
+                            eventCallbacks.forEach(cb => channel.unbind(event, cb));
                         }
                     });
-                    eventListeners.delete(event);
+                    listeners.delete(event);
                 }
             }
         },
@@ -126,17 +133,18 @@ export function getSocket() {
 export function subscribeToChannel(channelName: string) {
     if (!pusher) return null;
     
+    const channels = getActiveChannels();
     // If already subscribed, return the existing channel
-    if (activeChannels.has(channelName)) {
+    if (channels.has(channelName)) {
         return pusher.channel(channelName);
     }
     
     const channel = pusher.subscribe(channelName);
-    activeChannels.add(channelName);
+    channels.add(channelName);
     console.log(`📡 Subscribed to channel: ${channelName}`);
 
     // Automatically bind existing listeners to this new channel
-    eventListeners.forEach((callbacks, event) => {
+    getEventListeners().forEach((callbacks, event) => {
         callbacks.forEach(callback => {
             channel.bind(event, callback);
         });
@@ -146,22 +154,20 @@ export function subscribeToChannel(channelName: string) {
 }
 
 export function unsubscribeFromChannel(channelName: string) {
-    if (!pusher || !activeChannels.has(channelName)) return;
+    const channels = getActiveChannels();
+    if (!pusher || !channels.has(channelName)) return;
     
     pusher.unsubscribe(channelName);
-    activeChannels.delete(channelName);
+    channels.delete(channelName);
     console.log(`🚫 Unsubscribed from channel: ${channelName}`);
 }
 
 export function disconnectSocket() {
     if (pusher) {
-        // Just unsubscribe from all channels instead of disconnecting entirely
-        // to avoid killing the singleton for other components
-        activeChannels.forEach(channel => {
+        const channels = getActiveChannels();
+        channels.forEach(channel => {
             pusher?.unsubscribe(channel);
         });
-        activeChannels.clear();
-        // pusher.disconnect(); // Don't disconnect entirely
-        // pusher = null;
+        channels.clear();
     }
 }
