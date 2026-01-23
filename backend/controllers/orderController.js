@@ -368,7 +368,7 @@ const updateOrderStatus = async (req, res) => {
 
         // If order is delivered, trigger payment processing
         if (status === 'Delivered') {
-            await processOrderCompletion(order, distanceKm || 5, req); // Pass req to access io
+            await processOrderCompletion(order, distanceKm || 0, req); // Pass req to access io
         }
 
         await order.save();
