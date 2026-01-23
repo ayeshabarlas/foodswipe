@@ -12,7 +12,7 @@ const CreateRestaurant = dynamic(() => import("@/components/CreateRestaurant"), 
 import axios from "axios";
 import { getApiUrl } from "@/utils/config";
 
-// Force redeploy trigger - 2026-01-15 11:05
+// Force Redeploy for "es" error fix - 2026-01-23 11:31
 export default function Home() {
   const router = useRouter();
   useEffect(() => {
