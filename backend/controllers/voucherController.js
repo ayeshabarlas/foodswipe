@@ -1,4 +1,5 @@
 const Voucher = require('../models/Voucher');
+const Restaurant = require('../models/Restaurant');
 const { triggerEvent } = require('../socket');
 
 // @desc    Get all vouchers
@@ -70,8 +71,28 @@ const verifyVoucher = async (req, res) => {
  */
 const createRestaurantVoucher = async (req, res) => {
     try {
-        const Restaurant = require('../models/Restaurant');
-        const restaurant = await Restaurant.findOne({ owner: req.user._id });
+        let restaurant = await Restaurant.findOne({ owner: req.user._id });
+
+        // Smart linking fallback (similar to restaurantController)
+        if (!restaurant) {
+            const userEmail = req.user.email?.toLowerCase();
+            const userPhone = req.user.phone || req.user.phoneNumber;
+            const normalizedUserPhone = userPhone ? userPhone.replace(/[\s\-\+\(\)]/g, '').slice(-10) : null;
+
+            if (normalizedUserPhone) {
+                restaurant = await Restaurant.findOne({ contact: new RegExp(normalizedUserPhone + '$') });
+            }
+            if (!restaurant && userEmail) {
+                const allRests = await Restaurant.find({}).populate('owner');
+                restaurant = allRests.find(r => r.owner?.email?.toLowerCase() === userEmail);
+            }
+            
+            if (restaurant) {
+                console.log(`[Voucher] Smart-linked restaurant ${restaurant._id} to user ${req.user._id}`);
+                restaurant.owner = req.user._id;
+                await restaurant.save();
+            }
+        }
 
         if (!restaurant) {
             return res.status(404).json({ message: 'Restaurant not found' });
@@ -113,8 +134,28 @@ const createRestaurantVoucher = async (req, res) => {
  */
 const getRestaurantVouchers = async (req, res) => {
     try {
-        const Restaurant = require('../models/Restaurant');
-        const restaurant = await Restaurant.findOne({ owner: req.user._id });
+        let restaurant = await Restaurant.findOne({ owner: req.user._id });
+
+        // Smart linking fallback
+        if (!restaurant) {
+            const userEmail = req.user.email?.toLowerCase();
+            const userPhone = req.user.phone || req.user.phoneNumber;
+            const normalizedUserPhone = userPhone ? userPhone.replace(/[\s\-\+\(\)]/g, '').slice(-10) : null;
+
+            if (normalizedUserPhone) {
+                restaurant = await Restaurant.findOne({ contact: new RegExp(normalizedUserPhone + '$') });
+            }
+            if (!restaurant && userEmail) {
+                const allRests = await Restaurant.find({}).populate('owner');
+                restaurant = allRests.find(r => r.owner?.email?.toLowerCase() === userEmail);
+            }
+            
+            if (restaurant) {
+                console.log(`[Voucher-Get] Smart-linked restaurant ${restaurant._id} to user ${req.user._id}`);
+                restaurant.owner = req.user._id;
+                await restaurant.save();
+            }
+        }
 
         if (!restaurant) {
             return res.status(404).json({ message: 'Restaurant not found' });
@@ -138,14 +179,18 @@ const getRestaurantVouchers = async (req, res) => {
  */
 const getVouchersByRestaurant = async (req, res) => {
     try {
+        const now = new Date();
         const vouchers = await Voucher.find({
             $or: [
                 { restaurant: req.params.restaurantId, createdBy: 'restaurant' },
                 { createdBy: 'platform' }
             ],
             isActive: true,
-            expiryDate: { $gte: new Date(new Date().setHours(0, 0, 0, 0)) },
-        });
+            $or: [
+                { expiryDate: { $gte: now } },
+                { expiryDate: { $exists: false } }
+            ]
+        }).sort({ createdAt: -1 });
 
         res.json(vouchers);
     } catch (error) {
@@ -166,7 +211,6 @@ const toggleVoucherStatus = async (req, res) => {
             return res.status(404).json({ message: 'Voucher not found' });
         }
 
-        const Restaurant = require('../models/Restaurant');
         const restaurant = await Restaurant.findOne({ owner: req.user._id });
 
         if (voucher.restaurant.toString() !== restaurant._id.toString()) {

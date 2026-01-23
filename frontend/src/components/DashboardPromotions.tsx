@@ -170,8 +170,8 @@ export default function DashboardPromotions() {
                         <span className="w-1.5 h-1.5 rounded-full bg-orange-500 animate-pulse"></span>
                         Promotion Tools
                     </div>
-                    <h2 className="text-4xl font-bold text-gray-900 font-plus-jakarta tracking-tight leading-none">Promotions</h2>
-                    <p className="text-gray-500 text-[14px] font-normal max-w-md">Strategically boost your restaurant&apos;s performance with professional-grade promotional tools and insights.</p>
+                    <h2 className="text-4xl font-bold text-gray-900 font-plus-jakarta tracking-tight leading-none">Marketing Hub</h2>
+                    <p className="text-gray-500 text-[14px] font-medium max-w-md">Strategically boost your restaurant&apos;s performance with professional-grade promotional tools and insights.</p>
                 </div>
                 <div className="flex items-center gap-6 bg-white p-4 rounded-[24px] shadow-sm border border-gray-100">
                     <div className="flex items-center gap-3">
@@ -233,13 +233,13 @@ export default function DashboardPromotions() {
                             <FaTicketAlt size={20} />
                         </div>
                         <div>
-                            <h3 className="font-extrabold text-gray-900 text-lg font-plus-jakarta tracking-tight">Voucher Campaigns</h3>
+                            <h3 className="font-bold text-gray-900 text-lg font-plus-jakarta tracking-tight">Voucher Campaigns</h3>
                             <p className="text-gray-400 text-[11px] font-medium uppercase tracking-widest mt-0.5">Custom Discount Codes</p>
                         </div>
                     </div>
                     <button
                         onClick={() => setShowVoucherModal(true)}
-                        className="w-full sm:w-auto bg-gradient-to-r from-orange-500 to-red-500 text-white px-8 py-4 rounded-2xl font-extrabold shadow-xl shadow-orange-500/20 hover:shadow-2xl transition-all duration-300 flex items-center justify-center gap-2 active:scale-95 uppercase text-[11px] tracking-widest font-plus-jakarta"
+                        className="w-full sm:w-auto bg-gradient-to-r from-orange-500 to-red-500 text-white px-8 py-4 rounded-2xl font-bold shadow-xl shadow-orange-500/20 hover:shadow-2xl transition-all duration-300 flex items-center justify-center gap-2 active:scale-95 uppercase text-[11px] tracking-widest font-plus-jakarta"
                     >
                         <FaPlus /> Create New Voucher
                     </button>
@@ -315,7 +315,7 @@ export default function DashboardPromotions() {
                         <div className="w-24 h-24 rounded-full bg-gray-50 flex items-center justify-center mx-auto mb-6">
                             <FaTicketAlt className="text-4xl text-gray-200" />
                         </div>
-                        <h4 className="text-xl font-extrabold text-gray-900 font-plus-jakarta mb-2">No active vouchers</h4>
+                        <h4 className="text-xl font-bold text-gray-900 font-plus-jakarta mb-2">No active vouchers</h4>
                         <p className="text-gray-400 text-sm max-w-xs mx-auto">Launch your first voucher campaign to start attracting more customers today!</p>
                     </div>
                 )}
@@ -329,13 +329,13 @@ export default function DashboardPromotions() {
                             <FaTags size={20} />
                         </div>
                         <div>
-                            <h3 className="font-extrabold text-gray-900 text-lg font-plus-jakarta tracking-tight">Exclusive Deals</h3>
-                            <p className="text-gray-400 text-[11px] font-medium uppercase tracking-widest mt-0.5">Limited Time Offers</p>
+                            <h3 className="font-bold text-gray-900 text-lg font-plus-jakarta tracking-tight">Exclusive Deals</h3>
+                            <p className="text-gray-400 text-[11px] font-medium uppercase tracking-widest mt-0.5">Flash Sales & Offers</p>
                         </div>
                     </div>
                     <button
                         onClick={() => setShowDealModal(true)}
-                        className="w-full sm:w-auto bg-gradient-to-r from-purple-600 to-indigo-600 text-white px-8 py-4 rounded-2xl font-extrabold shadow-xl shadow-purple-500/20 hover:shadow-2xl transition-all duration-300 flex items-center justify-center gap-2 active:scale-95 uppercase text-[11px] tracking-widest font-plus-jakarta"
+                        className="w-full sm:w-auto bg-gradient-to-r from-purple-600 to-indigo-600 text-white px-8 py-4 rounded-2xl font-bold shadow-xl shadow-purple-500/20 hover:shadow-2xl transition-all duration-300 flex items-center justify-center gap-2 active:scale-95 uppercase text-[11px] tracking-widest font-plus-jakarta"
                     >
                         <FaPlus /> Create New Deal
                     </button>
@@ -429,7 +429,7 @@ export default function DashboardPromotions() {
                         <div className="w-24 h-24 rounded-full bg-gray-50 flex items-center justify-center mx-auto mb-6">
                             <FaTags className="text-4xl text-gray-200" />
                         </div>
-                        <h4 className="text-xl font-extrabold text-gray-900 font-plus-jakarta mb-2">No active deals</h4>
+                        <h4 className="text-xl font-bold text-gray-900 font-plus-jakarta mb-2">No active deals</h4>
                         <p className="text-gray-400 text-sm max-w-xs mx-auto">Create a limited-time deal to clear stock or promote new items!</p>
                     </div>
                 )}

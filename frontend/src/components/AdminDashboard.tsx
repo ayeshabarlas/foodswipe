@@ -21,6 +21,7 @@ import CustomersView from './admin/CustomersView';
 import AdminManagementView from './admin/AdminManagementView';
 import SupportView from './admin/SupportView';
 import CODSettlementView from './admin/CODSettlementView';
+import NotificationList from './admin/NotificationList';
 
 import axios from 'axios';
 import { initSocket, getSocket, disconnectSocket } from '../utils/socket';
@@ -64,6 +65,7 @@ export default function AdminDashboard() {
         newUsers: 0,
         totalNotifications: 0
     });
+    const [showNotifications, setShowNotifications] = useState(false);
     const [loading, setLoading] = useState(true);
     const [mounted, setMounted] = useState(false);
     const router = useRouter();
@@ -82,7 +84,7 @@ export default function AdminDashboard() {
             try {
                 user = JSON.parse(userInfo);
                 const isAdminRole = ['admin', 'super-admin', 'finance-admin', 'support-admin', 'restaurant-manager'].includes(user.role);
-                
+
                 if (!isAdminRole) {
                     console.error('Unauthorized: User is not an admin. Role:', user.role);
                     handleLogout();
@@ -185,7 +187,7 @@ export default function AdminDashboard() {
         try {
             const userInfoStr = localStorage.getItem('userInfo');
             const token = localStorage.getItem('token');
-            
+
             if (!userInfoStr && !token) {
                 console.error('No auth info found');
                 handleLogout();
@@ -311,7 +313,7 @@ export default function AdminDashboard() {
     return (
         <div className="h-screen bg-[#F8FAFC] flex overflow-hidden relative">
             <Toaster />
-            
+
             {/* Background Decorative Gradients */}
             <div className="fixed inset-0 overflow-hidden pointer-events-none z-0">
                 <div className="absolute top-[-10%] right-[-10%] w-[40%] h-[40%] bg-gradient-to-br from-orange-500/10 to-pink-500/20 blur-[100px] rounded-full"></div>
@@ -320,8 +322,29 @@ export default function AdminDashboard() {
             </div>
 
             <Sidebar activeTab={activeTab} setActiveTab={handleTabChange} onLogout={handleLogout} notificationCounts={notificationCounts} />
-            
+
             <div className="flex-1 w-full md:ml-64 pt-16 md:pt-0 h-screen overflow-y-auto relative z-10 custom-scrollbar">
+                {/* Floating Notification Bell */}
+                <div className="fixed top-4 right-4 md:top-6 md:right-8 z-[100] flex items-center gap-3">
+                    <button
+                        onClick={() => setShowNotifications(!showNotifications)}
+                        className="w-12 h-12 bg-white rounded-2xl shadow-xl flex items-center justify-center text-gray-600 hover:text-orange-500 transition-all duration-300 border border-gray-100 group relative"
+                    >
+                        <FaBell className={`text-xl transition-transform duration-500 ${showNotifications ? 'rotate-[20deg]' : ''}`} />
+                        {(notificationCounts.totalNotifications > 0) && (
+                            <span className="absolute -top-1 -right-1 w-5 h-5 bg-orange-500 text-white text-[10px] font-bold rounded-lg flex items-center justify-center border-2 border-white animate-pulse">
+                                {notificationCounts.totalNotifications}
+                            </span>
+                        )}
+                    </button>
+
+                    {showNotifications && (
+                        <div className="absolute top-14 right-0 animate-in fade-in slide-in-from-top-4 duration-300">
+                            <NotificationList onClose={() => setShowNotifications(false)} />
+                        </div>
+                    )}
+                </div>
+
                 {renderView()}
             </div>
         </div>

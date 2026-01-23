@@ -28,6 +28,8 @@ const {
     settleRider,
     blockRider,
     getNotificationCounts,
+    getAdminNotifications,
+    markNotificationRead,
     nuclearWipe,
     fixInflatedOrders
 } = require('../controllers/adminController');
@@ -90,6 +92,8 @@ router.put('/settings', updateSystemSettings);
 // Dashboard stats
 router.get('/stats', getDashboardStats);
 router.get('/notifications/counts', getNotificationCounts);
+router.get('/notifications', getAdminNotifications);
+router.put('/notifications/:id/read', markNotificationRead);
 
 // System Cleanup
 router.post('/cleanup-mock', cleanupMockData);

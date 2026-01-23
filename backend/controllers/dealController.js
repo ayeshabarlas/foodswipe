@@ -10,19 +10,32 @@ const { triggerEvent } = require('../socket');
 const createDeal = async (req, res) => {
     try {
         console.log('=== CREATE DEAL DEBUG ===');
-        console.log('User:', req.user);
-        console.log('User ID:', req.user?._id);
+        let restaurant = await Restaurant.findOne({ owner: req.user._id });
 
-        // Find all restaurants for debugging
-        const allRestaurants = await Restaurant.find({}).select('name owner').limit(5);
-        console.log('Sample restaurants in DB:', JSON.stringify(allRestaurants, null, 2));
+        // Smart linking fallback
+        if (!restaurant) {
+            const userEmail = req.user.email?.toLowerCase();
+            const userPhone = req.user.phone || req.user.phoneNumber;
+            const normalizedUserPhone = userPhone ? userPhone.replace(/[\s\-\+\(\)]/g, '').slice(-10) : null;
 
-        const restaurant = await Restaurant.findOne({ owner: req.user._id });
-        console.log('Found restaurant for this user:', restaurant);
+            if (normalizedUserPhone) {
+                restaurant = await Restaurant.findOne({ contact: new RegExp(normalizedUserPhone + '$') });
+            }
+            if (!restaurant && userEmail) {
+                const allRests = await Restaurant.find({}).populate('owner');
+                restaurant = allRests.find(r => r.owner?.email?.toLowerCase() === userEmail);
+            }
+            
+            if (restaurant) {
+                console.log(`[Deal] Smart-linked restaurant ${restaurant._id} to user ${req.user._id}`);
+                restaurant.owner = req.user._id;
+                await restaurant.save();
+            }
+        }
 
         if (!restaurant) {
             return res.status(404).json({
-                message: 'Restaurant not found. Please check backend logs for debugging info.'
+                message: 'Restaurant not found. Please ensure you have a restaurant profile.'
             });
         }
 
@@ -62,7 +75,28 @@ const createDeal = async (req, res) => {
  */
 const getMyDeals = async (req, res) => {
     try {
-        const restaurant = await Restaurant.findOne({ owner: req.user._id });
+        let restaurant = await Restaurant.findOne({ owner: req.user._id });
+
+        // Smart linking fallback
+        if (!restaurant) {
+            const userEmail = req.user.email?.toLowerCase();
+            const userPhone = req.user.phone || req.user.phoneNumber;
+            const normalizedUserPhone = userPhone ? userPhone.replace(/[\s\-\+\(\)]/g, '').slice(-10) : null;
+
+            if (normalizedUserPhone) {
+                restaurant = await Restaurant.findOne({ contact: new RegExp(normalizedUserPhone + '$') });
+            }
+            if (!restaurant && userEmail) {
+                const allRests = await Restaurant.find({}).populate('owner');
+                restaurant = allRests.find(r => r.owner?.email?.toLowerCase() === userEmail);
+            }
+            
+            if (restaurant) {
+                console.log(`[Deal-Get] Smart-linked restaurant ${restaurant._id} to user ${req.user._id}`);
+                restaurant.owner = req.user._id;
+                await restaurant.save();
+            }
+        }
 
         if (!restaurant) {
             return res.status(404).json({ message: 'Restaurant not found' });
@@ -83,12 +117,22 @@ const getMyDeals = async (req, res) => {
  */
 const getDealsByRestaurant = async (req, res) => {
     try {
+        // Find deals that are active and either have no date restrictions or are within current date
+        const now = new Date();
         const deals = await Deal.find({
             restaurant: req.params.restaurantId,
             isActive: true,
-            startDate: { $lte: new Date() },
-            endDate: { $gte: new Date() },
-        });
+            $or: [
+                { 
+                    startDate: { $lte: now }, 
+                    endDate: { $gte: now } 
+                },
+                {
+                    startDate: { $exists: false },
+                    endDate: { $exists: false }
+                }
+            ]
+        }).sort({ createdAt: -1 });
 
         res.json(deals);
     } catch (error) {

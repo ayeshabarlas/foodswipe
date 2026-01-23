@@ -407,7 +407,7 @@ export default function RestaurantDashboard() {
         { id: 'analytics', label: 'Performance', icon: FaChartLine },
         { id: 'payments', label: 'Earnings', icon: FaWallet },
         { id: 'reviews', label: 'Customer Reviews', icon: FaStar },
-        { id: 'promotions', label: 'Promotions', icon: FaBullhorn },
+        { id: 'promotions', label: 'Marketing Hub', icon: FaBullhorn },
         { id: 'support', label: 'Help Center', icon: FaHeadset },
         { id: 'settings', label: 'Account Settings', icon: FaClock },
     ];
@@ -575,7 +575,7 @@ export default function RestaurantDashboard() {
                 <header className="bg-white/80 backdrop-blur-md border-b border-gray-100 p-4 hidden lg:flex items-center justify-between sticky top-0 z-30 shadow-sm">
                     <div className="flex items-center gap-6">
                         <div className="flex flex-col">
-                            <h1 className="text-xl font-extrabold text-gray-900 tracking-tight flex items-center gap-2 font-plus-jakarta">
+                            <h1 className="text-xl font-bold text-gray-900 tracking-tight flex items-center gap-2 font-plus-jakarta">
                                 {menuItems.find((i) => i.id === activePage)?.label}
                                 {activePage === 'overview' && <span className="text-[10px] bg-orange-100 text-orange-600 px-2 py-0.5 rounded-full font-bold uppercase tracking-widest">Live</span>}
                             </h1>
@@ -589,7 +589,7 @@ export default function RestaurantDashboard() {
                         {/* Search or Quick Stats could go here */}
                         <div className="hidden xl:flex items-center gap-4 pr-6 border-r border-gray-100">
                             <div className="flex flex-col items-end">
-                                <span className="text-[10px] font-medium text-gray-400 uppercase tracking-widest mb-0.5">Store Status</span>
+                                <span className="text-[10px] font-normal text-gray-400 uppercase tracking-widest mb-0.5">Store Status</span>
                                 <span className="flex items-center gap-1.5 text-[11px] font-semibold text-green-500 font-plus-jakarta">
                                     <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse shadow-[0_0_8px_rgba(34,197,94,0.6)]" />
                                     Online & Accepting
@@ -693,7 +693,7 @@ export default function RestaurantDashboard() {
                         {/* User Profile */}
                         <div className="flex items-center gap-3 pl-4 border-l border-gray-100 group cursor-pointer">
                             <div className="text-right hidden sm:block transition-transform group-hover:-translate-x-1 duration-300">
-                                <p className="text-[14px] font-extrabold text-gray-900 leading-none mb-1 font-plus-jakarta tracking-tight">{displayRestaurant?.owner?.name}</p>
+                                <p className="text-[14px] font-bold text-gray-900 leading-none mb-1 font-plus-jakarta tracking-tight">{displayRestaurant?.owner?.name}</p>
                                 <div className="flex items-center justify-end gap-1.5">
                                     <div className="w-1.5 h-1.5 rounded-full bg-orange-500 shadow-[0_0_8px_rgba(249,115,22,0.4)]" />
                                     <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest">Restaurant Owner</p>
@@ -701,7 +701,7 @@ export default function RestaurantDashboard() {
                             </div>
                             <div className="relative">
                                 <div className="w-11 h-11 rounded-2xl bg-gradient-to-tr from-orange-500 to-red-500 p-[2px] shadow-lg shadow-orange-100 group-hover:scale-105 transition-transform duration-300">
-                                    <div className="w-full h-full rounded-2xl bg-white flex items-center justify-center text-orange-600 font-extrabold text-base uppercase font-plus-jakarta">
+                                    <div className="w-full h-full rounded-2xl bg-white flex items-center justify-center text-orange-600 font-bold text-base uppercase font-plus-jakarta">
                                         {displayRestaurant?.name?.charAt(0)}
                                     </div>
                                 </div>

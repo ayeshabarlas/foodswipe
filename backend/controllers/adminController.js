@@ -216,28 +216,28 @@ const getDashboardStats = async (req, res) => {
                     _id: null,
                     totalRevenue: { $sum: { $ifNull: ['$totalPrice', 0] } },
                     totalCommission: { $sum: { $ifNull: ['$commissionAmount', 0] } },
-                    totalRiderEarnings: { 
-                        $sum: { 
+                    totalRiderEarnings: {
+                        $sum: {
                             $cond: [
                                 { $gt: [{ $toDouble: { $ifNull: ['$riderEarning', 0] } }, 200] },
                                 200,
                                 { $toDouble: { $ifNull: ['$riderEarning', 0] } }
                             ]
-                        } 
+                        }
                     },
                     totalRestaurantEarnings: { $sum: { $toDouble: { $ifNull: ['$restaurantEarning', 0] } } },
                     totalServiceFees: { $sum: { $toDouble: { $ifNull: ['$serviceFee', 0] } } },
                     totalTax: { $sum: { $toDouble: { $ifNull: ['$tax', 0] } } },
                     totalGatewayFees: { $sum: { $toDouble: { $ifNull: ['$gatewayFee', 0] } } },
                     totalDiscounts: { $sum: { $toDouble: { $ifNull: ['$discount', 0] } } },
-                    totalDeliveryFees: { 
-                        $sum: { 
+                    totalDeliveryFees: {
+                        $sum: {
                             $cond: [
                                 { $gt: [{ $toDouble: { $ifNull: ['$deliveryFee', 0] } }, 200] },
                                 200,
                                 { $toDouble: { $ifNull: ['$deliveryFee', 0] } }
                             ]
-                        } 
+                        }
                     }
                 }
             }
@@ -252,7 +252,7 @@ const getDashboardStats = async (req, res) => {
         const totalTax = totalStatsResult[0]?.totalTax || 0;
         const totalGatewayFees = totalStatsResult[0]?.totalGatewayFees || 0;
         const totalDiscounts = totalStatsResult[0]?.totalDiscounts || 0;
-        
+
         // Calculate Net Platform Profit: Commission + (Delivery Fees - Rider Earnings) + Service Fees + Tax - Gateway Fees - Discounts
         const netPlatformProfit = totalCommission + (totalDeliveryFees - totalRiderEarnings) + totalServiceFees + totalTax - totalGatewayFees - totalDiscounts;
 
@@ -449,10 +449,12 @@ const getAllRestaurants = async (req, res) => {
         const enrichedRestaurants = await Promise.all(restaurants.map(async (restaurant) => {
             try {
                 const stats = await Order.aggregate([
-                    { $match: { 
-                        restaurant: new mongoose.Types.ObjectId(restaurant._id),
-                        status: { $in: ['Delivered', 'Completed'] }
-                    } },
+                    {
+                        $match: {
+                            restaurant: new mongoose.Types.ObjectId(restaurant._id),
+                            status: { $in: ['Delivered', 'Completed'] }
+                        }
+                    },
                     {
                         $group: {
                             _id: null,
@@ -679,7 +681,7 @@ const updateSystemSettings = async (req, res) => {
             appVersion,
             appConfig
         } = req.body;
-        
+
         let settings = await Settings.getSettings();
 
         if (commission !== undefined) settings.commission = commission;
@@ -697,7 +699,7 @@ const updateSystemSettings = async (req, res) => {
         if (deliveryFeeMax !== undefined) settings.deliveryFeeMax = deliveryFeeMax;
         if (serviceFee !== undefined) settings.serviceFee = serviceFee;
         if (googleMapsApiKey !== undefined) settings.googleMapsApiKey = googleMapsApiKey;
-        
+
         if (featureToggles) {
             settings.featureToggles = { ...settings.featureToggles, ...featureToggles };
         }
@@ -705,7 +707,7 @@ const updateSystemSettings = async (req, res) => {
         if (safepay) {
             settings.safepay = { ...settings.safepay, ...safepay };
         }
-        
+
         if (appVersion) {
             settings.appVersion = { ...settings.appVersion, ...appVersion };
         }
@@ -741,8 +743,8 @@ const syncFirebaseUsers = async (req, res) => {
 
             // Check if user exists in MongoDB for any role
             // We search for the email case-insensitively
-            let existingUser = await User.findOne({ 
-                email: { $regex: new RegExp(`^${email}$`, 'i') } 
+            let existingUser = await User.findOne({
+                email: { $regex: new RegExp(`^${email}$`, 'i') }
             });
 
             if (!existingUser) {
@@ -751,7 +753,7 @@ const syncFirebaseUsers = async (req, res) => {
                     name: fbUser.displayName || 'Firebase User',
                     email: email,
                     phone: fbUser.phoneNumber || undefined,
-                    password: '', 
+                    password: '',
                     role: 'customer',
                     firebaseUid: fbUser.uid,
                     status: 'active',
@@ -765,7 +767,7 @@ const syncFirebaseUsers = async (req, res) => {
                     existingUser.firebaseUid = fbUser.uid;
                     modified = true;
                 }
-                
+
                 // Track last login from Firebase
                 if (fbUser.metadata.lastSignInTime) {
                     const fbLastLogin = new Date(fbUser.metadata.lastSignInTime);
@@ -787,10 +789,10 @@ const syncFirebaseUsers = async (req, res) => {
         // Audit Log
         await AuditLog.create({
             event: 'SYNC_FIREBASE',
-            details: { 
-                syncedCount, 
-                updatedCount, 
-                totalFirebaseUsers: firebaseUsers.length 
+            details: {
+                syncedCount,
+                updatedCount,
+                totalFirebaseUsers: firebaseUsers.length
             }
         });
 
@@ -822,8 +824,8 @@ const verifyUsers = async (req, res) => {
 
         // 1. Check Firebase users missing in MongoDB
         for (const fbUser of firebaseUsers) {
-            const existsInMongo = mongoUsers.find(u => 
-                u.email?.toLowerCase() === fbUser.email?.toLowerCase() || 
+            const existsInMongo = mongoUsers.find(u =>
+                u.email?.toLowerCase() === fbUser.email?.toLowerCase() ||
                 u.firebaseUid === fbUser.uid
             );
 
@@ -843,8 +845,8 @@ const verifyUsers = async (req, res) => {
         // 2. Check MongoDB users missing Firebase UID (but should have one if they use social login)
         // We only care about users who are likely social users or have been synced before
         for (const mUser of mongoUsers) {
-            const existsInFirebase = firebaseUsers.find(u => 
-                u.email?.toLowerCase() === mUser.email?.toLowerCase() || 
+            const existsInFirebase = firebaseUsers.find(u =>
+                u.email?.toLowerCase() === mUser.email?.toLowerCase() ||
                 u.uid === mUser.firebaseUid
             );
 
@@ -1036,7 +1038,7 @@ const deleteRestaurant = async (req, res) => {
 
         // Delete all dishes associated with this restaurant
         await Dish.deleteMany({ restaurant: restaurant._id });
-        
+
         // Delete the restaurant
         await Restaurant.findByIdAndDelete(req.params.id);
 
@@ -1074,25 +1076,25 @@ const deleteRider = async (req, res) => {
 const cleanupMockData = async (req, res) => {
     try {
         console.log('🧹 Manual cleanup triggered by admin...');
-        
+
         // 1. Run fixInflatedOrders logic first to clean up any bad historical data
         console.log('🛠️ FIXING INFLATED ORDERS AS PART OF CLEANUP');
-        const ordersToFix = await Order.find({ 
+        const ordersToFix = await Order.find({
             $or: [
                 { riderEarning: { $gt: 200 } },
                 { deliveryFee: { $gt: 200 } }
             ]
         });
-        
+
         for (let order of ordersToFix) {
             const oldEarning = order.riderEarning;
             const newEarning = 200; // Cap it to 200
-            
+
             if (order.riderEarning > 200) {
                 order.riderEarning = newEarning;
                 order.netRiderEarning = newEarning;
                 order.grossRiderEarning = newEarning;
-                
+
                 // Recalculate admin earning for this order
                 const commissionAmount = order.commissionAmount || 0;
                 const deliveryFee = order.deliveryFee || 0;
@@ -1119,7 +1121,7 @@ const cleanupMockData = async (req, res) => {
         // 3. Run original seeder if needed (optional, but let's keep it safe)
         const seedData = require('../seederFunction');
         // await seedData(); // Commented out to avoid wiping everything, just fixing data
-        
+
         // Notify all admins to refresh their dashboards
         triggerEvent('admin', 'restaurant_updated');
         triggerEvent('admin', 'stats_updated');
@@ -1127,7 +1129,7 @@ const cleanupMockData = async (req, res) => {
             type: 'success',
             message: 'Data cleanup and inflation fix completed successfully'
         });
-        
+
         res.json({ message: 'Data cleanup and inflation fix completed successfully. All dashboards will refresh.' });
     } catch (error) {
         console.error('Cleanup failed:', error);
@@ -1145,7 +1147,7 @@ const getCODLedger = async (req, res) => {
         for (let rider of allRiders) {
             const pendingTx = await CODLedger.find({ rider: rider._id, status: 'pending' });
             const totalCod = pendingTx.reduce((sum, tx) => sum + (tx.cod_collected || 0), 0);
-            
+
             // If there's a mismatch, update the rider's cod_balance
             if (rider.cod_balance !== totalCod) {
                 rider.cod_balance = totalCod;
@@ -1198,8 +1200,8 @@ const settleRider = async (req, res) => {
         // Mark related ledger entries as paid
         await CODLedger.updateMany(
             { rider: riderId, status: 'pending' },
-            { 
-                status: 'paid', 
+            {
+                status: 'paid',
                 settlementDate: Date.now(),
                 transactionId: transactionId || 'Admin-Manual'
             }
@@ -1256,8 +1258,8 @@ const getNotificationCounts = async (req, res) => {
             Restaurant.countDocuments({ status: 'pending' }),
             Rider.countDocuments({ status: 'pending' }),
             Order.countDocuments({ orderStatus: 'placed' }),
-            User.countDocuments({ 
-                createdAt: { $gte: new Date(Date.now() - 24 * 60 * 60 * 1000) } 
+            User.countDocuments({
+                createdAt: { $gte: new Date(Date.now() - 24 * 60 * 60 * 1000) }
             })
         ]);
 
@@ -1280,7 +1282,7 @@ const getNotificationCounts = async (req, res) => {
 const nuclearWipe = async (req, res) => {
     try {
         console.log('☢️ NUCLEAR WIPE INITIATED via API');
-        
+
         const collections = mongoose.connection.collections;
         for (const key in collections) {
             await collections[key].deleteMany({});
@@ -1290,7 +1292,7 @@ const nuclearWipe = async (req, res) => {
         // Create Fresh Super Admin
         const email = 'superadmin@foodswipe.com';
         const password = 'password123';
-        
+
         await User.create({
             name: 'Super Admin',
             email,
@@ -1321,26 +1323,26 @@ const nuclearWipe = async (req, res) => {
 const fixInflatedOrders = async (req, res) => {
     try {
         console.log('🛠️ FIX INFLATED ORDERS INITIATED');
-        
+
         // 1. Fix Orders (Cap riderEarning and deliveryFee at 200)
-        const orders = await Order.find({ 
+        const orders = await Order.find({
             $or: [
                 { riderEarning: { $gt: 200 } },
                 { deliveryFee: { $gt: 200 } }
             ]
         });
-        
+
         console.log(`Found ${orders.length} inflated orders`);
         let fixedOrdersCount = 0;
         for (let order of orders) {
             const oldEarning = order.riderEarning;
             const newEarning = 200;
-            
+
             if (order.riderEarning > 200) {
                 order.riderEarning = newEarning;
                 order.netRiderEarning = newEarning;
                 order.grossRiderEarning = newEarning;
-                
+
                 // Recalculate admin earning for this order
                 const commissionAmount = order.commissionAmount || 0;
                 const deliveryFee = order.deliveryFee || 0;
@@ -1369,7 +1371,7 @@ const fixInflatedOrders = async (req, res) => {
             });
 
             const correctTotalEarnings = riderOrders.reduce((sum, o) => sum + (o.riderEarning || 0), 0);
-            
+
             // Fix Wallet
             wallet.totalEarnings = correctTotalEarnings;
             wallet.availableWithdraw = correctTotalEarnings; // Resetting to total for simplicity in cleanup
@@ -1382,26 +1384,60 @@ const fixInflatedOrders = async (req, res) => {
                 rider.earnings_balance = correctTotalEarnings;
                 if (!rider.earnings) rider.earnings = {};
                 rider.earnings.total = correctTotalEarnings;
-                
+
                 // Recalculate COD balance from ledger
                 const pendingLedger = await CODLedger.find({ rider: riderId, status: 'pending' });
                 const correctCodBalance = pendingLedger.reduce((sum, tx) => sum + (tx.cod_collected || 0), 0);
                 rider.cod_balance = correctCodBalance;
-                
+
                 await rider.save();
             }
             fixedWalletsCount++;
         }
 
-        res.json({ 
-            message: 'Fix complete', 
-            foundOrders: orders.length, 
+        res.json({
+            message: 'Fix complete',
+            foundOrders: orders.length,
             fixedOrders: fixedOrdersCount,
             fixedWallets: fixedWalletsCount
         });
     } catch (err) {
         console.error('Fix error:', err);
         res.status(500).json({ error: err.message });
+    }
+};
+
+/**
+ * @desc    Get all active admin notifications
+ * @route   GET /api/admin/notifications
+ */
+const getAdminNotifications = async (req, res) => {
+    try {
+        const Notification = require('../models/Notification');
+
+        // Find notifications where recipient is the current admin or generic admin notifications
+        // In our system, recipient is specifically set in adminNotifier.js
+        const notifications = await Notification.find({ recipient: req.user._id })
+            .sort({ createdAt: -1 })
+            .limit(50);
+
+        res.json(notifications);
+    } catch (error) {
+        res.status(500).json({ message: 'Error fetching notifications', error: error.message });
+    }
+};
+
+/**
+ * @desc    Mark a notification as read
+ * @route   PUT /api/admin/notifications/:id/read
+ */
+const markNotificationRead = async (req, res) => {
+    try {
+        const Notification = require('../models/Notification');
+        await Notification.findByIdAndUpdate(req.params.id, { read: true });
+        res.json({ message: 'Notification marked as read' });
+    } catch (error) {
+        res.status(500).json({ message: 'Error updating notification', error: error.message });
     }
 };
 
@@ -1432,6 +1468,8 @@ module.exports = {
     settleRider,
     blockRider,
     getNotificationCounts,
+    getAdminNotifications,
+    markNotificationRead,
     nuclearWipe,
     fixInflatedOrders
 };

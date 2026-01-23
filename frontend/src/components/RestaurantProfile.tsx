@@ -629,7 +629,7 @@ export default function RestaurantProfile({ restaurant: initialRestaurant, onBac
                                 {deals.length > 0 && (
                                     <div>
                                         <h3 className="text-sm font-bold text-gray-700 mb-2 flex items-center gap-2">
-                                            ðŸ·ï¸ Active Deals
+                                            🏷️ Active Deals
                                         </h3>
                                         <div className="grid grid-cols-1 gap-2">
                                             {deals.map((deal) => (

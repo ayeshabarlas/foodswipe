@@ -13,7 +13,7 @@ const { triggerEvent } = require('../socket');
 const notifyAdmins = async (subject, message, type = 'general_notification', data = {}) => {
     try {
         console.log(`🔔 Admin Notification: ${subject}`);
-        
+
         // 1. Socket.io Notification (for real-time dashboard badges)
         triggerEvent('admin', 'notification_received', {
             type,
@@ -26,17 +26,17 @@ const notifyAdmins = async (subject, message, type = 'general_notification', dat
         // 2. Email Notification
         // Fetch from both Admin and User collections
         const [adminsFromAdminColl, adminsFromUserColl] = await Promise.all([
-            Admin.find({ 
+            Admin.find({
                 $or: [
                     { role: 'super-admin' },
                     { role: 'admin' }
                 ]
             }),
-            User.find({ 
+            User.find({
                 role: { $in: ['admin', 'super-admin'] }
             })
         ]);
-        
+
         const adminEmails = [
             ...adminsFromAdminColl.map(a => a.email),
             ...adminsFromUserColl.map(u => u.email)
@@ -44,6 +44,29 @@ const notifyAdmins = async (subject, message, type = 'general_notification', dat
 
         // Remove duplicates and add the support email
         const uniqueEmails = [...new Set([...adminEmails, 'app.foodswipehelp@gmail.com'])];
+
+        // 3. Persist Notifications in Database (non-blocking)
+        const Notification = require('../models/Notification');
+        const createNotifications = async () => {
+            try {
+                const notifications = adminsFromUserColl.map(admin => ({
+                    recipient: admin._id,
+                    type: type.includes('order') ? 'order' : 'alert',
+                    title: subject,
+                    message: message,
+                    data: data
+                }));
+
+                // Also include admins from Admin collection if they have a linked User ID
+                // (Usually super-admins are in User collection too, but let's be safe)
+                if (notifications.length > 0) {
+                    await Notification.insertMany(notifications);
+                }
+            } catch (err) {
+                console.error('❌ Error persisting admin notifications:', err);
+            }
+        };
+        createNotifications();
 
         if (uniqueEmails.length > 0) {
             await sendEmail({

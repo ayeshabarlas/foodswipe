@@ -62,17 +62,17 @@ const registerUser = async (req, res) => {
     if (!name || !email) {
         return res.status(400).json({ message: 'Name and email are required' });
     }
-    
+
     const normalizedEmail = email.trim().toLowerCase();
     const normalizedRole = role || 'customer';
 
     try {
         // 1. Check if user already exists for this email and role
-        const emailExists = await User.findOne({ 
-            email: { $regex: new RegExp(`^${normalizedEmail}$`, 'i') }, 
-            role: normalizedRole 
+        const emailExists = await User.findOne({
+            email: { $regex: new RegExp(`^${normalizedEmail}$`, 'i') },
+            role: normalizedRole
         });
-        
+
         if (emailExists) {
             console.log(`Registration failed: User exists for role ${normalizedRole}`, { email: normalizedEmail });
             return res.status(400).json({ message: 'User with given email already exists for this role' });
@@ -87,17 +87,17 @@ const registerUser = async (req, res) => {
         }
 
         // 3. Create the User
-        const user = await User.create({ 
-            name, 
-            email: normalizedEmail, 
-            password: password || '', 
-            phone: phone ? phone.trim() : null, 
+        const user = await User.create({
+            name,
+            email: normalizedEmail,
+            password: password || '',
+            phone: phone ? phone.trim() : null,
             phoneNumber: phone ? phone.trim() : null,
-            role: normalizedRole 
+            role: normalizedRole
         });
-        
+
         console.log(`User registered: id=${user._id}, email=${user.email}, role=${user.role}`);
-        
+
         // Notify Admins (non-blocking)
         notifyAdmins(
             'New User Registration',
@@ -105,7 +105,7 @@ const registerUser = async (req, res) => {
             'new_user',
             { userId: user._id, email: user.email, role: user.role }
         ).catch(err => console.error('[Auth] Background notification error:', err));
-        
+
         // 4. Create Role-Specific Profile
         if (normalizedRole === 'rider') {
             const Rider = require('../models/Rider');
@@ -145,14 +145,14 @@ const registerUser = async (req, res) => {
             details: { method: 'email/password' }
         });
 
-        return res.status(201).json({ 
-            _id: user._id, 
-            name: user.name, 
-            email: user.email, 
-            phone: user.phone, 
-            phoneVerified: user.phoneVerified, 
-            role: user.role, 
-            token: generateToken(user._id) 
+        return res.status(201).json({
+            _id: user._id,
+            name: user.name,
+            email: user.email,
+            phone: user.phone,
+            phoneVerified: user.phoneVerified,
+            role: user.role,
+            token: generateToken(user._id)
         });
     } catch (err) {
         console.error('Registration error:', err);
@@ -166,7 +166,7 @@ const registerUser = async (req, res) => {
  * @access  Public
  */
 const loginUser = async (req, res) => {
-    const { identifier, password, role } = req.body; 
+    const { identifier, password, role } = req.body;
     if (!identifier) {
         return res.status(400).json({ message: 'Identifier (email or phone) is required' });
     }
@@ -184,7 +184,7 @@ const loginUser = async (req, res) => {
                 { phoneNumber: identifier.trim() }
             ]
         };
-        
+
         // If role is provided, we must match it because a single email can have multiple accounts with different roles
         if (role && role !== 'admin' && role !== 'super-admin') {
             query.role = role;
@@ -194,7 +194,7 @@ const loginUser = async (req, res) => {
 
         if (!user) {
             console.log(`Login failed: User NOT found for "${identifierLower}" with role "${role}"`);
-            
+
             // Check if user exists with ANY role to give a better error message
             const existingAnyRole = await User.findOne({
                 $or: [
@@ -202,13 +202,13 @@ const loginUser = async (req, res) => {
                     { phone: identifier.trim() }
                 ]
             });
-            
+
             if (existingAnyRole) {
-                return res.status(401).json({ 
-                    message: `Account found as "${existingAnyRole.role}", but you are trying to login as "${role}". Please select the correct role.` 
+                return res.status(401).json({
+                    message: `Account found as "${existingAnyRole.role}", but you are trying to login as "${role}". Please select the correct role.`
                 });
             }
-            
+
             return res.status(401).json({ message: 'Invalid credentials' });
         }
 
@@ -225,7 +225,7 @@ const loginUser = async (req, res) => {
         // 3. Status Check
         if (user.status === 'suspended') {
             console.log(`Login failed: Account ${user.email} is suspended`);
-            return res.status(403).json({ 
+            return res.status(403).json({
                 message: 'Your account has been suspended. Please contact support.',
                 status: 'suspended'
             });
@@ -271,15 +271,15 @@ const loginUser = async (req, res) => {
         // Ensure role-specific profile exists (AUTO-REPAIR)
         await ensureRoleProfile(user);
 
-        return res.json({ 
-            _id: user._id, 
-            name: user.name, 
-            email: user.email, 
-            phone: user.phone, 
-            phoneVerified: user.phoneVerified, 
-            phoneNumber: user.phoneNumber, 
+        return res.json({
+            _id: user._id,
+            name: user.name,
+            email: user.email,
+            phone: user.phone,
+            phoneVerified: user.phoneVerified,
+            phoneNumber: user.phoneNumber,
             role: user.role,
-            token: generateToken(user._id) 
+            token: generateToken(user._id)
         });
     } catch (err) {
         console.error('Login error:', err);
@@ -299,13 +299,13 @@ const getMe = async (req, res) => {
             console.log(`getMe: No user found in request (middleware failed?)`);
             return res.status(401).json({ message: 'Not authorized' });
         }
-        
+
         // Return fresh data from DB just in case
         const user = await User.findById(req.user._id);
         if (!user) {
             return res.status(404).json({ message: 'User not found' });
         }
-        
+
         return res.status(200).json(user);
     } catch (err) {
         return res.status(500).json({ message: err.message });
@@ -319,7 +319,7 @@ const getMe = async (req, res) => {
  */
 const checkPhoneExists = async (req, res) => {
     const { phoneNumber } = req.body;
-    
+
     if (!phoneNumber) {
         return res.status(400).json({ message: 'Phone number is required' });
     }
@@ -327,7 +327,7 @@ const checkPhoneExists = async (req, res) => {
     try {
         // Clean the phone number to match how it's stored
         const cleanedPhone = phoneNumber.replace(/\D/g, '');
-        
+
         // Check both 'phone' and 'phoneNumber' fields across ALL roles
         const existingUser = await User.findOne({
             $or: [
@@ -339,15 +339,15 @@ const checkPhoneExists = async (req, res) => {
         });
 
         if (existingUser) {
-            return res.status(200).json({ 
-                exists: true, 
-                message: 'This number is already linked' 
+            return res.status(200).json({
+                exists: true,
+                message: 'This number is already linked'
             });
         }
 
-        return res.status(200).json({ 
-            exists: false, 
-            message: 'Number is available' 
+        return res.status(200).json({
+            exists: false,
+            message: 'Number is available'
         });
     } catch (err) {
         console.error('Check phone error:', err);
@@ -407,8 +407,8 @@ const verifyOtp = async (req, res) => {
             });
 
             if (existsAnywhere) {
-                return res.status(400).json({ 
-                    message: `Account not found for this role. Please ensure you've selected the correct role or sign up.` 
+                return res.status(400).json({
+                    message: `Account not found for this role. Please ensure you've selected the correct role or sign up.`
                 });
             }
 
@@ -423,7 +423,7 @@ const verifyOtp = async (req, res) => {
             user = await User.create({ name, email, phone, password: password || '', role: requestedRole });
             console.log(`User created via OTP: id=${user._id}, role=${user.role}`);
             type = 'signup';
-            
+
             // Trigger real-time event for admin dashboard
             triggerEvent('admin', 'user_registered', {
                 _id: user._id,
@@ -438,6 +438,14 @@ const verifyOtp = async (req, res) => {
                 message: `New ${user.role} registered: ${user.name}`
             });
 
+            // Notify Admins via Email & Persistence
+            notifyAdmins(
+                'New User Registration (OTP)',
+                `A new user "${user.name}" (${user.role}) has registered via phone/OTP.`,
+                'new_user',
+                { userId: user._id, email: user.email, role: user.role, method: 'otp' }
+            ).catch(err => console.error('[Auth] Admin notification error (OTP):', err));
+
             // Audit Log
             await AuditLog.create({
                 event: 'SIGNUP',
@@ -448,11 +456,11 @@ const verifyOtp = async (req, res) => {
             });
         } else {
             console.log(`User logged in via OTP: id=${user._id}, role=${user.role}`);
-            
+
             // Update last login
             user.lastLogin = new Date();
             await user.save();
-            
+
             // Trigger real-time event for admin dashboard
             triggerEvent('admin', 'user_logged_in', {
                 _id: user._id,
@@ -522,8 +530,8 @@ const verifyPhone = async (req, res) => {
         });
 
         if (existingUser) {
-            return res.status(400).json({ 
-                message: 'This phone number is already linked to another account. Please use a different number.' 
+            return res.status(400).json({
+                message: 'This phone number is already linked to another account. Please use a different number.'
             });
         }
 
@@ -558,11 +566,11 @@ const verifyPhone = async (req, res) => {
 const verifyFirebaseToken = async (req, res) => {
     const { idToken, name, email, phone } = req.body;
     console.log('verifyFirebaseToken called with:', { name, email, phone, idToken: idToken ? 'present' : 'missing' });
-    
+
     if (!idToken) {
         return res.status(400).json({ message: 'idToken is required' });
     }
-    
+
     try {
         let decoded;
         try {
@@ -570,17 +578,17 @@ const verifyFirebaseToken = async (req, res) => {
             decoded = await admin.auth().verifyIdToken(idToken, true);
         } catch (verifyError) {
             console.error('Firebase verifyIdToken error:', verifyError.message);
-            
+
             // Check if Firebase was actually initialized with credentials
             const firebaseConfigured = !!process.env.FIREBASE_SERVICE_ACCOUNT_JSON;
             if (!firebaseConfigured) {
-                return res.status(500).json({ 
-                    message: 'Backend Configuration Error', 
+                return res.status(500).json({
+                    message: 'Backend Configuration Error',
                     error: 'Firebase service account is not configured on this server. Please check environment variables.',
                     code: 'auth/config-missing'
                 });
             }
-            
+
             // Detailed error messages for common issues
             if (verifyError.code === 'auth/id-token-expired') {
                 return res.status(401).json({ message: 'Firebase token expired. Please try signing in again.' });
@@ -591,14 +599,14 @@ const verifyFirebaseToken = async (req, res) => {
             if (verifyError.code === 'auth/argument-error') {
                 return res.status(401).json({ message: 'Invalid token format.' });
             }
-            
-            return res.status(401).json({ 
-                message: `Firebase Error: ${verifyError.message}`, 
+
+            return res.status(401).json({
+                message: `Firebase Error: ${verifyError.message}`,
                 error: verifyError.message,
-                code: verifyError.code 
+                code: verifyError.code
             });
         }
-        
+
         console.log('Token decoded successfully for:', decoded.email);
         const verifiedPhone = decoded.phone_number || phone;
         const requestedRole = req.body.role || 'customer';
@@ -609,17 +617,17 @@ const verifyFirebaseToken = async (req, res) => {
         const emailRegex = new RegExp(`^${decoded.email}$`, 'i');
         let user = await User.findOne({ email: emailRegex, role: requestedRole });
         console.log(`User found by email/role (${requestedRole}): ${!!user}`);
-        
+
         if (!user) {
             // Check if they have ANY account with this email
             const existingAnyRole = await User.findOne({ email: emailRegex });
             if (existingAnyRole) {
                 console.log(`User exists with different role: ${existingAnyRole.role}. Checking for profiles...`);
-                
+
                 // If they have a restaurant profile, and requested 'restaurant', use that account!
                 if (requestedRole === 'restaurant') {
                     const Restaurant = require('../models/Restaurant');
-                    const rest = await Restaurant.findOne({ 
+                    const rest = await Restaurant.findOne({
                         $or: [{ owner: existingAnyRole._id }, { contact: existingAnyRole.phone }]
                     });
                     if (rest) {
@@ -627,11 +635,11 @@ const verifyFirebaseToken = async (req, res) => {
                         user = existingAnyRole;
                     }
                 }
-                
+
                 // If they have a rider profile, and requested 'rider', use that account!
                 if (!user && requestedRole === 'rider') {
                     const Rider = require('../models/Rider');
-                    const rider = await Rider.findOne({ 
+                    const rider = await Rider.findOne({
                         $or: [{ user: existingAnyRole._id }, { phone: existingAnyRole.phone }]
                     });
                     if (rider) {
@@ -655,12 +663,12 @@ const verifyFirebaseToken = async (req, res) => {
             console.log(`Creating new user for ${decoded.email} with role ${requestedRole}`);
             // RELAXED ROLE CHECK: If user exists with another role, we still allow creating a new account for the requested role
             // This allows one email to have multiple roles (Customer, Rider, etc.)
-            
+
             if (!name && !decoded.name) {
                 // If we don't have a name from the request or the token, use a fallback
                 // but usually decoded.name is present in Google tokens
             }
-            
+
             user = await User.create({
                 name: name || decoded.name || 'Google User',
                 email: decoded.email,
@@ -686,6 +694,14 @@ const verifyFirebaseToken = async (req, res) => {
                 message: `New ${user.role} registered: ${user.name}`
             });
 
+            // Notify Admins via Email & Persistence
+            notifyAdmins(
+                'New User Registration (Google)',
+                `A new user "${user.name}" (${user.role}) has registered via Google Sign-In.`,
+                'new_user',
+                { userId: user._id, email: user.email, role: user.role, method: 'google' }
+            ).catch(err => console.error('[Auth] Admin notification error (Google):', err));
+
             // Audit Log
             await AuditLog.create({
                 event: 'SIGNUP',
@@ -696,7 +712,7 @@ const verifyFirebaseToken = async (req, res) => {
             });
         } else {
             console.log(`Existing user found: ${user._id}, checking password...`);
-            
+
             // Update last login (already handled later but triggering event here)
             // Trigger real-time event for admin dashboard
             triggerEvent('admin', 'user_logged_in', {
@@ -722,7 +738,7 @@ const verifyFirebaseToken = async (req, res) => {
                     message: 'This account was created with email/password. Please log in with your email and password instead of Google Sign-In.'
                 });
             }
-            
+
             // Link firebaseUid if not already linked
             if (!user.firebaseUid) {
                 console.log(`Linking existing user ${user.email} with Firebase UID ${decoded.uid}`);
@@ -731,7 +747,7 @@ const verifyFirebaseToken = async (req, res) => {
         }
         // 5. Success - send response
         console.log(`[VerifyToken] User ${user.email} verified successfully. Role: ${user.role}`);
-        
+
         // Update last login timestamp
         user.lastLogin = new Date();
         await user.save();
@@ -742,10 +758,10 @@ const verifyFirebaseToken = async (req, res) => {
         return res.json({ verified: true, type, token: generateToken(user._id), user: { _id: user._id, name: user.name, email: user.email, phone: user.phone, phoneVerified: user.phoneVerified, role: user.role } });
     } catch (err) {
         console.error('Firebase verification CRITICAL error:', err);
-        return res.status(401).json({ 
-            message: `Google Login Error: ${err.message}`, 
+        return res.status(401).json({
+            message: `Google Login Error: ${err.message}`,
             error: err.message,
-            stack: process.env.NODE_ENV === 'development' ? err.stack : undefined 
+            stack: process.env.NODE_ENV === 'development' ? err.stack : undefined
         });
     }
 };
@@ -761,7 +777,7 @@ const updateProfile = async (req, res) => {
         if (user) {
             user.name = req.body.name || user.name;
             user.email = req.body.email || user.email;
-            
+
             // If phone is changed, reset verification status
             if (req.body.phone && req.body.phone !== user.phone) {
                 user.phone = req.body.phone;
@@ -772,7 +788,7 @@ const updateProfile = async (req, res) => {
             } else {
                 user.phone = req.body.phone || user.phone;
             }
-            
+
             user.address = req.body.address || user.address;
             user.houseNumber = req.body.houseNumber || user.houseNumber;
             user.avatar = req.body.avatar || user.avatar;
@@ -801,6 +817,7 @@ const updateProfile = async (req, res) => {
     }
 };
 
-module.exports = { registerUser, loginUser, getMe, sendOtp, verifyOtp, verifyPhone, verifyFirebaseToken, updateProfile,
+module.exports = {
+    registerUser, loginUser, getMe, sendOtp, verifyOtp, verifyPhone, verifyFirebaseToken, updateProfile,
     checkPhoneExists
 };

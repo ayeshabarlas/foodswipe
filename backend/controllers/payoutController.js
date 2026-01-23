@@ -29,7 +29,7 @@ const getCurrentWeekRange = () => {
 // Helper function to calculate totals
 const calculateTotals = async (restaurantId, start, end) => {
     const restaurant = await Restaurant.findById(restaurantId);
-    
+
     const orders = await Order.find({
         restaurant: restaurantId,
         status: { $in: ['Delivered', 'Completed'] },
@@ -43,7 +43,7 @@ const calculateTotals = async (restaurantId, start, end) => {
     orders.forEach(order => {
         // Use stored finance split if available, otherwise fallback to default calculation
         const subtotal = order.subtotal || order.totalPrice || 0;
-        
+
         // Fallback calculation if detailed fields are missing
         const fallbackCommRate = (restaurant && restaurant.businessType === 'home-chef') ? 10 : 15;
         const commAmt = order.commissionAmount !== undefined ? order.commissionAmount : (subtotal * (order.commissionPercent || fallbackCommRate) / 100);
@@ -182,10 +182,19 @@ const uploadPaymentProof = async (req, res) => {
         await payout.save();
 
         // Emit socket event for admin real-time update
-        triggerEvent('admin', 'stats_updated', { 
+        triggerEvent('admin', 'stats_updated', {
             type: 'payment_proof_uploaded',
-            payoutId: payout._id 
+            payoutId: payout._id
         });
+
+        // Notify Admins via Email & Persistence
+        const { notifyAdmins } = require('../utils/adminNotifier');
+        notifyAdmins(
+            'Payment Proof Uploaded',
+            `A restaurant "${payout.entityId}" has uploaded payment proof for their payout.`,
+            'payment_proof',
+            { payoutId: payout._id, entityId: payout.entityId, type: payout.type }
+        ).catch(err => console.error('[Payout] Admin notification error:', err));
 
         // Emit back to restaurant to confirm update
         triggerEvent(`restaurant_${payout.restaurant}`, 'payment_status_updated', {
