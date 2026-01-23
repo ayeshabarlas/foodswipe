@@ -748,7 +748,31 @@ const processOrderCompletion = async (order, distanceKm, req = null) => {
 const getRestaurantOrders = async (req, res) => {
     try {
         // Find restaurant owned by this user
-        const restaurant = await Restaurant.findOne({ owner: req.user._id });
+        let restaurant = await Restaurant.findOne({ owner: req.user._id });
+
+        if (!restaurant) {
+            console.log(`[Orders] No restaurant linked to ID ${req.user._id}. Searching by contact info...`);
+            
+            // SMART LINKING
+            const userEmail = req.user.email?.toLowerCase();
+            const userPhone = req.user.phone || req.user.phoneNumber;
+            const normalizedUserPhone = userPhone ? userPhone.replace(/[\s\-\+\(\)]/g, '').slice(-10) : null;
+
+            if (normalizedUserPhone) {
+                restaurant = await Restaurant.findOne({ contact: new RegExp(normalizedUserPhone + '$') });
+            }
+
+            if (!restaurant && userEmail) {
+                const allRests = await Restaurant.find({}).populate('owner');
+                restaurant = allRests.find(r => r.owner?.email?.toLowerCase() === userEmail);
+            }
+
+            if (restaurant) {
+                console.log(`[SmartLinking] Re-linking restaurant ${restaurant._id} to user ${req.user._id} for orders`);
+                restaurant.owner = req.user._id;
+                await restaurant.save();
+            }
+        }
 
         if (!restaurant) {
             return res.status(404).json({ message: 'Restaurant not found' });

@@ -171,20 +171,37 @@ const VideoCard = React.memo(({
     const handleShare = async (e: React.MouseEvent) => {
         e.stopPropagation();
         try {
+            // Track share in backend
             await axios.post(`${getApiUrl()}/api/videos/${dish._id}/share`);
             setSharesCount(prev => prev + 1);
 
+            const shareUrl = `${window.location.origin}/dish/${dish._id}`;
+            const shareTitle = `Check out ${dish.name} on FoodSwipe!`;
+            const shareText = `Look at this delicious ${dish.name} from ${dish.restaurant.name}. Order now!`;
+
             if (navigator.share) {
-                navigator.share({
-                    title: dish.name,
-                    text: `Check out ${dish.name} from ${dish.restaurant.name}!`,
-                    url: window.location.href
+                await navigator.share({
+                    title: shareTitle,
+                    text: shareText,
+                    url: shareUrl
                 });
             } else {
-                alert('Link copied to clipboard!');
+                // Fallback to clipboard
+                await navigator.clipboard.writeText(shareUrl);
+                toast.success('Link copied to clipboard!', {
+                    icon: '🔗',
+                    style: {
+                        borderRadius: '10px',
+                        background: '#333',
+                        color: '#fff',
+                    },
+                });
             }
-        } catch (error) {
-            console.error('Share failed:', error);
+        } catch (error: any) {
+            if (error.name !== 'AbortError') {
+                console.error('Share failed:', error);
+                toast.error('Could not share. Please try again.');
+            }
         }
     };
 

@@ -13,7 +13,7 @@ export default function SettingsView() {
         taxRate: 8,
         isTaxEnabled: true,
         supportEmail: 'app.foodswipehelp@gmail.com',
-        supportPhone: '+920000000000',
+        supportPhone: '+923295599855',
         announcement: '',
         deliveryFeeBase: 40,
         deliveryFeePerKm: 20,
@@ -21,7 +21,6 @@ export default function SettingsView() {
         minimumOrderAmount: 0,
         serviceFee: 0,
         googleMapsApiKey: '',
-        announcement: '',
         isMaintenanceMode: false,
         featureToggles: {
             isOrderingEnabled: true,
@@ -91,12 +90,12 @@ export default function SettingsView() {
                 settings,
                 { headers: { Authorization: `Bearer ${userInfo.token}` } }
             );
-            
+
             // Sync with local state to ensure UI is fresh
             if (response.data.settings) {
                 setSettings(response.data.settings);
             }
-            
+
             toast.success('Settings updated successfully', { id: toastId });
         } catch (error: any) {
             toast.error(error.response?.data?.message || 'Failed to update settings', { id: toastId });
@@ -150,7 +149,7 @@ export default function SettingsView() {
                                     <input
                                         type="number"
                                         value={settings.commission}
-                                        onChange={(e) => setSettings({...settings, commission: Number(e.target.value)})}
+                                        onChange={(e) => setSettings({ ...settings, commission: Number(e.target.value) })}
                                         className="w-full pl-8 pr-3 py-2.5 bg-gray-50 border border-gray-100 rounded-xl outline-none focus:border-orange-500 transition-all font-medium text-sm text-gray-700"
                                     />
                                 </div>
@@ -162,7 +161,7 @@ export default function SettingsView() {
                                     <input
                                         type="number"
                                         value={settings.commissionRate}
-                                        onChange={(e) => setSettings({...settings, commissionRate: Number(e.target.value)})}
+                                        onChange={(e) => setSettings({ ...settings, commissionRate: Number(e.target.value) })}
                                         className="w-full pl-8 pr-3 py-2.5 bg-gray-50 border border-gray-100 rounded-xl outline-none focus:border-orange-500 transition-all font-medium text-sm text-gray-700"
                                     />
                                 </div>
@@ -176,7 +175,7 @@ export default function SettingsView() {
                                     <input
                                         type="number"
                                         value={settings.deliveryFeeBase}
-                                        onChange={(e) => setSettings({...settings, deliveryFeeBase: Number(e.target.value)})}
+                                        onChange={(e) => setSettings({ ...settings, deliveryFeeBase: Number(e.target.value) })}
                                         className="w-full pl-8 pr-3 py-2.5 bg-gray-50 border border-gray-100 rounded-xl outline-none focus:border-orange-500 transition-all font-medium text-sm text-gray-700"
                                     />
                                 </div>
@@ -188,7 +187,7 @@ export default function SettingsView() {
                                     <input
                                         type="number"
                                         value={settings.deliveryFeePerKm}
-                                        onChange={(e) => setSettings({...settings, deliveryFeePerKm: Number(e.target.value)})}
+                                        onChange={(e) => setSettings({ ...settings, deliveryFeePerKm: Number(e.target.value) })}
                                         className="w-full pl-8 pr-3 py-2.5 bg-gray-50 border border-gray-100 rounded-xl outline-none focus:border-orange-500 transition-all font-medium text-sm text-gray-700"
                                     />
                                 </div>
@@ -202,7 +201,7 @@ export default function SettingsView() {
                                     <input
                                         type="number"
                                         value={settings.deliveryFeeMax}
-                                        onChange={(e) => setSettings({...settings, deliveryFeeMax: Number(e.target.value)})}
+                                        onChange={(e) => setSettings({ ...settings, deliveryFeeMax: Number(e.target.value) })}
                                         className="w-full pl-8 pr-3 py-2.5 bg-gray-50 border border-gray-100 rounded-xl outline-none focus:border-orange-500 transition-all font-medium text-sm text-gray-700"
                                     />
                                 </div>
@@ -214,7 +213,7 @@ export default function SettingsView() {
                                     <input
                                         type="number"
                                         value={settings.serviceFee}
-                                        onChange={(e) => setSettings({...settings, serviceFee: Number(e.target.value)})}
+                                        onChange={(e) => setSettings({ ...settings, serviceFee: Number(e.target.value) })}
                                         className="w-full pl-8 pr-3 py-2.5 bg-gray-50 border border-gray-100 rounded-xl outline-none focus:border-orange-500 transition-all font-medium text-sm text-gray-700"
                                     />
                                 </div>
@@ -227,7 +226,7 @@ export default function SettingsView() {
                                 <input
                                     type="number"
                                     value={settings.minimumOrderAmount}
-                                    onChange={(e) => setSettings({...settings, minimumOrderAmount: Number(e.target.value)})}
+                                    onChange={(e) => setSettings({ ...settings, minimumOrderAmount: Number(e.target.value) })}
                                     className="w-full pl-8 pr-3 py-2.5 bg-gray-50 border border-gray-100 rounded-xl outline-none focus:border-orange-500 transition-all font-medium text-sm text-gray-700"
                                 />
                             </div>
@@ -245,14 +244,14 @@ export default function SettingsView() {
                                         <p className="text-[10px] text-purple-700">Enable/Disable and set tax percentage</p>
                                     </div>
                                 </div>
-                                <div 
+                                <div
                                     className={`w-10 h-5 rounded-full p-0.5 transition-all duration-300 cursor-pointer ${settings.isTaxEnabled ? 'bg-purple-600' : 'bg-gray-300'}`}
-                                    onClick={() => setSettings({...settings, isTaxEnabled: !settings.isTaxEnabled})}
+                                    onClick={() => setSettings({ ...settings, isTaxEnabled: !settings.isTaxEnabled })}
                                 >
                                     <div className={`w-4 h-4 bg-white rounded-full transition-all duration-300 transform ${settings.isTaxEnabled ? 'translate-x-5' : 'translate-x-0'}`}></div>
                                 </div>
                             </div>
-                            
+
                             {settings.isTaxEnabled && (
                                 <div className="space-y-1 pt-2 border-t border-purple-100">
                                     <label className="text-[10px] font-bold text-purple-700 uppercase ml-1">Tax Percentage (%)</label>
@@ -261,7 +260,7 @@ export default function SettingsView() {
                                         <input
                                             type="number"
                                             value={settings.taxRate}
-                                            onChange={(e) => setSettings({...settings, taxRate: Number(e.target.value)})}
+                                            onChange={(e) => setSettings({ ...settings, taxRate: Number(e.target.value) })}
                                             className="w-full pl-8 pr-3 py-2 bg-white border border-purple-100 rounded-lg outline-none focus:border-purple-500 transition-all font-medium text-sm text-purple-900"
                                         />
                                     </div>
@@ -303,7 +302,7 @@ export default function SettingsView() {
                                 <input
                                     type="email"
                                     value={settings.supportEmail}
-                                    onChange={(e) => setSettings({...settings, supportEmail: e.target.value})}
+                                    onChange={(e) => setSettings({ ...settings, supportEmail: e.target.value })}
                                     className="w-full pl-8 pr-3 py-2.5 bg-gray-50 border border-gray-100 rounded-xl outline-none focus:border-orange-500 transition-all font-medium text-sm text-gray-700"
                                 />
                             </div>
@@ -315,7 +314,7 @@ export default function SettingsView() {
                                 <input
                                     type="text"
                                     value={settings.supportPhone}
-                                    onChange={(e) => setSettings({...settings, supportPhone: e.target.value})}
+                                    onChange={(e) => setSettings({ ...settings, supportPhone: e.target.value })}
                                     className="w-full pl-8 pr-3 py-2.5 bg-gray-50 border border-gray-100 rounded-xl outline-none focus:border-orange-500 transition-all font-medium text-sm text-gray-700"
                                 />
                             </div>
@@ -327,7 +326,7 @@ export default function SettingsView() {
                                 <input
                                     type="text"
                                     value={settings.announcement}
-                                    onChange={(e) => setSettings({...settings, announcement: e.target.value})}
+                                    onChange={(e) => setSettings({ ...settings, announcement: e.target.value })}
                                     className="w-full pl-8 pr-3 py-2.5 bg-gray-50 border border-gray-100 rounded-xl outline-none focus:border-orange-500 transition-all font-medium text-sm text-gray-700"
                                     placeholder="Enter app-wide announcement"
                                 />
@@ -346,12 +345,12 @@ export default function SettingsView() {
                                         <p className="text-[10px] text-orange-700">Enable/Disable app-wide announcement</p>
                                     </div>
                                 </div>
-                                <div 
+                                <div
                                     className={`w-10 h-5 rounded-full p-0.5 transition-all duration-300 cursor-pointer ${settings.featureToggles.enableNotifications ? 'bg-orange-600' : 'bg-gray-300'}`}
                                     onClick={() => setSettings({
-                                        ...settings, 
+                                        ...settings,
                                         featureToggles: {
-                                            ...settings.featureToggles, 
+                                            ...settings.featureToggles,
                                             enableNotifications: !settings.featureToggles.enableNotifications
                                         }
                                     })}
@@ -364,7 +363,7 @@ export default function SettingsView() {
                                     <label className="text-[10px] font-bold text-orange-700 uppercase ml-1">Announcement Message</label>
                                     <textarea
                                         value={settings.announcement}
-                                        onChange={(e) => setSettings({...settings, announcement: e.target.value})}
+                                        onChange={(e) => setSettings({ ...settings, announcement: e.target.value })}
                                         className="w-full p-3 bg-white border border-orange-100 rounded-xl outline-none focus:border-orange-500 transition-all font-medium text-sm text-orange-900 h-20 resize-none"
                                         placeholder="Enter message for customers..."
                                     />
@@ -390,7 +389,7 @@ export default function SettingsView() {
                                     <input
                                         type="password"
                                         value={settings.googleMapsApiKey}
-                                        onChange={(e) => setSettings({...settings, googleMapsApiKey: e.target.value})}
+                                        onChange={(e) => setSettings({ ...settings, googleMapsApiKey: e.target.value })}
                                         className="w-full pl-8 pr-3 py-2 bg-white border border-blue-100 rounded-lg outline-none focus:border-blue-500 transition-all font-medium text-sm text-blue-900"
                                         placeholder="AIzaSy..."
                                     />
@@ -417,7 +416,7 @@ export default function SettingsView() {
                                     <p className="text-[10px] text-orange-700">Shuts down app for everyone except admins</p>
                                 </div>
                             </div>
-                            <div className={`w-10 h-5 rounded-full p-0.5 transition-all duration-300 cursor-pointer ${settings.isMaintenanceMode ? 'bg-orange-600' : 'bg-gray-300'}`} onClick={() => setSettings({...settings, isMaintenanceMode: !settings.isMaintenanceMode})}>
+                            <div className={`w-10 h-5 rounded-full p-0.5 transition-all duration-300 cursor-pointer ${settings.isMaintenanceMode ? 'bg-orange-600' : 'bg-gray-300'}`} onClick={() => setSettings({ ...settings, isMaintenanceMode: !settings.isMaintenanceMode })}>
                                 <div className={`w-4 h-4 bg-white rounded-full transition-all duration-300 transform ${settings.isMaintenanceMode ? 'translate-x-5' : 'translate-x-0'}`}></div>
                             </div>
                         </div>
@@ -428,7 +427,7 @@ export default function SettingsView() {
                                 <input
                                     type="text"
                                     value={settings.appVersion.currentVersion}
-                                    onChange={(e) => setSettings({...settings, appVersion: {...settings.appVersion, currentVersion: e.target.value}})}
+                                    onChange={(e) => setSettings({ ...settings, appVersion: { ...settings.appVersion, currentVersion: e.target.value } })}
                                     className="w-full px-3 py-2 bg-gray-50 border border-gray-100 rounded-lg outline-none focus:border-orange-500 font-medium text-sm text-gray-700"
                                 />
                             </div>
@@ -437,7 +436,7 @@ export default function SettingsView() {
                                 <input
                                     type="text"
                                     value={settings.appVersion.minVersion}
-                                    onChange={(e) => setSettings({...settings, appVersion: {...settings.appVersion, minVersion: e.target.value}})}
+                                    onChange={(e) => setSettings({ ...settings, appVersion: { ...settings.appVersion, minVersion: e.target.value } })}
                                     className="w-full px-3 py-2 bg-gray-50 border border-gray-100 rounded-lg outline-none focus:border-orange-500 font-medium text-sm text-gray-700"
                                 />
                             </div>
@@ -451,7 +450,7 @@ export default function SettingsView() {
                                     <input
                                         type="text"
                                         value={settings.appVersion.updateUrl}
-                                        onChange={(e) => setSettings({...settings, appVersion: {...settings.appVersion, updateUrl: e.target.value}})}
+                                        onChange={(e) => setSettings({ ...settings, appVersion: { ...settings.appVersion, updateUrl: e.target.value } })}
                                         className="w-full pl-8 pr-3 py-2 bg-gray-50 border border-gray-100 rounded-lg outline-none focus:border-orange-500 font-medium text-sm text-gray-700"
                                         placeholder="https://..."
                                     />
@@ -462,7 +461,7 @@ export default function SettingsView() {
                                     <input
                                         type="checkbox"
                                         checked={settings.appVersion.forceUpdate}
-                                        onChange={(e) => setSettings({...settings, appVersion: {...settings.appVersion, forceUpdate: e.target.checked}})}
+                                        onChange={(e) => setSettings({ ...settings, appVersion: { ...settings.appVersion, forceUpdate: e.target.checked } })}
                                         className="w-4 h-4 rounded accent-orange-500"
                                     />
                                     <span className="text-[11px] font-bold text-gray-600">Force Update</span>
@@ -486,7 +485,7 @@ export default function SettingsView() {
                                     <input
                                         type="email"
                                         value={settings.supportEmail}
-                                        onChange={(e) => setSettings({...settings, supportEmail: e.target.value})}
+                                        onChange={(e) => setSettings({ ...settings, supportEmail: e.target.value })}
                                         className="w-full pl-8 pr-3 py-2 bg-gray-50 border border-gray-100 rounded-lg outline-none focus:border-orange-500 font-medium text-sm text-gray-700"
                                     />
                                 </div>
@@ -498,7 +497,7 @@ export default function SettingsView() {
                                     <input
                                         type="text"
                                         value={settings.supportPhone}
-                                        onChange={(e) => setSettings({...settings, supportPhone: e.target.value})}
+                                        onChange={(e) => setSettings({ ...settings, supportPhone: e.target.value })}
                                         className="w-full pl-8 pr-3 py-2 bg-gray-50 border border-gray-100 rounded-lg outline-none focus:border-orange-500 font-medium text-sm text-gray-700"
                                     />
                                 </div>
@@ -510,7 +509,7 @@ export default function SettingsView() {
                                 <FaBullhorn className="absolute left-3 top-3 text-gray-400 text-xs" />
                                 <textarea
                                     value={settings.announcement}
-                                    onChange={(e) => setSettings({...settings, announcement: e.target.value})}
+                                    onChange={(e) => setSettings({ ...settings, announcement: e.target.value })}
                                     placeholder="Enter global announcement text..."
                                     className="w-full pl-8 pr-3 py-2 bg-gray-50 border border-gray-100 rounded-lg outline-none focus:border-orange-500 font-medium text-sm text-gray-700 min-h-[80px]"
                                 />
@@ -529,7 +528,7 @@ export default function SettingsView() {
                             <label className="text-[10px] font-bold text-gray-400 uppercase ml-1">Environment</label>
                             <select
                                 value={settings.safepay.environment}
-                                onChange={(e) => setSettings({...settings, safepay: {...settings.safepay, environment: e.target.value}})}
+                                onChange={(e) => setSettings({ ...settings, safepay: { ...settings.safepay, environment: e.target.value } })}
                                 className="w-full px-3 py-2 bg-gray-50 border border-gray-100 rounded-lg outline-none focus:border-orange-500 font-medium text-sm text-gray-700"
                             >
                                 <option value="sandbox">Sandbox (Testing)</option>
@@ -541,7 +540,7 @@ export default function SettingsView() {
                             <input
                                 type="text"
                                 value={settings.safepay.apiKey}
-                                onChange={(e) => setSettings({...settings, safepay: {...settings.safepay, apiKey: e.target.value}})}
+                                onChange={(e) => setSettings({ ...settings, safepay: { ...settings.safepay, apiKey: e.target.value } })}
                                 className="w-full px-3 py-2 bg-gray-50 border border-gray-100 rounded-lg outline-none focus:border-orange-500 font-medium text-sm text-gray-700"
                                 placeholder="Enter Safepay API Key"
                             />
@@ -551,7 +550,7 @@ export default function SettingsView() {
                             <input
                                 type="password"
                                 value={settings.safepay.v1Secret}
-                                onChange={(e) => setSettings({...settings, safepay: {...settings.safepay, v1Secret: e.target.value}})}
+                                onChange={(e) => setSettings({ ...settings, safepay: { ...settings.safepay, v1Secret: e.target.value } })}
                                 className="w-full px-3 py-2 bg-gray-50 border border-gray-100 rounded-lg outline-none focus:border-orange-500 font-medium text-sm text-gray-700"
                                 placeholder="Enter V1 Secret"
                             />
@@ -561,7 +560,7 @@ export default function SettingsView() {
                             <input
                                 type="password"
                                 value={settings.safepay.webhookSecret}
-                                onChange={(e) => setSettings({...settings, safepay: {...settings.safepay, webhookSecret: e.target.value}})}
+                                onChange={(e) => setSettings({ ...settings, safepay: { ...settings.safepay, webhookSecret: e.target.value } })}
                                 className="w-full px-3 py-2 bg-gray-50 border border-gray-100 rounded-lg outline-none focus:border-orange-500 font-medium text-sm text-gray-700"
                                 placeholder="Enter Webhook Secret"
                             />

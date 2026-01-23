@@ -311,7 +311,7 @@ export default function NavDrawer({ isOpen, onClose, user, onOpenProfile, active
                 user={user || {
                     name: 'John Doe',
                     email: 'john.doe@email.com',
-                    phone: '+92 329 5599855',
+                    phone: '+923295599855',
                     address: 'Gulberg III, Lahore, Pakistan',
                     memberSince: 'January 2024'
                 }}

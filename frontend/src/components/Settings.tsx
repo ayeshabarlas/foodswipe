@@ -175,7 +175,7 @@ We're a passionate team of food lovers and tech enthusiasts dedicated to making 
 
 📧 Contact Us:
    Email: {settings?.supportEmail || 'app.foodswipehelp@gmail.com'}
-   Phone: {settings?.supportPhone || '+92 329 5599855'}
+   Phone: {settings?.supportPhone || '+923295599855'}
 
 Follow us on social media:
    Instagram: @foodswipe

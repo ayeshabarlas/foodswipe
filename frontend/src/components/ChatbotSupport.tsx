@@ -91,7 +91,7 @@ export default function ChatbotSupport({ isOpen, onClose }: ChatbotSupportProps)
 
             const errorMessage: Message = {
                 id: Date.now() + 1,
-                text: "I apologize, but I'm having trouble connecting right now. Please try again or contact our support team at 1-800-FOODSWIPE.",
+                text: "I apologize, but I'm having trouble connecting right now. Please try again or contact our support team at +923295599855.",
                 sender: 'bot',
                 timestamp: new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })
             };

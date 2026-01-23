@@ -8,21 +8,21 @@ const settingsSchema = new mongoose.Schema({
     deliveryFee: { type: Number, default: 0 }, // Legacy support
     serviceFee: { type: Number, default: 0 },
     minimumOrderAmount: { type: Number, default: 0 },
-    
+
     // Commission
     commission: { type: Number, default: 10 }, // Percentage
     commissionRate: { type: Number, default: 15 }, // New field for clearer naming
-    
+
     // Tax
     taxRate: { type: Number, default: 8 }, // Percentage
     isTaxEnabled: { type: Boolean, default: true },
-    
+
     // General
     supportEmail: { type: String, default: 'app.foodswiphelp@gmail.com' },
-    supportPhone: { type: String, default: '+920000000000' },
+    supportPhone: { type: String, default: '+923295599855' },
     announcement: { type: String, default: '' },
     isMaintenanceMode: { type: Boolean, default: false },
-    
+
     // Feature Toggles
     featureToggles: {
         isOrderingEnabled: { type: Boolean, default: true },
@@ -35,7 +35,7 @@ const settingsSchema = new mongoose.Schema({
         isPromotionsEnabled: { type: Boolean, default: true },
         isPhoneVerificationEnabled: { type: Boolean, default: true }
     },
-    
+
     // App Version Management
     appVersion: {
         currentVersion: { type: String, default: '1.0.0' },
@@ -43,7 +43,7 @@ const settingsSchema = new mongoose.Schema({
         forceUpdate: { type: Boolean, default: false },
         updateUrl: { type: String, default: 'https://foodswipe.com/update' }
     },
-    
+
     // Legacy support for appConfig
     appConfig: {
         currentVersion: { type: String, default: '1.0.0' },
@@ -63,7 +63,7 @@ const settingsSchema = new mongoose.Schema({
 
     // Maps Config
     googleMapsApiKey: { type: String, default: 'AIzaSyBBwurPdZPLvTupX_YGiHYZRG3-ct3NWKU' },
-    
+
     updatedBy: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'Admin'
@@ -73,7 +73,7 @@ const settingsSchema = new mongoose.Schema({
 });
 
 // Ensure only one settings document exists
-settingsSchema.statics.getSettings = async function() {
+settingsSchema.statics.getSettings = async function () {
     let settings = await this.findOne();
     if (!settings) {
         settings = await this.create({});

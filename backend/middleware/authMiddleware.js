@@ -82,11 +82,34 @@ const Restaurant = require('../models/Restaurant');
 
 const requireRestaurant = async (req, res, next) => {
     if (req.user && (req.user.role === 'restaurant' || req.user.role === 'admin')) {
-        next();
+        return next();
     } else {
         // Auto-fix: Check if they actually own a restaurant
         try {
-            const restaurant = await Restaurant.findOne({ owner: req.user._id });
+            let restaurant = await Restaurant.findOne({ owner: req.user._id });
+            
+            // SMART LINKING: Try to find by contact info if owner ID doesn't match
+            if (!restaurant) {
+                const userEmail = req.user.email?.toLowerCase();
+                const userPhone = req.user.phone || req.user.phoneNumber;
+                const normalizedUserPhone = userPhone ? userPhone.replace(/[\s\-\+\(\)]/g, '').slice(-10) : null;
+
+                if (normalizedUserPhone) {
+                    restaurant = await Restaurant.findOne({ contact: new RegExp(normalizedUserPhone + '$') });
+                }
+
+                if (!restaurant && userEmail) {
+                    const allRests = await Restaurant.find({}).populate('owner');
+                    restaurant = allRests.find(r => r.owner?.email?.toLowerCase() === userEmail);
+                }
+
+                if (restaurant) {
+                    console.log(`[SmartLinking] Re-linking restaurant ${restaurant._id} to user ${req.user._id} in middleware`);
+                    restaurant.owner = req.user._id;
+                    await restaurant.save();
+                }
+            }
+
             if (restaurant) {
                 console.log(`Auto-fixing role for user ${req.user._id} to restaurant`);
                 req.user.role = 'restaurant';
@@ -98,7 +121,7 @@ const requireRestaurant = async (req, res, next) => {
         }
 
         console.log(`Access denied. User role: ${req.user ? req.user.role : 'none'}`);
-        res.status(403).json({ message: `Access denied. Restaurant owners only. Your role is: ${req.user ? req.user.role : 'none'}` });
+        res.status(403).json({ message: 'Access denied. Restaurant only.' });
     }
 };
 

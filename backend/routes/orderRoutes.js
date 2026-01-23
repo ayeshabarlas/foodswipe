@@ -23,6 +23,7 @@ router.route('/:id/complete').post(protect, completeOrder);
 router.route('/:id/cancel').patch(protect, cancelOrder);
 router.route('/:id/location').post(protect, updateOrderLocation);
 router.route('/:id/rate-rider').post(protect, rateRider);
+router.route('/restaurant/my-orders').get(protect, getRestaurantOrders);
 router.route('/restaurant/:restaurantId').get(protect, getRestaurantOrders);
 
 module.exports = router;

@@ -51,7 +51,7 @@ const DEFAULT_SETTINGS: SystemSettings = {
     commission: 15,
     commissionRate: 15,
     supportEmail: 'support@foodswipe.com',
-    supportPhone: '',
+    supportPhone: '+923295599855',
     announcement: '',
     isMaintenanceMode: false,
     minimumOrderAmount: 0,
