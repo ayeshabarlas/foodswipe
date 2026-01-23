@@ -258,40 +258,40 @@ export default function OrderBoard({ restaurant, onUpdate }: OrderBoardProps) {
                 layout
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="bg-white rounded-[32px] p-6 shadow-sm border border-gray-100 hover:shadow-xl transition-all duration-300 group"
+                className="bg-white rounded-[32px] p-6 shadow-sm border border-gray-100 hover:shadow-xl transition-all duration-300 group font-inter"
             >
                 {/* Order Header - Match Screenshot 2/3 */}
                 <div className="flex justify-between items-start mb-6">
                     <div className="flex items-center gap-4">
-                        <div className="w-11 h-11 rounded-full bg-[#FF7E47]/10 flex items-center justify-center text-[#FF7E47] font-medium text-sm">
+                        <div className="w-11 h-11 rounded-full bg-[#FF7E47]/10 flex items-center justify-center text-[#FF7E47] font-bold text-sm font-plus-jakarta">
                             {initials}
                         </div>
                         <div>
-                            <h4 className="font-medium text-gray-900 text-[13px]">{order.user?.name || 'Guest'}</h4>
-                            <p className="text-[10px] text-gray-400 font-light mt-0.5 tracking-tight">Order #{order._id.slice(-4)}</p>
+                            <h4 className="font-bold text-gray-900 text-[14px] font-plus-jakarta tracking-tight">{order.user?.name || 'Guest'}</h4>
+                            <p className="text-[10px] text-gray-400 font-medium mt-0.5 tracking-tight uppercase">Order #{order._id.slice(-4)}</p>
                         </div>
                     </div>
-                    <div className={`px-3 py-1 rounded-full text-[9px] font-medium uppercase tracking-widest ${getStatusBadgeColor(order.status)}`}>
+                    <div className={`px-3 py-1.5 rounded-full text-[9px] font-bold uppercase tracking-widest font-plus-jakarta ${getStatusBadgeColor(order.status)}`}>
                         {order.status}
                     </div>
                 </div>
 
                 {/* Items Summary - Bullet points as Screenshot 2 */}
                 <div className="bg-[#F8FAFC]/50 rounded-2xl p-4 mb-5 border border-gray-50">
-                    <p className="text-[9px] font-medium text-gray-400 uppercase tracking-widest mb-2.5">Items:</p>
+                    <p className="text-[9px] font-bold text-gray-400 uppercase tracking-widest mb-2.5 font-plus-jakarta">Items Summary</p>
                     <ul className="space-y-1.5">
                         {order.orderItems.map((item, idx) => (
-                            <li key={idx} className="flex items-center text-xs text-gray-600 font-light">
+                            <li key={idx} className="flex items-center text-xs text-gray-600 font-medium">
                                 <span className="w-1 h-1 rounded-full bg-gray-300 mr-2 shrink-0"></span>
                                 <span className="truncate">{item.name}</span>
-                                {item.qty > 1 && <span className="ml-1.5 text-gray-400 text-[10px] font-medium">x{item.qty}</span>}
+                                {item.qty > 1 && <span className="ml-1.5 text-gray-400 text-[10px] font-bold">x{item.qty}</span>}
                             </li>
                         ))}
                     </ul>
                 </div>
 
                 {/* Total & Address */}
-                <div className="space-y-2 mb-5 px-1">
+                <div className="space-y-2.5 mb-5 px-1">
                     {(() => {
                         const subtotal = order.subtotal || order.orderAmount || (order.totalPrice - (order.deliveryFee || 0));
                         const commRate = order.commissionPercent || 15;
@@ -302,27 +302,27 @@ export default function OrderBoard({ restaurant, onUpdate }: OrderBoardProps) {
                         return (
                             <>
                                 <div className="flex justify-between items-center">
-                                    <span className="text-gray-400 text-[11px] font-light">Order Total (Incl. Delivery)</span>
-                                    <span className="text-gray-500 text-xs font-medium">Rs. {order.totalPrice.toFixed(0)}</span>
+                                    <span className="text-gray-400 text-[11px] font-medium">Order Total (Incl. Delivery)</span>
+                                    <span className="text-gray-500 text-xs font-bold">Rs. {order.totalPrice.toFixed(0)}</span>
                                 </div>
                                 
-                                <div className="flex justify-between items-center pt-1 border-t border-gray-50">
-                                    <span className="text-gray-500 text-[11px] font-medium">Items Subtotal</span>
-                                    <span className="text-gray-900 text-sm font-bold">Rs. {subtotal.toFixed(0)}</span>
+                                <div className="flex justify-between items-center pt-2 border-t border-gray-50">
+                                    <span className="text-gray-500 text-[11px] font-bold font-plus-jakarta">Items Subtotal</span>
+                                    <span className="text-gray-900 text-[15px] font-extrabold font-plus-jakarta">Rs. {subtotal.toFixed(0)}</span>
                                 </div>
 
-                                <div className="flex justify-between items-center text-red-500">
-                                    <span className="text-[11px] font-light">Admin Commission ({commRate}%)</span>
-                                    <span className="text-[11px] font-medium">- Rs. {commAmount.toFixed(0)}</span>
+                                <div className="flex justify-between items-center text-red-500/80">
+                                    <span className="text-[11px] font-medium">Admin Commission ({commRate}%)</span>
+                                    <span className="text-[11px] font-bold">- Rs. {commAmount.toFixed(0)}</span>
                                 </div>
 
-                                <div className="flex justify-between items-center text-green-600 pt-1 border-t border-dashed border-gray-100">
-                                    <span className="text-[11px] font-bold">Your Earnings</span>
-                                    <span className="text-sm font-bold">Rs. {restEarning.toFixed(0)}</span>
+                                <div className="flex justify-between items-center text-emerald-600 pt-2 border-t border-dashed border-gray-100">
+                                    <span className="text-[11px] font-extrabold font-plus-jakarta uppercase tracking-wider">Your Earnings</span>
+                                    <span className="text-[16px] font-extrabold font-plus-jakarta">Rs. {restEarning.toFixed(0)}</span>
                                 </div>
 
                                 {deliveryFee > 0 && (
-                                    <div className="flex justify-between items-center text-gray-400 text-[9px] font-light italic">
+                                    <div className="flex justify-between items-center text-gray-400 text-[9px] font-medium italic">
                                         <span>* Delivery Fee (Rs. {deliveryFee.toFixed(0)}) paid to Rider</span>
                                     </div>
                                 )}
@@ -333,7 +333,7 @@ export default function OrderBoard({ restaurant, onUpdate }: OrderBoardProps) {
 
                 <div className="flex items-start gap-2 mb-6 px-1 text-gray-400">
                     <FaMapMarkerAlt className="mt-0.5 shrink-0 opacity-40" size={11} />
-                    <span className="text-[10px] font-light leading-relaxed line-clamp-2">{order.shippingAddress?.address}</span>
+                    <span className="text-[10px] font-medium leading-relaxed line-clamp-2">{order.shippingAddress?.address}</span>
                 </div>
 
                 {/* Rider Info - Screenshot 3 */}
@@ -341,16 +341,16 @@ export default function OrderBoard({ restaurant, onUpdate }: OrderBoardProps) {
                     <div className="bg-[#EFF6FF]/50 rounded-2xl p-4 mb-6 border border-blue-50/50">
                         <div className="flex justify-between items-center mb-4">
                             <div className="flex items-center gap-3">
-                                <div className="w-9 h-9 rounded-full bg-blue-500/10 flex items-center justify-center text-blue-600 font-medium text-[10px]">
+                                <div className="w-9 h-9 rounded-full bg-blue-500/10 flex items-center justify-center text-blue-600 font-bold text-[10px] font-plus-jakarta">
                                     {getInitials(order.rider.fullName || order.rider.user?.name || 'Rider')}
                                 </div>
                                 <div>
-                                    <h5 className="text-[11px] font-medium text-gray-900">{order.rider.fullName || order.rider.user?.name || 'Delivery Partner'}</h5>
-                                    <p className="text-[9px] text-blue-500 font-light">Delivery Partner</p>
+                                    <h5 className="text-[11px] font-bold text-gray-900 font-plus-jakarta">{order.rider.fullName || order.rider.user?.name || 'Delivery Partner'}</h5>
+                                    <p className="text-[9px] text-blue-500 font-bold uppercase tracking-tight">Delivery Partner</p>
                                 </div>
                             </div>
                             <div className="text-right">
-                                <p className="text-[10px] text-blue-500 font-bold uppercase tracking-wider">ETA: 5 MINS</p>
+                                <p className="text-[10px] text-blue-500 font-extrabold uppercase tracking-wider font-plus-jakarta">ETA: 5 MINS</p>
                             </div>
                         </div>
                         {/* Progress Stepper - Match Screenshot 3 */}
@@ -361,7 +361,7 @@ export default function OrderBoard({ restaurant, onUpdate }: OrderBoardProps) {
                                 {['Assigned', 'On Way', 'Arrived', 'Picked Up'].map((step, i) => (
                                     <div key={step} className="flex flex-col items-center">
                                         <div className={`w-2 h-2 rounded-full z-10 border-2 border-white ${i === 0 ? 'bg-blue-400' : 'bg-gray-200'}`}></div>
-                                        <span className="text-[7px] font-medium text-gray-400 absolute -bottom-4 mt-1 whitespace-nowrap tracking-tight">{step}</span>
+                                        <span className="text-[7px] font-bold text-gray-400 absolute -bottom-4 mt-1 whitespace-nowrap tracking-tight uppercase font-plus-jakarta">{step}</span>
                                     </div>
                                 ))}
                             </div>
@@ -372,10 +372,10 @@ export default function OrderBoard({ restaurant, onUpdate }: OrderBoardProps) {
                 {/* Preparation Time Selection - Screenshot 3 */}
                 {order.status === 'Accepted' && (
                     <div className="bg-[#FFF7ED] rounded-2xl p-4 mb-6 border border-orange-100">
-                        <p className="text-[10px] font-bold text-orange-600 uppercase tracking-widest mb-3">Preparation Time</p>
+                        <p className="text-[10px] font-extrabold text-orange-600 uppercase tracking-widest mb-3 font-plus-jakarta">Preparation Time</p>
                         <div className="flex gap-2">
                             <select
-                                className="flex-1 bg-white border border-orange-200 rounded-xl px-4 py-2 text-xs font-bold text-gray-700 focus:ring-orange-500 focus:border-orange-500"
+                                className="flex-1 bg-white border border-orange-200 rounded-xl px-4 py-2 text-xs font-bold text-gray-700 focus:ring-orange-500 focus:border-orange-500 font-plus-jakarta"
                                 value={prepTimes[order._id] || 20}
                                 onChange={(e) => setPrepTimes({ ...prepTimes, [order._id]: parseInt(e.target.value) })}
                             >
@@ -383,8 +383,8 @@ export default function OrderBoard({ restaurant, onUpdate }: OrderBoardProps) {
                                     <option key={m} value={m}>{m} minutes</option>
                                 ))}
                             </select>
-                            <button className="bg-orange-50 text-orange-600 w-10 h-10 rounded-xl font-bold hover:bg-orange-100 transition text-sm">+5</button>
-                            <button className="bg-orange-50 text-orange-600 w-10 h-10 rounded-xl font-bold hover:bg-orange-100 transition text-sm">+10</button>
+                            <button className="bg-orange-50 text-orange-600 w-10 h-10 rounded-xl font-extrabold hover:bg-orange-100 transition text-sm font-plus-jakarta">+5</button>
+                            <button className="bg-orange-50 text-orange-600 w-10 h-10 rounded-xl font-extrabold hover:bg-orange-100 transition text-sm font-plus-jakarta">+10</button>
                         </div>
                     </div>
                 )}
@@ -395,27 +395,15 @@ export default function OrderBoard({ restaurant, onUpdate }: OrderBoardProps) {
                         <div className="flex gap-2.5">
                             <button
                                 onClick={() => handleAcceptOrder(order._id)}
-                                className="flex-1 bg-gradient-to-r from-emerald-500 to-teal-600 text-white py-3 rounded-2xl font-bold text-[11px] transition-all shadow-lg shadow-emerald-500/20 active:scale-95 uppercase tracking-wider"
+                                className="flex-1 bg-gradient-to-r from-emerald-500 to-teal-600 text-white py-3.5 rounded-2xl font-extrabold text-[11px] transition-all shadow-lg shadow-emerald-500/20 active:scale-95 uppercase tracking-widest font-plus-jakarta"
                             >
-                                ACCEPT
+                                ACCEPT ORDER
                             </button>
                             <button
                                 onClick={() => setRejectingOrder(order._id)}
-                                className="flex-1 bg-gradient-to-r from-red-500 to-pink-600 text-white py-3 rounded-2xl font-bold text-[11px] transition-all shadow-lg shadow-red-500/20 active:scale-95 uppercase tracking-wider"
+                                className="flex-1 bg-gray-50 text-gray-400 py-3.5 rounded-2xl font-bold text-[11px] hover:bg-red-50 hover:text-red-500 transition-all active:scale-95 uppercase tracking-widest font-plus-jakarta"
                             >
                                 REJECT
-                            </button>
-                            <button
-                                onClick={() => setActiveChat(order)}
-                                className="w-11 h-11 flex items-center justify-center rounded-2xl bg-white text-gray-400 hover:text-orange-500 hover:border-orange-500 transition-all border border-gray-100 shadow-sm active:scale-90"
-                            >
-                                <FaCommentDots size={16} />
-                            </button>
-                            <button
-                                onClick={() => setCancellingOrderId(order._id)}
-                                className="w-11 h-11 flex items-center justify-center rounded-2xl bg-red-50 text-red-400 hover:bg-red-500 hover:text-white transition-all border border-red-100 shadow-sm active:scale-90"
-                            >
-                                <FaBan size={14} />
                             </button>
                         </div>
                     )}
@@ -424,7 +412,7 @@ export default function OrderBoard({ restaurant, onUpdate }: OrderBoardProps) {
                         <div className="flex gap-2.5">
                             <button
                                 onClick={() => updateStatus(order._id, 'Preparing', { prepTime: prepTimes[order._id] || 20 })}
-                                className="flex-1 bg-gradient-to-r from-blue-500 to-indigo-600 text-white py-3 rounded-2xl font-bold text-[11px] transition-all shadow-lg shadow-blue-500/20 active:scale-95 uppercase tracking-wider"
+                                className="flex-1 bg-gradient-to-r from-blue-500 to-indigo-600 text-white py-3.5 rounded-2xl font-extrabold text-[11px] transition-all shadow-lg shadow-blue-500/20 active:scale-95 uppercase tracking-widest font-plus-jakarta"
                             >
                                 START PREPARING
                             </button>
@@ -441,12 +429,12 @@ export default function OrderBoard({ restaurant, onUpdate }: OrderBoardProps) {
                         <div className="flex gap-2.5">
                             <button
                                 onClick={() => updateStatus(order._id, 'Ready')}
-                                className="flex-1 bg-gradient-to-r from-emerald-500 to-teal-600 text-white py-3 rounded-2xl font-bold text-[11px] transition-all shadow-lg shadow-emerald-500/20 active:scale-95 uppercase tracking-wider"
+                                className="flex-1 bg-gradient-to-r from-emerald-500 to-teal-600 text-white py-3.5 rounded-2xl font-extrabold text-[11px] transition-all shadow-lg shadow-emerald-500/20 active:scale-95 uppercase tracking-widest font-plus-jakarta"
                             >
                                 MARK READY
                             </button>
                             <button
-                                className="flex-1 bg-gradient-to-r from-amber-400 to-orange-500 text-white py-3 rounded-2xl font-bold text-[11px] transition-all shadow-lg shadow-amber-500/20 active:scale-95 uppercase tracking-wider"
+                                className="flex-1 bg-gray-50 text-gray-400 py-3.5 rounded-2xl font-bold text-[11px] hover:bg-orange-50 hover:text-orange-500 transition-all active:scale-95 uppercase tracking-widest font-plus-jakarta"
                             >
                                 DELAY
                             </button>
@@ -463,7 +451,7 @@ export default function OrderBoard({ restaurant, onUpdate }: OrderBoardProps) {
                         <div className="flex gap-2.5">
                             <button
                                 onClick={() => updateStatus(order._id, 'OnTheWay')}
-                                className="flex-1 bg-gradient-to-r from-purple-500 to-indigo-600 text-white py-3 rounded-2xl font-bold text-[11px] transition-all shadow-lg shadow-purple-500/20 active:scale-95 uppercase tracking-wider"
+                                className="flex-1 bg-gradient-to-r from-purple-500 to-indigo-600 text-white py-3.5 rounded-2xl font-extrabold text-[11px] transition-all shadow-lg shadow-purple-500/20 active:scale-95 uppercase tracking-widest font-plus-jakarta"
                             >
                                 HAND TO RIDER
                             </button>
@@ -481,7 +469,7 @@ export default function OrderBoard({ restaurant, onUpdate }: OrderBoardProps) {
                             {canTrack && (
                                 <button
                                     onClick={() => setTrackingOrder(order)}
-                                    className="flex-1 flex items-center justify-center gap-2 py-3 rounded-2xl bg-gradient-to-r from-blue-500 to-indigo-600 text-white font-bold text-[11px] transition-all shadow-lg shadow-blue-500/20 active:scale-95 uppercase tracking-wider"
+                                    className="flex-1 flex items-center justify-center gap-2 py-3.5 rounded-2xl bg-gradient-to-r from-blue-500 to-indigo-600 text-white font-extrabold text-[11px] transition-all shadow-lg shadow-blue-500/20 active:scale-95 uppercase tracking-widest font-plus-jakarta"
                                 >
                                     <FaMotorcycle size={14} />
                                     TRACK RIDER
@@ -492,7 +480,7 @@ export default function OrderBoard({ restaurant, onUpdate }: OrderBoardProps) {
                                 className={`${canTrack ? 'w-11' : 'flex-1'} h-11 flex items-center justify-center rounded-2xl bg-white text-gray-400 hover:text-orange-500 hover:border-orange-500 transition-all border border-gray-100 shadow-sm active:scale-90`}
                             >
                                 <FaCommentDots size={16} />
-                                {!canTrack && <span className="ml-2 text-[11px] font-bold uppercase tracking-wider">CHAT WITH CUSTOMER</span>}
+                                {!canTrack && <span className="ml-2 text-[11px] font-extrabold uppercase tracking-widest font-plus-jakarta">CHAT WITH CUSTOMER</span>}
                             </button>
                         </div>
                     )}

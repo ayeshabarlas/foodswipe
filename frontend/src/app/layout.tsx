@@ -1,9 +1,10 @@
 import type { Metadata } from "next";
 import { Poppins, Plus_Jakarta_Sans, Inter } from "next/font/google";
 import "./globals.css";
+import { CartProvider } from "../context/CartContext";
 import dynamic from "next/dynamic";
 const SystemWrapper = dynamic(() => import("../components/SystemWrapper"), { ssr: false });
-import { CartProvider } from "../context/CartContext";
+const Toaster = dynamic(() => import("react-hot-toast").then((m) => m.Toaster), { ssr: false });
 
 const inter = Inter({
   variable: "--font-inter",
@@ -43,6 +44,7 @@ export default function RootLayout({
         <SystemWrapper>
           <CartProvider>
             {children}
+            <Toaster position="top-center" reverseOrder={false} />
           </CartProvider>
         </SystemWrapper>
       </body>

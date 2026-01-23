@@ -438,7 +438,7 @@ export default function RestaurantDashboard() {
     };
 
     return (
-        <div className="flex min-h-screen bg-gray-50 font-sans text-[11px] overflow-x-hidden">
+        <div className="flex min-h-screen bg-gray-50 font-inter text-[13px] overflow-x-hidden">
             {/* Account Status Banner */}
             {restaurant?.owner?.status === 'suspended' && (
                 <div className="fixed top-0 left-0 right-0 bg-red-600 text-white px-4 py-2 text-center text-xs font-bold z-[9999] shadow-lg flex items-center justify-center gap-2">
@@ -492,11 +492,11 @@ export default function RestaurantDashboard() {
                             </div>
                             <div className="flex-1 min-w-0">
                                 <div className="flex items-center gap-2">
-                                    <h2 className="text-[13px] font-bold truncate leading-tight">{displayRestaurant.name}</h2>
+                                    <h2 className="text-[15px] font-bold truncate leading-tight font-plus-jakarta tracking-tight">{displayRestaurant.name}</h2>
                                 </div>
-                                <p className="text-[9px] text-gray-300 truncate flex items-center gap-1.5 mt-0.5 font-bold uppercase tracking-wider">
-                                    <span className={`w-1.5 h-1.5 rounded-full ${displayRestaurant.isVerified ? 'bg-green-500' : 'bg-yellow-500 animate-pulse'}`}></span>
-                                    {displayRestaurant.isVerified ? 'Partner' : 'Pending'}
+                                <p className="text-[10px] text-gray-400 truncate flex items-center gap-1.5 mt-1 font-bold uppercase tracking-widest">
+                                    <span className={`w-1.5 h-1.5 rounded-full ${displayRestaurant.isVerified ? 'bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.6)]' : 'bg-yellow-500 animate-pulse'}`}></span>
+                                    {displayRestaurant.isVerified ? 'Partner' : 'Pending Verification'}
                                 </p>
                             </div>
                         </div>
@@ -504,13 +504,13 @@ export default function RestaurantDashboard() {
                         {/* Status Stats */}
                         {!isPending && (
                             <div className="grid grid-cols-2 gap-2">
-                                <div className="bg-gray-800/50 rounded-lg p-2 text-center border border-gray-700/30">
-                                    <p className="text-[8px] text-gray-500 mb-0.5 font-bold uppercase tracking-wider">Earnings</p>
-                                    <p className="font-bold text-green-400 text-[10px]">Rs. {stats?.netEarningsToday?.toLocaleString() || 0}</p>
+                                <div className="bg-gray-800/40 rounded-xl p-2.5 text-center border border-gray-700/30 hover:bg-gray-800/60 transition-colors">
+                                    <p className="text-[9px] text-gray-500 mb-1 font-bold uppercase tracking-widest">Earnings</p>
+                                    <p className="font-extrabold text-green-400 text-[12px] font-plus-jakarta">Rs. {stats?.netEarningsToday?.toLocaleString() || 0}</p>
                                 </div>
-                                <div className="bg-gray-800/50 rounded-lg p-2 text-center border border-gray-700/30">
-                                    <p className="text-[8px] text-gray-500 mb-0.5 font-bold uppercase tracking-wider">Today</p>
-                                    <p className="font-bold text-orange-400 text-[10px]">{stats?.ordersToday || 0} Orders</p>
+                                <div className="bg-gray-800/40 rounded-xl p-2.5 text-center border border-gray-700/30 hover:bg-gray-800/60 transition-colors">
+                                    <p className="text-[9px] text-gray-500 mb-1 font-bold uppercase tracking-widest">Today</p>
+                                    <p className="font-extrabold text-orange-400 text-[12px] font-plus-jakarta">{stats?.ordersToday || 0} Orders</p>
                                 </div>
                             </div>
                         )}
@@ -575,12 +575,12 @@ export default function RestaurantDashboard() {
                 <header className="bg-white/80 backdrop-blur-md border-b border-gray-100 p-4 hidden lg:flex items-center justify-between sticky top-0 z-30 shadow-sm">
                     <div className="flex items-center gap-6">
                         <div className="flex flex-col">
-                            <h1 className="text-xl font-extrabold text-gray-900 tracking-tight flex items-center gap-2">
+                            <h1 className="text-xl font-extrabold text-gray-900 tracking-tight flex items-center gap-2 font-plus-jakarta">
                                 {menuItems.find((i) => i.id === activePage)?.label}
-                                {activePage === 'overview' && <span className="text-[10px] bg-orange-100 text-orange-600 px-2 py-0.5 rounded-full font-bold uppercase tracking-wider">Live</span>}
+                                {activePage === 'overview' && <span className="text-[10px] bg-orange-100 text-orange-600 px-2 py-0.5 rounded-full font-bold uppercase tracking-widest">Live</span>}
                             </h1>
-                            <p className="text-gray-400 text-[10px] font-medium uppercase tracking-widest mt-0.5">
-                                Merchant Portal <span className="mx-1">•</span> {new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                            <p className="text-gray-400 text-[10px] font-bold uppercase tracking-widest mt-0.5">
+                                Merchant Portal <span className="mx-1 text-gray-200">•</span> {new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
                             </p>
                         </div>
                     </div>
@@ -589,9 +589,9 @@ export default function RestaurantDashboard() {
                         {/* Search or Quick Stats could go here */}
                         <div className="hidden xl:flex items-center gap-4 pr-6 border-r border-gray-100">
                             <div className="flex flex-col items-end">
-                                <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Store Status</span>
-                                <span className="flex items-center gap-1.5 text-[11px] font-bold text-green-500">
-                                    <span className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" />
+                                <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-0.5">Store Status</span>
+                                <span className="flex items-center gap-1.5 text-[11px] font-extrabold text-green-500 font-plus-jakarta">
+                                    <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse shadow-[0_0_8px_rgba(34,197,94,0.6)]" />
                                     Online & Accepting
                                 </span>
                             </div>
@@ -693,15 +693,15 @@ export default function RestaurantDashboard() {
                         {/* User Profile */}
                         <div className="flex items-center gap-3 pl-4 border-l border-gray-100 group cursor-pointer">
                             <div className="text-right hidden sm:block transition-transform group-hover:-translate-x-1 duration-300">
-                                <p className="text-[13px] font-bold text-gray-900 leading-none mb-1">{displayRestaurant?.owner?.name}</p>
+                                <p className="text-[14px] font-extrabold text-gray-900 leading-none mb-1 font-plus-jakarta tracking-tight">{displayRestaurant?.owner?.name}</p>
                                 <div className="flex items-center justify-end gap-1.5">
-                                    <div className="w-1.5 h-1.5 rounded-full bg-green-500" />
-                                    <p className="text-[10px] text-gray-500 font-bold uppercase tracking-wider">Restaurant Owner</p>
+                                    <div className="w-1.5 h-1.5 rounded-full bg-orange-500 shadow-[0_0_8px_rgba(249,115,22,0.4)]" />
+                                    <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest">Restaurant Owner</p>
                                 </div>
                             </div>
                             <div className="relative">
-                                <div className="w-11 h-11 rounded-2xl bg-gradient-to-tr from-orange-500 to-red-500 p-[2px] shadow-lg shadow-orange-200 group-hover:scale-105 transition-transform duration-300">
-                                    <div className="w-full h-full rounded-2xl bg-white flex items-center justify-center text-orange-600 font-bold text-base uppercase">
+                                <div className="w-11 h-11 rounded-2xl bg-gradient-to-tr from-orange-500 to-red-500 p-[2px] shadow-lg shadow-orange-100 group-hover:scale-105 transition-transform duration-300">
+                                    <div className="w-full h-full rounded-2xl bg-white flex items-center justify-center text-orange-600 font-extrabold text-base uppercase font-plus-jakarta">
                                         {displayRestaurant?.owner?.name?.charAt(0)}
                                     </div>
                                 </div>

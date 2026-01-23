@@ -6,33 +6,12 @@ import 'leaflet/dist/leaflet.css';
 import L from 'leaflet';
 import { FaPhone } from 'react-icons/fa';
 
-// Fix Leaflet icon issues
-const iconPerson = new L.Icon({
-    iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-blue.png',
-    shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png',
-    iconSize: [25, 41],
-    iconAnchor: [12, 41],
-    popupAnchor: [1, -34],
-    shadowSize: [41, 41]
-});
-
-const iconStore = new L.Icon({
-    iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-orange.png',
-    shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png',
-    iconSize: [25, 41],
-    iconAnchor: [12, 41],
-    popupAnchor: [1, -34],
-    shadowSize: [41, 41]
-});
-
-const iconRider = new L.Icon({
-    iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-red.png',
-    shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png',
-    iconSize: [25, 41],
-    iconAnchor: [12, 41],
-    popupAnchor: [1, -34],
-    shadowSize: [41, 41]
-});
+interface MapComponentProps {
+    restaurantLoc: [number, number];
+    customerLoc: [number, number];
+    riderLoc: [number, number];
+    order: any;
+}
 
 // Component to update map center and bounds
 function MapUpdater({ restaurantLoc, customerLoc, riderLoc }: { restaurantLoc: [number, number], customerLoc: [number, number], riderLoc: [number, number] }) {
@@ -46,14 +25,35 @@ function MapUpdater({ restaurantLoc, customerLoc, riderLoc }: { restaurantLoc: [
     return null;
 }
 
-interface MapComponentProps {
-    restaurantLoc: [number, number];
-    customerLoc: [number, number];
-    riderLoc: [number, number];
-    order: any;
-}
-
 export default function MapComponent({ restaurantLoc, customerLoc, riderLoc, order }: MapComponentProps) {
+    // Fix Leaflet icon issues
+    const iconPerson = useMemo(() => new L.Icon({
+        iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-blue.png',
+        shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png',
+        iconSize: [25, 41],
+        iconAnchor: [12, 41],
+        popupAnchor: [1, -34],
+        shadowSize: [41, 41]
+    }), []);
+
+    const iconStore = useMemo(() => new L.Icon({
+        iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-orange.png',
+        shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png',
+        iconSize: [25, 41],
+        iconAnchor: [12, 41],
+        popupAnchor: [1, -34],
+        shadowSize: [41, 41]
+    }), []);
+
+    const iconRider = useMemo(() => new L.Icon({
+        iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-red.png',
+        shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png',
+        iconSize: [25, 41],
+        iconAnchor: [12, 41],
+        popupAnchor: [1, -34],
+        shadowSize: [41, 41]
+    }), []);
+
     // Default to Lahore center if any location is missing
     const safeRestaurantLoc = restaurantLoc || [31.5204, 74.3587];
     const safeCustomerLoc = customerLoc || [31.5204, 74.3587];
@@ -70,11 +70,6 @@ export default function MapComponent({ restaurantLoc, customerLoc, riderLoc, ord
             style={{ height: '100%', width: '100%' }}
             scrollWheelZoom={true}
         >
-            <MapUpdater 
-                restaurantLoc={safeRestaurantLoc} 
-                customerLoc={safeCustomerLoc} 
-                riderLoc={safeRiderLoc} 
-            />
             <TileLayer
                 attribution={attribution}
                 url={tileLayerUrl}

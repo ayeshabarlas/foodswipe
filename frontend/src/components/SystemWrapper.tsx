@@ -27,21 +27,32 @@ export default function SystemWrapper({ children }: SystemWrapperProps) {
 
     // Global Google Maps Script Loading
     useEffect(() => {
-        if (settings?.googleMapsApiKey && !(window as any).google) {
+        const apiKey = settings?.googleMapsApiKey;
+        if (apiKey && typeof window !== 'undefined' && !(window as any).google) {
             console.log('🌐 Loading Google Maps Script globally...');
+            
+            // Check if already loading to prevent duplicates
+            if (document.getElementById('google-maps-sdk')) return;
+
             const script = document.createElement('script');
-            script.src = `https://maps.googleapis.com/maps/api/js?key=${settings.googleMapsApiKey}&libraries=places`;
+            script.src = `https://maps.googleapis.com/maps/api/js?key=${apiKey}&libraries=places&callback=initGoogleMaps`;
             script.async = true;
             script.defer = true;
             script.id = 'google-maps-sdk';
+            
+            // Define global callback to avoid "not a function" errors
+            (window as any).initGoogleMaps = () => {
+                console.log('✅ Google Maps API initialized via callback');
+            };
+
             document.head.appendChild(script);
             
             script.onload = () => {
                 console.log('✅ Google Maps Script loaded successfully');
             };
             
-            script.onerror = () => {
-                console.error('❌ Failed to load Google Maps Script');
+            script.onerror = (e) => {
+                console.error('❌ Failed to load Google Maps Script', e);
             };
         }
     }, [settings?.googleMapsApiKey]);

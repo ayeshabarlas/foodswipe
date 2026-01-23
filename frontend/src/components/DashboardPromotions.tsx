@@ -102,19 +102,21 @@ export default function DashboardPromotions() {
 
     if (loading) return <div className="p-8 text-center text-gray-500">Loading...</div>;
 
-    const StatCard = ({ title, value, icon: Icon, color }: any) => (
+    const StatCard = ({ title, value, icon: Icon, color, lightColor }: any) => (
         <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            className={`${color} rounded-2xl p-6 text-white shadow-lg`}
+            className={`${color} rounded-[32px] p-8 text-white shadow-2xl relative overflow-hidden group border border-white/10`}
         >
-            <div className="flex items-center justify-between mb-4">
-                <div className="p-3 bg-white/20 rounded-xl">
+            <div className="absolute top-[-20%] right-[-10%] w-32 h-32 bg-white/10 rounded-full blur-3xl group-hover:bg-white/20 transition-all duration-500"></div>
+            <div className="flex items-center justify-between mb-6 relative z-10">
+                <div className={`p-4 ${lightColor} rounded-2xl backdrop-blur-md`}>
                     <Icon className="text-2xl" />
                 </div>
+                <div className="text-white/40 text-[10px] font-bold uppercase tracking-widest font-plus-jakarta">Real-time</div>
             </div>
-            <div className="text-3xl font-bold">{value}</div>
-            <div className="text-sm opacity-90">{title}</div>
+            <div className="text-4xl font-extrabold font-plus-jakarta mb-2 relative z-10">{value}</div>
+            <div className="text-[12px] font-bold text-white/80 uppercase tracking-widest font-plus-jakarta relative z-10">{title}</div>
         </motion.div>
     );
 
@@ -122,173 +124,238 @@ export default function DashboardPromotions() {
     const activeDeals = deals.filter(d => d.isActive && new Date(d.endDate) >= new Date());
 
     return (
-        <div className="p-6 space-y-6 max-w-7xl">
+        <div className="p-8 space-y-10 max-w-7xl font-inter bg-[#F8FAFC]">
             {/* Header */}
-            <div>
-                <h2 className="text-2xl font-bold text-gray-900">Promotions</h2>
-                <p className="text-gray-500 text-sm">Manage your vouchers and deals</p>
+            <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
+                <div>
+                    <h2 className="text-3xl font-extrabold text-gray-900 font-plus-jakarta tracking-tight">Marketing Hub</h2>
+                    <p className="text-gray-500 text-[13px] font-medium mt-1">Boost your sales with targeted vouchers and exclusive deals</p>
+                </div>
+                <div className="flex items-center gap-3">
+                    <div className="flex -space-x-3">
+                        {[1, 2, 3].map(i => (
+                            <div key={i} className="w-8 h-8 rounded-full border-2 border-white bg-gray-200 flex items-center justify-center text-[10px] font-bold text-gray-400">
+                                {String.fromCharCode(64 + i)}
+                            </div>
+                        ))}
+                    </div>
+                    <span className="text-[11px] font-bold text-emerald-500 uppercase tracking-widest font-plus-jakarta flex items-center gap-2">
+                        <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                        12.4k Views Today
+                    </span>
+                </div>
             </div>
 
             {/* Stats Grid */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
                 <StatCard
                     title="Active Vouchers"
                     value={activeVouchers.length}
                     icon={FaTicketAlt}
-                    color="bg-gradient-to-br from-orange-500 to-red-500"
+                    color="bg-gradient-to-br from-[#FF6B6B] to-[#FF8E8E]"
+                    lightColor="bg-white/20"
                 />
                 <StatCard
                     title="Active Deals"
                     value={activeDeals.length}
                     icon={FaTags}
-                    color="bg-gradient-to-br from-purple-500 to-pink-500"
+                    color="bg-gradient-to-br from-[#845EF7] to-[#B197FC]"
+                    lightColor="bg-white/20"
                 />
                 <StatCard
-                    title="Total Vouchers"
-                    value={vouchers.length}
+                    title="Total Reach"
+                    value={vouchers.length + deals.length}
+                    icon={FaUsers}
+                    color="bg-gradient-to-br from-[#339AF0] to-[#74C0FC]"
+                    lightColor="bg-white/20"
+                />
+                <StatCard
+                    title="Campaign Growth"
+                    value="+12%"
                     icon={FaChartLine}
-                    color="bg-gradient-to-br from-blue-500 to-indigo-500"
-                />
-                <StatCard
-                    title="Total Deals"
-                    value={deals.length}
-                    icon={FaPercent}
-                    color="bg-gradient-to-br from-green-500 to-emerald-500"
+                    color="bg-gradient-to-br from-[#51CF66] to-[#8CE99A]"
+                    lightColor="bg-white/20"
                 />
             </div>
 
             {/* Vouchers Section */}
-            <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
-                <div className="p-6 border-b border-gray-100 flex justify-between items-center">
-                    <h3 className="font-bold text-gray-900 flex items-center gap-2">
-                        <FaTicketAlt className="text-orange-500" />
-                        Vouchers
-                    </h3>
+            <div className="bg-white rounded-[40px] shadow-sm border border-gray-100 overflow-hidden">
+                <div className="p-8 border-b border-gray-50 flex flex-col sm:flex-row justify-between items-center gap-6">
+                    <div className="flex items-center gap-4">
+                        <div className="w-12 h-12 rounded-2xl bg-orange-50 flex items-center justify-center text-orange-500">
+                            <FaTicketAlt size={20} />
+                        </div>
+                        <div>
+                            <h3 className="font-extrabold text-gray-900 text-lg font-plus-jakarta tracking-tight">Voucher Campaigns</h3>
+                            <p className="text-gray-400 text-[11px] font-medium uppercase tracking-widest mt-0.5">Custom Discount Codes</p>
+                        </div>
+                    </div>
                     <button
                         onClick={() => setShowVoucherModal(true)}
-                        className="bg-gradient-to-r from-orange-500 to-red-500 text-white px-4 py-2 rounded-xl font-bold shadow-lg hover:shadow-xl transition flex items-center gap-2"
+                        className="w-full sm:w-auto bg-gradient-to-r from-orange-500 to-red-500 text-white px-8 py-4 rounded-2xl font-extrabold shadow-xl shadow-orange-500/20 hover:shadow-2xl transition-all duration-300 flex items-center justify-center gap-2 active:scale-95 uppercase text-[11px] tracking-widest font-plus-jakarta"
                     >
-                        <FaPlus /> Create Voucher
+                        <FaPlus /> Create New Voucher
                     </button>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 p-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 p-8">
                     {vouchers.map((voucher) => (
                         <motion.div
                             key={voucher._id}
                             initial={{ opacity: 0, scale: 0.95 }}
                             animate={{ opacity: 1, scale: 1 }}
-                            className={`rounded-xl p-6 border-2 ${voucher.isActive
-                                ? 'bg-green-50 border-green-200'
-                                : 'bg-gray-50 border-gray-200'
+                            className={`rounded-[32px] p-8 border transition-all duration-300 group hover:shadow-xl ${voucher.isActive
+                                ? 'bg-white border-emerald-100 shadow-sm'
+                                : 'bg-gray-50/50 border-gray-100 grayscale opacity-70'
                                 }`}
                         >
-                            <div className="flex justify-between items-start mb-4">
+                            <div className="flex justify-between items-start mb-6">
                                 <div>
-                                    <div className="font-mono font-bold text-xl text-gray-900">{voucher.code}</div>
-                                    <div className={`inline-block px-2 py-0.5 rounded-full text-xs font-bold mt-1 ${voucher.isActive
-                                        ? 'bg-green-500 text-white'
-                                        : 'bg-gray-500 text-white'
+                                    <div className="font-mono font-extrabold text-2xl text-gray-900 tracking-tighter bg-gray-50 px-4 py-2 rounded-xl border border-dashed border-gray-200 group-hover:border-orange-500/30 transition-colors">
+                                        {voucher.code}
+                                    </div>
+                                    <div className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[9px] font-extrabold mt-3 uppercase tracking-widest font-plus-jakarta ${voucher.isActive
+                                        ? 'bg-emerald-500/10 text-emerald-600'
+                                        : 'bg-gray-400/10 text-gray-500'
                                         }`}>
+                                        <span className={`w-1.5 h-1.5 rounded-full ${voucher.isActive ? 'bg-emerald-500 animate-pulse' : 'bg-gray-400'}`}></span>
                                         {voucher.isActive ? 'Active' : 'Inactive'}
                                     </div>
                                 </div>
-                                <div className="text-2xl font-bold text-orange-500">
-                                    Rs. {voucher.discount}
+                                <div className="text-right">
+                                    <div className="text-3xl font-extrabold text-orange-500 font-plus-jakarta leading-none">
+                                        <span className="text-sm font-bold align-top mt-1 mr-0.5">Rs.</span>{voucher.discount}
+                                    </div>
+                                    <div className="text-[9px] font-bold text-gray-400 uppercase tracking-widest mt-1">Discount</div>
                                 </div>
                             </div>
 
-                            <p className="text-sm text-gray-600 mb-3">{voucher.description}</p>
-
-                            <div className="text-xs text-gray-500 mb-3">
-                                Min: Rs. {voucher.minimumAmount} | Expires: {new Date(voucher.expiryDate).toLocaleDateString()}
+                            <div className="space-y-4 mb-8">
+                                <p className="text-sm text-gray-600 font-medium leading-relaxed">{voucher.description}</p>
+                                
+                                <div className="flex items-center gap-4 pt-4 border-t border-gray-50">
+                                    <div className="flex-1">
+                                        <div className="text-[9px] font-bold text-gray-400 uppercase tracking-widest mb-1">Min. Order</div>
+                                        <div className="text-sm font-extrabold text-gray-900 font-plus-jakarta">Rs. {voucher.minimumAmount}</div>
+                                    </div>
+                                    <div className="flex-1 text-right">
+                                        <div className="text-[9px] font-bold text-gray-400 uppercase tracking-widest mb-1">Expires On</div>
+                                        <div className="text-sm font-extrabold text-gray-900 font-plus-jakarta">{new Date(voucher.expiryDate).toLocaleDateString()}</div>
+                                    </div>
+                                </div>
                             </div>
 
                             <button
                                 onClick={() => toggleVoucherStatus(voucher._id)}
-                                className={`w-full py-2 rounded-lg font-medium transition flex items-center justify-center gap-2 ${voucher.isActive
-                                    ? 'bg-orange-100 hover:bg-orange-200 text-orange-700'
-                                    : 'bg-gray-100 hover:bg-gray-200 text-gray-700'
+                                className={`w-full py-4 rounded-2xl font-extrabold transition-all duration-300 flex items-center justify-center gap-3 text-[11px] uppercase tracking-widest font-plus-jakarta active:scale-95 ${voucher.isActive
+                                    ? 'bg-orange-50 hover:bg-orange-100 text-orange-600 shadow-sm'
+                                    : 'bg-emerald-50 hover:bg-emerald-100 text-emerald-600'
                                     }`}
                             >
-                                {voucher.isActive ? <FaToggleOn /> : <FaToggleOff />}
-                                {voucher.isActive ? 'Deactivate' : 'Activate'}
+                                {voucher.isActive ? <FaToggleOn size={18} /> : <FaToggleOff size={18} />}
+                                {voucher.isActive ? 'Deactivate Campaign' : 'Activate Campaign'}
                             </button>
                         </motion.div>
                     ))}
                 </div>
 
                 {vouchers.length === 0 && (
-                    <div className="p-12 text-center text-gray-500">
-                        <FaTicketAlt className="text-5xl mx-auto mb-4 opacity-50" />
-                        <p>No vouchers yet. Create your first voucher!</p>
+                    <div className="p-20 text-center">
+                        <div className="w-24 h-24 rounded-full bg-gray-50 flex items-center justify-center mx-auto mb-6">
+                            <FaTicketAlt className="text-4xl text-gray-200" />
+                        </div>
+                        <h4 className="text-xl font-extrabold text-gray-900 font-plus-jakarta mb-2">No active vouchers</h4>
+                        <p className="text-gray-400 text-sm max-w-xs mx-auto">Launch your first voucher campaign to start attracting more customers today!</p>
                     </div>
                 )}
             </div>
 
             {/* Deals Section */}
-            <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
-                <div className="p-6 border-b border-gray-100 flex justify-between items-center">
-                    <h3 className="font-bold text-gray-900 flex items-center gap-2">
-                        <FaTags className="text-purple-500" />
-                        Deals
-                    </h3>
+            <div className="bg-white rounded-[40px] shadow-sm border border-gray-100 overflow-hidden">
+                <div className="p-8 border-b border-gray-50 flex flex-col sm:flex-row justify-between items-center gap-6">
+                    <div className="flex items-center gap-4">
+                        <div className="w-12 h-12 rounded-2xl bg-purple-50 flex items-center justify-center text-purple-500">
+                            <FaTags size={20} />
+                        </div>
+                        <div>
+                            <h3 className="font-extrabold text-gray-900 text-lg font-plus-jakarta tracking-tight">Exclusive Deals</h3>
+                            <p className="text-gray-400 text-[11px] font-medium uppercase tracking-widest mt-0.5">Limited Time Offers</p>
+                        </div>
+                    </div>
                     <button
                         onClick={() => setShowDealModal(true)}
-                        className="bg-gradient-to-r from-purple-500 to-pink-500 text-white px-4 py-2 rounded-xl font-bold shadow-lg hover:shadow-xl transition flex items-center gap-2"
+                        className="w-full sm:w-auto bg-gradient-to-r from-purple-600 to-indigo-600 text-white px-8 py-4 rounded-2xl font-extrabold shadow-xl shadow-purple-500/20 hover:shadow-2xl transition-all duration-300 flex items-center justify-center gap-2 active:scale-95 uppercase text-[11px] tracking-widest font-plus-jakarta"
                     >
-                        <FaPlus /> Create Deal
+                        <FaPlus /> Create New Deal
                     </button>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 p-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 p-8">
                     {deals.map((deal) => (
                         <motion.div
                             key={deal._id}
                             initial={{ opacity: 0, scale: 0.95 }}
                             animate={{ opacity: 1, scale: 1 }}
-                            className={`rounded-xl p-6 border-2 ${deal.isActive
-                                ? 'bg-purple-50 border-purple-200'
-                                : 'bg-gray-50 border-gray-200'
+                            className={`rounded-[32px] p-8 border transition-all duration-300 group hover:shadow-xl ${deal.isActive
+                                ? 'bg-white border-purple-100 shadow-sm'
+                                : 'bg-gray-50/50 border-gray-100 grayscale opacity-70'
                                 }`}
                         >
-                            <div className="flex justify-between items-start mb-4">
+                            <div className="flex justify-between items-start mb-6">
                                 <div>
-                                    <h4 className="font-bold text-gray-900">{deal.title}</h4>
-                                    <div className={`inline-block px-2 py-0.5 rounded-full text-xs font-bold mt-1 ${deal.isActive
-                                        ? 'bg-purple-500 text-white'
-                                        : 'bg-gray-500 text-white'
+                                    <h4 className="font-extrabold text-gray-900 text-lg font-plus-jakarta tracking-tight leading-tight group-hover:text-purple-600 transition-colors">{deal.title}</h4>
+                                    <div className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[9px] font-extrabold mt-3 uppercase tracking-widest font-plus-jakarta ${deal.isActive
+                                        ? 'bg-purple-500/10 text-purple-600'
+                                        : 'bg-gray-400/10 text-gray-500'
                                         }`}>
-                                        {deal.isActive ? 'Active' : 'Inactive'}
+                                        <span className={`w-1.5 h-1.5 rounded-full ${deal.isActive ? 'bg-purple-500 animate-pulse' : 'bg-gray-400'}`}></span>
+                                        {deal.isActive ? 'Live Now' : 'Ended'}
                                     </div>
                                 </div>
-                                <div className="text-2xl font-bold text-purple-500">
-                                    {deal.discountType === 'percentage' ? `${deal.discount}%` : `Rs. ${deal.discount}`}
+                                <div className="text-right">
+                                    <div className="text-3xl font-extrabold text-purple-600 font-plus-jakarta leading-none">
+                                        {deal.discountType === 'percentage' ? (
+                                            <>{deal.discount}<span className="text-sm font-bold">%</span></>
+                                        ) : (
+                                            <><span className="text-sm font-bold align-top mt-1 mr-0.5">Rs.</span>{deal.discount}</>
+                                        )}
+                                    </div>
+                                    <div className="text-[9px] font-bold text-gray-400 uppercase tracking-widest mt-1">Benefit</div>
                                 </div>
                             </div>
 
-                            <p className="text-sm text-gray-600 mb-3">{deal.description}</p>
-
-                            <div className="text-xs text-gray-500 mb-3">
-                                Min: Rs. {deal.minimumAmount} | {new Date(deal.startDate).toLocaleDateString()} - {new Date(deal.endDate).toLocaleDateString()}
+                            <div className="space-y-4 mb-8">
+                                <p className="text-sm text-gray-600 font-medium leading-relaxed line-clamp-2">{deal.description}</p>
+                                
+                                <div className="bg-gray-50/50 rounded-2xl p-4 border border-gray-100">
+                                    <div className="flex justify-between mb-3">
+                                        <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Duration</span>
+                                        <span className="text-[10px] font-extrabold text-gray-900 font-plus-jakarta">
+                                            {new Date(deal.startDate).toLocaleDateString('en-GB', { day: '2-digit', month: 'short' })} - {new Date(deal.endDate).toLocaleDateString('en-GB', { day: '2-digit', month: 'short' })}
+                                        </span>
+                                    </div>
+                                    <div className="w-full bg-gray-200 h-1.5 rounded-full overflow-hidden">
+                                        <div className="bg-purple-500 h-full w-2/3 rounded-full"></div>
+                                    </div>
+                                </div>
                             </div>
 
-                            <div className="flex gap-2">
+                            <div className="flex gap-3">
                                 <button
                                     onClick={() => toggleDealStatus(deal._id)}
-                                    className={`flex-1 py-2 rounded-lg font-medium transition flex items-center justify-center gap-2 ${deal.isActive
-                                        ? 'bg-purple-100 hover:bg-purple-200 text-purple-700'
+                                    className={`flex-1 py-4 rounded-2xl font-extrabold transition-all duration-300 flex items-center justify-center gap-3 text-[11px] uppercase tracking-widest font-plus-jakarta active:scale-95 ${deal.isActive
+                                        ? 'bg-purple-50 hover:bg-purple-100 text-purple-600 shadow-sm'
                                         : 'bg-gray-100 hover:bg-gray-200 text-gray-700'
                                         }`}
                                 >
-                                    {deal.isActive ? <FaToggleOn /> : <FaToggleOff />}
-                                    {deal.isActive ? 'Deactivate' : 'Activate'}
+                                    {deal.isActive ? <FaToggleOn size={18} /> : <FaToggleOff size={18} />}
+                                    {deal.isActive ? 'Pause' : 'Resume'}
                                 </button>
                                 <button
                                     onClick={() => deleteDeal(deal._id)}
-                                    className="px-4 py-2 bg-red-50 hover:bg-red-100 text-red-600 rounded-lg font-medium transition"
+                                    className="w-14 h-14 bg-red-50 hover:bg-red-500 hover:text-white text-red-600 rounded-2xl flex items-center justify-center transition-all duration-300 active:scale-90 shadow-sm border border-red-100/50"
                                 >
-                                    <FaTrash />
+                                    <FaTrash size={16} />
                                 </button>
                             </div>
                         </motion.div>
@@ -296,9 +363,12 @@ export default function DashboardPromotions() {
                 </div>
 
                 {deals.length === 0 && (
-                    <div className="p-12 text-center text-gray-500">
-                        <FaTags className="text-5xl mx-auto mb-4 opacity-50" />
-                        <p>No deals yet. Create your first deal!</p>
+                    <div className="p-20 text-center">
+                        <div className="w-24 h-24 rounded-full bg-gray-50 flex items-center justify-center mx-auto mb-6">
+                            <FaTags className="text-4xl text-gray-200" />
+                        </div>
+                        <h4 className="text-xl font-extrabold text-gray-900 font-plus-jakarta mb-2">No active deals</h4>
+                        <p className="text-gray-400 text-sm max-w-xs mx-auto">Create a limited-time deal to clear stock or promote new items!</p>
                     </div>
                 )}
             </div>
