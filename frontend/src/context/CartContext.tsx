@@ -34,9 +34,15 @@ export const CartProvider = ({ children }: { children: React.ReactNode }) => {
 
     // Load cart from local storage on mount
     useEffect(() => {
+        if (typeof window === 'undefined') return;
+        
         const savedCart = localStorage.getItem('foodswipe_cart');
         if (savedCart) {
-            setCart(JSON.parse(savedCart));
+            try {
+                setCart(JSON.parse(savedCart));
+            } catch (e) {
+                console.error('Error parsing cart from localStorage:', e);
+            }
         }
 
         const handleCartCleared = () => {
@@ -49,7 +55,9 @@ export const CartProvider = ({ children }: { children: React.ReactNode }) => {
 
     // Save cart to local storage whenever it changes
     useEffect(() => {
-        localStorage.setItem('foodswipe_cart', JSON.stringify(cart));
+        if (typeof window !== 'undefined') {
+            localStorage.setItem('foodswipe_cart', JSON.stringify(cart));
+        }
     }, [cart]);
 
     const addToCart = (item: CartItem) => {

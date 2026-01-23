@@ -24,10 +24,8 @@ if (typeof window !== 'undefined') {
                         window.location.hostname.startsWith('192.168.');
                         
     if (isLocalhost) {
-        // @ts-ignore
-        auth.settings = auth.settings || {};
-        // @ts-ignore
-        auth.settings.appVerificationDisabledForTesting = true;
+        (auth as any).settings = (auth as any).settings || {};
+        (auth as any).settings.appVerificationDisabledForTesting = true;
         console.log('🔧 Firebase Auth: Test mode enabled for localhost');
     }
 }
