@@ -4,7 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { FaTimes, FaCopy, FaCheck, FaTicketAlt } from 'react-icons/fa';
 import axios from 'axios';
-import { API_BASE_URL } from '@/utils/config';
+import { getApiUrl } from '@/utils/config';
 
 interface DiscountsVouchersProps {
     isOpen: boolean;
@@ -45,7 +45,7 @@ export default function DiscountsVouchers({ isOpen, onClose }: DiscountsVouchers
                 return;
             }
 
-            const response = await axios.get(`${API_BASE_URL}/api/vouchers`, {
+            const response = await axios.get(`${getApiUrl()}/api/vouchers`, {
                 headers: { Authorization: `Bearer ${token}` }
             });
 
@@ -193,3 +193,4 @@ export default function DiscountsVouchers({ isOpen, onClose }: DiscountsVouchers
         </AnimatePresence>
     );
 }
+

@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import axios from 'axios';
 import { getSocket } from '../../utils/socket';
-import { API_BASE_URL } from '../../utils/config';
+import { getApiUrl } from '../../utils/config';
 import { FaChartLine, FaShoppingBag, FaMoneyBillWave, FaUsers, FaStore, FaMotorcycle } from 'react-icons/fa';
 
 interface AnalyticsData {
@@ -52,7 +52,7 @@ export default function AnalyticsView() {
                 },
             };
 
-            const res = await axios.get(`${API_BASE_URL}/api/admin/stats`, config);
+            const res = await axios.get(`${getApiUrl()}/api/admin/stats`, config);
             setAnalytics(res.data);
         } catch (err: any) {
             console.error('❌ Error fetching analytics:', err);
@@ -262,3 +262,4 @@ export default function AnalyticsView() {
         </div>
     );
 }
+

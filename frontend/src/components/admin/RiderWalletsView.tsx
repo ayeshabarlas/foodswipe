@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import axios from 'axios';
-import { API_BASE_URL } from '../../utils/config';
+import { getApiUrl } from '../../utils/config';
 import { FaWallet, FaMotorcycle, FaMoneyBillWave, FaHistory } from 'react-icons/fa';
 
 interface Wallet {
@@ -47,7 +47,7 @@ export default function RiderWalletsView() {
                 },
             };
 
-            const res = await axios.get(`${API_BASE_URL}/api/finance/rider-wallets`, config);
+            const res = await axios.get(`${getApiUrl()}/api/finance/rider-wallets`, config);
             setWallets(res.data);
         } catch (err: any) {
             console.error('Error fetching rider wallets:', err);
@@ -231,3 +231,4 @@ export default function RiderWalletsView() {
         </div>
     );
 }
+

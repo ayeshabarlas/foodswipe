@@ -8,7 +8,7 @@ import { useRouter } from 'next/navigation';
 import { useSwipeBack } from '../hooks/useSwipeBack';
 import ModernLoader from './ModernLoader';
 import PhoneAuthModal from './PhoneAuthModal';
-import { API_BASE_URL } from '../utils/config';
+import { getApiUrl } from '../utils/config';
 import { calculateDistance } from '../utils/location';
 import { useSettings } from '../hooks/useSettings';
 
@@ -81,7 +81,7 @@ export default function CheckoutModal({ isOpen, onClose, cart, total, subtotal, 
             };
 
             try {
-                const response = await axios.get(`${API_BASE_URL}/api/restaurants/${resId}`);
+                const response = await axios.get(`${getApiUrl()}/api/restaurants/${resId}`);
                 const restaurant = response.data;
                 
                 if (restaurant?.location?.coordinates && deliveryLocation) {
@@ -221,7 +221,7 @@ export default function CheckoutModal({ isOpen, onClose, cart, total, subtotal, 
             }
 
             const response = await axios.post(
-                `${API_BASE_URL}/api/vouchers/verify`,
+                `${getApiUrl()}/api/vouchers/verify`,
                 { code: promoCode.toUpperCase(), amount: subtotal },
                 { headers: { Authorization: `Bearer ${token}` } }
             );
@@ -513,7 +513,7 @@ export default function CheckoutModal({ isOpen, onClose, cart, total, subtotal, 
 
             console.log('📡 handlePlaceOrder: Sending order request to API...', orderData);
             const response = await axios.post(
-                `${API_BASE_URL}/api/orders`,
+                `${getApiUrl()}/api/orders`,
                 orderData,
                 { 
                     headers: { Authorization: `Bearer ${token}` },
@@ -529,7 +529,7 @@ export default function CheckoutModal({ isOpen, onClose, cart, total, subtotal, 
                 try {
                     console.log('💳 handlePlaceOrder: Initiating Safepay for order:', order._id);
                     const safepayRes = await axios.post(
-                        `${API_BASE_URL}/api/payments/safepay/checkout`,
+                        `${getApiUrl()}/api/payments/safepay/checkout`,
                         { orderId: order._id },
                         { headers: { Authorization: `Bearer ${token}` } }
                     );
@@ -597,7 +597,7 @@ export default function CheckoutModal({ isOpen, onClose, cart, total, subtotal, 
 
                         // Update backend - don't await this to avoid blocking the UI
                         axios.put(
-                            `${API_BASE_URL}/api/auth/profile`,
+                            `${getApiUrl()}/api/auth/profile`,
                             { 
                                 address: deliveryAddress,
                                 houseNumber: houseNumber 
@@ -1213,3 +1213,4 @@ export default function CheckoutModal({ isOpen, onClose, cart, total, subtotal, 
         </AnimatePresence>
     );
 }
+

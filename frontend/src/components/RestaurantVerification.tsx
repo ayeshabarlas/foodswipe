@@ -4,7 +4,7 @@ import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { FaCheck, FaUpload, FaIdCard, FaStore, FaMoneyBill, FaCamera, FaSpinner } from "react-icons/fa";
 import axios from "axios";
-import { API_BASE_URL } from "../utils/config";
+import { getApiUrl() } from "../utils/config";
 
 interface VerificationProps {
     onComplete: () => void;
@@ -47,7 +47,7 @@ export default function RestaurantVerification({ onComplete }: VerificationProps
                 setScanProgress(0);
             }
 
-            const res = await axios.post(`${API_BASE_URL}/api/upload`, uploadData, {
+            const res = await axios.post(`${getApiUrl()}/api/upload`, uploadData, {
                 headers: { "Content-Type": "multipart/form-data" },
             });
 
@@ -127,7 +127,7 @@ export default function RestaurantVerification({ onComplete }: VerificationProps
             const token = JSON.parse(localStorage.getItem("userInfo") || "{}").token;
 
             await axios.post(
-                `${API_BASE_URL}/api/restaurants/verify`,
+                `${getApiUrl()}/api/restaurants/verify`,
                 {
                     ownerCNIC: formData.ownerCNIC,
                     bankDetails: {
@@ -416,3 +416,4 @@ export default function RestaurantVerification({ onComplete }: VerificationProps
         </div>
     );
 }
+

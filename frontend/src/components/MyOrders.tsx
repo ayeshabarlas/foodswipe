@@ -4,7 +4,7 @@ import React, { useState, useEffect, useImperativeHandle, forwardRef } from 'rea
 import { motion, AnimatePresence } from 'framer-motion';
 import { FaTimes, FaClock, FaBiking, FaReceipt, FaSync } from 'react-icons/fa';
 import axios from 'axios';
-import { API_BASE_URL } from '@/utils/config';
+import { getApiUrl } from '@/utils/config';
 import { useSwipeBack } from '../hooks/useSwipeBack';
 import ModernLoader from './ModernLoader';
 
@@ -76,7 +76,7 @@ const MyOrders = forwardRef<MyOrdersRef, MyOrdersProps>(({ isOpen, onClose, onTr
                 return;
             }
 
-            const response = await axios.get(`${API_BASE_URL}/api/orders/my-orders`, {
+            const response = await axios.get(`${getApiUrl()}/api/orders/my-orders`, {
                 headers: { Authorization: `Bearer ${token}` }
             });
 
@@ -276,3 +276,4 @@ const MyOrders = forwardRef<MyOrdersRef, MyOrdersProps>(({ isOpen, onClose, onTr
 
 MyOrders.displayName = 'MyOrders';
 export default MyOrders;
+

@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import axios from 'axios';
-import { API_BASE_URL } from '../utils/config';
+import { getApiUrl } from '../utils/config';
 import { FaWallet, FaStar, FaDownload, FaHistory, FaArrowRight, FaUniversity, FaMoneyBillWave, FaRoute } from 'react-icons/fa';
 
 interface RiderEarningsProps {
@@ -34,7 +34,7 @@ export default function RiderEarnings({ riderId }: RiderEarningsProps) {
         const fetchEarnings = async () => {
             try {
                 const token = JSON.parse(localStorage.getItem("userInfo") || "{}").token;
-                const res = await axios.get(`${API_BASE_URL}/api/riders/${riderId}/earnings?period=${period}`, {
+                const res = await axios.get(`${getApiUrl()}/api/riders/${riderId}/earnings?period=${period}`, {
                     headers: { Authorization: `Bearer ${token}` }
                 });
                 setEarnings(res.data);
@@ -46,7 +46,7 @@ export default function RiderEarnings({ riderId }: RiderEarningsProps) {
         const fetchTransactions = async () => {
             try {
                 const token = JSON.parse(localStorage.getItem("userInfo") || "{}").token;
-                const res = await axios.get(`${API_BASE_URL}/api/riders/${riderId}/transactions`, {
+                const res = await axios.get(`${getApiUrl()}/api/riders/${riderId}/transactions`, {
                     headers: { Authorization: `Bearer ${token}` }
                 });
                 setTransactions(res.data);
@@ -58,7 +58,7 @@ export default function RiderEarnings({ riderId }: RiderEarningsProps) {
         const fetchRiderDetails = async () => {
             try {
                 const token = JSON.parse(localStorage.getItem("userInfo") || "{}").token;
-                const res = await axios.get(`${API_BASE_URL}/api/riders/${riderId}`, {
+                const res = await axios.get(`${getApiUrl()}/api/riders/${riderId}`, {
                     headers: { Authorization: `Bearer ${token}` }
                 });
                 if (res.data.bankDetails) {
@@ -78,7 +78,7 @@ export default function RiderEarnings({ riderId }: RiderEarningsProps) {
         setSavingBank(true);
         try {
             const token = JSON.parse(localStorage.getItem("userInfo") || "{}").token;
-            await axios.put(`${API_BASE_URL}/api/riders/${riderId}/bank-details`, bankDetails, {
+            await axios.put(`${getApiUrl()}/api/riders/${riderId}/bank-details`, bankDetails, {
                 headers: { Authorization: `Bearer ${token}` }
             });
             setIsEditingBank(false);
@@ -104,12 +104,12 @@ export default function RiderEarnings({ riderId }: RiderEarningsProps) {
 
         try {
             const token = JSON.parse(localStorage.getItem("userInfo") || "{}").token;
-            await axios.post(`${API_BASE_URL}/api/riders/${riderId}/cashout`, {}, {
+            await axios.post(`${getApiUrl()}/api/riders/${riderId}/cashout`, {}, {
                 headers: { Authorization: `Bearer ${token}` }
             });
             alert('Cashout request submitted successfully!');
             // Refresh data
-            const res = await axios.get(`${API_BASE_URL}/api/riders/${riderId}/earnings?period=${period}`, {
+            const res = await axios.get(`${getApiUrl()}/api/riders/${riderId}/earnings?period=${period}`, {
                 headers: { Authorization: `Bearer ${token}` }
             });
             setEarnings(res.data);
@@ -315,3 +315,4 @@ function SmallStat({ icon, label, value, color }: { icon: any; label: string; va
         </div>
     );
 }
+

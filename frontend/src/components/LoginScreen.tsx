@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { FaEnvelope, FaUser, FaPhone, FaGoogle, FaArrowLeft, FaStore, FaMotorcycle } from "react-icons/fa";
 import axios from "axios";
-import { API_BASE_URL } from "@/utils/config";
+import { getApiUrl } from "@/utils/config";
 import { useRouter } from "next/navigation";
 import { signInWithPopup } from "firebase/auth";
 import { auth, googleProvider } from "../config/firebase";
@@ -37,7 +37,7 @@ export default function LoginScreen({ onLogin }: LoginScreenProps) {
     useEffect(() => {
         const checkForceUpdate = async () => {
             try {
-                const { data } = await axios.get(`${API_BASE_URL}/api/admin/settings/public`);
+                const { data } = await axios.get(`${getApiUrl()}/api/admin/settings/public`);
                 if (data.appConfig?.forceUpdate) {
                     const currentVersion = '1.0.0'; // Should come from app config/package.json
                     if (data.appConfig.minVersion > currentVersion) {
@@ -69,7 +69,7 @@ export default function LoginScreen({ onLogin }: LoginScreenProps) {
             const idToken = await user.getIdToken(true); 
 
             console.log('Sending token to backend...');
-            const response = await axios.post(`${API_BASE_URL}/api/auth/verify-firebase-token`, {
+            const response = await axios.post(`${getApiUrl()}/api/auth/verify-firebase-token`, {
                 idToken,
                 name: user.displayName || 'Google User',
                 email: user.email || '',
@@ -115,7 +115,7 @@ export default function LoginScreen({ onLogin }: LoginScreenProps) {
             }
 
             // Direct register without OTP or Phone
-            const res = await axios.post(`${API_BASE_URL}/api/auth/register`, {
+            const res = await axios.post(`${getApiUrl()}/api/auth/register`, {
                 name: `${formData.firstName} ${formData.lastName}`,
                 email: formData.email,
                 password: formData.password,
@@ -147,7 +147,7 @@ export default function LoginScreen({ onLogin }: LoginScreenProps) {
                 setError("Password is required for login");
                 return;
             }
-            const res = await axios.post(`${API_BASE_URL}/api/auth/login`, {
+            const res = await axios.post(`${getApiUrl()}/api/auth/login`, {
                 identifier: formData.email,
                 password: formData.password,
                 role: selectedRole,
@@ -215,14 +215,15 @@ export default function LoginScreen({ onLogin }: LoginScreenProps) {
                                 onClick={async () => {
                                     try {
                                         setError("Checking connection...");
-                                        const res = await axios.get(`${API_BASE_URL}/health?t=${Date.now()}`);
+                                        const res = await axios.get(`${getApiUrl()}/health?t=${Date.now()}`);
                                         const data = res.data;
-                                        let msg = `Backend: ${data.status}\nDB: ${data.db}\nFirebase: ${data.firebase}\nURL: ${API_BASE_URL}`;
+                                        let msg = `Backend: ${data.status}\nDB: ${data.db}\nFirebase: ${data.firebase}\nURL: ${getApiUrl()}`;
                                         alert(msg);
                                         setError("");
                                     } catch (e: any) {
-                                        alert(`Backend unreachable!\nURL: ${API_BASE_URL}\nError: ${e.message}`);
-                                        setError(`Connection failed: ${e.message}`);
+                                        console.error(e);
+                                        alert(`Backend unreachable!\nURL: ${getApiUrl()}\nError: ${e.message}`);
+                                        setError(`Offline: ${e.message}`);
                                     }
                                 }}
                                 className="mt-2 text-xs font-bold underline hover:text-red-900"

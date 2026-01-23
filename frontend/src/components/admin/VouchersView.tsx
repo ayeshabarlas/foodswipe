@@ -2,7 +2,7 @@
 import { useState, useEffect } from 'react';
 import axios from 'axios';
 import { getSocket } from '../../utils/socket';
-import { API_BASE_URL } from '../../utils/config';
+import { getApiUrl } from '../../utils/config';
 import { FaPlus, FaFilter, FaEdit, FaTrash, FaTicketAlt } from 'react-icons/fa';
 import AdminCreateVoucherModal from './AdminCreateVoucherModal';
 
@@ -80,7 +80,7 @@ export default function VouchersView() {
             const config = {
                 headers: { Authorization: `Bearer ${userInfo.token}` }
             };
-            const { data } = await axios.get(`${API_BASE_URL}/api/vouchers/admin/all`, config);
+            const { data } = await axios.get(`${getApiUrl()}/api/vouchers/admin/all`, config);
             setVouchers(data.map((v: any) => ({
                 ...v,
                 status: v.isActive ? (new Date(v.expiryDate) > new Date() ? 'Active' : 'Expired') : 'Inactive',
@@ -118,7 +118,7 @@ export default function VouchersView() {
             const userInfo = JSON.parse(userInfoStr);
             console.log('Attempting to delete voucher:', id); // Debug log
 
-            await axios.delete(`${API_BASE_URL}/api/vouchers/${id}`, {
+            await axios.delete(`${getApiUrl()}/api/vouchers/${id}`, {
                 headers: { Authorization: `Bearer ${userInfo.token}` }
             });
 
@@ -338,3 +338,4 @@ export default function VouchersView() {
         </div>
     );
 }
+

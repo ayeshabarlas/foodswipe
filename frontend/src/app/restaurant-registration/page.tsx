@@ -3,14 +3,14 @@
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import axios from 'axios';
-import { API_BASE_URL } from '@/utils/config';
+import { getApiUrl } from '@/utils/config';
 import { FaUpload, FaCheckCircle, FaTimesCircle } from 'react-icons/fa';
 
 export default function RestaurantRegistration() {
     const router = useRouter();
     const [step, setStep] = useState(1);
     const [uploading, setUploading] = useState(false);
-    interface FormData {
+    interface RestaurantFormData {
         name: string;
         address: string;
         contact: string;
@@ -37,7 +37,7 @@ export default function RestaurantRegistration() {
         };
     }
 
-    const [formData, setFormData] = useState<FormData>({
+    const [formData, setFormData] = useState<RestaurantFormData>({
         name: '',
         address: '',
         contact: '',
@@ -80,8 +80,8 @@ export default function RestaurantRegistration() {
                 },
             };
 
-            const { data } = await axios.post(`${API_BASE_URL}/api/upload`, uploadData, config);
-            const fullUrl = `${API_BASE_URL}${data.imageUrl}`;
+            const { data } = await axios.post(`${getApiUrl()}/api/upload`, uploadData, config);
+            const fullUrl = `${getApiUrl()}${data.imageUrl}`;
 
             if (isArray) {
                 const keys = field.split('.');
@@ -128,7 +128,7 @@ export default function RestaurantRegistration() {
                 verificationStatus: 'pending'
             };
 
-            await axios.post(`${API_BASE_URL}/api/restaurants`, submitData, config);
+            await axios.post(`${getApiUrl()}/api/restaurants`, submitData, config);
             alert('Registration submitted! Your application is pending admin approval.');
             router.push('/restaurant-dashboard');
         } catch (error: any) {
@@ -419,3 +419,4 @@ export default function RestaurantRegistration() {
         </div>
     );
 }
+

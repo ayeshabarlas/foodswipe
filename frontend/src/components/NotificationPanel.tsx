@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import { API_BASE_URL } from '../utils/config';
+import { getApiUrl } from '../utils/config';
 import { FaTimes, FaBox, FaWallet, FaStar, FaCheckCircle, FaBell } from 'react-icons/fa';
 import { motion, AnimatePresence } from 'framer-motion';
 import { initSocket, getSocket } from '../utils/socket';
@@ -29,7 +29,7 @@ export default function NotificationPanel({ onClose, riderId, onReadUpdate }: No
     const fetchNotifications = async () => {
         try {
             const token = JSON.parse(localStorage.getItem("userInfo") || "{}").token;
-            const res = await axios.get(`${API_BASE_URL}/api/notifications`, {
+            const res = await axios.get(`${getApiUrl()}/api/notifications`, {
                 headers: { Authorization: `Bearer ${token}` }
             });
             setNotifications(res.data);
@@ -68,7 +68,7 @@ export default function NotificationPanel({ onClose, riderId, onReadUpdate }: No
     const markAllAsRead = async () => {
         try {
             const token = JSON.parse(localStorage.getItem("userInfo") || "{}").token;
-            await axios.put(`${API_BASE_URL}/api/notifications/read-all`, {}, {
+            await axios.put(`${getApiUrl()}/api/notifications/read-all`, {}, {
                 headers: { Authorization: `Bearer ${token}` }
             });
             setNotifications(prev => prev.map(n => ({ ...n, read: true })));
@@ -81,7 +81,7 @@ export default function NotificationPanel({ onClose, riderId, onReadUpdate }: No
     const markAsRead = async (id: string) => {
         try {
             const token = JSON.parse(localStorage.getItem("userInfo") || "{}").token;
-            await axios.put(`${API_BASE_URL}/api/notifications/${id}/read`, {}, {
+            await axios.put(`${getApiUrl()}/api/notifications/${id}/read`, {}, {
                 headers: { Authorization: `Bearer ${token}` }
             });
             setNotifications(prev => prev.map(n => n._id === id ? { ...n, read: true } : n));
@@ -196,3 +196,4 @@ export default function NotificationPanel({ onClose, riderId, onReadUpdate }: No
         </motion.div>
     );
 }
+

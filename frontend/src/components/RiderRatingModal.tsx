@@ -4,7 +4,7 @@ import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { FaStar, FaTimes, FaMotorcycle } from 'react-icons/fa';
 import axios from 'axios';
-import { API_BASE_URL } from '../utils/config';
+import { getApiUrl } from '../utils/config';
 import toast from 'react-hot-toast';
 
 interface RiderRatingModalProps {
@@ -49,7 +49,7 @@ export default function RiderRatingModal({ isOpen, onClose, orderId, riderName, 
             }
 
             await axios.post(
-                `${API_BASE_URL}/api/orders/${orderId}/rate-rider`,
+                `${getApiUrl()}/api/orders/${orderId}/rate-rider`,
                 { rating, review },
                 { headers: { Authorization: `Bearer ${token}` } }
             );
@@ -137,3 +137,4 @@ export default function RiderRatingModal({ isOpen, onClose, orderId, riderName, 
         </AnimatePresence>
     );
 }
+

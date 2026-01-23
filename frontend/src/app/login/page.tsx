@@ -4,7 +4,7 @@ import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import axios from 'axios';
-import { API_BASE_URL } from '@/utils/config';
+import { getApiUrl } from '@/utils/config';
 import { FaGoogle, FaEnvelope, FaExclamationCircle } from 'react-icons/fa';
 import { auth, googleProvider } from '@/config/firebase';
 import { signInWithPopup } from 'firebase/auth';
@@ -31,7 +31,7 @@ export default function LoginPage() {
             const token = await result.user.getIdToken(true);
 
             // Send to backend
-            const { data } = await axios.post(`${API_BASE_URL}/api/auth/verify-firebase-token`, {
+            const { data } = await axios.post(`${getApiUrl()}/api/auth/verify-firebase-token`, {
                 idToken: token,
                 email: result.user.email,
                 name: result.user.displayName,
@@ -55,7 +55,7 @@ export default function LoginPage() {
         try {
             if (emailMode === 'signup') {
                 const fullName = `${formData.firstName} ${formData.lastName}`.trim();
-                const { data } = await axios.post(`${API_BASE_URL}/api/auth/register`, {
+                const { data } = await axios.post(`${getApiUrl()}/api/auth/register`, {
                     name: fullName,
                     email: formData.email,
                     password: formData.password,
@@ -63,7 +63,7 @@ export default function LoginPage() {
                 });
                 handleAuthSuccess(data);
             } else {
-                const { data } = await axios.post(`${API_BASE_URL}/api/auth/login`, {
+                const { data } = await axios.post(`${getApiUrl()}/api/auth/login`, {
                     identifier: formData.email,
                     password: formData.password,
                     role: 'customer' // Default
@@ -237,3 +237,4 @@ export default function LoginPage() {
         </div>
     );
 }
+

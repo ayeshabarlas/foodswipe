@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { FaSave, FaPlus, FaTrash, FaClock, FaMapMarkerAlt, FaInfoCircle, FaUniversity, FaCamera, FaCheck } from 'react-icons/fa';
 import axios from 'axios';
-import { API_BASE_URL } from '../utils/config';
+import { getApiUrl } from '../utils/config';
 import { getImageUrl } from '../utils/imageUtils';
 import ModernLoader from './ModernLoader';
 
@@ -102,12 +102,12 @@ export default function SettingsTab({ restaurant, onUpdate }: SettingsTabProps) 
                 },
             };
 
-            const { data } = await axios.post(`${API_BASE_URL}/api/upload`, uploadData, config);
+            const { data } = await axios.post(`${getApiUrl()}/api/upload`, uploadData, config);
             const fullUrl = data.imageUrl; // Use direct URL from response
             
             // Immediately update backend to sync with Store Profile
             await axios.put(
-                `${API_BASE_URL}/api/restaurants/store-settings`,
+                `${getApiUrl()}/api/restaurants/store-settings`,
                 { logo: fullUrl },
                 { headers: { Authorization: `Bearer ${userInfo.token}` } }
             );
@@ -140,7 +140,7 @@ export default function SettingsTab({ restaurant, onUpdate }: SettingsTabProps) 
 
             // We send the filtered updateData. The backend will handle geocoding 
             // the address into coordinates if the address has changed or location is missing.
-            await axios.put(`${API_BASE_URL}/api/restaurants/${restaurant._id}`, updateData, {
+            await axios.put(`${getApiUrl()}/api/restaurants/${restaurant._id}`, updateData, {
                 headers: { Authorization: `Bearer ${token}` }
             });
             onUpdate();
@@ -557,3 +557,4 @@ export default function SettingsTab({ restaurant, onUpdate }: SettingsTabProps) 
         </div>
     );
 }
+

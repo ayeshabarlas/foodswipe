@@ -17,7 +17,7 @@ const ProfileModal = dynamic(() => import('./ProfileModal'), { ssr: false });
 
 import { getImageUrl, getImageFallback } from '../utils/imageUtils';
 import { useCart } from '@/context/CartContext';
-import { API_BASE_URL } from '../utils/config';
+import { getApiUrl } from '../utils/config';
 import { initSocket, subscribeToChannel, unsubscribeFromChannel } from '../utils/socket';
 import toast from 'react-hot-toast';
 
@@ -136,7 +136,7 @@ const VideoCard = React.memo(({
     const fetchComments = async () => {
         setLoadingComments(true);
         try {
-            const res = await axios.get(`${API_BASE_URL}/api/videos/${dish._id}/comments`);
+            const res = await axios.get(`${getApiUrl()}/api/videos/${dish._id}/comments`);
             setComments(res.data);
         } catch (error) {
             console.error('Error fetching comments:', error);
@@ -156,7 +156,7 @@ const VideoCard = React.memo(({
         try {
             if (!user?.token) return alert('Please login to like');
 
-            const res = await axios.post(`${API_BASE_URL}/api/videos/${dish._id}/like`, {}, {
+            const res = await axios.post(`${getApiUrl()}/api/videos/${dish._id}/like`, {}, {
                 headers: { Authorization: `Bearer ${user.token}` }
             });
 
@@ -170,7 +170,7 @@ const VideoCard = React.memo(({
     const handleShare = async (e: React.MouseEvent) => {
         e.stopPropagation();
         try {
-            await axios.post(`${API_BASE_URL}/api/videos/${dish._id}/share`);
+            await axios.post(`${getApiUrl()}/api/videos/${dish._id}/share`);
             setSharesCount(prev => prev + 1);
 
             if (navigator.share) {
@@ -194,7 +194,7 @@ const VideoCard = React.memo(({
         try {
             if (!user?.token) return alert('Please login to comment');
 
-            const res = await axios.post(`${API_BASE_URL}/api/videos/${dish._id}/comment`, {
+            const res = await axios.post(`${getApiUrl()}/api/videos/${dish._id}/comment`, {
                 text: commentText,
                 rating: 5
             }, {
@@ -462,7 +462,7 @@ export default function VideoFeed() {
             const userInfo = JSON.parse(userInfoStr);
             if (!userInfo.token) return;
 
-            const res = await axios.get(`${API_BASE_URL}/api/orders/user/active`, {
+            const res = await axios.get(`${getApiUrl()}/api/orders/user/active`, {
                 headers: { Authorization: `Bearer ${userInfo.token}` }
             });
 
@@ -572,8 +572,8 @@ export default function VideoFeed() {
                 queryParams += (queryParams ? '&' : '?') + `category=${encodeURIComponent(activeCategory)}`;
             }
             
-            console.log('📡 Fetching videos from:', `${API_BASE_URL}/api/videos/feed${queryParams}`);
-            const res = await axios.get(`${API_BASE_URL}/api/videos/feed${queryParams}`);
+            console.log('📡 Fetching videos from:', `${getApiUrl()}/api/videos/feed${queryParams}`);
+            const res = await axios.get(`${getApiUrl()}/api/videos/feed${queryParams}`);
             console.log('📡 Feed Response:', res.status, 'Videos:', res.data?.videos?.length);
             
             if (res.data && res.data.videos) {

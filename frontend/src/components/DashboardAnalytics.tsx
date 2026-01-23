@@ -4,7 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { FaChartLine, FaEye, FaHeart, FaShare, FaShoppingBag, FaMousePointer, FaArrowUp, FaArrowDown } from 'react-icons/fa';
 import axios from 'axios';
-import { API_BASE_URL } from '../utils/config';
+import { getApiUrl } from '../utils/config';
 
 interface AnalyticsData {
     overview: {
@@ -50,7 +50,7 @@ export default function DashboardAnalytics({ restaurantId }: { restaurantId: str
         if (!restaurantId || restaurantId === 'loading' || restaurantId === 'error' || !userInfo?.token) return;
 
         try {
-            const analyticsRes = await axios.get(`${API_BASE_URL}/api/restaurants/${restaurantId}/analytics`, {
+            const analyticsRes = await axios.get(`${getApiUrl()}/api/restaurants/${restaurantId}/analytics`, {
                 headers: { Authorization: `Bearer ${userInfo.token}` }
             });
             setData(analyticsRes.data);
@@ -257,3 +257,4 @@ export default function DashboardAnalytics({ restaurantId }: { restaurantId: str
         </div>
     );
 }
+

@@ -1,3 +1,5 @@
+import React from 'react';
+
 // Utility function to calculate distance between two coordinates using Haversine formula
 export function calculateDistance(
     lat1: number,
@@ -76,4 +78,3 @@ export function useUserLocation() {
     return { userLocation, locationError };
 }
 
-import React from 'react';

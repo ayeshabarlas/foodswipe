@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import { API_BASE_URL } from '../utils/config';
+import { getApiUrl } from '../utils/config';
 import { motion, AnimatePresence } from 'framer-motion';
 import { FaTimes, FaCheck, FaClock, FaMapMarkerAlt, FaCommentDots, FaBan, FaMotorcycle, FaShoppingBag, FaPaperPlane } from 'react-icons/fa';
 import CancelOrderModal from './CancelOrderModal';
@@ -76,7 +76,7 @@ export default function OrderBoard({ restaurant, onUpdate }: OrderBoardProps) {
             const userStr = typeof window !== 'undefined' ? localStorage.getItem('userInfo') : null;
             if (!userStr) return;
             const token = JSON.parse(userStr).token;
-            const res = await axios.get(`${API_BASE_URL}/api/orders/restaurant/my-orders`, {
+            const res = await axios.get(`${getApiUrl()}/api/orders/restaurant/my-orders`, {
                 headers: { Authorization: `Bearer ${token}` }
             });
             // Ensure we always set an array
@@ -164,7 +164,7 @@ export default function OrderBoard({ restaurant, onUpdate }: OrderBoardProps) {
         try {
             const token = JSON.parse(localStorage.getItem('userInfo') || '{}').token;
             await axios.put(
-                `${API_BASE_URL}/api/orders/${orderId}/status`,
+                `${getApiUrl()}/api/orders/${orderId}/status`,
                 { status, ...extraData },
                 { headers: { Authorization: `Bearer ${token}` } }
             );
@@ -978,3 +978,4 @@ export default function OrderBoard({ restaurant, onUpdate }: OrderBoardProps) {
         </div>
     );
 }
+

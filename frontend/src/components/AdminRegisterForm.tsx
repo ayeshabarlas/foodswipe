@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { FaShoppingBag, FaLock, FaEnvelope, FaUser } from 'react-icons/fa';
 import axios from 'axios';
-import { API_BASE_URL } from '../utils/config';
+import { getApiUrl } from '../utils/config';
 
 export default function AdminRegisterForm() {
     const [name, setName] = useState('');
@@ -41,10 +41,10 @@ export default function AdminRegisterForm() {
             console.log('=== REGISTRATION ATTEMPT ===');
             console.log('Name:', name);
             console.log('Email:', email);
-            console.log('API Base URL:', API_BASE_URL);
-            console.log('Full URL:', `${API_BASE_URL}/api/admin/register`);
+            console.log('API Base URL:', getApiUrl());
+            console.log('Full URL:', `${getApiUrl()}/api/admin/register`);
 
-            const { data } = await axios.post(`${API_BASE_URL}/api/admin/register`, {
+            const { data } = await axios.post(`${getApiUrl()}/api/admin/register`, {
                 name,
                 email,
                 password
@@ -221,3 +221,4 @@ export default function AdminRegisterForm() {
         </div>
     );
 }
+

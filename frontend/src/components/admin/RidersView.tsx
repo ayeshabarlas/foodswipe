@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import axios from 'axios';
 import { getSocket } from '../../utils/socket';
-import { API_BASE_URL } from '../../utils/config';
+import { getApiUrl } from '../../utils/config';
 import toast from 'react-hot-toast';
 import { 
     FaUser, FaMotorcycle, FaSearch, FaFilter, FaMapMarkerAlt, 
@@ -113,7 +113,7 @@ export default function RidersView() {
             const userInfo = JSON.parse(localStorage.getItem('userInfo') || '{}');
             if (!userInfo.token) return;
 
-            const res = await axios.get(`${API_BASE_URL}/api/admin/riders`, {
+            const res = await axios.get(`${getApiUrl()}/api/admin/riders`, {
                 headers: { Authorization: `Bearer ${userInfo.token}` }
             });
             const data = res.data;
@@ -141,7 +141,7 @@ export default function RidersView() {
             const userInfo = JSON.parse(localStorage.getItem('userInfo') || '{}');
             if (!userInfo.token) return;
 
-            await axios.put(`${API_BASE_URL}/api/admin/riders/${id}/approve`, {}, {
+            await axios.put(`${getApiUrl()}/api/admin/riders/${id}/approve`, {}, {
                 headers: { Authorization: `Bearer ${userInfo.token}` }
             });
             toast.success('Rider approved');
@@ -163,7 +163,7 @@ export default function RidersView() {
             const userInfo = JSON.parse(localStorage.getItem('userInfo') || '{}');
             if (!userInfo.token) return;
 
-            await axios.put(`${API_BASE_URL}/api/admin/riders/${id}/reject`, { reason }, {
+            await axios.put(`${getApiUrl()}/api/admin/riders/${id}/reject`, { reason }, {
                 headers: { Authorization: `Bearer ${userInfo.token}` }
             });
             toast.success('Rider application rejected');
@@ -184,7 +184,7 @@ export default function RidersView() {
             const userInfo = JSON.parse(localStorage.getItem('userInfo') || '{}');
             if (!userInfo.token) return;
 
-            await axios.put(`${API_BASE_URL}/api/admin/users/${id}/suspend`, {}, {
+            await axios.put(`${getApiUrl()}/api/admin/users/${id}/suspend`, {}, {
                 headers: { Authorization: `Bearer ${userInfo.token}` }
             });
             toast.success('Rider suspended');
@@ -201,7 +201,7 @@ export default function RidersView() {
             const userInfo = JSON.parse(localStorage.getItem('userInfo') || '{}');
             if (!userInfo.token) return;
 
-            await axios.put(`${API_BASE_URL}/api/admin/users/${id}/unsuspend`, {}, {
+            await axios.put(`${getApiUrl()}/api/admin/users/${id}/unsuspend`, {}, {
                 headers: { Authorization: `Bearer ${userInfo.token}` }
             });
             toast.success('Rider unsuspended');
@@ -219,7 +219,7 @@ export default function RidersView() {
             const userInfo = JSON.parse(localStorage.getItem('userInfo') || '{}');
             if (!userInfo.token) return;
 
-            await axios.delete(`${API_BASE_URL}/api/admin/users/${id}`, {
+            await axios.delete(`${getApiUrl()}/api/admin/users/${id}`, {
                 headers: { Authorization: `Bearer ${userInfo.token}` }
             });
             toast.success('Rider deleted');
@@ -617,13 +617,13 @@ export default function RidersView() {
                                                                 <p className="text-[11px] font-medium text-[#9CA3AF] uppercase mb-2 tracking-tight truncate">{key.replace(/([A-Z])/g, ' $1').trim()}</p>
                                                                 <div className="aspect-[4/3] relative overflow-hidden rounded-xl bg-white">
                                                                     <img 
-                                                                        src={`${API_BASE_URL}/${value}`} 
+                                                                        src={`${getApiUrl()}/${value}`} 
                                                                         alt={key} 
                                                                         className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" 
                                                                     />
                                                                     <div className="absolute inset-0 bg-gray-900/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
                                                                         <a 
-                                                                            href={`${API_BASE_URL}/${value}`} 
+                                                                            href={`${getApiUrl()}/${value}`} 
                                                                             target="_blank" 
                                                                             rel="noopener noreferrer"
                                                                             className="bg-white text-gray-900 p-2 rounded-xl hover:bg-[#FF6A00] hover:text-white transition-all shadow-xl"
@@ -765,3 +765,4 @@ export default function RidersView() {
         </div>
     );
 }
+

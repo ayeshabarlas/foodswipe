@@ -4,7 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { FaClock, FaBox, FaCheckCircle, FaUtensils, FaExclamationCircle } from 'react-icons/fa';
 import axios from 'axios';
-import { API_BASE_URL } from '@/utils/config';
+import { getApiUrl } from '@/utils/config';
 
 interface OrderItem {
     product: any;
@@ -31,7 +31,7 @@ export default function KitchenDisplay() {
     const fetchOrders = async () => {
         try {
             const token = JSON.parse(localStorage.getItem('userInfo') || '{}').token;
-            const res = await axios.get(`${API_BASE_URL}/api/orders/restaurant/my-orders`, {
+            const res = await axios.get(`${getApiUrl()}/api/orders/restaurant/my-orders`, {
                 headers: { Authorization: `Bearer ${token}` }
             });
             setOrders(res.data);
@@ -230,3 +230,4 @@ export default function KitchenDisplay() {
         </div>
     );
 }
+

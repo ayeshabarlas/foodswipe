@@ -7,7 +7,7 @@ import { useCart } from '../context/CartContext';
 import { useSwipeBack } from '../hooks/useSwipeBack';
 import DishDetails from './DishDetails';
 import { getImageUrl, getImageFallback } from '../utils/imageUtils';
-import { API_BASE_URL } from '../utils/config';
+import { getApiUrl } from '../utils/config';
 import { getSocket, initSocket, subscribeToChannel, unsubscribeFromChannel } from '../utils/socket';
 
 interface Dish {
@@ -224,7 +224,7 @@ export default function RestaurantProfile({ restaurant: initialRestaurant, onBac
     useEffect(() => {
         const fetchRestaurantDetails = async () => {
             try {
-                const res = await axios.get(`${API_BASE_URL}/api/restaurants/${initialRestaurant._id}`);
+                const res = await axios.get(`${getApiUrl()}/api/restaurants/${initialRestaurant._id}`);
                 if (res.data) {
                     setRestaurantData(prev => ({ ...prev, ...res.data }));
                 }
@@ -235,7 +235,7 @@ export default function RestaurantProfile({ restaurant: initialRestaurant, onBac
 
         const fetchMenu = async () => {
             try {
-                const res = await axios.get(`${API_BASE_URL}/api/restaurants/${initialRestaurant._id}/menu`);
+                const res = await axios.get(`${getApiUrl()}/api/restaurants/${initialRestaurant._id}/menu`);
                 setMenuSections(res.data);
                 if (res.data.length > 0 && activeTab === 'Popular') {
                     setActiveTab(res.data[0].name);
@@ -247,7 +247,7 @@ export default function RestaurantProfile({ restaurant: initialRestaurant, onBac
 
         const fetchReviews = async () => {
             try {
-                const res = await axios.get(`${API_BASE_URL}/api/restaurants/${initialRestaurant._id}/reviews`);
+                const res = await axios.get(`${getApiUrl()}/api/restaurants/${initialRestaurant._id}/reviews`);
                 setReviews(res.data);
                 setReviewCount(res.data.length);
             } catch (error) {
@@ -257,7 +257,7 @@ export default function RestaurantProfile({ restaurant: initialRestaurant, onBac
 
         const fetchVouchers = async () => {
             try {
-                const res = await axios.get(`${API_BASE_URL}/api/vouchers/restaurant/${initialRestaurant._id}`);
+                const res = await axios.get(`${getApiUrl()}/api/vouchers/restaurant/${initialRestaurant._id}`);
                 setVouchers(res.data);
             } catch (error) {
                 console.error('Error fetching vouchers:', error);
@@ -266,7 +266,7 @@ export default function RestaurantProfile({ restaurant: initialRestaurant, onBac
 
         const fetchDeals = async () => {
             try {
-                const res = await axios.get(`${API_BASE_URL}/api/deals/restaurant/${initialRestaurant._id}`);
+                const res = await axios.get(`${getApiUrl()}/api/deals/restaurant/${initialRestaurant._id}`);
                 setDeals(res.data);
             } catch (error) {
                 console.error('Error fetching deals:', error);
@@ -332,14 +332,14 @@ export default function RestaurantProfile({ restaurant: initialRestaurant, onBac
             }
 
             const config = { headers: { Authorization: `Bearer ${userInfo.token}` } };
-            await axios.post(`${API_BASE_URL}/api/reviews`, {
+            await axios.post(`${getApiUrl()}/api/reviews`, {
                 restaurantId: restaurantData._id,
                 rating: newReview.rating,
                 comment: newReview.comment
             }, config);
 
             // Refresh reviews
-            const res = await axios.get(`${API_BASE_URL}/api/restaurants/${restaurantData._id}/reviews`);
+            const res = await axios.get(`${getApiUrl()}/api/restaurants/${restaurantData._id}/reviews`);
             setReviews(res.data);
             setReviewCount(res.data.length);
             setShowReviewModal(false);
@@ -894,3 +894,4 @@ export default function RestaurantProfile({ restaurant: initialRestaurant, onBac
         </motion.div >
     );
 }
+

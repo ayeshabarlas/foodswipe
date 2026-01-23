@@ -9,7 +9,7 @@ import {
 import AddDishModal from './AddDishModal';
 import axios from 'axios';
 import { getImageUrl, getImageFallback } from '../utils/imageUtils';
-import { API_BASE_URL } from '../utils/config';
+import { getApiUrl } from '../utils/config';
 
 interface Dish {
     _id: string;
@@ -54,8 +54,8 @@ export default function DashboardMenu({ restaurant: initialRestaurant }: { resta
 
             // If we don't have initial restaurant, fetch it
             const [restaurantRes, dishesRes] = await Promise.all([
-                !initialRestaurant ? axios.get(`${API_BASE_URL}/api/restaurants/my-restaurant`, config) : Promise.resolve({ data: initialRestaurant }),
-                axios.get(`${API_BASE_URL}/api/dishes/my-dishes`, config)
+                !initialRestaurant ? axios.get(`${getApiUrl()}/api/restaurants/my-restaurant`, config) : Promise.resolve({ data: initialRestaurant }),
+                axios.get(`${getApiUrl()}/api/dishes/my-dishes`, config)
             ]);
 
             if (restaurantRes.data) {
@@ -82,7 +82,7 @@ export default function DashboardMenu({ restaurant: initialRestaurant }: { resta
             if (!userInfo?.token) return alert('Please login again');
             const config = { headers: { Authorization: `Bearer ${userInfo.token}` } };
 
-            const restaurantRes = await axios.get(`${API_BASE_URL}/api/restaurants/my-restaurant`, config);
+            const restaurantRes = await axios.get(`${getApiUrl()}/api/restaurants/my-restaurant`, config);
 
             const payload = {
                 ...data,
@@ -90,10 +90,10 @@ export default function DashboardMenu({ restaurant: initialRestaurant }: { resta
             };
 
             if (editingDish) {
-                const res = await axios.put(`${API_BASE_URL}/api/dishes/${editingDish._id}`, payload, config);
+                const res = await axios.put(`${getApiUrl()}/api/dishes/${editingDish._id}`, payload, config);
                 setDishes(dishes.map(d => d._id === editingDish._id ? res.data : d));
             } else {
-                const res = await axios.post(`${API_BASE_URL}/api/dishes`, payload, config);
+                const res = await axios.post(`${getApiUrl()}/api/dishes`, payload, config);
                 setDishes([res.data, ...dishes]);
             }
 
@@ -112,7 +112,7 @@ export default function DashboardMenu({ restaurant: initialRestaurant }: { resta
 
         try {
             if (!userInfo?.token) return alert('Please login again');
-            await axios.delete(`${API_BASE_URL}/api/dishes/${id}`, {
+            await axios.delete(`${getApiUrl()}/api/dishes/${id}`, {
                 headers: { Authorization: `Bearer ${userInfo.token}` }
             });
             fetchDishes();
@@ -139,7 +139,7 @@ export default function DashboardMenu({ restaurant: initialRestaurant }: { resta
             }
 
             const updatedCategories = [...currentCategories, newCategoryName.trim()];
-            const res = await axios.put(`${API_BASE_URL}/api/restaurants/categories`, {
+            const res = await axios.put(`${getApiUrl()}/api/restaurants/categories`, {
                 categories: updatedCategories
             }, config);
 
@@ -159,7 +159,7 @@ export default function DashboardMenu({ restaurant: initialRestaurant }: { resta
             const config = { headers: { Authorization: `Bearer ${userInfo.token}` } };
             const updatedCategories = (restaurant?.menuCategories || []).filter((c: string) => c !== catToDelete);
             
-            const res = await axios.put(`${API_BASE_URL}/api/restaurants/categories`, {
+            const res = await axios.put(`${getApiUrl()}/api/restaurants/categories`, {
                 categories: updatedCategories
             }, config);
 
@@ -369,3 +369,4 @@ export default function DashboardMenu({ restaurant: initialRestaurant }: { resta
         </div>
     );
 }
+

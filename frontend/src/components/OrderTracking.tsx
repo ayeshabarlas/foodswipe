@@ -4,7 +4,7 @@ import React, { useEffect, useState } from 'react';
 import { FaMotorcycle, FaPhone, FaCheck, FaCommentDots, FaTimes, FaMapMarkerAlt, FaChevronRight, FaBox, FaClock, FaRoute } from 'react-icons/fa';
 import { initSocket, getSocket, subscribeToChannel, unsubscribeFromChannel } from '../utils/socket';
 import axios from 'axios';
-import { API_BASE_URL } from '../utils/config';
+import { getApiUrl } from '../utils/config';
 import dynamic from 'next/dynamic';
 const OrderChat = dynamic(() => import('./OrderChat'), { ssr: false });
 import { motion, AnimatePresence } from 'framer-motion';
@@ -59,7 +59,7 @@ export default function OrderTracking({ order: initialOrder, userRole = 'user', 
                     const userStr = typeof window !== 'undefined' ? localStorage.getItem('userInfo') : null;
                     if (!userStr) return;
                     const token = JSON.parse(userStr).token;
-                    const { data } = await axios.get(`${API_BASE_URL}/api/orders/${targetOrderId}`, {
+                    const { data } = await axios.get(`${getApiUrl()}/api/orders/${targetOrderId}`, {
                         headers: { Authorization: `Bearer ${token}` }
                     });
                     setOrder(data);
@@ -361,3 +361,4 @@ export default function OrderTracking({ order: initialOrder, userRole = 'user', 
         </AnimatePresence>
     );
 }
+

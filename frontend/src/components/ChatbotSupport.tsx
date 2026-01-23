@@ -4,7 +4,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { FaTimes, FaPaperPlane, FaRobot } from 'react-icons/fa';
 import axios from 'axios';
-import { API_BASE_URL } from '../utils/config';
+import { getApiUrl } from '../utils/config';
 
 interface Message {
     id: number;
@@ -69,7 +69,7 @@ export default function ChatbotSupport({ isOpen, onClose }: ChatbotSupportProps)
 
         try {
             // Real-time API call to backend
-            const response = await axios.post(`${API_BASE_URL}/api/chat`, {
+            const response = await axios.post(`${getApiUrl()}/api/chat`, {
                 message: text,
                 conversationHistory: messages
             });
@@ -234,3 +234,4 @@ export default function ChatbotSupport({ isOpen, onClose }: ChatbotSupportProps)
         </AnimatePresence>
     );
 }
+

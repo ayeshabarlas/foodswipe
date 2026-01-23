@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import axios from 'axios';
-import { API_BASE_URL } from '../../utils/config';
+import { getApiUrl } from '../../utils/config';
 import toast from 'react-hot-toast';
 import { 
     FaMotorcycle, FaSearch, FaFilter, FaMoneyBillWave, 
@@ -54,7 +54,7 @@ export default function CODSettlementView() {
             const config = {
                 headers: { Authorization: `Bearer ${userInfo.token}` }
             };
-            const response = await axios.get(`${API_BASE_URL}/api/admin/cod-ledger`, config);
+            const response = await axios.get(`${getApiUrl()}/api/admin/cod-ledger`, config);
             setRiders(response.data.riders || []);
             setPendingTransactions(response.data.pendingTransactions || []);
         } catch (error) {
@@ -74,7 +74,7 @@ export default function CODSettlementView() {
             const config = {
                 headers: { Authorization: `Bearer ${userInfo.token}` }
             };
-            await axios.post(`${API_BASE_URL}/api/admin/settle-rider`, { 
+            await axios.post(`${getApiUrl()}/api/admin/settle-rider`, { 
                 riderId,
                 amountCollected: riders.find(r => r._id === riderId)?.cod_balance,
                 earningsPaid: 0 // In a real scenario, you might allow partial payment
@@ -98,7 +98,7 @@ export default function CODSettlementView() {
             const config = {
                 headers: { Authorization: `Bearer ${userInfo.token}` }
             };
-            await axios.post(`${API_BASE_URL}/api/admin/riders/${riderId}/block`, { status: newStatus }, config);
+            await axios.post(`${getApiUrl()}/api/admin/riders/${riderId}/block`, { status: newStatus }, config);
             toast.success(`Rider ${newStatus} successfully`);
             fetchData();
         } catch (error: any) {
@@ -369,3 +369,4 @@ export default function CODSettlementView() {
         </div>
     );
 }
+

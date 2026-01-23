@@ -4,7 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { FaStar, FaUser, FaQuoteLeft, FaChartLine, FaComment, FaHeart } from 'react-icons/fa';
 import axios from 'axios';
-import { API_BASE_URL } from '../utils/config';
+import { getApiUrl } from '../utils/config';
 
 interface Review {
     _id: string;
@@ -22,7 +22,7 @@ export default function DashboardReviews({ restaurant }: { restaurant: any }) {
     const fetchReviews = async () => {
         if (!restaurant?._id) return;
         try {
-            const reviewsRes = await axios.get(`${API_BASE_URL}/api/restaurants/${restaurant._id}/reviews`);
+            const reviewsRes = await axios.get(`${getApiUrl()}/api/restaurants/${restaurant._id}/reviews`);
             setReviews(reviewsRes.data);
         } catch (error) {
             console.error('Error fetching reviews:', error);
@@ -221,3 +221,4 @@ export default function DashboardReviews({ restaurant }: { restaurant: any }) {
         </div>
     );
 }
+

@@ -2,7 +2,7 @@
 import { useState, useEffect } from 'react';
 import axios from 'axios';
 import { getSocket } from '../../utils/socket';
-import { API_BASE_URL } from '../../utils/config';
+import { getApiUrl } from '../../utils/config';
 import { FaUserShield, FaPlus, FaSearch, FaEllipsisV, FaShieldAlt, FaTimes, FaEnvelope, FaUserTag } from 'react-icons/fa';
 import toast from 'react-hot-toast';
 
@@ -43,7 +43,7 @@ export default function AdminManagementView() {
                 headers: { Authorization: `Bearer ${userInfo.token}` }
             };
             // Use the new list endpoint
-            const { data } = await axios.get(`${API_BASE_URL}/api/admin/list`, config);
+            const { data } = await axios.get(`${getApiUrl()}/api/admin/list`, config);
             setAdmins(data);
         } catch (error: any) {
             console.error('Error fetching admins:', error);
@@ -61,7 +61,7 @@ export default function AdminManagementView() {
         try {
             const userInfo = JSON.parse(localStorage.getItem('userInfo') || '{}');
             await axios.post(
-                `${API_BASE_URL}/api/admin/invite`,
+                `${getApiUrl()}/api/admin/invite`,
                 inviteData,
                 { headers: { Authorization: `Bearer ${userInfo.token}` } }
             );
@@ -82,7 +82,7 @@ export default function AdminManagementView() {
         try {
             const userInfo = JSON.parse(localStorage.getItem('userInfo') || '{}');
             await axios.delete(
-                `${API_BASE_URL}/api/admin/${id}`,
+                `${getApiUrl()}/api/admin/${id}`,
                 { headers: { Authorization: `Bearer ${userInfo.token}` } }
             );
             toast.success('Administrator removed');
@@ -337,3 +337,4 @@ export default function AdminManagementView() {
         </div>
     );
 }
+

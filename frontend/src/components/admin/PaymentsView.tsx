@@ -2,7 +2,7 @@
 import { useState, useEffect } from 'react';
 import axios from 'axios';
 import { getSocket } from '../../utils/socket';
-import { API_BASE_URL } from '../../utils/config';
+import { getApiUrl } from '../../utils/config';
 import { FaCheckCircle } from 'react-icons/fa';
 
 export default function PaymentsView() {
@@ -32,7 +32,7 @@ export default function PaymentsView() {
             const config = {
                 headers: { Authorization: `Bearer ${userInfo.token}` }
             };
-            const { data } = await axios.get(`${API_BASE_URL}/api/payouts/all`, config);
+            const { data } = await axios.get(`${getApiUrl()}/api/payouts/all`, config);
             setPayouts(data);
         } catch (error: any) {
             console.error('Error fetching payouts:', error);
@@ -183,3 +183,4 @@ export default function PaymentsView() {
         </div>
     );
 }
+

@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { FaWallet, FaHistory, FaArrowUp, FaClock, FaCheckCircle, FaExclamationTriangle, FaLock } from 'react-icons/fa';
 import axios from 'axios';
-import { API_BASE_URL } from '../utils/config';
+import { getApiUrl } from '../utils/config';
 import toast from 'react-hot-toast';
 
 interface LedgerEntry {
@@ -40,7 +40,7 @@ const RiderCODWallet: React.FC<RiderCODWalletProps> = ({ rider, token, onRefresh
             const config = {
                 headers: { Authorization: `Bearer ${token}` }
             };
-            const response = await axios.get(`${API_BASE_URL}/api/riders/me/ledger`, config);
+            const response = await axios.get(`${getApiUrl()}/api/riders/me/ledger`, config);
             setLedger(response.data);
         } catch (error) {
             console.error('Error fetching ledger:', error);
@@ -66,7 +66,7 @@ const RiderCODWallet: React.FC<RiderCODWalletProps> = ({ rider, token, onRefresh
             const config = {
                 headers: { Authorization: `Bearer ${token}` }
             };
-            await axios.post(`${API_BASE_URL}/api/riders/me/request-payout`, {
+            await axios.post(`${getApiUrl()}/api/riders/me/request-payout`, {
                 amount: parseFloat(payoutAmount),
                 notes: 'Manual payout request from app'
             }, config);
@@ -255,3 +255,4 @@ const RiderCODWallet: React.FC<RiderCODWalletProps> = ({ rider, token, onRefresh
 };
 
 export default RiderCODWallet;
+

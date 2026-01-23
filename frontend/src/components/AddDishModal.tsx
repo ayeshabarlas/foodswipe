@@ -4,7 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { FaPlus, FaTrash, FaTimes, FaSave } from 'react-icons/fa';
 import axios from 'axios';
-import { API_BASE_URL } from '@/utils/config';
+import { getApiUrl } from '@/utils/config';
 import { getImageUrl } from '@/utils/imageUtils';
 import ModernLoader from './ModernLoader';
 
@@ -121,7 +121,7 @@ export default function AddDishModal({ isOpen, onClose, onSubmit, editingDish, c
                 timeout: 30000
             };
 
-            const { data } = await axios.post(`${API_BASE_URL}/api/upload`, uploadData, config);
+            const { data } = await axios.post(`${getApiUrl()}/api/upload`, uploadData, config);
             
             const uploadedPath = data.videoUrl || data.imageUrl;
             if (uploadedPath) {
@@ -163,7 +163,7 @@ export default function AddDishModal({ isOpen, onClose, onSubmit, editingDish, c
         if (cleanPath.startsWith('http')) {
             // Only strip if it's our own API's uploads folder
             const uploadsIndex = cleanPath.indexOf('/uploads/');
-            if (uploadsIndex !== -1 && (cleanPath.includes(API_BASE_URL) || !cleanPath.includes('storage.googleapis.com'))) {
+            if (uploadsIndex !== -1 && (cleanPath.includes(getApiUrl()) || !cleanPath.includes('storage.googleapis.com'))) {
                 cleanPath = cleanPath.substring(uploadsIndex + 9); // Skip '/uploads/'
             } else {
                 // Keep full URL (e.g. Firebase)
@@ -738,3 +738,4 @@ export default function AddDishModal({ isOpen, onClose, onSubmit, editingDish, c
         </motion.div>
     );
 }
+

@@ -3,7 +3,7 @@ import { useState, useEffect } from 'react';
 import axios from 'axios';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
 import { getSocket } from '../../utils/socket';
-import { API_BASE_URL } from '../../utils/config';
+import { getApiUrl } from '../../utils/config';
 import { FaCalendarAlt, FaDownload } from 'react-icons/fa';
 import toast from 'react-hot-toast';
 
@@ -52,7 +52,7 @@ export default function FinanceView() {
             if (!userInfo.token) return;
 
             // Fetch dashboard stats which is lighter and has aggregated data
-            const res = await axios.get(`${API_BASE_URL}/api/admin/stats`, {
+            const res = await axios.get(`${getApiUrl()}/api/admin/stats`, {
                 headers: { Authorization: `Bearer ${userInfo.token}` }
             });
             const data = res.data;
@@ -302,3 +302,4 @@ export default function FinanceView() {
         </div>
     );
 }
+

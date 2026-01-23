@@ -10,7 +10,7 @@ import {
 } from 'react-icons/fa';
 import axios from 'axios';
 import toast from 'react-hot-toast';
-import { API_BASE_URL } from '../utils/config';
+import { getApiUrl } from '../utils/config';
 import { initSocket, getSocket, subscribeToChannel, unsubscribeFromChannel } from '../utils/socket';
 import dynamic from 'next/dynamic';
 import ModernLoader from './ModernLoader';
@@ -68,7 +68,7 @@ const RiderDashboard = ({
         try {
             if (!userInfo?.token) return;
             const config = { headers: { Authorization: `Bearer ${userInfo.token}` } };
-            const res = await axios.get(`${API_BASE_URL}/api/notifications`, config);
+            const res = await axios.get(`${getApiUrl()}/api/notifications`, config);
             const unread = res.data.filter((n: any) => !n.read).length;
             setUnreadCount(unread);
         } catch (err) {
@@ -88,7 +88,7 @@ const RiderDashboard = ({
             // Fetch profile first to get the correct rider ID
             let rider = null;
             try {
-                const profileRes = await axios.get(`${API_BASE_URL}/api/riders/my-profile`, config);
+                const profileRes = await axios.get(`${getApiUrl()}/api/riders/my-profile`, config);
                 rider = profileRes.data;
                 setRiderData(rider);
                 setIsOnline(rider.isOnline || false);
@@ -106,7 +106,7 @@ const RiderDashboard = ({
 
             // Only fetch orders if we have a rider ID
             if (rider?._id) {
-                const ordersRes = await axios.get(`${API_BASE_URL}/api/riders/${rider._id}/orders`, config).catch((err) => {
+                const ordersRes = await axios.get(`${getApiUrl()}/api/riders/${rider._id}/orders`, config).catch((err) => {
                     console.error('Error fetching orders:', err);
                     return { data: [] };
                 });
@@ -254,7 +254,7 @@ const RiderDashboard = ({
                     async (position) => {
                         const { latitude, longitude } = position.coords;
                         try {
-                            await axios.post(`${API_BASE_URL}/api/orders/${activeOrder._id}/location`, {
+                            await axios.post(`${getApiUrl()}/api/orders/${activeOrder._id}/location`, {
                                 location: { lat: latitude, lng: longitude }
                             });
                         } catch (err) {
@@ -281,11 +281,11 @@ const RiderDashboard = ({
 
             let response;
             if (status === 'Delivered') {
-                response = await axios.post(`${API_BASE_URL}/api/orders/${orderId}/complete`, { 
+                response = await axios.post(`${getApiUrl()}/api/orders/${orderId}/complete`, { 
                     distanceKm: distanceKm || 5 
                 }, config);
             } else {
-                response = await axios.put(`${API_BASE_URL}/api/orders/${orderId}/status`, { 
+                response = await axios.put(`${getApiUrl()}/api/orders/${orderId}/status`, { 
                     status,
                     distanceKm 
                 }, config);
@@ -329,7 +329,7 @@ const RiderDashboard = ({
             const userInfo = JSON.parse(userStr);
             const config = { headers: { Authorization: `Bearer ${userInfo.token}` } };
 
-            const { data } = await axios.post(`${API_BASE_URL}/api/riders/${riderData._id}/accept-order`, { orderId }, { ...config, timeout: 20000 });
+            const { data } = await axios.post(`${getApiUrl()}/api/riders/${riderData._id}/accept-order`, { orderId }, { ...config, timeout: 20000 });
             
             toast.success('Order accepted successfully!');
             fetchRiderData(); // Refresh to show in active orders
@@ -365,7 +365,7 @@ const RiderDashboard = ({
             const userInfo = JSON.parse(userStr);
             const config = { headers: { Authorization: `Bearer ${userInfo.token}` } };
             
-            await axios.put(`${API_BASE_URL}/api/riders/${riderData._id}/status`, { isOnline: !isOnline }, { ...config, timeout: 20000 });
+            await axios.put(`${getApiUrl()}/api/riders/${riderData._id}/status`, { isOnline: !isOnline }, { ...config, timeout: 20000 });
             setIsOnline(!isOnline);
         } catch (err) {
             console.error('Status update failed', err);

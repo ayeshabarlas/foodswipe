@@ -2,7 +2,7 @@
 import { Suspense, useState, useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import axios from 'axios';
-import { API_BASE_URL } from '../../../utils/config';
+import { getApiUrl } from '../../../utils/config';
 import { FaLock, FaCheckCircle, FaShieldAlt } from 'react-icons/fa';
 import toast from 'react-hot-toast';
 
@@ -34,7 +34,7 @@ function SetupPasswordForm() {
 
         setLoading(true);
         try {
-            await axios.post(`${API_BASE_URL}/api/admin/accept-invite`, {
+            await axios.post(`${getApiUrl()}/api/admin/accept-invite`, {
                 token,
                 password
             });
@@ -168,3 +168,4 @@ export default function SetupPasswordPage() {
         </Suspense>
     );
 }
+

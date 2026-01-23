@@ -3,9 +3,9 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { FaTimes, FaCommentDots, FaPaperPlane } from 'react-icons/fa';
-import { getSocket, subscribeToChannel, unsubscribeFromChannel } from '../utils/socket';
+import { getSocket, subscribeToChannel, unsubscribeFromChannel, initSocket } from '../utils/socket';
 import axios from 'axios';
-import { API_BASE_URL } from '../utils/config';
+import { getApiUrl } from '../utils/config';
 
 interface Message {
     id: string;
@@ -60,7 +60,7 @@ export default function OrderChat({ orderId, isOpen, onClose, userRole, userName
                         Authorization: `Bearer ${userInfo.token}`,
                     },
                 };
-                const { data } = await axios.get(`${API_BASE_URL}/api/chat/${orderId}`, config);
+                const { data } = await axios.get(`${getApiUrl()}/api/chat/${orderId}`, config);
                 
                 const formattedMessages: Message[] = data.map((msg: any) => ({
                     id: msg._id,
@@ -86,6 +86,11 @@ export default function OrderChat({ orderId, isOpen, onClose, userRole, userName
     // Pusher Listener
     useEffect(() => {
         if (isOpen && orderId) {
+            // Ensure socket is initialized
+            if (userId) {
+                initSocket(userId, userRole);
+            }
+            
             const channel = subscribeToChannel(`order-${orderId}`);
             
             if (channel) {
@@ -138,7 +143,7 @@ export default function OrderChat({ orderId, isOpen, onClose, userRole, userName
                 },
             };
 
-            await axios.post(`${API_BASE_URL}/api/chat/${orderId}`, {
+            await axios.post(`${getApiUrl()}/api/chat/${orderId}`, {
                 text: messageText,
                 senderRole: userRole,
                 senderName: userName

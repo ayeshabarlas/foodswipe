@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { FaShoppingBag, FaLock, FaEnvelope } from 'react-icons/fa';
 import axios from 'axios';
-import { API_BASE_URL } from '../utils/config';
+import { getApiUrl } from '../utils/config';
 
 export default function AdminLoginForm() {
     const [email, setEmail] = useState('');
@@ -23,7 +23,7 @@ export default function AdminLoginForm() {
             console.log('=== ADMIN LOGIN ATTEMPT ===');
             console.log('Email:', email);
             console.log('Password length:', password.length);
-            const { data } = await axios.post(`${API_BASE_URL}/api/admin/login`, {
+            const { data } = await axios.post(`${getApiUrl()}/api/admin/login`, {
                 identifier: email.trim(),
                 password
             });
@@ -73,12 +73,12 @@ export default function AdminLoginForm() {
                             onClick={async () => {
                                 try {
                                     setError("Checking connection...");
-                                    const res = await axios.get(`${API_BASE_URL}/health?t=${Date.now()}`);
-                                    alert(`Backend is reachable! \nURL: ${API_BASE_URL} \nStatus: ${JSON.stringify(res.data)}`);
+                                    const res = await axios.get(`${getApiUrl()}/health?t=${Date.now()}`);
+                                    alert(`Backend is reachable! \nURL: ${getApiUrl()} \nStatus: ${JSON.stringify(res.data)}`);
                                     setError("");
                                 } catch (e: any) {
-                                    alert(`Backend unreachable! \nURL: ${API_BASE_URL} \nError: ${e.message}`);
-                                    setError(`Backend Unreachable: ${e.message}. URL: ${API_BASE_URL}`);
+                                    alert(`Backend unreachable! \nURL: ${getApiUrl()} \nError: ${e.message}`);
+                                    setError(`Backend Unreachable: ${e.message}. URL: ${getApiUrl()}`);
                                 }
                             }}
                             className="mt-2 text-xs font-bold underline hover:text-red-900"
@@ -173,3 +173,4 @@ export default function AdminLoginForm() {
         </div>
     );
 }
+

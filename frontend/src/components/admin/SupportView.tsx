@@ -2,7 +2,7 @@
 import { useState, useEffect } from 'react';
 import axios from 'axios';
 import { getSocket } from '../../utils/socket';
-import { API_BASE_URL } from '../../utils/config';
+import { getApiUrl } from '../../utils/config';
 import { FaHeadset, FaSearch, FaFilter, FaClock, FaCheck, FaExclamationCircle } from 'react-icons/fa';
 
 export default function SupportView() {
@@ -30,7 +30,7 @@ export default function SupportView() {
             const config = {
                 headers: { Authorization: `Bearer ${userInfo.token}` }
             };
-            const { data } = await axios.get(`${API_BASE_URL}/api/tickets`, config);
+            const { data } = await axios.get(`${getApiUrl()}/api/tickets`, config);
             setTickets(data);
         } catch (error: any) {
             console.error('Error fetching tickets:', error);
@@ -198,3 +198,4 @@ export default function SupportView() {
         </div>
     );
 }
+

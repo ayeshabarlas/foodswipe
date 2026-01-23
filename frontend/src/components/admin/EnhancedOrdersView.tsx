@@ -2,7 +2,7 @@
 import { useState, useEffect } from 'react';
 import axios from 'axios';
 import { getSocket } from '../../utils/socket';
-import { API_BASE_URL } from '../../utils/config';
+import { getApiUrl } from '../../utils/config';
 import { FaSearch, FaFilter, FaCalendarAlt, FaDownload, FaReceipt, FaSyncAlt, FaUser, FaStore, FaMotorcycle, FaMapMarkerAlt, FaTimes } from 'react-icons/fa';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -66,7 +66,7 @@ export default function EnhancedOrdersView() {
             if (!userInfo.token) return;
 
             // Fetch all orders
-            const res = await axios.get(`${API_BASE_URL}/api/admin/orders`, {
+            const res = await axios.get(`${getApiUrl()}/api/admin/orders`, {
                 headers: { Authorization: `Bearer ${userInfo.token}` }
             });
             setOrders(Array.isArray(res.data) ? res.data : (res.data?.orders || []));
@@ -497,3 +497,4 @@ export default function EnhancedOrdersView() {
         </div>
     );
 }
+

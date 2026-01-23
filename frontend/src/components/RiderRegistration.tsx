@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import axios from 'axios';
-import { API_BASE_URL } from '../utils/config';
+import { getApiUrl } from '../utils/config';
 import { FaBicycle, FaArrowLeft } from 'react-icons/fa';
 
 interface RiderRegistrationProps {
@@ -65,7 +65,7 @@ export default function RiderRegistration({ onComplete }: RiderRegistrationProps
                 throw new Error('Authentication required. Please create an account or login first.');
             }
 
-            const res = await axios.post(`${API_BASE_URL}/api/riders/register`, formData, {
+            const res = await axios.post(`${getApiUrl()}/api/riders/register`, formData, {
                 headers: { Authorization: `Bearer ${token}` },
                 timeout: 30000
             });
@@ -210,3 +210,4 @@ export default function RiderRegistration({ onComplete }: RiderRegistrationProps
         </div>
     );
 }
+

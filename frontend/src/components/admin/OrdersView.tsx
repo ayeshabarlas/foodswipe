@@ -3,7 +3,7 @@ import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import axios from 'axios';
 import { getSocket } from '../../utils/socket';
-import { API_BASE_URL } from '../../utils/config';
+import { getApiUrl } from '../../utils/config';
 import { FaClock, FaMotorcycle, FaStore, FaUser, FaPhone, FaMapMarkerAlt, FaSyncAlt, FaShoppingBag } from 'react-icons/fa';
 
 interface Order {
@@ -61,7 +61,7 @@ export default function OrdersView() {
     const fetchOrders = async () => {
         try {
             const token = JSON.parse(localStorage.getItem('userInfo') || '{}').token;
-            const res = await axios.get(`${API_BASE_URL}/api/admin/orders`, {
+            const res = await axios.get(`${getApiUrl()}/api/admin/orders`, {
                 headers: { Authorization: `Bearer ${token}` }
             });
             // Filter only live orders
@@ -391,3 +391,4 @@ export default function OrdersView() {
         </div>
     );
 }
+

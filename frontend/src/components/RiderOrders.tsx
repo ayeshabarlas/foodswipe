@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import { API_BASE_URL } from '../utils/config';
+import { getApiUrl } from '../utils/config';
 import { useSettings } from '../hooks/useSettings';
 import { FaBox, FaCheckCircle, FaClock, FaTimes, FaMapMarkerAlt, FaPhone, FaCommentDots, FaBell, FaWallet, FaMotorcycle, FaRoute } from 'react-icons/fa';
 import { initSocket, disconnectSocket, getSocket, subscribeToChannel } from '../utils/socket';
@@ -61,7 +61,7 @@ export default function RiderOrders({ riderId, setShowNotifications, unreadCount
                     if (!userStr) return;
                     const token = JSON.parse(userStr).token;
                     await axios.post(
-                        `${API_BASE_URL}/api/orders/${activeDelivery._id}/location`,
+                        `${getApiUrl()}/api/orders/${activeDelivery._id}/location`,
                         {
                             location: {
                                 lat: location.lat,
@@ -87,7 +87,7 @@ export default function RiderOrders({ riderId, setShowNotifications, unreadCount
             if (!userStr) return;
             const userInfo = JSON.parse(userStr);
             const config = { headers: { Authorization: `Bearer ${userInfo.token}` } };
-            const res = await axios.get(`${API_BASE_URL}/api/notifications`, config);
+            const res = await axios.get(`${getApiUrl()}/api/notifications`, config);
             const unread = res.data.filter((n: any) => !n.read).length;
             setUnreadCount(unread);
         } catch (err) {
@@ -99,7 +99,7 @@ export default function RiderOrders({ riderId, setShowNotifications, unreadCount
         try {
             setLoading(true);
             const token = JSON.parse(localStorage.getItem("userInfo") || "{}").token;
-            const res = await axios.get(`${API_BASE_URL}/api/riders/${riderId}/orders`, {
+            const res = await axios.get(`${getApiUrl()}/api/riders/${riderId}/orders`, {
                 headers: { Authorization: `Bearer ${token}` }
             });
             if (res.data) {
@@ -113,7 +113,7 @@ export default function RiderOrders({ riderId, setShowNotifications, unreadCount
             }
 
             // Also fetch wallet balance
-            const riderRes = await axios.get(`${API_BASE_URL}/api/riders/${riderId}`, {
+            const riderRes = await axios.get(`${getApiUrl()}/api/riders/${riderId}`, {
                 headers: { Authorization: `Bearer ${token}` }
             });
             if (riderRes.data && riderRes.data.walletBalance !== undefined) {
@@ -214,7 +214,7 @@ export default function RiderOrders({ riderId, setShowNotifications, unreadCount
         try {
             const token = JSON.parse(localStorage.getItem("userInfo") || "{}").token;
             await axios.post(
-                `${API_BASE_URL}/api/riders/${riderId}/accept-order`,
+                `${getApiUrl()}/api/riders/${riderId}/accept-order`,
                 { orderId },
                 { headers: { Authorization: `Bearer ${token}` } }
             );
@@ -230,7 +230,7 @@ export default function RiderOrders({ riderId, setShowNotifications, unreadCount
         try {
             const token = JSON.parse(localStorage.getItem("userInfo") || "{}").token;
             await axios.put(
-                `${API_BASE_URL}/api/orders/${orderId}/status`,
+                `${getApiUrl()}/api/orders/${orderId}/status`,
                 { status },
                 { headers: { Authorization: `Bearer ${token}` } }
             );
@@ -246,7 +246,7 @@ export default function RiderOrders({ riderId, setShowNotifications, unreadCount
         try {
             const token = JSON.parse(localStorage.getItem("userInfo") || "{}").token;
             await axios.put(
-                `${API_BASE_URL}/api/riders/${riderId}/orders/${orderId}/pickup`,
+                `${getApiUrl()}/api/riders/${riderId}/orders/${orderId}/pickup`,
                 {},
                 { headers: { Authorization: `Bearer ${token}` } }
             );
@@ -270,7 +270,7 @@ export default function RiderOrders({ riderId, setShowNotifications, unreadCount
             // but we'll send it if we have it to be explicit.
             
             await axios.post(
-                `${API_BASE_URL}/api/orders/${orderId}/complete`,
+                `${getApiUrl()}/api/orders/${orderId}/complete`,
                 { distanceKm: dist },
                 { headers: { Authorization: `Bearer ${token}` } }
             );
@@ -1006,3 +1006,4 @@ function OrderCard({
         </div>
     );
 }
+

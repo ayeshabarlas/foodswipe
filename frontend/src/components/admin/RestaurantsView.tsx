@@ -9,7 +9,7 @@ import {
     FaMoneyBillWave, FaPercentage, FaWallet, FaHistory
 } from 'react-icons/fa';
 import axios from 'axios';
-import { API_BASE_URL } from '../../utils/config';
+import { getApiUrl } from '../../utils/config';
 import { getSocket } from '../../utils/socket';
 import { getImageUrl, getImageFallback } from '../../utils/imageUtils';
 import toast from 'react-hot-toast';
@@ -95,7 +95,7 @@ export default function RestaurantsView() {
             const userInfo = JSON.parse(localStorage.getItem('userInfo') || '{}');
             if (!userInfo.token) return;
 
-            const res = await axios.get(`${API_BASE_URL}/api/admin/restaurants`, {
+            const res = await axios.get(`${getApiUrl()}/api/admin/restaurants`, {
                 headers: { Authorization: `Bearer ${userInfo.token}` }
             });
             const data = res.data;
@@ -122,7 +122,7 @@ export default function RestaurantsView() {
             const userInfo = JSON.parse(localStorage.getItem('userInfo') || '{}');
             if (!userInfo.token) return;
 
-            await axios.put(`${API_BASE_URL}/api/admin/restaurants/${id}/approve`, {}, {
+            await axios.put(`${getApiUrl()}/api/admin/restaurants/${id}/approve`, {}, {
                 headers: { Authorization: `Bearer ${userInfo.token}` }
             });
             toast.success('Restaurant approved');
@@ -145,7 +145,7 @@ export default function RestaurantsView() {
             const userInfo = JSON.parse(localStorage.getItem('userInfo') || '{}');
             if (!userInfo.token) return;
 
-            await axios.put(`${API_BASE_URL}/api/admin/restaurants/${id}/reject`, { reason }, {
+            await axios.put(`${getApiUrl()}/api/admin/restaurants/${id}/reject`, { reason }, {
                 headers: { Authorization: `Bearer ${userInfo.token}` }
             });
             toast.success('Restaurant application rejected');
@@ -167,7 +167,7 @@ export default function RestaurantsView() {
             const userInfo = JSON.parse(localStorage.getItem('userInfo') || '{}');
             if (!userInfo.token) return;
 
-            await axios.put(`${API_BASE_URL}/api/admin/users/${id}/suspend`, {}, {
+            await axios.put(`${getApiUrl()}/api/admin/users/${id}/suspend`, {}, {
                 headers: { Authorization: `Bearer ${userInfo.token}` }
             });
             toast.success('User suspended');
@@ -185,7 +185,7 @@ export default function RestaurantsView() {
             const userInfo = JSON.parse(localStorage.getItem('userInfo') || '{}');
             if (!userInfo.token) return;
 
-            await axios.put(`${API_BASE_URL}/api/admin/users/${id}/unsuspend`, {}, {
+            await axios.put(`${getApiUrl()}/api/admin/users/${id}/unsuspend`, {}, {
                 headers: { Authorization: `Bearer ${userInfo.token}` }
             });
             toast.success('User unsuspended');
@@ -204,7 +204,7 @@ export default function RestaurantsView() {
             const userInfo = JSON.parse(localStorage.getItem('userInfo') || '{}');
             if (!userInfo.token) return;
 
-            await axios.delete(`${API_BASE_URL}/api/admin/users/${id}`, {
+            await axios.delete(`${getApiUrl()}/api/admin/users/${id}`, {
                 headers: { Authorization: `Bearer ${userInfo.token}` }
             });
             toast.success('User deleted');
@@ -767,3 +767,4 @@ export default function RestaurantsView() {
         </div>
     );
 }
+

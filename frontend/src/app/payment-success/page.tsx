@@ -8,7 +8,7 @@ import Link from 'next/link';
 import ModernLoader from '@/components/ModernLoader';
 import { useCart } from '@/context/CartContext';
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
+import { getApiUrl } from '@/utils/config';
 
 function PaymentSuccessContent() {
     const searchParams = useSearchParams();
@@ -38,7 +38,7 @@ function PaymentSuccessContent() {
 
             try {
                 // Call backend to verify payment and update order status
-                await axios.post(`${API_BASE_URL}/api/payments/safepay/verify`, {
+                await axios.post(`${getApiUrl()}/api/payments/safepay/verify`, {
                     order_id,
                     tracker,
                     sig
@@ -126,3 +126,4 @@ export default function PaymentSuccessPage() {
         </Suspense>
     );
 }
+

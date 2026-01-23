@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import { API_BASE_URL } from '../utils/config';
+import { getApiUrl } from '../utils/config';
 import { FaCheckCircle, FaCloudUploadAlt, FaFileAlt, FaImage } from 'react-icons/fa';
 
 interface RiderDocumentUploadProps {
@@ -29,7 +29,7 @@ export default function RiderDocumentUpload({ riderId, onVerified }: RiderDocume
         const fetchDocuments = async () => {
             try {
                 const token = JSON.parse(localStorage.getItem("userInfo") || "{}").token;
-                const res = await axios.get(`${API_BASE_URL}/api/riders/${riderId}`, {
+                const res = await axios.get(`${getApiUrl()}/api/riders/${riderId}`, {
                     headers: { Authorization: `Bearer ${token}` },
                     timeout: 20000
                 });
@@ -70,7 +70,7 @@ export default function RiderDocumentUpload({ riderId, onVerified }: RiderDocume
             const formData = new FormData();
             formData.append('file', file);
 
-            const uploadRes = await axios.post(`${API_BASE_URL}/api/upload`, formData, {
+            const uploadRes = await axios.post(`${getApiUrl()}/api/upload`, formData, {
                 headers: { 'Content-Type': 'multipart/form-data' },
                 timeout: 30000
             });
@@ -78,7 +78,7 @@ export default function RiderDocumentUpload({ riderId, onVerified }: RiderDocume
             const imageUrl = uploadRes.data.imageUrl;
 
             const token = JSON.parse(localStorage.getItem("userInfo") || "{}").token;
-            await axios.put(`${API_BASE_URL}/api/riders/${riderId}/documents`, {
+            await axios.put(`${getApiUrl()}/api/riders/${riderId}/documents`, {
                 [field]: imageUrl
             }, {
                 headers: { Authorization: `Bearer ${token}` },
@@ -107,7 +107,7 @@ export default function RiderDocumentUpload({ riderId, onVerified }: RiderDocume
         setSubmitting(true);
         try {
             const token = JSON.parse(localStorage.getItem("userInfo") || "{}").token;
-            await axios.put(`${API_BASE_URL}/api/riders/${riderId}/submit-verification`, {}, {
+            await axios.put(`${getApiUrl()}/api/riders/${riderId}/submit-verification`, {}, {
                 headers: { Authorization: `Bearer ${token}` },
                 timeout: 30000
             });
@@ -312,3 +312,4 @@ function DocumentItem({
         </div>
     );
 }
+

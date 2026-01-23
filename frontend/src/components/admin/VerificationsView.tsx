@@ -3,7 +3,7 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { motion, AnimatePresence } from 'framer-motion';
 import { getSocket } from '../../utils/socket';
-import { API_BASE_URL } from '../../utils/config';
+import { getApiUrl } from '../../utils/config';
 import { getImageUrl } from '../../utils/imageUtils';
 import { FaCheckCircle, FaTimesCircle, FaEye, FaSpinner, FaStore, FaMotorcycle, FaFileAlt } from 'react-icons/fa';
 
@@ -49,8 +49,8 @@ export default function VerificationsView({ initialTab = 'restaurants' }: { init
             };
 
             const [restaurantsRes, ridersRes] = await Promise.all([
-                axios.get(`${API_BASE_URL}/api/verifications/restaurants`, config),
-                axios.get(`${API_BASE_URL}/api/verifications/riders`, config)
+                axios.get(`${getApiUrl()}/api/verifications/restaurants`, config),
+                axios.get(`${getApiUrl()}/api/verifications/riders`, config)
             ]);
 
             setRestaurants(Array.isArray(restaurantsRes.data) ? restaurantsRes.data : (restaurantsRes.data?.restaurants || []));
@@ -77,8 +77,8 @@ export default function VerificationsView({ initialTab = 'restaurants' }: { init
             };
 
             const endpoint = type === 'restaurant'
-                ? `${API_BASE_URL}/api/verifications/restaurants/${id}`
-                : `${API_BASE_URL}/api/verifications/riders/${id}`;
+                ? `${getApiUrl()}/api/verifications/restaurants/${id}`
+                : `${getApiUrl()}/api/verifications/riders/${id}`;
 
             await axios.put(endpoint, { action, rejectionReason }, config);
 
@@ -378,3 +378,4 @@ export default function VerificationsView({ initialTab = 'restaurants' }: { init
         </div>
     );
 }
+

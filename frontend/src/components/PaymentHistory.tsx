@@ -6,7 +6,7 @@ import { FaMoneyBillWave, FaHistory, FaFileInvoiceDollar, FaCheckCircle, FaClock
 import axios from 'axios';
 import { initSocket, subscribeToChannel, unsubscribeFromChannel } from '../utils/socket';
 import PaymentProofModal from './PaymentProofModal';
-import { API_BASE_URL } from '../utils/config';
+import { getApiUrl } from '../utils/config';
 
 interface Payout {
     _id: string;
@@ -56,11 +56,11 @@ export default function PaymentHistory({ restaurant: initialRestaurant, onSwitch
             const headers = { Authorization: `Bearer ${token}` };
 
             const [currentRes, historyRes, restaurantRes, ordersRes, statsRes] = await Promise.all([
-                axios.get(`${API_BASE_URL}/api/payouts/current`, { headers }),
-                axios.get(`${API_BASE_URL}/api/payouts/history`, { headers }),
-                !initialRestaurant ? axios.get(`${API_BASE_URL}/api/restaurants/my-restaurant`, { headers }) : Promise.resolve({ data: initialRestaurant }),
-                axios.get(`${API_BASE_URL}/api/restaurants/orders/history/weekly`, { headers }).catch(() => ({ data: [] })),
-                axios.get(`${API_BASE_URL}/api/restaurants/earnings/stats`, { headers }).catch(() => ({ data: null }))
+                axios.get(`${getApiUrl()}/api/payouts/current`, { headers }),
+                axios.get(`${getApiUrl()}/api/payouts/history`, { headers }),
+                !initialRestaurant ? axios.get(`${getApiUrl()}/api/restaurants/my-restaurant`, { headers }) : Promise.resolve({ data: initialRestaurant }),
+                axios.get(`${getApiUrl()}/api/restaurants/orders/history/weekly`, { headers }).catch(() => ({ data: [] })),
+                axios.get(`${getApiUrl()}/api/restaurants/earnings/stats`, { headers }).catch(() => ({ data: null }))
             ]);
 
             setCurrentPayout(currentRes.data);
@@ -671,3 +671,4 @@ export default function PaymentHistory({ restaurant: initialRestaurant, onSwitch
         </div>
     );
 }
+

@@ -18,7 +18,7 @@ import DashboardSettings from './DashboardSettings';
 import DashboardOverview from './DashboardOverview';
 import DashboardSupport from './DashboardSupport';
 import { getImageUrl, getImageFallback } from '../utils/imageUtils';
-import { API_BASE_URL } from '../utils/config';
+import { getApiUrl } from '../utils/config';
 import { initSocket, disconnectSocket } from '../utils/socket';
 import { useSettings } from '../hooks/useSettings';
 import ModernLoader from './ModernLoader';
@@ -63,7 +63,7 @@ export default function RestaurantDashboard() {
         try {
             if (!userInfo?.token) return;
             await axios.put(
-                `${API_BASE_URL}/api/orders/${orderId}/status`,
+                `${getApiUrl()}/api/orders/${orderId}/status`,
                 { status: 'Accepted' },
                 { headers: { Authorization: `Bearer ${userInfo.token}` } }
             );
@@ -82,7 +82,7 @@ export default function RestaurantDashboard() {
         try {
             if (!userInfo?.token) return;
             await axios.put(
-                `${API_BASE_URL}/api/orders/${orderId}/status`,
+                `${getApiUrl()}/api/orders/${orderId}/status`,
                 { status: 'Cancelled', cancellationReason: 'Restaurant rejected the order' },
                 { headers: { Authorization: `Bearer ${userInfo.token}` } }
             );
@@ -140,8 +140,8 @@ export default function RestaurantDashboard() {
             
             // Fetch restaurant and stats in parallel
             const [restaurantResult, statsResult] = await Promise.allSettled([
-                axios.get(`${API_BASE_URL}/api/restaurants/my-restaurant`, { headers }),
-                axios.get(`${API_BASE_URL}/api/dashboard/stats`, { headers })
+                axios.get(`${getApiUrl()}/api/restaurants/my-restaurant`, { headers }),
+                axios.get(`${getApiUrl()}/api/dashboard/stats`, { headers })
             ]);
 
             // Handle restaurant result
@@ -200,7 +200,7 @@ export default function RestaurantDashboard() {
     const fetchNotifications = async () => {
         try {
             if (!userInfo?.token) return;
-            const res = await axios.get(`${API_BASE_URL}/api/notifications`, {
+            const res = await axios.get(`${getApiUrl()}/api/notifications`, {
                 headers: { Authorization: `Bearer ${userInfo.token}` }
             });
             // Ensure data is an array before setting
@@ -283,7 +283,7 @@ export default function RestaurantDashboard() {
     const markAsRead = async (id: string) => {
         try {
             const token = JSON.parse(localStorage.getItem('userInfo') || '{}').token;
-            await axios.put(`${API_BASE_URL}/api/notifications/${id}/read`, {}, {
+            await axios.put(`${getApiUrl()}/api/notifications/${id}/read`, {}, {
                 headers: { Authorization: `Bearer ${token}` }
             });
             setNotifications(notifications.map(n => n._id === id ? { ...n, read: true } : n));
@@ -323,7 +323,7 @@ export default function RestaurantDashboard() {
 
             // 1. Upload the file
             console.log('Uploading logo file...');
-            const { data } = await axios.post(`${API_BASE_URL}/api/upload`, formData, {
+            const { data } = await axios.post(`${getApiUrl()}/api/upload`, formData, {
                 headers: {
                     'Content-Type': 'multipart/form-data',
                     Authorization: `Bearer ${token}`
@@ -339,7 +339,7 @@ export default function RestaurantDashboard() {
 
             // 2. Update restaurant logo in backend
             // Using store-settings endpoint
-            const updateRes = await axios.put(`${API_BASE_URL}/api/restaurants/store-settings`,
+            const updateRes = await axios.put(`${getApiUrl()}/api/restaurants/store-settings`,
                 { logo: uploadedPath },
                 { headers: { Authorization: `Bearer ${token}` } }
             );

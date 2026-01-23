@@ -4,7 +4,7 @@ import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { FaTimes } from 'react-icons/fa';
 import axios from 'axios';
-import { API_BASE_URL } from '../utils/config';
+import { getApiUrl } from '../utils/config';
 
 interface CancelOrderModalProps {
     isOpen: boolean;
@@ -35,7 +35,7 @@ export default function CancelOrderModal({ isOpen, onClose, orderId, onCancelSuc
             const token = JSON.parse(localStorage.getItem('userInfo') || '{}').token;
 
             await axios.patch(
-                `${API_BASE_URL}/api/orders/${orderId}/cancel`,
+                `${getApiUrl()}/api/orders/${orderId}/cancel`,
                 { reason: selectedReason },
                 { headers: { Authorization: `Bearer ${token}` } }
             );
@@ -129,3 +129,4 @@ export default function CancelOrderModal({ isOpen, onClose, orderId, onCancelSuc
         </AnimatePresence>
     );
 }
+

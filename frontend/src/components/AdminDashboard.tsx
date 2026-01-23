@@ -24,7 +24,7 @@ import CODSettlementView from './admin/CODSettlementView';
 
 import axios from 'axios';
 import { initSocket, getSocket, disconnectSocket } from '../utils/socket';
-import { API_BASE_URL } from '../utils/config';
+import { getApiUrl } from '../utils/config';
 import { FaClock } from 'react-icons/fa';
 import toast, { Toaster } from 'react-hot-toast';
 
@@ -207,10 +207,10 @@ export default function AdminDashboard() {
                 },
             };
 
-            console.log('Fetching stats from:', `${API_BASE_URL}/api/admin/stats`);
+            console.log('Fetching stats from:', `${getApiUrl()}/api/admin/stats`);
             const [statsRes, countsRes] = await Promise.all([
-                axios.get(`${API_BASE_URL}/api/admin/stats`, config),
-                axios.get(`${API_BASE_URL}/api/admin/notifications/counts`, config)
+                axios.get(`${getApiUrl()}/api/admin/stats`, config),
+                axios.get(`${getApiUrl()}/api/admin/notifications/counts`, config)
             ]);
 
             console.log('Stats received:', statsRes.data);

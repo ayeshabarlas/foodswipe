@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import { API_BASE_URL } from '../utils/config';
+import { getApiUrl } from '../utils/config';
 import RiderRegistration from './RiderRegistration';
 import RiderDocumentUpload from './RiderDocumentUpload';
 import RiderDashboard from './RiderDashboard';
@@ -39,7 +39,7 @@ export default function RiderPortal() {
         }
 
         try {
-            const res = await axios.get(`${API_BASE_URL}/api/riders/my-profile`, {
+            const res = await axios.get(`${getApiUrl()}/api/riders/my-profile`, {
                 headers: { Authorization: `Bearer ${userInfo.token}` },
                 timeout: 20000
             });
@@ -117,3 +117,4 @@ export default function RiderPortal() {
         </div>
     );
 }
+

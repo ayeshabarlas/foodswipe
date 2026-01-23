@@ -1,4 +1,4 @@
-import { API_BASE_URL } from './config';
+import { getApiUrl } from './config';
 
 /**
  * Normalizes image paths and returns a full URL.
@@ -23,7 +23,8 @@ export const getImageUrl = (path: string | undefined | null) => {
         cleanPath = cleanPath.replace(/^(\.\/|\.\.\/|\/|uploads\/)+/, '');
     } while (cleanPath !== oldPath);
     
-    const baseUrl = API_BASE_URL.endsWith('/') ? API_BASE_URL.slice(0, -1) : API_BASE_URL;
+    const API_URL = getApiUrl();
+    const baseUrl = API_URL.endsWith('/') ? API_URL.slice(0, -1) : API_URL;
     
     // Always return with /uploads/ prefix
     return `${baseUrl}/uploads/${cleanPath}`;

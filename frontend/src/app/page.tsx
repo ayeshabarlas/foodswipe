@@ -10,7 +10,7 @@ const LoginScreen = dynamic(() => import("@/components/LoginScreen"), { ssr: fal
 const SplashScreen = dynamic(() => import("@/components/SplashScreen"), { ssr: false });
 const CreateRestaurant = dynamic(() => import("@/components/CreateRestaurant"), { ssr: false });
 import axios from "axios";
-import { API_BASE_URL } from "@/utils/config";
+import { getApiUrl } from "@/utils/config";
 
 // Force redeploy trigger - 2026-01-15 11:05
 export default function Home() {
@@ -75,7 +75,7 @@ export default function Home() {
       if (userInfoStr && token) {
         try {
           console.log("Home: Starting background re-validation...");
-          const response = await axios.get(`${API_BASE_URL}/api/auth/me`, {
+          const response = await axios.get(`${getApiUrl()}/api/auth/me`, {
             headers: { Authorization: `Bearer ${token}` },
             timeout: 5000 
           });

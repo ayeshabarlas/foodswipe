@@ -4,7 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { FaPowerOff, FaClock, FaInfoCircle, FaBell, FaCheckCircle, FaChartLine } from 'react-icons/fa';
 import axios from 'axios';
-import { API_BASE_URL } from '../utils/config';
+import { getApiUrl } from '../utils/config';
 import { getImageUrl, getImageFallback } from '../utils/imageUtils';
 
 interface StoreHours {
@@ -78,13 +78,13 @@ export default function DashboardStore({ restaurant, onUpdate }: DashboardStoreP
                 },
             };
 
-            const { data } = await axios.post(`${API_BASE_URL}/api/upload`, uploadData, config);
+            const { data } = await axios.post(`${getApiUrl()}/api/upload`, uploadData, config);
             const fullUrl = data.imageUrl;
             setLogo(fullUrl);
 
             // Immediately update restaurant profile with new logo
             await axios.put(
-                `${API_BASE_URL}/api/restaurants/store-settings`,
+                `${getApiUrl()}/api/restaurants/store-settings`,
                 { logo: fullUrl },
                 { headers: { Authorization: `Bearer ${token}` } }
             );
@@ -104,7 +104,7 @@ export default function DashboardStore({ restaurant, onUpdate }: DashboardStoreP
         try {
             const token = JSON.parse(localStorage.getItem('userInfo') || '{}').token;
             await axios.put(
-                `${API_BASE_URL}/api/restaurants/store-settings`,
+                `${getApiUrl()}/api/restaurants/store-settings`,
                 { storeStatus, prepTime, storeHours },
                 { headers: { Authorization: `Bearer ${token}` } }
             );
@@ -127,7 +127,7 @@ export default function DashboardStore({ restaurant, onUpdate }: DashboardStoreP
         try {
             const token = JSON.parse(localStorage.getItem('userInfo') || '{}').token;
             await axios.put(
-                `${API_BASE_URL}/api/restaurants/prep-time`,
+                `${getApiUrl()}/api/restaurants/prep-time`,
                 { prepTime },
                 { headers: { Authorization: `Bearer ${token}` } }
             );
@@ -413,3 +413,4 @@ export default function DashboardStore({ restaurant, onUpdate }: DashboardStoreP
         </div>
     );
 }
+

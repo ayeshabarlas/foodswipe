@@ -4,7 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { FaTimes, FaPhone, FaLock, FaArrowRight, FaCheckCircle } from 'react-icons/fa';
 import axios from 'axios';
-import { API_BASE_URL } from '../utils/config';
+import { getApiUrl } from '../utils/config';
 import toast from 'react-hot-toast';
 import { initRecaptcha, sendOTP as firebaseSendOTP, verifyOTP as firebaseVerifyOTP, cleanupRecaptcha } from '../utils/firebase-phone-auth';
 import { ConfirmationResult } from 'firebase/auth';
@@ -83,7 +83,7 @@ export default function PhoneAuthModal({ isOpen, onClose, onSuccess }: PhoneAuth
         try {
             // NEW: Real-time validation check before sending OTP
             console.log('🔍 Checking if phone number is already linked:', fullNumber);
-            const checkRes = await axios.post(`${API_BASE_URL}/api/auth/check-phone`, {
+            const checkRes = await axios.post(`${getApiUrl()}/api/auth/check-phone`, {
                 phoneNumber: fullNumber
             });
 
@@ -158,7 +158,7 @@ export default function PhoneAuthModal({ isOpen, onClose, onSuccess }: PhoneAuth
             const fullNumber = `${countryCode}${formattedPhone}`;
 
             console.log('🔗 Linking phone number in backend...');
-            const { data } = await axios.post(`${API_BASE_URL}/api/auth/verify-phone`, {
+            const { data } = await axios.post(`${getApiUrl()}/api/auth/verify-phone`, {
                 idToken,
                 phoneNumber: fullNumber
             }, config);
@@ -317,3 +317,4 @@ export default function PhoneAuthModal({ isOpen, onClose, onSuccess }: PhoneAuth
         </AnimatePresence>
     );
 }
+

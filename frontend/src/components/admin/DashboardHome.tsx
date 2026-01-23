@@ -1,7 +1,7 @@
 'use client';
 import { motion } from 'framer-motion';
 import axios from 'axios';
-import { API_BASE_URL } from '../../utils/config';
+import { getApiUrl } from '../../utils/config';
 import {
     FaUsers,
     FaStore,
@@ -69,7 +69,7 @@ export default function DashboardHome({ stats, refreshStats }: DashboardHomeProp
             const userInfo = JSON.parse(localStorage.getItem('userInfo') || '{}');
             if (!userInfo.token) return;
             
-            await axios.post(`${API_BASE_URL}/api/admin/cleanup-mock`, {}, {
+            await axios.post(`${getApiUrl()}/api/admin/cleanup-mock`, {}, {
                 headers: { Authorization: `Bearer ${userInfo.token}` }
             });
             alert('Mock data cleanup successful! The panel will refresh.');
@@ -410,3 +410,4 @@ export default function DashboardHome({ stats, refreshStats }: DashboardHomeProp
         </div>
     );
 }
+

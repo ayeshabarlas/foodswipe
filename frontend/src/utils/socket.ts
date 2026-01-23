@@ -2,6 +2,8 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 import Pusher from 'pusher-js';
 
+type SocketCallback = (data: any) => void;
+
 // Initialize these as null/empty and only use them inside functions
 let pusher: any = null;
 let activeChannels: Set<string> | null = null;

@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import { API_BASE_URL } from '../utils/config';
+import { getApiUrl } from '../utils/config';
 import { FaStar, FaCheckCircle, FaUser, FaPhone, FaEnvelope, FaBicycle, FaMapMarkerAlt, FaBell, FaCog, FaSignOutAlt, FaChevronRight, FaTimes, FaCamera, FaIdCard, FaCarSide, FaClock } from 'react-icons/fa';
 
 interface RiderProfileProps {
@@ -35,7 +35,7 @@ export default function RiderProfile({ riderId }: RiderProfileProps) {
             }
             
             // Try fetching by session first
-            const res = await axios.get(`${API_BASE_URL}/api/riders/my-profile`, {
+            const res = await axios.get(`${getApiUrl()}/api/riders/my-profile`, {
                 headers: { Authorization: `Bearer ${token}` }
             });
             
@@ -49,7 +49,7 @@ export default function RiderProfile({ riderId }: RiderProfileProps) {
                 try {
                     console.log('Attempting to fetch by riderId prop:', riderId);
                     const token = JSON.parse(localStorage.getItem("userInfo") || "{}").token;
-                    const res = await axios.get(`${API_BASE_URL}/api/riders/${riderId}`, {
+                    const res = await axios.get(`${getApiUrl()}/api/riders/${riderId}`, {
                         headers: { Authorization: `Bearer ${token}` }
                     });
                     setRiderData(res.data);
@@ -66,7 +66,7 @@ export default function RiderProfile({ riderId }: RiderProfileProps) {
     const fetchUnreadNotifications = async () => {
         try {
             const token = JSON.parse(localStorage.getItem("userInfo") || "{}").token;
-            const res = await axios.get(`${API_BASE_URL}/api/notifications`, {
+            const res = await axios.get(`${getApiUrl()}/api/notifications`, {
                 headers: { Authorization: `Bearer ${token}` }
             });
             const unread = res.data.filter((n: any) => !n.read).length;
@@ -390,7 +390,7 @@ function SettingsModal({ riderData, riderId, onClose, onUpdate }: { riderData: a
         setSaving(true);
         try {
             const token = JSON.parse(localStorage.getItem("userInfo") || "{}").token;
-            await axios.put(`${API_BASE_URL}/api/riders/${riderId}/profile`,
+            await axios.put(`${getApiUrl()}/api/riders/${riderId}/profile`,
                 { city, phone, fullName },
                 { headers: { Authorization: `Bearer ${token}` } }
             );
@@ -486,7 +486,7 @@ function NotificationsModal({ onClose }: { onClose: () => void }) {
     const fetchNotifications = async () => {
         try {
             const token = JSON.parse(localStorage.getItem("userInfo") || "{}").token;
-            const res = await axios.get(`${API_BASE_URL}/api/notifications`, {
+            const res = await axios.get(`${getApiUrl()}/api/notifications`, {
                 headers: { Authorization: `Bearer ${token}` }
             });
             setNotifications(res.data);
@@ -506,7 +506,7 @@ function NotificationsModal({ onClose }: { onClose: () => void }) {
     const markAsRead = async (id: string) => {
         try {
             const token = JSON.parse(localStorage.getItem("userInfo") || "{}").token;
-            await axios.put(`${API_BASE_URL}/api/notifications/${id}/read`, {}, {
+            await axios.put(`${getApiUrl()}/api/notifications/${id}/read`, {}, {
                 headers: { Authorization: `Bearer ${token}` }
             });
             setNotifications(notifications.map(n => n._id === id ? { ...n, read: true } : n));
@@ -593,3 +593,4 @@ function SettingItem({ icon, label, onClick }: { icon: React.ReactNode; label: s
         </button>
     );
 }
+

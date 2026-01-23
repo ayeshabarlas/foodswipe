@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import dynamic from 'next/dynamic';
 import axios from 'axios';
 import { getSocket } from '../../utils/socket';
-import { API_BASE_URL } from '../../utils/config';
+import { getApiUrl } from '../../utils/config';
 import { FaMotorcycle, FaSyncAlt } from 'react-icons/fa';
 
 // Dynamically import the map content to avoid SSR issues
@@ -84,7 +84,7 @@ export default function RiderLiveMap() {
             if (!userInfoStr) return;
             const userInfo = JSON.parse(userInfoStr);
 
-            const res = await axios.get(`${API_BASE_URL}/api/admin/riders`, {
+            const res = await axios.get(`${getApiUrl()}/api/admin/riders`, {
                 headers: { Authorization: `Bearer ${userInfo.token}` }
             });
 
@@ -174,3 +174,4 @@ export default function RiderLiveMap() {
         </div>
     );
 }
+

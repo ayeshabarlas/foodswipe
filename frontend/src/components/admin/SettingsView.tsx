@@ -2,7 +2,7 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import axios from 'axios';
-import { API_BASE_URL } from '../../utils/config';
+import { getApiUrl } from '../../utils/config';
 import toast from 'react-hot-toast';
 import { FaSave, FaCog, FaEnvelope, FaBullhorn, FaPercentage, FaShieldAlt, FaMobileAlt, FaTools, FaMoneyBillWave, FaTruck, FaShoppingCart, FaBan, FaKey, FaPhone, FaGlobe } from 'react-icons/fa';
 
@@ -60,7 +60,7 @@ export default function SettingsView() {
             const userInfo = JSON.parse(localStorage.getItem('userInfo') || '{}');
             if (!userInfo.token) return;
 
-            const { data } = await axios.get(`${API_BASE_URL}/api/admin/settings`, {
+            const { data } = await axios.get(`${getApiUrl()}/api/admin/settings`, {
                 headers: { Authorization: `Bearer ${userInfo.token}` }
             });
             if (data) {
@@ -87,7 +87,7 @@ export default function SettingsView() {
             }
 
             const response = await axios.put(
-                `${API_BASE_URL}/api/admin/settings`,
+                `${getApiUrl()}/api/admin/settings`,
                 settings,
                 { headers: { Authorization: `Bearer ${userInfo.token}` } }
             );
@@ -572,3 +572,4 @@ export default function SettingsView() {
         </div>
     );
 }
+

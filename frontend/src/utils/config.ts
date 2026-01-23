@@ -89,3 +89,5 @@ export function getSocketUrl() {
 // but they call the safe functions
 export const API_BASE_URL = 'https://foodswipe-6178.onrender.com'; // Hardcoded for safety in TDZ
 export const SOCKET_URL = 'https://foodswipe-6178.onrender.com';   // Hardcoded for safety in TDZ
+
+

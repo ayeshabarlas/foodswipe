@@ -2,7 +2,7 @@
 import { useState, useEffect } from 'react';
 import axios from 'axios';
 import { getSocket } from '../../utils/socket';
-import { API_BASE_URL } from '../../utils/config';
+import { getApiUrl } from '../../utils/config';
 import toast from 'react-hot-toast';
 import { FaUser, FaSearch, FaFilter, FaEye, FaFlag, FaBan, FaCheckCircle, FaTimesCircle, FaSync, FaTimes, FaShoppingBag, FaCalendarAlt, FaEnvelope, FaPhoneAlt, FaHistory, FaCreditCard, FaExclamationTriangle } from 'react-icons/fa';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -41,7 +41,7 @@ export default function CustomersView() {
             const userInfo = JSON.parse(localStorage.getItem('userInfo') || '{}');
             if (!userInfo.token) return;
 
-            const res = await axios.get(`${API_BASE_URL}/api/admin/users?role=customer`, {
+            const res = await axios.get(`${getApiUrl()}/api/admin/users?role=customer`, {
                 headers: { Authorization: `Bearer ${userInfo.token}` }
             });
             setCustomers(Array.isArray(res.data) ? res.data : (res.data?.users || []));
@@ -63,7 +63,7 @@ export default function CustomersView() {
             const userInfo = JSON.parse(localStorage.getItem('userInfo') || '{}');
             if (!userInfo.token) return;
 
-            const res = await axios.post(`${API_BASE_URL}/api/admin/users/sync`, {}, {
+            const res = await axios.post(`${getApiUrl()}/api/admin/users/sync`, {}, {
                 headers: { Authorization: `Bearer ${userInfo.token}` }
             });
             toast.success(`Sync complete! Created: ${res.data.syncedCount}, Updated: ${res.data.updatedCount}`, { id: toastId });
@@ -83,7 +83,7 @@ export default function CustomersView() {
             const userInfo = JSON.parse(localStorage.getItem('userInfo') || '{}');
             if (!userInfo.token) return;
 
-            await axios.put(`${API_BASE_URL}/api/admin/users/${id}/suspend`, {}, {
+            await axios.put(`${getApiUrl()}/api/admin/users/${id}/suspend`, {}, {
                 headers: { Authorization: `Bearer ${userInfo.token}` }
             });
             toast.success('Customer suspended');
@@ -103,7 +103,7 @@ export default function CustomersView() {
             const userInfo = JSON.parse(localStorage.getItem('userInfo') || '{}');
             if (!userInfo.token) return;
 
-            await axios.put(`${API_BASE_URL}/api/admin/users/${id}/unsuspend`, {}, {
+            await axios.put(`${getApiUrl()}/api/admin/users/${id}/unsuspend`, {}, {
                 headers: { Authorization: `Bearer ${userInfo.token}` }
             });
             toast.success('Customer unsuspended');
@@ -124,7 +124,7 @@ export default function CustomersView() {
             const userInfo = JSON.parse(localStorage.getItem('userInfo') || '{}');
             if (!userInfo.token) return;
 
-            await axios.delete(`${API_BASE_URL}/api/admin/users/${id}`, {
+            await axios.delete(`${getApiUrl()}/api/admin/users/${id}`, {
                 headers: { Authorization: `Bearer ${userInfo.token}` }
             });
             toast.success('Customer deleted permanently');
@@ -584,3 +584,4 @@ export default function CustomersView() {
         </div>
     );
 }
+

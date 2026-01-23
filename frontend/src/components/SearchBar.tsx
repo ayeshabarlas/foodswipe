@@ -4,7 +4,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { FaSearch, FaTimes, FaHistory, FaFire, FaUtensils } from 'react-icons/fa';
 import axios from 'axios';
-import { API_BASE_URL } from '../utils/config';
+import { getApiUrl } from '../utils/config';
 
 interface Suggestion {
     type: 'dish' | 'restaurant';
@@ -54,7 +54,7 @@ export default function SearchBar({ onSearch }: SearchBarProps) {
             }
 
             try {
-                const res = await axios.get(`${API_BASE_URL}/api/search/autocomplete?q=${query}`);
+                const res = await axios.get(`${getApiUrl()}/api/search/autocomplete?q=${query}`);
                 setSuggestions(res.data);
             } catch (error) {
                 console.error('Error fetching suggestions:', error);
@@ -205,3 +205,4 @@ export default function SearchBar({ onSearch }: SearchBarProps) {
         </div>
     );
 }
+

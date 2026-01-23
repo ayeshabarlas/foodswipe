@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import axios from 'axios';
-import { API_BASE_URL } from '../utils/config';
+import { getApiUrl } from '../utils/config';
 import { getSocket } from '../utils/socket';
 
 export interface SystemSettings {
@@ -96,7 +96,7 @@ export function useSettings() {
     const fetchSettings = async () => {
         try {
             // Add timestamp to bypass potential browser cache
-            const { data } = await axios.get(`${API_BASE_URL}/api/settings?t=${Date.now()}`);
+            const { data } = await axios.get(`${getApiUrl()}/api/settings?t=${Date.now()}`);
             if (data) {
                 setSettings(data);
             }
@@ -132,3 +132,4 @@ export function useSettings() {
 
     return { settings, loading, error, refetch: fetchSettings };
 }
+
