@@ -9,8 +9,19 @@ import {
 } from 'react-icons/fa';
 
 interface DashboardOverviewProps {
-    stats: any;
-    restaurant: any;
+    stats: {
+        isOnline: boolean;
+        ordersToday: number;
+        netEarningsToday: number;
+        commissionToday: number;
+        [key: string]: any;
+    };
+    restaurant: {
+        owner: {
+            name: string;
+        };
+        [key: string]: any;
+    };
 }
 
 export default function DashboardOverview({ stats, restaurant }: DashboardOverviewProps) {

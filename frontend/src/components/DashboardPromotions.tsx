@@ -1,8 +1,11 @@
 'use client';
 
+/* eslint-disable @next/next/no-img-element */
+/* eslint-disable @typescript-eslint/no-explicit-any */
+
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { FaChartLine, FaUsers, FaPercent, FaPlus, FaTrash, FaTicketAlt, FaTags, FaToggleOn, FaToggleOff } from 'react-icons/fa';
+import { FaChartLine, FaUsers, FaPlus, FaTrash, FaTicketAlt, FaTags, FaToggleOn, FaToggleOff, FaClock } from 'react-icons/fa';
 import axios from 'axios';
 import { API_BASE_URL } from '../utils/config';
 import CreateVoucherModal from './CreateVoucherModal';
@@ -30,7 +33,15 @@ interface Deal {
     minimumAmount: number;
 }
 
-const StatCard = ({ title, value, icon: Icon, color, lightColor }: any) => (
+interface StatCardProps {
+    title: string;
+    value: string | number;
+    icon: any;
+    color: string;
+    lightColor: string;
+}
+
+const StatCard = ({ title, value, icon: Icon, color, lightColor }: StatCardProps) => (
     <motion.div
         initial={{ opacity: 0, y: 20 }}
         whileHover={{ y: -8, scale: 1.02 }}
@@ -160,7 +171,7 @@ export default function DashboardPromotions() {
                         Merchant Growth Tools
                     </div>
                     <h2 className="text-4xl font-extrabold text-gray-900 font-plus-jakarta tracking-tight leading-none">Marketing Hub</h2>
-                    <p className="text-gray-500 text-[14px] font-medium max-w-md">Strategically boost your restaurant's performance with professional-grade promotional tools and insights.</p>
+                    <p className="text-gray-500 text-[14px] font-medium max-w-md">Strategically boost your restaurant&apos;s performance with professional-grade promotional tools and insights.</p>
                 </div>
                 <div className="flex items-center gap-6 bg-white p-4 rounded-[24px] shadow-sm border border-gray-100">
                     <div className="flex items-center gap-3">
