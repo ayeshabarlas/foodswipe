@@ -7,8 +7,8 @@ const VideoFeed = dynamic(() => import("@/components/VideoFeed"), { ssr: false }
 const RestaurantDashboard = dynamic(() => import("@/components/RestaurantDashboard"), { ssr: false });
 const RiderPortal = dynamic(() => import("@/components/RiderPortal"), { ssr: false });
 const LoginScreen = dynamic(() => import("@/components/LoginScreen"), { ssr: false });
-import SplashScreen from "@/components/SplashScreen";
-import CreateRestaurant from "@/components/CreateRestaurant";
+const SplashScreen = dynamic(() => import("@/components/SplashScreen"), { ssr: false });
+const CreateRestaurant = dynamic(() => import("@/components/CreateRestaurant"), { ssr: false });
 import axios from "axios";
 import { API_BASE_URL } from "@/utils/config";
 

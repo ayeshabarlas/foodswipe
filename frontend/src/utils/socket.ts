@@ -1,6 +1,6 @@
 import Pusher from 'pusher-js';
 
-let pusher: Pusher | null = null;
+let pusher: any = null;
 let activeChannels: Set<string> = new Set();
 const eventListeners = new Map<string, Set<(data: any) => void>>();
 
@@ -9,68 +9,35 @@ const PUSHER_CLUSTER = process.env.NEXT_PUBLIC_PUSHER_CLUSTER || 'ap2';
 
 function createEmptySocket() {
     return {
-        on: () => { },
-        off: () => { },
-        emit: () => { },
-        pusher: null
+        on: () => {},
+        emit: () => {},
+        disconnect: () => {},
+        subscribe: () => null,
+        unsubscribe: () => {},
+        bind: () => {},
+        unbind: () => {},
     };
 }
 
 function createSocketWrapper() {
-    const on = (event: string, callback: (data: any) => void) => {
-        // Store listener for future channels
-        if (!eventListeners.has(event)) {
-            eventListeners.set(event, new Set());
-        }
-        eventListeners.get(event)?.add(callback);
-
-        // Bind to current active channels
-        activeChannels.forEach(channelName => {
-            const channel = pusher?.channel(channelName);
-            channel?.bind(event, callback);
-        });
-
-        // Also bind to connection events if it's a Pusher-specific event
-        if (['connect', 'disconnect', 'error'].includes(event)) {
-            pusher?.connection.bind(event, callback);
-        }
-    };
-
-    const off = (event: string, callback?: (data: any) => void) => {
-        if (callback) {
-            eventListeners.get(event)?.delete(callback);
-        } else {
-            eventListeners.delete(event);
-        }
-
-        activeChannels.forEach(channelName => {
-            const channel = pusher?.channel(channelName);
-            if (callback) {
-                channel?.unbind(event, callback);
-            } else {
-                channel?.unbind(event);
-            }
-        });
-
-        if (['connect', 'disconnect', 'error'].includes(event)) {
-            if (callback) {
-                pusher?.connection.unbind(event, callback);
-            } else {
-                pusher?.connection.unbind(event);
-            }
-        }
-    };
-
     return {
-        on,
-        off,
-        bind: on,
-        unbind: off,
-        emit: (event: string, data: any) => {
-            console.warn(`Socket.emit('${event}') called but Pusher is client-only. Use API instead.`);
+        on: (event: string, callback: Function) => {
+            console.warn('Socket.on is deprecated, use channel.bind');
         },
-        // Original pusher instance if needed
-        pusher
+        emit: (event: string, data: any) => {
+            console.warn('Socket.emit is not supported in Pusher wrapper');
+        },
+        disconnect: () => {
+            if (pusher) pusher.disconnect();
+        },
+        subscribe: (channelName: string) => subscribeToChannel(channelName),
+        unsubscribe: (channelName: string) => unsubscribeFromChannel(channelName),
+        bind: (event: string, callback: Function) => {
+            // Global binding if needed
+        },
+        unbind: (event: string) => {
+            // Global unbinding if needed
+        },
     };
 }
 

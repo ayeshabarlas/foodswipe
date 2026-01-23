@@ -12,9 +12,9 @@ const CartDrawer = dynamic(() => import('./CartDrawer'), { ssr: false });
 const NavDrawer = dynamic(() => import('./NavDrawer'), { ssr: false });
 const RiderRatingModal = dynamic(() => import('./RiderRatingModal'), { ssr: false });
 const OrderTracking = dynamic(() => import('./OrderTracking'), { ssr: false });
+const LocationPermission = dynamic(() => import('./LocationPermission'), { ssr: false });
+const ProfileModal = dynamic(() => import('./ProfileModal'), { ssr: false });
 
-import LocationPermission from './LocationPermission';
-import ProfileModal from './ProfileModal';
 import { getImageUrl, getImageFallback } from '../utils/imageUtils';
 import { useCart } from '@/context/CartContext';
 import { API_BASE_URL } from '../utils/config';

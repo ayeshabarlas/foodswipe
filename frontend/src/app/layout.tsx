@@ -1,8 +1,9 @@
 import type { Metadata } from "next";
 import { Poppins, Plus_Jakarta_Sans, Inter } from "next/font/google";
 import "./globals.css";
+import dynamic from "next/dynamic";
+const SystemWrapper = dynamic(() => import("../components/SystemWrapper"), { ssr: false });
 import { CartProvider } from "../context/CartContext";
-import SystemWrapper from "../components/SystemWrapper";
 
 const inter = Inter({
   variable: "--font-inter",
