@@ -2,12 +2,13 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import VideoFeed from "@/components/VideoFeed";
-import LoginScreen from "@/components/LoginScreen";
+import dynamic from "next/dynamic";
+const VideoFeed = dynamic(() => import("@/components/VideoFeed"), { ssr: false });
+const RestaurantDashboard = dynamic(() => import("@/components/RestaurantDashboard"), { ssr: false });
+const RiderPortal = dynamic(() => import("@/components/RiderPortal"), { ssr: false });
+const LoginScreen = dynamic(() => import("@/components/LoginScreen"), { ssr: false });
 import SplashScreen from "@/components/SplashScreen";
-import RestaurantDashboard from "@/components/RestaurantDashboard";
 import CreateRestaurant from "@/components/CreateRestaurant";
-import RiderPortal from "@/components/RiderPortal";
 import axios from "axios";
 import { API_BASE_URL } from "@/utils/config";
 
