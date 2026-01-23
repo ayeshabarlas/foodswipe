@@ -287,7 +287,7 @@ const VideoCard = React.memo(({
                                 <FaPlay className="text-white text-6xl opacity-70" />
                             </div>
                         )}
-                        <button 
+                        <button
                             onClick={(e) => { e.stopPropagation(); setIsMuted(!isMuted); }}
                             className="absolute bottom-28 right-4 z-30 bg-black/20 p-2 rounded-full text-white backdrop-blur-sm"
                         >
@@ -481,7 +481,7 @@ export default function VideoFeed() {
         fetchActiveOrder();
         // Poll for active orders every 30 seconds
         const interval = setInterval(fetchActiveOrder, 30000);
-        
+
         // Real-time listener for order updates
         const userInfoStr = localStorage.getItem('userInfo');
         if (userInfoStr) {
@@ -491,11 +491,11 @@ export default function VideoFeed() {
                     initSocket(userInfo._id, 'user');
                     const userChannelName = `user-${userInfo._id}`;
                     const userChannel = subscribeToChannel(userChannelName);
-                    
+
                     if (userChannel) {
                         userChannel.bind('orderStatusUpdate', (updatedOrder: any) => {
                             console.log('📦 Real-time order update:', updatedOrder.status);
-                            
+
                             // If order is delivered, show rating modal
                             if (updatedOrder.status === 'Delivered') {
                                 console.log('✅ Order delivered! Showing rating modal...');
@@ -504,7 +504,7 @@ export default function VideoFeed() {
                                     setShowRatingModal(true);
                                 }, 2000);
                             }
-                            
+
                             // Refresh active orders list
                             fetchActiveOrder();
                         });
@@ -538,48 +538,33 @@ export default function VideoFeed() {
                 console.error('Error setting up real-time listener:', e);
             }
         }
-        
+
         return () => clearInterval(interval);
     }, []);
-
-    useEffect(() => {
-        // Fallback polling to refresh dishes every 30 seconds
-        const interval = setInterval(() => {
-            // We don't pass arguments, so it uses the current state for search/category
-            fetchDishes(); 
-        }, 30000);
-
-        return () => clearInterval(interval);
-    }, [fetchDishes]); // Rerun if fetchDishes changes (e.g., due to filter changes)
-
-    const handleTrackOrder = (orderId: string) => {
-        setSelectedOrderId(orderId);
-        setShowTrackingModal(true);
-    };
 
     const fetchDishes = useCallback(async (searchQuery?: string, category?: string) => {
         try {
             const loc = userLocation || (localStorage.getItem('userLocation') ? JSON.parse(localStorage.getItem('userLocation')!) : null);
             let queryParams = loc ? `?lat=${loc.latitude}&lng=${loc.longitude}` : '';
-            
+
             const activeSearch = searchQuery ?? searchTerm;
             const activeCategory = category ?? selectedCategory;
 
             if (activeSearch) {
                 queryParams += (queryParams ? '&' : '?') + `search=${encodeURIComponent(activeSearch)}`;
             }
-            
+
             if (activeCategory && activeCategory !== 'All') {
                 queryParams += (queryParams ? '&' : '?') + `category=${encodeURIComponent(activeCategory)}`;
             }
-            
+
             console.log('📡 Fetching videos from:', `${getApiUrl()}/api/videos/feed${queryParams}`);
             const res = await axios.get(`${getApiUrl()}/api/videos/feed${queryParams}`);
             console.log('📡 Feed Response:', res.status, 'Videos:', res.data?.videos?.length);
-            
+
             if (res.data && res.data.videos) {
                 setDishes(res.data.videos);
-                
+
                 // If we have items in cart, but the feed is empty and no filters are active,
                 // it means there are no restaurants in the system. Clear the cart to avoid stale items.
                 if (res.data.videos.length === 0 && !activeSearch && activeCategory === 'All') {
@@ -600,9 +585,24 @@ export default function VideoFeed() {
     }, [userLocation, searchTerm, selectedCategory]);
 
     useEffect(() => {
+        // Fallback polling to refresh dishes every 30 seconds
+        const interval = setInterval(() => {
+            // We don't pass arguments, so it uses the current state for search/category
+            fetchDishes();
+        }, 30000);
+
+        return () => clearInterval(interval);
+    }, [fetchDishes]); // Rerun if fetchDishes changes (e.g., due to filter changes)
+
+    const handleTrackOrder = (orderId: string) => {
+        setSelectedOrderId(orderId);
+        setShowTrackingModal(true);
+    };
+
+    useEffect(() => {
         // Initial fetch
         fetchDishes();
-        
+
         const userInfo = localStorage.getItem('userInfo');
         if (userInfo) setUser(JSON.parse(userInfo));
         const savedLocation = localStorage.getItem('userLocation');
@@ -755,19 +755,19 @@ export default function VideoFeed() {
                             <line x1="3" y1="18" x2="21" y2="18" />
                         </svg>
                     </button>
-                    
+
                     <div className="flex-1 flex items-center gap-2">
                         <div className="flex-1 relative">
-                            <input 
-                                type="text" 
-                                placeholder="Search..." 
+                            <input
+                                type="text"
+                                placeholder="Search..."
                                 value={searchTerm}
                                 onChange={(e) => setSearchTerm(e.target.value)}
-                                className="w-full bg-white/10 backdrop-blur-md text-white placeholder-gray-300 rounded-lg px-4 py-2 pl-9 pr-8 outline-none focus:bg-white/20 transition text-sm border border-white/10" 
+                                className="w-full bg-white/10 backdrop-blur-md text-white placeholder-gray-300 rounded-lg px-4 py-2 pl-9 pr-8 outline-none focus:bg-white/20 transition text-sm border border-white/10"
                             />
                             <FaSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-300" size={12} />
                             {searchTerm && (
-                                <button 
+                                <button
                                     onClick={() => setSearchTerm('')}
                                     className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-white"
                                 >
@@ -778,11 +778,10 @@ export default function VideoFeed() {
 
                         {/* Category Dropdown */}
                         <div className="relative">
-                            <button 
+                            <button
                                 onClick={() => setIsCategoryDropdownOpen(!isCategoryDropdownOpen)}
-                                className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-semibold transition-all duration-200 border border-white/10 backdrop-blur-md ${
-                                    selectedCategory !== 'All' ? 'bg-[#FF6A00] text-white border-[#FF6A00]' : 'bg-white/10 text-white hover:bg-white/20'
-                                }`}
+                                className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-semibold transition-all duration-200 border border-white/10 backdrop-blur-md ${selectedCategory !== 'All' ? 'bg-[#FF6A00] text-white border-[#FF6A00]' : 'bg-white/10 text-white hover:bg-white/20'
+                                    }`}
                             >
                                 <span className="max-w-[60px] truncate">{selectedCategory === 'All' ? 'Menu' : selectedCategory}</span>
                                 <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" className={`transition-transform duration-200 ${isCategoryDropdownOpen ? 'rotate-180' : ''}`}>
@@ -793,14 +792,14 @@ export default function VideoFeed() {
                             <AnimatePresence>
                                 {isCategoryDropdownOpen && (
                                     <>
-                                        <motion.div 
+                                        <motion.div
                                             initial={{ opacity: 0 }}
                                             animate={{ opacity: 1 }}
                                             exit={{ opacity: 0 }}
                                             onClick={() => setIsCategoryDropdownOpen(false)}
                                             className="fixed inset-0 z-40 bg-black/20"
                                         />
-                                        <motion.div 
+                                        <motion.div
                                             initial={{ opacity: 0, y: 10, scale: 0.95 }}
                                             animate={{ opacity: 1, y: 0, scale: 1 }}
                                             exit={{ opacity: 0, y: 10, scale: 0.95 }}
@@ -814,11 +813,10 @@ export default function VideoFeed() {
                                                             setSelectedCategory(cat);
                                                             setIsCategoryDropdownOpen(false);
                                                         }}
-                                                        className={`w-full text-left px-4 py-2.5 text-xs transition-colors ${
-                                                            selectedCategory === cat 
-                                                                ? 'bg-[#FF6A00] text-white font-bold' 
-                                                                : 'text-gray-300 hover:bg-white/10 hover:text-white'
-                                                        }`}
+                                                        className={`w-full text-left px-4 py-2.5 text-xs transition-colors ${selectedCategory === cat
+                                                            ? 'bg-[#FF6A00] text-white font-bold'
+                                                            : 'text-gray-300 hover:bg-white/10 hover:text-white'
+                                                            }`}
                                                     >
                                                         {cat}
                                                     </button>
@@ -864,14 +862,14 @@ export default function VideoFeed() {
                     };
                     distance = compute(userLocation || (typeof window !== 'undefined' ? JSON.parse(localStorage.getItem('userLocation') || 'null') : null));
                     return (
-                        <VideoCard 
-                            key={dish._id} 
-                            dish={dish} 
-                            isActive={index === currentVideoIndex} 
+                        <VideoCard
+                            key={dish._id}
+                            dish={dish}
+                            isActive={index === currentVideoIndex}
                             isNext={index === currentVideoIndex + 1}
-                            onOpenDetails={handleOpenDetails} 
-                            onOpenProfile={handleOpenProfile} 
-                            distance={distance} 
+                            onOpenDetails={handleOpenDetails}
+                            onOpenProfile={handleOpenProfile}
+                            distance={distance}
                             user={user}
                         />
                     );
@@ -885,7 +883,7 @@ export default function VideoFeed() {
                                 </div>
                                 <h3 className="text-xl font-bold mb-2">No results found</h3>
                                 <p className="text-gray-400 max-w-xs">We couldn't find any dishes or restaurants matching "{searchTerm}"</p>
-                                <button 
+                                <button
                                     onClick={() => setSearchTerm('')}
                                     className="mt-6 text-[#FF6A00] font-medium hover:underline"
                                 >
@@ -906,17 +904,17 @@ export default function VideoFeed() {
                 {selectedRestaurant && <RestaurantProfile restaurant={selectedRestaurant} onBack={() => setSelectedRestaurant(null)} />}
             </AnimatePresence>
             <CartDrawer isOpen={isCartOpen} onClose={() => setIsCartOpen(false)} onTrackOrder={handleTrackOrder} />
-            <NavDrawer 
-                isOpen={isNavOpen} 
-                onClose={() => setIsNavOpen(false)} 
-                user={user} 
+            <NavDrawer
+                isOpen={isNavOpen}
+                onClose={() => setIsNavOpen(false)}
+                user={user}
                 onOpenProfile={() => setIsUserProfileOpen(true)}
                 activeOrderId={activeOrder?._id}
             />
             <ProfileModal isOpen={isUserProfileOpen} onClose={() => setIsUserProfileOpen(false)} user={user} />
             <OrderTracking isOpen={showTrackingModal} onClose={() => setShowTrackingModal(false)} orderId={selectedOrderId || ''} />
             {showRatingModal && ratingOrderId && (
-                <RiderRatingModal 
+                <RiderRatingModal
                     isOpen={showRatingModal}
                     onClose={() => setShowRatingModal(false)}
                     orderId={ratingOrderId}

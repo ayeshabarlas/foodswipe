@@ -10,8 +10,8 @@ interface ModernLoaderProps {
     fullScreen?: boolean;
 }
 
-const ModernLoader: React.FC<ModernLoaderProps> = ({ 
-    size = 'md', 
+const ModernLoader: React.FC<ModernLoaderProps> = ({
+    size = 'md',
     color = '#FF4500', // Orange-red primary color
     text,
     fullScreen = false
@@ -36,12 +36,12 @@ const ModernLoader: React.FC<ModernLoaderProps> = ({
                         repeat: Infinity
                     }}
                 />
-                
+
                 {/* Inner pulsing circle */}
                 <motion.div
                     className="absolute inset-2 rounded-full opacity-20"
                     style={{ backgroundColor: color }}
-                    animate={{ 
+                    animate={{
                         scale: [0.8, 1.1, 0.8],
                         opacity: [0.2, 0.5, 0.2]
                     }}
@@ -55,19 +55,22 @@ const ModernLoader: React.FC<ModernLoaderProps> = ({
                 {/* Orbiting dot */}
                 <motion.div
                     className="absolute -top-1 left-1/2 w-2 h-2 rounded-full"
-                    style={{ backgroundColor: color, marginLeft: '-4px' }}
+                    style={{
+                        backgroundColor: color,
+                        marginLeft: '-4px',
+                        transformOrigin: `center ${size === 'lg' ? '44px' : size === 'md' ? '28px' : '16px'}`
+                    }}
                     animate={{ rotate: 360 }}
                     transition={{
                         duration: 2,
                         ease: "linear",
                         repeat: Infinity
                     }}
-                    style={{ transformOrigin: `center ${size === 'lg' ? '44px' : size === 'md' ? '28px' : '16px'}` }}
                 />
             </div>
-            
+
             {text && (
-                <motion.p 
+                <motion.p
                     className="text-sm font-medium text-gray-500 tracking-wide"
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
