@@ -249,14 +249,14 @@ const VideoCard = React.memo(({
     };
 
     return (
-        <div className="relative h-screen w-full snap-start snap-always bg-black flex-shrink-0 overflow-hidden" onClick={togglePlay}>
+        <div className="relative h-[100dvh] w-full snap-start snap-always bg-black flex-shrink-0 overflow-hidden" onClick={togglePlay}>
             <div className="absolute inset-0 z-0" onPointerDown={handlePointerDown} onPointerMove={handlePointerMove} onPointerUp={handlePointerUp}>
                 {dish.videoUrl ? (
                     <div className="relative w-full h-full">
                         <video
                             ref={videoRef}
                             src={getImageUrl(dish.videoUrl)}
-                            className="w-full h-full object-contain"
+                            className="w-full h-full object-cover"
                             loop
                             muted={isMuted}
                             playsInline
@@ -875,7 +875,7 @@ export default function VideoFeed() {
                     );
                 })}
                 {filteredDishes.length === 0 && (
-                    <div className="h-screen flex flex-col items-center justify-center text-white bg-gray-900 px-6 text-center">
+                    <div className="h-[100dvh] flex flex-col items-center justify-center text-white bg-gray-900 px-6 text-center">
                         {searchTerm ? (
                             <>
                                 <div className="w-16 h-16 bg-white/10 rounded-full flex items-center justify-center mb-4">
