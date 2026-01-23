@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import axios from 'axios';
 import { getApiUrl } from '../../utils/config';
-import { FaBell, FaCheck, FaInfoCircle, FaShoppingBag, FaStore, FaMotorcycle, FaExclamationTriangle } from 'react-icons/fa';
+import { FaBell, FaCheck, FaInfoCircle, FaShoppingBag, FaStore, FaMotorcycle, FaExclamationTriangle, FaSync } from 'react-icons/fa';
 import toast from 'react-hot-toast';
 
 interface Notification {
@@ -85,6 +85,13 @@ export default function NotificationList({ onClose }: { onClose?: () => void }) 
                     <h3 className="font-bold text-gray-800">Notifications</h3>
                 </div>
                 <div className="flex items-center gap-3">
+                    <button
+                        onClick={handleRefresh}
+                        className={`text-gray-400 hover:text-orange-500 transition-all ${loading ? 'animate-spin' : ''}`}
+                        title="Refresh"
+                    >
+                        <FaSync className="text-xs" />
+                    </button>
                     {notifications.some(n => !n.read) && (
                         <button
                             onClick={markAllRead}

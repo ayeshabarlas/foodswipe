@@ -78,6 +78,19 @@ export default function DashboardMenu({ restaurant: initialRestaurant }: { resta
         }
     }, [userInfo]);
 
+    useEffect(() => {
+        if (restaurant?._id) {
+            console.log("DashboardMenu: Subscribing to channel for restaurant:", restaurant._id);
+            const channel = subscribeToChannel(`restaurant-${restaurant._id}`);
+            if (channel) {
+                channel.bind('menu_updated', (data: any) => {
+                    console.log('DashboardMenu: Menu update received via socket:', data);
+                    fetchDishes();
+                });
+            }
+        }
+    }, [restaurant?._id]);
+
     const handleModalSubmit = async (data: any) => {
         try {
             if (!userInfo?.token) return alert('Please login again');
