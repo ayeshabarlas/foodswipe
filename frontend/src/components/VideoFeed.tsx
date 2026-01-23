@@ -4,14 +4,14 @@ import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react'
 import { FaHeart, FaComment, FaShare, FaShoppingCart, FaFilter, FaStar, FaTimes, FaPaperPlane, FaBars, FaChevronRight, FaSearch, FaMapMarkerAlt, FaPlay, FaVolumeUp, FaVolumeMute } from 'react-icons/fa';
 import axios from 'axios';
 import { motion, AnimatePresence, PanInfo } from 'framer-motion';
-import DishDetails from './DishDetails';
-import RestaurantProfile from './RestaurantProfile';
-import CartDrawer from './CartDrawer';
-import NavDrawer from './NavDrawer';
+const DishDetails = dynamic(() => import('./DishDetails'), { ssr: false });
+const RestaurantProfile = dynamic(() => import('./RestaurantProfile'), { ssr: false });
+const CartDrawer = dynamic(() => import('./CartDrawer'), { ssr: false });
+const NavDrawer = dynamic(() => import('./NavDrawer'), { ssr: false });
+const RiderRatingModal = dynamic(() => import('./RiderRatingModal'), { ssr: false });
 import dynamic from 'next/dynamic';
 
 const OrderTracking = dynamic(() => import('./OrderTracking'), { ssr: false });
-const RiderRatingModal = dynamic(() => import('./RiderRatingModal'), { ssr: false });
 import LocationPermission from './LocationPermission';
 import ProfileModal from './ProfileModal';
 import { getImageUrl, getImageFallback } from '../utils/imageUtils';

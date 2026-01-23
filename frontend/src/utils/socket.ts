@@ -7,44 +7,16 @@ const eventListeners = new Map<string, Set<(data: any) => void>>();
 const PUSHER_KEY = process.env.NEXT_PUBLIC_PUSHER_KEY || '';
 const PUSHER_CLUSTER = process.env.NEXT_PUBLIC_PUSHER_CLUSTER || 'ap2';
 
-export const initSocket = (userId: string, role: string, restaurantId?: string, riderId?: string) => {
-    if (typeof window === 'undefined') return createEmptySocket();
+function createEmptySocket() {
+    return {
+        on: () => { },
+        off: () => { },
+        emit: () => { },
+        pusher: null
+    };
+}
 
-    if (!pusher) {
-        if (!PUSHER_KEY) {
-            console.error('❌ Pusher Key is missing!');
-            return createEmptySocket();
-        }
-        pusher = new Pusher(PUSHER_KEY, {
-            cluster: PUSHER_CLUSTER,
-        });
-        console.log('✅ Pusher Client initialized');
-    }
-
-    // Subscribe to channels based on role (replacing rooms)
-    if (role === 'admin') {
-        subscribeToChannel('admin');
-    } else if (role === 'restaurant' && restaurantId) {
-        subscribeToChannel(`restaurant-${restaurantId}`);
-    } else if (role === 'rider' && riderId) {
-        subscribeToChannel(`rider-${riderId}`);
-        subscribeToChannel('riders');
-    } else if (userId) {
-        subscribeToChannel(`user-${userId}`);
-    }
-
-    // Return a wrapper that mimics Socket.io API
-    return createSocketWrapper();
-};
-
-const createEmptySocket = () => ({
-    on: () => {},
-    off: () => {},
-    emit: () => {},
-    pusher: null
-});
-
-const createSocketWrapper = () => {
+function createSocketWrapper() {
     const on = (event: string, callback: (data: any) => void) => {
         // Store listener for future channels
         if (!eventListeners.has(event)) {
@@ -57,7 +29,7 @@ const createSocketWrapper = () => {
             const channel = pusher?.channel(channelName);
             channel?.bind(event, callback);
         });
-        
+
         // Also bind to connection events if it's a Pusher-specific event
         if (['connect', 'disconnect', 'error'].includes(event)) {
             pusher?.connection.bind(event, callback);
@@ -79,7 +51,7 @@ const createSocketWrapper = () => {
                 channel?.unbind(event);
             }
         });
-        
+
         if (['connect', 'disconnect', 'error'].includes(event)) {
             if (callback) {
                 pusher?.connection.unbind(event, callback);
@@ -100,6 +72,44 @@ const createSocketWrapper = () => {
         // Original pusher instance if needed
         pusher
     };
+}
+
+export const initSocket = (userId: string, role: string, restaurantId?: string, riderId?: string) => {
+    // Return dummy socket for server-side rendering
+    if (typeof window === 'undefined') return createEmptySocket();
+
+    // Check if Pusher is configured
+    if (!PUSHER_KEY) {
+        console.warn('⚠️ Pusher Key is missing, skipping socket initialization');
+        return createEmptySocket();
+    }
+
+    if (!pusher) {
+        try {
+            pusher = new Pusher(PUSHER_KEY, {
+                cluster: PUSHER_CLUSTER,
+            });
+            console.log('✅ Pusher Client initialized');
+        } catch (error) {
+            console.error('❌ Failed to initialize Pusher:', error);
+            return createEmptySocket();
+        }
+    }
+
+    // Subscribe to channels based on role (replacing rooms)
+    if (role === 'admin') {
+        subscribeToChannel('admin');
+    } else if (role === 'restaurant' && restaurantId) {
+        subscribeToChannel(`restaurant-${restaurantId}`);
+    } else if (role === 'rider' && riderId) {
+        subscribeToChannel(`rider-${riderId}`);
+        subscribeToChannel('riders');
+    } else if (userId) {
+        subscribeToChannel(`user-${userId}`);
+    }
+
+    // Return a wrapper that mimics Socket.io API
+    return createSocketWrapper();
 };
 
 export const getSocket = () => {

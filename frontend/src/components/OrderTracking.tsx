@@ -1,15 +1,15 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
-import { FaMotorcycle, FaPhone, FaCheck, FaCommentDots, FaTimes, FaMapMarkerAlt, FaChevronRight, FaBox, FaClock } from 'react-icons/fa';
+import { FaMotorcycle, FaPhone, FaCheck, FaCommentDots, FaTimes, FaMapMarkerAlt, FaChevronRight, FaBox, FaClock, FaRoute } from 'react-icons/fa';
 import { initSocket, getSocket, subscribeToChannel, unsubscribeFromChannel } from '../utils/socket';
 import axios from 'axios';
 import { API_BASE_URL } from '../utils/config';
 import dynamic from 'next/dynamic';
-import OrderChat from './OrderChat';
+const OrderChat = dynamic(() => import('./OrderChat'), { ssr: false });
 import { motion, AnimatePresence } from 'framer-motion';
 import toast from 'react-hot-toast';
-import RiderRatingModal from './RiderRatingModal';
+const RiderRatingModal = dynamic(() => import('./RiderRatingModal'), { ssr: false });
 
 // Dynamically import MapComponent to avoid SSR and module instantiation issues
 const MapComponent = dynamic(() => import('./MapComponent'), {
