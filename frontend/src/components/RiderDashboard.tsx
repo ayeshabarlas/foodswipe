@@ -974,7 +974,7 @@ function ActionItem({ icon, label, sublabel, onClick }: any) {
                                         </div>
                                         <div>
                                             <p className="text-gray-400 text-[9px] font-bold uppercase tracking-widest mb-0.5">Estimated Pay</p>
-                                            <p className="font-bold text-gray-900 text-lg">Rs. {newOrderPopup.netRiderEarning || newOrderPopup.earnings || newOrderPopup.riderEarning || Math.round(60 + ((newOrderPopup.distanceKm || 1.5) * 20))}</p>
+                                            <p className="font-bold text-gray-900 text-lg">Rs. {newOrderPopup.netRiderEarning || newOrderPopup.earnings || newOrderPopup.riderEarning || Math.round(40 + ((newOrderPopup.distanceKm || 0) * 20))}</p>
                                         </div>
                                     </div>
                                     <div className="flex flex-col items-end">

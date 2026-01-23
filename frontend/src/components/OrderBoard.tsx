@@ -296,17 +296,25 @@ export default function OrderBoard({ restaurant, onUpdate }: OrderBoardProps) {
                 <div className="space-y-2.5 mb-5 px-1">
                     {(() => {
                         const subtotal = order.subtotal || order.orderAmount || (order.totalPrice - (order.deliveryFee || 0));
+                        const discount = order.discount || 0;
                         const commRate = order.commissionPercent || 15;
                         const commAmount = order.commissionAmount || (subtotal * commRate / 100);
                         const restEarning = order.restaurantEarning || (subtotal - commAmount);
-                        const deliveryFee = order.deliveryFee || (order.totalPrice - subtotal);
+                        const deliveryFee = order.deliveryFee || 0;
 
                         return (
                             <>
                                 <div className="flex justify-between items-center">
-                                    <span className="text-gray-400 text-[11px] font-medium">Order Total (Incl. Delivery)</span>
-                                    <span className="text-gray-500 text-xs font-bold">Rs. {order.totalPrice.toFixed(0)}</span>
+                                    <span className="text-gray-400 text-[11px] font-medium">Order Total (Final)</span>
+                                    <span className="text-[#FF4D00] text-sm font-black">Rs. {order.totalPrice.toFixed(0)}</span>
                                 </div>
+
+                                {discount > 0 && (
+                                    <div className="flex justify-between items-center">
+                                        <span className="text-green-600 text-[10px] font-bold">Voucher Discount</span>
+                                        <span className="text-green-600 text-[10px] font-bold">- Rs. {discount.toFixed(0)}</span>
+                                    </div>
+                                )}
                                 
                                 <div className="flex justify-between items-center pt-2 border-t border-gray-50">
                                     <span className="text-gray-500 text-[11px] font-bold font-plus-jakarta">Items Subtotal</span>

@@ -299,8 +299,8 @@ const getAvailableOrders = async (req, res) => {
                 distance = calculateDistance(restLat, restLng, order.deliveryLocation.lat, order.deliveryLocation.lng);
             }
             
-            // Fallback if still 0 - reduced from 4.2 to 1.5 for fairness
-            if (distance === 0) distance = 1.5;
+            // CONSISTENCY: Use 0 as fallback if distance is still not available
+            if (!distance || distance < 0) distance = 0;
 
             const earnings = calculateRiderEarning(distance);
             
@@ -465,8 +465,8 @@ const getEarnings = async (req, res) => {
         const totalEarnings = rider.earnings?.total || 0;
         const completedDeliveries = rider.stats?.completedDeliveries || 0;
         
-        // MVP Logic: 60 Base + 20/km
-        const BASE_PAY_PER_DELIVERY = 60;
+        // MVP Logic: Use dynamic settings if available, otherwise base 40
+        const BASE_PAY_PER_DELIVERY = 40;
         const totalBasePay = completedDeliveries * BASE_PAY_PER_DELIVERY;
         const totalDistancePay = Math.max(0, totalEarnings - totalBasePay);
         
@@ -618,8 +618,8 @@ const getRiderOrders = async (req, res) => {
                 distance = calculateDistance(restLat, restLng, order.deliveryLocation.lat, order.deliveryLocation.lng);
             }
             
-            // Fallback if still 0
-            if (distance === 0) distance = 1.5; // Reduced from 4.2 to 1.5 for fairness
+            // CONSISTENCY: Use 0 as fallback if distance is still not available
+            if (!distance || distance < 0) distance = 0; 
 
             const earnings = calculateRiderEarning(distance);
             

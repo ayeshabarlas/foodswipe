@@ -26,7 +26,7 @@ import NotificationList from './admin/NotificationList';
 import axios from 'axios';
 import { initSocket, getSocket, disconnectSocket } from '../utils/socket';
 import { getApiUrl } from '../utils/config';
-import { FaClock } from 'react-icons/fa';
+import { FaClock, FaBell } from 'react-icons/fa';
 import toast, { Toaster } from 'react-hot-toast';
 
 import ModernLoader from './ModernLoader';

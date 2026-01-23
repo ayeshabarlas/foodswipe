@@ -34,6 +34,11 @@ export default function NotificationList({ onClose }: { onClose?: () => void }) 
         }
     };
 
+    const handleRefresh = () => {
+        setLoading(true);
+        fetchNotifications();
+    };
+
     const markAsRead = async (id: string) => {
         try {
             const token = localStorage.getItem('token') || JSON.parse(localStorage.getItem('userInfo') || '{}').token;

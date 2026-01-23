@@ -414,8 +414,9 @@ const updateOrderStatus = async (req, res) => {
                 const [restLng, restLat] = updatedOrder.restaurant.location.coordinates;
                 distance = calculateDistance(restLat, restLng, updatedOrder.deliveryLocation.lat, updatedOrder.deliveryLocation.lng);
             }
-            if (distance === 0) distance = 4.2; // Default fallback
-            const earnings = calculateRiderEarning(distance);
+            // CONSISTENCY: Use 0 as fallback if distance is still not available
+            if (!distance || distance < 0) distance = 0; 
+            const earnings = calculateRiderEarning(distance, settings);
 
             triggerEvent('riders', 'newOrderAvailable', {
                 _id: updatedOrder._id,
@@ -487,8 +488,8 @@ const processOrderCompletion = async (order, distanceKm, req = null) => {
             finalDistance = calculateDistance(restLat, restLng, order.deliveryLocation.lat, order.deliveryLocation.lng);
         }
         
-        // Fallback if still 0
-        if (!finalDistance || finalDistance === 0) finalDistance = 1.5;
+        // CONSISTENCY: Use 0 as fallback if distance is still not available
+        if (!finalDistance || finalDistance < 0) finalDistance = 0;
 
         if (!order.rider) {
             console.error(`[Finance] Order ${order._id} completion attempted without rider assigned.`);
@@ -940,9 +941,9 @@ const completeOrder = async (req, res) => {
         console.log(`[Order] Completing order ${order._id}, distance: ${distanceKm}km`);
 
         // Process completion (finance splits, wallets, stats)
-        // Use a default distance of 5km if none provided
-        const finalDistance = distanceKm || order.distanceKm || 5;
-        await processOrderCompletion(order, finalDistance);
+        // Use a default distance of 0km if none provided
+        const finalDistance = distanceKm || order.distanceKm || 0;
+        await processOrderCompletion(order, finalDistance, req);
 
         // Update status and save
         order.status = 'Delivered';

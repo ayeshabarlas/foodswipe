@@ -177,8 +177,8 @@ export default function RiderOrders({ riderId, setShowNotifications, unreadCount
             const earnings = o.netRiderEarning || o.earnings || o.riderEarning || 0;
             // Fallback calculation if earnings are 0
             if (earnings === 0) {
-                const dist = o.distanceKm || o.distance || 1.5;
-                return sum + Math.round(60 + (dist * 20));
+                const dist = o.distanceKm || o.distance || 0;
+                return sum + Math.round(40 + (dist * 20));
             }
             return sum + earnings;
         }, 0);
@@ -277,9 +277,9 @@ export default function RiderOrders({ riderId, setShowNotifications, unreadCount
             
             // The backend returns the updated order with correct earnings
             // We'll set the completion data for the summary modal
-            const BASE_PAY = 60;
+            const BASE_PAY = 40;
             const PER_KM_RATE = 20;
-            const finalDist = dist || 1.5; // Match backend fallback for UI preview
+            const finalDist = dist || 0; // Match backend fallback for UI preview
             const gross = BASE_PAY + (finalDist * PER_KM_RATE);
             const net = gross;
 
@@ -481,7 +481,7 @@ export default function RiderOrders({ riderId, setShowNotifications, unreadCount
                                                             <div className="flex items-center gap-2 text-gray-800 font-bold text-xs">
                                                                 <span>Rs.</span> Total Earning
                                                             </div>
-                                                            <span className="text-[#FF4D00] font-semibold text-lg">Rs. {activeDelivery.netRiderEarning || activeDelivery.riderEarning || activeDelivery.earnings || Math.round((settings.deliveryFeeBase || 40) + ((activeDelivery.distanceKm || 4.2) * (settings.deliveryFeePerKm || 20)))}</span>
+                                                            <span className="text-[#FF4D00] font-semibold text-lg">Rs. {activeDelivery.netRiderEarning || activeDelivery.riderEarning || activeDelivery.earnings || Math.round((settings.deliveryFeeBase || 40) + ((activeDelivery.distanceKm || 0) * (settings.deliveryFeePerKm || 20)))}</span>
                                                         </div>
                                                     
                                                     {/* MVP Earnings Breakdown */}
@@ -491,8 +491,8 @@ export default function RiderOrders({ riderId, setShowNotifications, unreadCount
                                                             <span className="font-bold text-gray-800">Rs. {settings.deliveryFeeBase || 40}</span>
                                                         </div>
                                                         <div className="flex justify-between items-center text-[10px]">
-                                                            <span className="text-gray-800 font-bold">Distance ({activeDelivery.distanceKm || 4.2} km x {settings.deliveryFeePerKm || 20})</span>
-                                                            <span className="font-bold text-gray-800">Rs. {Math.round((activeDelivery.distanceKm || 4.2) * (settings.deliveryFeePerKm || 20))}</span>
+                                                            <span className="text-gray-800 font-bold">Distance ({activeDelivery.distanceKm || 0} km x {settings.deliveryFeePerKm || 20})</span>
+                                                            <span className="font-bold text-gray-800">Rs. {Math.round((activeDelivery.distanceKm || 0) * (settings.deliveryFeePerKm || 20))}</span>
                                                         </div>
                                                     </div>
 

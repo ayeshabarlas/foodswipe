@@ -6,7 +6,7 @@
 // 1. Core Rules
 const BASE_RIDER_PAY = 40;
 const PER_KM_RATE = 20;
-const MAX_RIDER_PAY = 200; // Added cap to prevent inflated earnings (matched with settings default)
+const MAX_RIDER_PAY = 200; 
 
 /**
  * Calculates rider earnings based on distance
@@ -15,11 +15,14 @@ const MAX_RIDER_PAY = 200; // Added cap to prevent inflated earnings (matched wi
  * @returns {object} - grossEarning, platformFee (0), netEarning
  */
 const calculateRiderEarning = (distanceKm, settings = null) => {
+    // Standardized base pay for consistency across the system
     const basePay = settings?.deliveryFeeBase || BASE_RIDER_PAY;
     const perKmRate = settings?.deliveryFeePerKm || PER_KM_RATE;
     const maxPay = settings?.deliveryFeeMax || MAX_RIDER_PAY;
 
-    let gross = basePay + (distanceKm * perKmRate);
+    // Use absolute distance, min 0
+    const finalDistance = Math.max(0, Number(distanceKm) || 0);
+    let gross = basePay + (finalDistance * perKmRate);
     
     // Cap the earnings to prevent extreme cases
     if (gross > maxPay) {
