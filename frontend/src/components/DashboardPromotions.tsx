@@ -166,12 +166,12 @@ export default function DashboardPromotions() {
             {/* Header */}
             <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 px-4">
                 <div className="space-y-2">
-                    <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-orange-50 text-orange-600 text-[10px] font-extrabold uppercase tracking-wider border border-orange-100/50">
+                    <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-orange-50 text-orange-600 text-[10px] font-semibold uppercase tracking-wider border border-orange-100/50">
                         <span className="w-1.5 h-1.5 rounded-full bg-orange-500 animate-pulse"></span>
-                        Merchant Growth Tools
+                        Promotion Tools
                     </div>
-                    <h2 className="text-4xl font-extrabold text-gray-900 font-plus-jakarta tracking-tight leading-none">Marketing Hub</h2>
-                    <p className="text-gray-500 text-[14px] font-medium max-w-md">Strategically boost your restaurant&apos;s performance with professional-grade promotional tools and insights.</p>
+                    <h2 className="text-4xl font-bold text-gray-900 font-plus-jakarta tracking-tight leading-none">Promotions</h2>
+                    <p className="text-gray-500 text-[14px] font-normal max-w-md">Strategically boost your restaurant&apos;s performance with professional-grade promotional tools and insights.</p>
                 </div>
                 <div className="flex items-center gap-6 bg-white p-4 rounded-[24px] shadow-sm border border-gray-100">
                     <div className="flex items-center gap-3">
@@ -183,8 +183,8 @@ export default function DashboardPromotions() {
                             ))}
                         </div>
                         <div className="flex flex-col">
-                            <span className="text-[12px] font-extrabold text-gray-900 font-plus-jakarta leading-none">Live Traffic</span>
-                            <span className="text-[10px] font-bold text-emerald-500 uppercase tracking-widest mt-1 flex items-center gap-1.5">
+                            <span className="text-[12px] font-bold text-gray-900 font-plus-jakarta leading-none">Live Traffic</span>
+                            <span className="text-[10px] font-medium text-emerald-500 uppercase tracking-widest mt-1 flex items-center gap-1.5">
                                 <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-ping"></span>
                                 12.4k Views Today
                             </span>

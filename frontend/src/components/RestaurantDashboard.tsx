@@ -505,12 +505,12 @@ export default function RestaurantDashboard() {
                         {!isPending && (
                             <div className="grid grid-cols-2 gap-2">
                                 <div className="bg-gray-800/40 rounded-xl p-2.5 text-center border border-gray-700/30 hover:bg-gray-800/60 transition-colors">
-                                    <p className="text-[9px] text-gray-500 mb-1 font-bold uppercase tracking-widest">Earnings</p>
-                                    <p className="font-extrabold text-green-400 text-[12px] font-plus-jakarta">Rs. {stats?.netEarningsToday?.toLocaleString() || 0}</p>
+                                    <p className="text-[9px] text-gray-500 mb-1 font-medium uppercase tracking-widest">Earnings</p>
+                                    <p className="font-semibold text-green-400 text-[12px] font-plus-jakarta">Rs. {stats?.netEarningsToday?.toLocaleString() || 0}</p>
                                 </div>
                                 <div className="bg-gray-800/40 rounded-xl p-2.5 text-center border border-gray-700/30 hover:bg-gray-800/60 transition-colors">
-                                    <p className="text-[9px] text-gray-500 mb-1 font-bold uppercase tracking-widest">Today</p>
-                                    <p className="font-extrabold text-orange-400 text-[12px] font-plus-jakarta">{stats?.ordersToday || 0} Orders</p>
+                                    <p className="text-[9px] text-gray-500 mb-1 font-medium uppercase tracking-widest">Today</p>
+                                    <p className="font-semibold text-orange-400 text-[12px] font-plus-jakarta">{stats?.ordersToday || 0} Orders</p>
                                 </div>
                             </div>
                         )}
@@ -579,7 +579,7 @@ export default function RestaurantDashboard() {
                                 {menuItems.find((i) => i.id === activePage)?.label}
                                 {activePage === 'overview' && <span className="text-[10px] bg-orange-100 text-orange-600 px-2 py-0.5 rounded-full font-bold uppercase tracking-widest">Live</span>}
                             </h1>
-                            <p className="text-gray-400 text-[10px] font-bold uppercase tracking-widest mt-0.5">
+                            <p className="text-gray-400 text-[10px] font-medium uppercase tracking-widest mt-0.5">
                                 Merchant Portal <span className="mx-1 text-gray-200">•</span> {new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
                             </p>
                         </div>
@@ -589,8 +589,8 @@ export default function RestaurantDashboard() {
                         {/* Search or Quick Stats could go here */}
                         <div className="hidden xl:flex items-center gap-4 pr-6 border-r border-gray-100">
                             <div className="flex flex-col items-end">
-                                <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-0.5">Store Status</span>
-                                <span className="flex items-center gap-1.5 text-[11px] font-extrabold text-green-500 font-plus-jakarta">
+                                <span className="text-[10px] font-medium text-gray-400 uppercase tracking-widest mb-0.5">Store Status</span>
+                                <span className="flex items-center gap-1.5 text-[11px] font-semibold text-green-500 font-plus-jakarta">
                                     <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse shadow-[0_0_8px_rgba(34,197,94,0.6)]" />
                                     Online & Accepting
                                 </span>
@@ -702,7 +702,7 @@ export default function RestaurantDashboard() {
                             <div className="relative">
                                 <div className="w-11 h-11 rounded-2xl bg-gradient-to-tr from-orange-500 to-red-500 p-[2px] shadow-lg shadow-orange-100 group-hover:scale-105 transition-transform duration-300">
                                     <div className="w-full h-full rounded-2xl bg-white flex items-center justify-center text-orange-600 font-extrabold text-base uppercase font-plus-jakarta">
-                                        {displayRestaurant?.owner?.name?.charAt(0)}
+                                        {displayRestaurant?.name?.charAt(0)}
                                     </div>
                                 </div>
                                 <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-green-500 border-2 border-white rounded-full shadow-sm" />
