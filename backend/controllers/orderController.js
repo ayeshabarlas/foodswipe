@@ -143,10 +143,11 @@ const createOrder = async (req, res) => {
             finalDeliveryFee = Math.min(maxFee, Math.round(baseFee + (distanceKm * perKmFee)));
         } else {
             // Fallback distance if location data is missing
-            distanceKm = 1.5; // Reduced from 2.0 to be more realistic for unknown locations
-            finalDeliveryFee = settings.deliveryFeeBase || 40;
+            distanceKm = 0; // Set to 0 if we can't calculate it
+            finalDeliveryFee = settings.deliveryFeeBase || 40; // Default base fee
         }
 
+        // CONSISTENCY FIX: If distance is 0, rider earning should also be based on base fee ONLY
         const riderEarnings = calculateRiderEarning(distanceKm, settings);
         const finalServiceFee = serviceFee || settings.serviceFee || 0;
         
@@ -247,7 +248,12 @@ const createOrder = async (req, res) => {
             .populate('restaurant', 'name address contact');
 
         // Emit Pusher events for real-time update to restaurant and admin
-        triggerEvent(`restaurant-${restaurant}`, 'newOrder', populatedOrder);
+        triggerEvent(`restaurant-${restaurant.toString()}`, 'newOrder', populatedOrder);
+        
+        // Also notify all riders that a new order is available (if restaurant auto-accepts or it's just available)
+        // Usually riders only see orders after they are 'Accepted' or 'Ready', but we can notify them to check
+        triggerEvent('riders', 'newOrderAvailable', populatedOrder);
+
         triggerEvent('admin', 'order_created', populatedOrder);
         triggerEvent('admin', 'stats_updated', { type: 'order_created', orderId: populatedOrder._id });
         
@@ -384,6 +390,16 @@ const updateOrderStatus = async (req, res) => {
         // Notify restaurant about order update
         if (order.restaurant) {
             triggerEvent(`restaurant-${order.restaurant.toString()}`, 'orderStatusUpdate', updatedOrder);
+        }
+
+        // Notify assigned rider about order update
+        if (order.rider) {
+            triggerEvent(`rider-${order.rider.toString()}`, 'orderStatusUpdate', updatedOrder);
+        }
+
+        // When order status changes to something riders can pick up, notify all riders
+        if (['Accepted', 'Ready'].includes(status)) {
+            triggerEvent('riders', 'newOrderAvailable', updatedOrder);
         }
 
         // Always notify admin about any order status update

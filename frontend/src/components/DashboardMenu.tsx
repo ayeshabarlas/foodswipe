@@ -10,6 +10,7 @@ import AddDishModal from './AddDishModal';
 import axios from 'axios';
 import { getImageUrl, getImageFallback } from '../utils/imageUtils';
 import { getApiUrl } from '../utils/config';
+import { initSocket, subscribeToChannel } from '../utils/socket';
 
 interface Dish {
     _id: string;

@@ -60,6 +60,23 @@ export default function NotificationList({ onClose }: { onClose?: () => void }) 
         }
     };
 
+    const markAllRead = async () => {
+        try {
+            const token = localStorage.getItem('token') || JSON.parse(localStorage.getItem('userInfo') || '{}').token;
+            // We use a separate endpoint or just loop for now if no bulk endpoint exists
+            // To be efficient, let's assume the backend can handle a bulk request or we just local-update
+            await Promise.all(notifications.filter(n => !n.read).map(n =>
+                axios.put(`${getApiUrl()}/api/admin/notifications/${n._id}/read`, {}, {
+                    headers: { Authorization: `Bearer ${token}` }
+                })
+            ));
+            setNotifications(prev => prev.map(n => ({ ...n, read: true })));
+            toast.success('All notifications marked as read');
+        } catch (error) {
+            console.error('Error marking all as read:', error);
+        }
+    };
+
     return (
         <div className="bg-white rounded-2xl shadow-2xl border border-gray-100 overflow-hidden flex flex-col h-full max-h-[500px] w-[350px]">
             <div className="p-4 border-b border-gray-50 flex items-center justify-between bg-gradient-to-r from-orange-50 to-pink-50">
@@ -67,11 +84,21 @@ export default function NotificationList({ onClose }: { onClose?: () => void }) 
                     <FaBell className="text-orange-500" />
                     <h3 className="font-bold text-gray-800">Notifications</h3>
                 </div>
-                {onClose && (
-                    <button onClick={onClose} className="text-gray-400 hover:text-gray-600">
-                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
-                    </button>
-                )}
+                <div className="flex items-center gap-3">
+                    {notifications.some(n => !n.read) && (
+                        <button
+                            onClick={markAllRead}
+                            className="text-[10px] bg-white px-2 py-1 rounded-md border border-gray-200 text-gray-600 hover:text-orange-500 hover:border-orange-200 transition-all font-bold"
+                        >
+                            Mark all read
+                        </button>
+                    )}
+                    {onClose && (
+                        <button onClick={onClose} className="text-gray-400 hover:text-gray-600">
+                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+                        </button>
+                    )}
+                </div>
             </div>
 
             <div className="flex-1 overflow-y-auto p-2 custom-scrollbar">

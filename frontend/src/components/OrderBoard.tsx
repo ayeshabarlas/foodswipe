@@ -118,6 +118,8 @@ export default function OrderBoard({ restaurant, onUpdate }: OrderBoardProps) {
                 setNewOrderPopup(order);
                 setCountdown(30);
                 playNotificationSound();
+                // Fallback fetch to ensure everything is in sync
+                setTimeout(fetchOrders, 2000);
             });
 
             channel.bind('orderStatusUpdate', (updatedOrder: any) => {

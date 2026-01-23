@@ -418,6 +418,9 @@ const acceptOrder = async (req, res) => {
             triggerEvent(`user-${order.user._id}`, 'orderStatusUpdate', updatedOrder);
         }
 
+        // Notify all riders that this order is no longer available
+        triggerEvent('riders', 'orderStatusUpdate', updatedOrder);
+
         // Create Notification for Rider
         const notification = await createNotification(
             rider.user._id,
