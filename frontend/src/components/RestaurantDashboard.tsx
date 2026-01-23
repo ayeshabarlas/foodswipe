@@ -407,7 +407,7 @@ export default function RestaurantDashboard() {
         { id: 'analytics', label: 'Performance', icon: FaChartLine },
         { id: 'payments', label: 'Earnings', icon: FaWallet },
         { id: 'reviews', label: 'Customer Reviews', icon: FaStar },
-        { id: 'promotions', label: 'Marketing Hub', icon: FaBullhorn },
+        { id: 'promotions', label: 'Promotions', icon: FaBullhorn },
         { id: 'support', label: 'Help Center', icon: FaHeadset },
         { id: 'settings', label: 'Account Settings', icon: FaClock },
     ];
