@@ -1,22 +1,24 @@
 import Pusher from 'pusher-js';
 
-let pusher: any = null;
-let activeChannels: Set<string> = new Set();
-const eventListeners = new Map<string, Set<(data: any) => void>>();
+let pusher: Pusher | null = null;
+const activeChannels: Set<string> = new Set();
+type SocketCallback = (data: any) => void;
 
-const PUSHER_KEY = process.env.NEXT_PUBLIC_PUSHER_KEY || '';
-const PUSHER_CLUSTER = process.env.NEXT_PUBLIC_PUSHER_CLUSTER || 'ap2';
+const eventListeners = new Map<string, Set<SocketCallback>>();
+
+function getPusherKey() { return process.env.NEXT_PUBLIC_PUSHER_KEY || ''; }
+function getPusherCluster() { return process.env.NEXT_PUBLIC_PUSHER_CLUSTER || 'ap2'; }
 
 function createEmptySocket() {
     return {
-        on: () => {},
-        off: () => {},
-        emit: () => {},
+        on: (_event: string, _callback: (data: any) => void) => {},
+        off: (_event: string, _callback?: (data: any) => void) => {},
+        emit: (_event: string, _data: any) => {},
         disconnect: () => {},
-        subscribe: () => null,
-        unsubscribe: () => {},
-        bind: () => {},
-        unbind: () => {},
+        subscribe: (_channelName: string) => null,
+        unsubscribe: (_channelName: string) => {},
+        bind: (_event: string, _callback: (data: any) => void) => {},
+        unbind: (_event: string, _callback?: (data: any) => void) => {},
     };
 }
 
@@ -57,11 +59,11 @@ function createSocketWrapper() {
                 }
             }
         },
-        emit: (event: string, data: any) => {
+        emit: (_event: string, _data: any) => {
             console.warn('Socket.emit is not supported in Pusher wrapper');
         },
         disconnect: () => {
-            if (pusher) pusher.disconnect();
+            disconnectSocket();
         },
         subscribe: (channelName: string) => subscribeToChannel(channelName),
         unsubscribe: (channelName: string) => unsubscribeFromChannel(channelName),
@@ -75,20 +77,21 @@ function createSocketWrapper() {
     return wrapper;
 }
 
-export const initSocket = (userId: string, role: string, restaurantId?: string, riderId?: string) => {
+export function initSocket(userId: string, role: string, restaurantId?: string, riderId?: string) {
     // Return dummy socket for server-side rendering
     if (typeof window === 'undefined') return createEmptySocket();
 
+    const key = getPusherKey();
     // Check if Pusher is configured
-    if (!PUSHER_KEY) {
+    if (!key) {
         console.warn('⚠️ Pusher Key is missing, skipping socket initialization');
         return createEmptySocket();
     }
 
     if (!pusher) {
         try {
-            pusher = new Pusher(PUSHER_KEY, {
-                cluster: PUSHER_CLUSTER,
+            pusher = new Pusher(key, {
+                cluster: getPusherCluster(),
             });
             console.log('✅ Pusher Client initialized');
         } catch (error) {
@@ -111,14 +114,14 @@ export const initSocket = (userId: string, role: string, restaurantId?: string, 
 
     // Return a wrapper that mimics Socket.io API
     return createSocketWrapper();
-};
+}
 
-export const getSocket = () => {
+export function getSocket() {
     if (!pusher) return createEmptySocket();
     return createSocketWrapper();
-};
+}
 
-export const subscribeToChannel = (channelName: string) => {
+export function subscribeToChannel(channelName: string) {
     if (!pusher) return null;
     
     // If already subscribed, return the existing channel
@@ -138,17 +141,17 @@ export const subscribeToChannel = (channelName: string) => {
     });
 
     return channel;
-};
+}
 
-export const unsubscribeFromChannel = (channelName: string) => {
+export function unsubscribeFromChannel(channelName: string) {
     if (!pusher || !activeChannels.has(channelName)) return;
     
     pusher.unsubscribe(channelName);
     activeChannels.delete(channelName);
     console.log(`🚫 Unsubscribed from channel: ${channelName}`);
-};
+}
 
-export const disconnectSocket = () => {
+export function disconnectSocket() {
     if (pusher) {
         // Just unsubscribe from all channels instead of disconnecting entirely
         // to avoid killing the singleton for other components
@@ -159,4 +162,4 @@ export const disconnectSocket = () => {
         // pusher.disconnect(); // Don't disconnect entirely
         // pusher = null;
     }
-};
+}

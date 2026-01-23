@@ -1,5 +1,5 @@
 // Deploy Trigger: 2026-01-24 00:30 - Final Production Sync (Repo Public)
-const getApiUrl = () => {
+export function getApiUrl() {
   // Priority 1: Use Environment variable if provided (from .env.local)
   let url = process.env.NEXT_PUBLIC_API_URL;
 
@@ -58,9 +58,9 @@ const getApiUrl = () => {
   }
   
   return url;
-};
+}
 
-const getSocketUrl = () => {
+export function getSocketUrl() {
   // Priority 1: Environment variable
   let url = process.env.NEXT_PUBLIC_SOCKET_URL;
   
@@ -100,8 +100,8 @@ const getSocketUrl = () => {
     url = `https://${url}`;
   }
 
-  return url.endsWith('/') ? url.slice(0, -1) : url;
-};
+  return url;
+}
 
 export const API_BASE_URL = getApiUrl();
 export const SOCKET_URL = getSocketUrl();

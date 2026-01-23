@@ -4,9 +4,9 @@ import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { FaMoneyBillWave, FaHistory, FaFileInvoiceDollar, FaCheckCircle, FaClock, FaExclamationCircle, FaUpload, FaEye, FaDownload, FaCalendarAlt, FaPercent, FaReceipt, FaUniversity, FaShoppingBag, FaChartLine, FaWallet } from 'react-icons/fa';
 import axios from 'axios';
-import { io } from 'socket.io-client';
+import { initSocket, subscribeToChannel, unsubscribeFromChannel } from '../utils/socket';
 import PaymentProofModal from './PaymentProofModal';
-import { API_BASE_URL, SOCKET_URL } from '../utils/config';
+import { API_BASE_URL } from '../utils/config';
 
 interface Payout {
     _id: string;
@@ -92,14 +92,15 @@ export default function PaymentHistory({ restaurant: initialRestaurant, onSwitch
     useEffect(() => {
         fetchPaymentData();
 
-        const newSocket = io(SOCKET_URL);
-        setSocket(newSocket);
+        const user = JSON.parse(localStorage.getItem('userInfo') || '{}');
+        const pusherSocket = initSocket(user._id, 'restaurant', restaurant?._id);
+        setSocket(pusherSocket);
 
         if (restaurant?._id) {
-            newSocket.emit('join_restaurant', restaurant._id);
+            subscribeToChannel(`restaurant-${restaurant._id}`);
         }
 
-        newSocket.on('payment_status_updated', (data: any) => {
+        pusherSocket.on('payment_status_updated', (data: any) => {
             if (currentPayout && currentPayout._id === data.payoutId) {
                 setCurrentPayout(prev => prev ? { ...prev, status: data.status } : null);
             }
@@ -107,9 +108,11 @@ export default function PaymentHistory({ restaurant: initialRestaurant, onSwitch
         });
 
         return () => {
-            newSocket.disconnect();
+            if (restaurant?._id) {
+                unsubscribeFromChannel(`restaurant-${restaurant._id}`);
+            }
         };
-    }, []);
+    }, [restaurant?._id]);
 
     const formatDateRange = (start: string, end: string) => {
         const s = new Date(start);
