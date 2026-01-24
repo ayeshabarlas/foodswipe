@@ -65,14 +65,15 @@ exports.sendMessage = async (req, res) => {
             }
         });
 
-        // If the sender is a customer, notify the restaurant
-        if (senderRole === 'customer') {
+        // If the sender is a customer or rider, notify the restaurant
+        if (senderRole === 'customer' || senderRole === 'rider') {
             const order = await Order.findById(orderId);
             if (order && order.restaurant) {
                 triggerEvent(`restaurant-${order.restaurant}`, 'newChatMessage', {
                     orderId,
                     orderNumber: orderId.slice(-4),
                     senderName,
+                    senderRole,
                     text: text.length > 50 ? text.substring(0, 47) + '...' : text
                 });
             }

@@ -19,9 +19,10 @@ import DashboardOverview from './DashboardOverview';
 import DashboardSupport from './DashboardSupport';
 import { getImageUrl, getImageFallback } from '../utils/imageUtils';
 import { getApiUrl } from '../utils/config';
-import { initSocket, disconnectSocket } from '../utils/socket';
+import { initSocket, disconnectSocket, subscribeToChannel } from '../utils/socket';
 import { useSettings } from '../hooks/useSettings';
 import ModernLoader from './ModernLoader';
+import { FaCommentDots } from 'react-icons/fa';
 
 export default function RestaurantDashboard() {
     const { settings } = useSettings();
@@ -29,6 +30,7 @@ export default function RestaurantDashboard() {
     const [loading, setLoading] = useState(true);
     const [uploadingLogo, setUploadingLogo] = useState(false);
     const [activePage, setActivePage] = useState('overview');
+    const [selectedOrderId, setSelectedOrderId] = useState<string | null>(null);
     const [isSidebarOpen, setIsSidebarOpen] = useState(false);
     const [notifications, setNotifications] = useState<any[]>([]);
     const [showNotifications, setShowNotifications] = useState(false);
@@ -110,6 +112,61 @@ export default function RestaurantDashboard() {
             console.log("Initializing dashboard socket with resId:", resId);
             const newSocket = initSocket(userInfo._id, 'restaurant', resId);
             setSocket(newSocket);
+
+            // Subscribe to restaurant channel for global notifications
+            const channel = subscribeToChannel(`restaurant-${resId}`);
+            if (channel) {
+                // Global listener for new chat messages
+                channel.bind('newChatMessage', (data: any) => {
+                    console.log('Dashboard: Global new chat message:', data);
+                    
+                    // Show notification even if not on orders page
+                    toast((t) => (
+                        <div className="flex items-center gap-4 cursor-pointer" onClick={() => {
+                            setSelectedOrderId(data.orderId);
+                            setActivePage('orders');
+                            toast.dismiss(t.id);
+                        }}>
+                            <div className="w-10 h-10 bg-orange-100 rounded-full flex items-center justify-center text-orange-500">
+                                <FaCommentDots size={18} />
+                            </div>
+                            <div className="flex-1">
+                                <p className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">
+                                    {data.senderRole === 'rider' ? 'Rider Message' : 'Customer Message'} • Order #{data.orderNumber}
+                                </p>
+                                <p className="text-xs font-bold text-gray-900">{data.senderName}: <span className="font-medium text-gray-600">{data.text}</span></p>
+                            </div>
+                        </div>
+                    ), {
+                        duration: 6000,
+                        position: 'top-right',
+                        style: {
+                            borderRadius: '16px',
+                            background: '#fff',
+                            color: '#333',
+                            border: '1px solid #eee',
+                            boxShadow: '0 10px 25px -5px rgba(0,0,0,0.1)',
+                            padding: '12px',
+                            minWidth: '300px'
+                        },
+                    });
+
+                    // Play chat sound
+                    const audio = new Audio('https://assets.mixkit.co/active_storage/sfx/2357/2357-preview.mp3');
+                    audio.play().catch(e => console.log('Audio play failed:', e));
+                });
+
+                // Global listener for new orders
+                channel.bind('newOrder', (order: any) => {
+                    console.log('Dashboard: Global new order:', order);
+                    setNewOrderModal(order);
+                    setCountdown(60);
+                    
+                    // Play notification sound
+                    const audio = new Audio('https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3');
+                    audio.play().catch(e => console.log('Audio play failed:', e));
+                });
+            }
         }
         
         return () => { 
@@ -424,7 +481,7 @@ export default function RestaurantDashboard() {
 
         switch (activePage) {
             case 'overview': return <DashboardOverview stats={stats} restaurant={displayRestaurant} />;
-            case 'orders': return <OrderBoard restaurant={displayRestaurant} onUpdate={fetchDashboardData} />;
+            case 'orders': return <OrderBoard restaurant={displayRestaurant} initialOrderId={selectedOrderId} onUpdate={() => { fetchDashboardData(true); setSelectedOrderId(null); }} />;
             case 'menu': return <DashboardMenu restaurant={displayRestaurant} />;
             case 'store': return <DashboardStore restaurant={displayRestaurant} onUpdate={fetchDashboardData} />;
             case 'analytics': return <DashboardAnalytics restaurantId={displayRestaurant._id} />;
@@ -433,7 +490,7 @@ export default function RestaurantDashboard() {
             case 'promotions': return <DashboardPromotions restaurant={displayRestaurant} />;
             case 'support': return <DashboardSupport />;
             case 'settings': return <DashboardSettings restaurant={displayRestaurant} onUpdate={fetchDashboardData} />;
-            default: return <OrderBoard restaurant={displayRestaurant} onUpdate={fetchDashboardData} />;
+            default: return <OrderBoard restaurant={displayRestaurant} initialOrderId={selectedOrderId} onUpdate={() => { fetchDashboardData(true); setSelectedOrderId(null); }} />;
         }
     };
 

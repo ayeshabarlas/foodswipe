@@ -44,10 +44,11 @@ interface Message {
 
 interface OrderBoardProps {
     restaurant: any;
+    initialOrderId?: string | null;
     onUpdate?: () => void;
 }
 
-export default function OrderBoard({ restaurant, onUpdate }: OrderBoardProps) {
+export default function OrderBoard({ restaurant, initialOrderId, onUpdate }: OrderBoardProps) {
     const [orders, setOrders] = useState<Order[]>([]);
     const [loading, setLoading] = useState(true);
     const [newOrderPopup, setNewOrderPopup] = useState<Order | null>(null);
@@ -61,6 +62,15 @@ export default function OrderBoard({ restaurant, onUpdate }: OrderBoardProps) {
     const [activeTab, setActiveTab] = useState<'active' | 'history'>('active');
     
     const [userInfo, setUserInfo] = useState<any>(null);
+
+    useEffect(() => {
+        if (initialOrderId && orders.length > 0) {
+            const order = orders.find(o => o._id === initialOrderId);
+            if (order) {
+                setActiveChat(order);
+            }
+        }
+    }, [initialOrderId, orders]);
 
     useEffect(() => {
         if (typeof window !== 'undefined') {
@@ -115,9 +125,7 @@ export default function OrderBoard({ restaurant, onUpdate }: OrderBoardProps) {
                     if (exists) return prev;
                     return [order, ...prev];
                 });
-                setNewOrderPopup(order);
-                setCountdown(30);
-                playNotificationSound();
+                // Note: Popup and Sound are handled globally in RestaurantDashboard
                 // Fallback fetch to ensure everything is in sync
                 setTimeout(fetchOrders, 2000);
             });
@@ -143,37 +151,8 @@ export default function OrderBoard({ restaurant, onUpdate }: OrderBoardProps) {
 
             channel.bind('newChatMessage', (data: any) => {
                 console.log('OrderBoard: New chat message via socket:', data);
-                
-                // Show a custom toast for new messages
-                toast((t) => (
-                    <div className="flex items-center gap-4 cursor-pointer" onClick={() => {
-                        const order = orders.find(o => o._id === data.orderId);
-                        if (order) setActiveChat(order);
-                        toast.dismiss(t.id);
-                    }}>
-                        <div className="w-10 h-10 bg-orange-100 rounded-full flex items-center justify-center text-orange-500">
-                            <FaCommentDots size={18} />
-                        </div>
-                        <div className="flex-1">
-                            <p className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">New Message • Order #{data.orderNumber}</p>
-                            <p className="text-xs font-bold text-gray-900">{data.senderName}: <span className="font-medium text-gray-600">{data.text}</span></p>
-                        </div>
-                    </div>
-                ), {
-                    duration: 5000,
-                    style: {
-                        borderRadius: '16px',
-                        background: '#fff',
-                        color: '#333',
-                        border: '1px solid #eee',
-                        boxShadow: '0 10px 25px -5px rgba(0,0,0,0.1)',
-                        padding: '12px'
-                    },
-                });
-
-                // Play a subtle chat ping
-                const audio = new Audio('https://assets.mixkit.co/active_storage/sfx/2357/2357-preview.mp3');
-                audio.play().catch(e => console.log('Audio play failed:', e));
+                // Notification is handled globally in RestaurantDashboard
+                // We could potentially update some local UI state here if needed
             });
         }
 
