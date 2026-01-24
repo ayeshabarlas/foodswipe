@@ -154,51 +154,56 @@ const VideoCard = React.memo(({
         }
     };
 
+    const [isCopied, setIsCopied] = useState(false);
+
     const handleShare = async (e: React.MouseEvent) => {
         e.stopPropagation();
-
-        // Track share in backend (non-blocking)
-        axios.post(`${getApiUrl()}/api/videos/${dish._id}/share`).catch(err => console.error('Share tracking failed:', err));
-        setSharesCount(prev => prev + 1);
 
         const shareUrl = `${window.location.origin}/?dishId=${dish._id}`;
         const shareTitle = `Check out ${dish.name} on FoodSwipe!`;
         const shareText = `Look at this delicious ${dish.name} from ${dish.restaurant.name}. Order now!`;
 
         try {
-            if (navigator.share && /Android|iPhone|iPad|iPod/i.test(navigator.userAgent)) {
-                await navigator.share({
-                    title: shareTitle,
-                    text: shareText,
-                    url: shareUrl
-                });
-            } else {
-                // Fallback to clipboard for desktop or if share API fails
-                await navigator.clipboard.writeText(shareUrl);
-                toast.success('Link copied to clipboard!', {
-                    icon: '🔗',
-                    duration: 3000,
-                    style: {
-                        borderRadius: '12px',
-                        background: '#1A1A1A',
-                        color: '#fff',
-                        border: '1px solid rgba(255,255,255,0.1)',
-                        fontSize: '14px',
-                        fontWeight: '600'
-                    },
-                });
-            }
-        } catch (error: any) {
-            if (error.name !== 'AbortError') {
-                console.error('Share failed:', error);
-                // Last resort fallback if share API was present but failed
+            // Track share in backend (non-blocking)
+            axios.post(`${getApiUrl()}/api/videos/${dish._id}/share`).catch(err => console.error('Share tracking failed:', err));
+            setSharesCount(prev => prev + 1);
+
+            // Try Web Share API first if available (more and more browsers support it)
+            if (navigator.share) {
                 try {
-                    await navigator.clipboard.writeText(shareUrl);
-                    toast.success('Link copied to clipboard!');
-                } catch (clipboardErr) {
-                    toast.error('Could not share. Please copy the URL manually.');
+                    await navigator.share({
+                        title: shareTitle,
+                        text: shareText,
+                        url: shareUrl
+                    });
+                    return; // Success!
+                } catch (shareErr: any) {
+                    // If user cancelled, don't show error or fallback
+                    if (shareErr.name === 'AbortError') return;
+                    console.warn('Native share failed, falling back to clipboard:', shareErr);
                 }
             }
+
+            // Fallback to clipboard
+            await navigator.clipboard.writeText(shareUrl);
+            setIsCopied(true);
+            setTimeout(() => setIsCopied(false), 2000);
+            
+            toast.success('Link copied to clipboard!', {
+                icon: '🔗',
+                duration: 2000,
+                style: {
+                    borderRadius: '12px',
+                    background: '#1A1A1A',
+                    color: '#fff',
+                    border: '1px solid rgba(255,255,255,0.1)',
+                    fontSize: '14px',
+                    fontWeight: '600'
+                },
+            });
+        } catch (error: any) {
+            console.error('Share failed:', error);
+            toast.error('Could not share. Please copy the URL manually.');
         }
     };
 
@@ -371,8 +376,14 @@ const VideoCard = React.memo(({
                     <span className="text-white text-[11px] font-medium drop-shadow-lg">{comments.length > 0 ? comments.length : 'Comments'}</span>
                 </div>
                 <div className="flex flex-col items-center gap-1.5">
-                    <button onClick={handleShare} className="w-11 h-11 rounded-full bg-white/10 backdrop-blur-sm flex items-center justify-center text-white hover:bg-white/20 transition-all active:scale-90">
-                        <FaShare className="text-white text-xl" />
+                    <button onClick={handleShare} className={`w-11 h-11 rounded-full ${isCopied ? 'bg-green-500' : 'bg-white/10'} backdrop-blur-sm flex items-center justify-center text-white hover:bg-white/20 transition-all active:scale-90 relative`}>
+                        {isCopied ? (
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+                                <polyline points="20 6 9 17 4 12" />
+                            </svg>
+                        ) : (
+                            <FaShare className="text-xl" />
+                        )}
                     </button>
                     <span className="text-white text-[11px] font-medium drop-shadow-lg">{sharesCount}</span>
                 </div>
