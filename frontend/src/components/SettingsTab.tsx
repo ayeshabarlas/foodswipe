@@ -146,9 +146,10 @@ export default function SettingsTab({ restaurant, onUpdate }: SettingsTabProps) 
             onUpdate();
             setSaved(true);
             setTimeout(() => setSaved(false), 3000);
-        } catch (error) {
+        } catch (error: any) {
             console.error(error);
-            alert('Failed to save settings');
+            const message = error.response?.data?.message || error.message || 'Failed to save settings';
+            alert(`Error: ${message}`);
         } finally {
             setSaving(false);
         }

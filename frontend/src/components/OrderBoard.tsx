@@ -140,6 +140,41 @@ export default function OrderBoard({ restaurant, onUpdate }: OrderBoardProps) {
                 console.log('OrderBoard: Rider picked up order via socket:', data);
                 fetchOrders();
             });
+
+            channel.bind('newChatMessage', (data: any) => {
+                console.log('OrderBoard: New chat message via socket:', data);
+                
+                // Show a custom toast for new messages
+                toast((t) => (
+                    <div className="flex items-center gap-4 cursor-pointer" onClick={() => {
+                        const order = orders.find(o => o._id === data.orderId);
+                        if (order) setActiveChat(order);
+                        toast.dismiss(t.id);
+                    }}>
+                        <div className="w-10 h-10 bg-orange-100 rounded-full flex items-center justify-center text-orange-500">
+                            <FaCommentDots size={18} />
+                        </div>
+                        <div className="flex-1">
+                            <p className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">New Message • Order #{data.orderNumber}</p>
+                            <p className="text-xs font-bold text-gray-900">{data.senderName}: <span className="font-medium text-gray-600">{data.text}</span></p>
+                        </div>
+                    </div>
+                ), {
+                    duration: 5000,
+                    style: {
+                        borderRadius: '16px',
+                        background: '#fff',
+                        color: '#333',
+                        border: '1px solid #eee',
+                        boxShadow: '0 10px 25px -5px rgba(0,0,0,0.1)',
+                        padding: '12px'
+                    },
+                });
+
+                // Play a subtle chat ping
+                const audio = new Audio('https://assets.mixkit.co/active_storage/sfx/2357/2357-preview.mp3');
+                audio.play().catch(e => console.log('Audio play failed:', e));
+            });
         }
 
         return () => {

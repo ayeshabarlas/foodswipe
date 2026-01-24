@@ -205,7 +205,7 @@ export default function OrderChat({ orderId, isOpen, onClose, userRole, userName
                                             <div
                                                 className={`max-w-[80%] px-5 py-3.5 rounded-2xl text-sm font-bold shadow-sm ${msg.senderId === userId
                                                     ? 'bg-gradient-to-br from-orange-500 to-red-500 text-white rounded-tr-none'
-                                                    : 'bg-white text-gray-800 rounded-tl-none border border-gray-100 shadow-sm'
+                                                    : 'bg-white text-gray-900 rounded-tl-none border border-gray-100 shadow-sm'
                                             }`}
                                             >
                                                 <p className="leading-relaxed">{msg.text}</p>
@@ -241,14 +241,14 @@ export default function OrderChat({ orderId, isOpen, onClose, userRole, userName
                                     </p>
                                 </div>
                             ) : (
-                                <div className="flex gap-4 items-center bg-gray-50 rounded-[1.5rem] px-5 py-2 border border-gray-100 focus-within:ring-4 focus-within:ring-orange-500/5 focus-within:border-orange-500/20 transition-all">
+                                <div className="flex gap-4 items-center bg-gray-50 rounded-[1.5rem] px-5 py-2 border border-gray-200 focus-within:ring-4 focus-within:ring-orange-500/10 focus-within:border-orange-500/30 transition-all">
                                     <input
                                         type="text"
                                         value={currentMessage}
                                         onChange={(e) => setCurrentMessage(e.target.value)}
                                         onKeyPress={(e) => e.key === 'Enter' && handleSendMessage()}
                                         placeholder="Type your message..."
-                                        className="flex-1 bg-transparent border-none py-4 text-sm font-bold focus:outline-none placeholder:text-gray-400"
+                                        className="flex-1 bg-transparent border-none py-4 text-sm font-bold focus:outline-none placeholder:text-gray-500 text-gray-900"
                                     />
                                     <button
                                         onClick={handleSendMessage}

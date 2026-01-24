@@ -65,6 +65,19 @@ exports.sendMessage = async (req, res) => {
             }
         });
 
+        // If the sender is a customer, notify the restaurant
+        if (senderRole === 'customer') {
+            const order = await Order.findById(orderId);
+            if (order && order.restaurant) {
+                triggerEvent(`restaurant-${order.restaurant}`, 'newChatMessage', {
+                    orderId,
+                    orderNumber: orderId.slice(-4),
+                    senderName,
+                    text: text.length > 50 ? text.substring(0, 47) + '...' : text
+                });
+            }
+        }
+
         res.status(201).json(message);
     } catch (error) {
         console.error('Send message error:', error);

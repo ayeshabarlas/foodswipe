@@ -123,8 +123,8 @@ const restaurantSchema = mongoose.Schema(
         },
         priceRange: {
             type: String,
-            enum: ['$', '$$', '$$$', '$$$$'],
-            default: '$$',
+            enum: ['$', '$$', '$$$', '$$$$', 'Rs', 'RsRs', 'RsRsRs', 'RsRsRsRs'],
+            default: 'RsRs',
         },
         deliveryTime: {
             type: String,
