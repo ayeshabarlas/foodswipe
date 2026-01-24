@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { FaShoppingBag, FaUtensils, FaStore, FaChartLine, FaWallet, FaStar, FaBullhorn, FaHeadset, FaConciergeBell, FaBell, FaClock, FaBox, FaCheck, FaPaperPlane, FaSignOutAlt, FaBars, FaTimes, FaBan, FaThLarge, FaMapMarkerAlt } from 'react-icons/fa';
+import { FaShoppingBag, FaUtensils, FaStore, FaChartLine, FaWallet, FaStar, FaBullhorn, FaHeadset, FaConciergeBell, FaBell, FaClock, FaBox, FaCheck, FaPaperPlane, FaSignOutAlt, FaBars, FaTimes, FaBan, FaThLarge, FaMapMarkerAlt, FaCommentDots } from 'react-icons/fa';
 import { motion, AnimatePresence } from 'framer-motion';
 import axios from 'axios';
 import toast from 'react-hot-toast';
@@ -116,61 +116,15 @@ export default function RestaurantDashboard() {
             // Subscribe to restaurant channel for global notifications
             const channel = subscribeToChannel(`restaurant-${resId}`);
             if (channel) {
-                // Global listener for new chat messages
-                channel.bind('newChatMessage', (data: any) => {
-                    console.log('Dashboard: Global new chat message:', data);
-                    
-                    // Show notification even if not on orders page
-                    toast((t) => (
-                        <div className="flex items-center gap-4 cursor-pointer" onClick={() => {
-                            setSelectedOrderId(data.orderId);
-                            setActivePage('orders');
-                            toast.dismiss(t.id);
-                        }}>
-                            <div className="w-10 h-10 bg-orange-100 rounded-full flex items-center justify-center text-orange-500">
-                                <FaCommentDots size={18} />
-                            </div>
-                            <div className="flex-1">
-                                <p className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">
-                                    {data.senderRole === 'rider' ? 'Rider Message' : 'Customer Message'} • Order #{data.orderNumber}
-                                </p>
-                                <p className="text-xs font-bold text-gray-900">{data.senderName}: <span className="font-medium text-gray-600">{data.text}</span></p>
-                            </div>
-                        </div>
-                    ), {
-                        duration: 6000,
-                        position: 'top-right',
-                        style: {
-                            borderRadius: '16px',
-                            background: '#fff',
-                            color: '#333',
-                            border: '1px solid #eee',
-                            boxShadow: '0 10px 25px -5px rgba(0,0,0,0.1)',
-                            padding: '12px',
-                            minWidth: '300px'
-                        },
-                    });
-
-                    // Play chat sound
-                    const audio = new Audio('https://assets.mixkit.co/active_storage/sfx/2357/2357-preview.mp3');
-                    audio.play().catch(e => console.log('Audio play failed:', e));
-                });
-
-                // Global listener for new orders
-                channel.bind('newOrder', (order: any) => {
-                    console.log('Dashboard: Global new order:', order);
-                    setNewOrderModal(order);
-                    setCountdown(60);
-                    
-                    // Play notification sound
-                    const audio = new Audio('https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3');
-                    audio.play().catch(e => console.log('Audio play failed:', e));
-                });
+                console.log(`📡 Dashboard: Subscribed to channel restaurant-${resId}`);
             }
         }
         
         return () => { 
-            if (socket) disconnectSocket(); 
+            if (socket) {
+                console.log("Disconnecting dashboard socket");
+                disconnectSocket(); 
+            }
         };
     }, [restaurant?._id, userInfo]);
 
@@ -314,14 +268,56 @@ export default function RestaurantDashboard() {
             setNotifications(prev => [notification, ...prev]);
         };
 
+        const handleNewChatMessage = (data: any) => {
+            console.log('Dashboard: Global new chat message:', data);
+            
+            // Show notification even if not on orders page
+            toast((t) => (
+                <div className="flex items-center gap-4 cursor-pointer" onClick={() => {
+                    setSelectedOrderId(data.orderId);
+                    setActivePage('orders');
+                    toast.dismiss(t.id);
+                }}>
+                    <div className="w-10 h-10 bg-orange-100 rounded-full flex items-center justify-center text-orange-500 shadow-sm border border-orange-200">
+                        <FaCommentDots size={18} />
+                    </div>
+                    <div className="flex-1">
+                        <p className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">
+                            {data.senderRole === 'rider' ? 'Rider Message' : 'Customer Message'} • Order #{data.orderNumber || data.orderId.slice(-5).toUpperCase()}
+                        </p>
+                        <p className="text-xs font-bold text-gray-900">{data.senderName}: <span className="font-medium text-gray-600">{data.text}</span></p>
+                    </div>
+                </div>
+            ), {
+                duration: 6000,
+                position: 'top-right',
+                style: {
+                    borderRadius: '16px',
+                    background: '#fff',
+                    color: '#333',
+                    border: '1px solid #eee',
+                    boxShadow: '0 10px 25px -5px rgba(0,0,0,0.1)',
+                    padding: '12px',
+                    minWidth: '320px',
+                    zIndex: 9999
+                },
+            });
+
+            // Play chat sound
+            const audio = new Audio('https://assets.mixkit.co/active_storage/sfx/2357/2357-preview.mp3');
+            audio.play().catch(e => console.log('Audio play failed:', e));
+        };
+
         socket.on('newOrder', handleNewOrder);
         socket.on('orderStatusUpdate', handleOrderUpdate);
         socket.on('notification', handleGenericNotification);
+        socket.on('newChatMessage', handleNewChatMessage);
 
         return () => {
             socket.off('newOrder', handleNewOrder);
             socket.off('orderStatusUpdate', handleOrderUpdate);
             socket.off('notification', handleGenericNotification);
+            socket.off('newChatMessage', handleNewChatMessage);
         };
     }, [socket, restaurant]);
 
@@ -566,8 +562,8 @@ export default function RestaurantDashboard() {
                                     <p className="font-semibold text-green-400 text-[12px] font-plus-jakarta">Rs. {stats?.netEarningsToday?.toLocaleString() || 0}</p>
                                 </div>
                                 <div className="bg-gray-800/40 rounded-xl p-2.5 text-center border border-gray-700/30 hover:bg-gray-800/60 transition-colors">
-                                    <p className="text-[9px] text-gray-500 mb-1 font-medium uppercase tracking-widest">Today</p>
-                                    <p className="font-semibold text-orange-400 text-[12px] font-plus-jakarta">{stats?.ordersToday || 0} Orders</p>
+                                    <p className="text-[9px] text-gray-500 mb-1 font-medium uppercase tracking-widest">Active</p>
+                                    <p className="font-semibold text-orange-400 text-[12px] font-plus-jakarta">{(stats?.activeOrders !== undefined ? stats.activeOrders : stats?.ordersToday) || 0} Orders</p>
                                 </div>
                             </div>
                         )}
