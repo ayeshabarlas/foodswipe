@@ -22,8 +22,6 @@ import { getApiUrl } from '../utils/config';
 import { initSocket, disconnectSocket, subscribeToChannel } from '../utils/socket';
 import { useSettings } from '../hooks/useSettings';
 import ModernLoader from './ModernLoader';
-import { FaCommentDots } from 'react-icons/fa';
-
 export default function RestaurantDashboard() {
     const { settings } = useSettings();
     const [restaurant, setRestaurant] = useState<any>(null);
