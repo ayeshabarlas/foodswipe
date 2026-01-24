@@ -179,6 +179,11 @@ export default function Sidebar({ activeTab, setActiveTab, onLogout, notificatio
                                                 {notificationCounts?.newOrders}
                                             </span>
                                         )}
+                                        {item.id === 'customers' && (notificationCounts?.newUsers || 0) > 0 && (
+                                            <span className="ml-2 px-1.5 py-0.5 text-[10px] font-bold bg-orange-500 text-white rounded-full">
+                                                {notificationCounts?.newUsers}
+                                            </span>
+                                        )}
                                     </div>
                                     {item.subItems && (
                                         <div className={`transition-transform duration-300 ${expandedMenus.includes(item.id) ? 'rotate-180' : ''}`}>

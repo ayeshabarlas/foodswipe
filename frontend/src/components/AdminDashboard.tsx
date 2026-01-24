@@ -152,10 +152,27 @@ export default function AdminDashboard() {
                 updateStats();
             });
 
+            socket.on('rider_registered', (rider) => {
+                console.log('New rider registered!', rider);
+                toast.success(`New Rider: ${rider.fullName} registered!`, {
+                    duration: 6000,
+                    position: 'top-right',
+                    icon: '🏍️',
+                });
+                updateStats();
+            });
+
+            socket.on('user_registered', (user) => {
+                console.log('New user registered!', user);
+                toast.success(`New Customer: ${user.name} registered!`, {
+                    duration: 5000,
+                    position: 'top-right',
+                    icon: '👤',
+                });
+                updateStats();
+            });
+
             socket.on('restaurant_updated', updateStats);
-            socket.on('stats_updated', updateStats);
-            socket.on('rider_updated', updateStats);
-            socket.on('user_registered', updateStats);
             socket.on('user_logged_in', updateStats);
             socket.on('admin-channel', (data: any) => {
                 console.log('Admin channel event:', data);
