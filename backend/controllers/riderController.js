@@ -358,6 +358,20 @@ const acceptOrder = async (req, res) => {
             return res.status(404).json({ message: 'Rider not found' });
         }
 
+        // CONCURRENCY FIX: Check if order already has a rider
+        if (order.rider) {
+            return res.status(400).json({ message: 'Order has already been accepted by another rider' });
+        }
+
+        // CONCURRENCY FIX: Check if rider already has an active order
+        // This prevents one rider from accepting multiple orders at once
+        if (rider.currentOrder) {
+            return res.status(400).json({ 
+                message: 'You already have an active order. Please complete or cancel it before accepting a new one.',
+                activeOrderId: rider.currentOrder 
+            });
+        }
+
         // COD Block Check
         if (rider.settlementStatus === 'blocked') {
             return res.status(403).json({ message: 'Account blocked due to overdue COD. Please settle with admin.' });
@@ -372,6 +386,7 @@ const acceptOrder = async (req, res) => {
         }
 
         // Calculate rider earnings if not already set
+        let earningsData = {};
         if (!order.netRiderEarning || order.netRiderEarning === 0) {
             let distance = order.distanceKm || 0;
             if (distance === 0 && order.restaurant?.location?.coordinates && order.deliveryLocation?.lat) {
@@ -382,18 +397,50 @@ const acceptOrder = async (req, res) => {
             if (!distance || distance < 0) distance = 0; 
             
             const earnings = calculateRiderEarning(distance);
-            order.distanceKm = distance;
-            order.netRiderEarning = earnings.netEarning;
-            order.grossRiderEarning = earnings.grossEarning;
-            order.riderEarning = earnings.netEarning; // Legacy field
+            earningsData = {
+                distanceKm: distance,
+                netRiderEarning: earnings.netEarning,
+                grossRiderEarning: earnings.grossEarning,
+                riderEarning: earnings.netEarning // Legacy field
+            };
         }
 
-        order.rider = req.params.id;
-        order.riderAcceptedAt = new Date();
-        await order.save();
+        // ATOMIC UPDATE: Use findOneAndUpdate with rider: null condition to prevent race conditions
+        const updatedOrderRecord = await Order.findOneAndUpdate(
+            { _id: orderId, rider: null },
+            { 
+                $set: { 
+                    rider: req.params.id, 
+                    riderAcceptedAt: new Date(),
+                    ...earningsData
+                } 
+            },
+            { new: true }
+        );
 
-        rider.currentOrder = orderId;
-        await rider.save();
+        if (!updatedOrderRecord) {
+            return res.status(400).json({ message: 'Order was just accepted by another rider. Please try another order.' });
+        }
+
+        // Now that the order is atomically ours, update the rider atomically too
+        // This prevents a rider from accepting two orders simultaneously from different devices
+        const updatedRider = await Rider.findOneAndUpdate(
+            { _id: req.params.id, currentOrder: null },
+            { $set: { currentOrder: orderId, status: 'Busy' } },
+            { new: true }
+        );
+
+        if (!updatedRider) {
+            // ROLLBACK: If rider update failed, we must release the order
+            await Order.findOneAndUpdate(
+                { _id: orderId, rider: req.params.id },
+                { $set: { rider: null, riderAcceptedAt: null } }
+            );
+            return res.status(400).json({ 
+                message: 'You already have an active order. Please complete it first.',
+                activeOrderId: rider.currentOrder 
+            });
+        }
 
         // Get fully populated order to emit
         const updatedOrder = await Order.findById(order._id)

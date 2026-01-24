@@ -134,7 +134,29 @@ const requireRider = async (req, res, next) => {
     } else {
         // Auto-fix: Check if they actually have a rider profile
         try {
-            const rider = await Rider.findOne({ user: req.user._id });
+            let rider = await Rider.findOne({ user: req.user._id });
+            
+            // SMART LINKING: Try to find by contact info if user ID doesn't match
+            if (!rider) {
+                const userEmail = req.user.email?.toLowerCase();
+                const userPhone = req.user.phone || req.user.phoneNumber;
+                const normalizedUserPhone = userPhone ? userPhone.replace(/[\s\-\+\(\)]/g, '').slice(-10) : null;
+
+                if (normalizedUserPhone) {
+                    rider = await Rider.findOne({ phone: new RegExp(normalizedUserPhone + '$') });
+                }
+
+                if (!rider && userEmail) {
+                    rider = await Rider.findOne({ email: userEmail });
+                }
+
+                if (rider) {
+                    console.log(`[SmartLinking] Re-linking rider ${rider._id} to user ${req.user._id} in middleware`);
+                    rider.user = req.user._id;
+                    await rider.save();
+                }
+            }
+
             if (rider) {
                 console.log(`Auto-fixing role for user ${req.user._id} to rider`);
                 req.user.role = 'rider';

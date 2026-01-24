@@ -322,8 +322,12 @@ const RiderDashboard = ({
         }
     };
 
+    const [isAccepting, setIsAccepting] = useState(false);
+
     const handleAcceptOrder = async (orderId: string) => {
+        if (isAccepting) return;
         try {
+            setIsAccepting(true);
             const userStr = localStorage.getItem('userInfo');
             if (!userStr || !riderData?._id) return;
             const userInfo = JSON.parse(userStr);
@@ -340,7 +344,10 @@ const RiderDashboard = ({
             socket?.emit('updateOrderStatus', { orderId, status: data.order?.status || 'Ready' });
         } catch (err: any) {
             console.error('Failed to accept order:', err);
-            toast.error(err.response?.data?.message || 'Failed to accept order');
+            const errorMsg = err.response?.data?.message || 'Failed to accept order. It may have been taken by another rider.';
+            toast.error(errorMsg);
+        } finally {
+            setIsAccepting(false);
         }
     };
 
@@ -907,9 +914,15 @@ function ActionItem({ icon, label, sublabel, onClick }: any) {
                                 ) : (
                                     <button 
                                         onClick={() => handleAcceptOrder(order._id)}
-                                        className="flex-[2] bg-green-500 text-white py-4 rounded-2xl text-[10px] font-semibold uppercase tracking-widest shadow-lg shadow-green-100 hover:scale-[1.02] active:scale-[0.98] transition-all"
+                                        disabled={isAccepting}
+                                        className={`flex-[2] bg-green-500 text-white py-4 rounded-2xl text-[10px] font-semibold uppercase tracking-widest shadow-lg shadow-green-100 hover:scale-[1.02] active:scale-[0.98] transition-all flex items-center justify-center gap-2 ${isAccepting ? 'opacity-70 cursor-not-allowed' : ''}`}
                                     >
-                                        Accept Order
+                                        {isAccepting ? (
+                                            <>
+                                                <div className="w-3 h-3 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                                                Accepting...
+                                            </>
+                                        ) : 'Accept Order'}
                                     </button>
                                 )}
                             </div>
@@ -1059,12 +1072,17 @@ function ActionItem({ icon, label, sublabel, onClick }: any) {
                                     <button 
                                         onClick={() => {
                                             handleAcceptOrder(newOrderPopup._id);
-                                            setNewOrderPopup(null);
                                             setTimer(30);
                                         }}
-                                        className="flex-[2] py-4 rounded-2xl bg-gradient-to-r from-orange-500 to-red-500 text-white font-bold text-[11px] uppercase tracking-widest hover:shadow-lg hover:shadow-orange-500/30 transition-all active:scale-95"
+                                        disabled={isAccepting}
+                                        className={`flex-[2] py-4 rounded-2xl bg-gradient-to-r from-orange-500 to-red-500 text-white font-bold text-[11px] uppercase tracking-widest hover:shadow-lg hover:shadow-orange-500/30 transition-all active:scale-95 flex items-center justify-center gap-2 ${isAccepting ? 'opacity-70 cursor-not-allowed' : ''}`}
                                     >
-                                        Accept Order
+                                        {isAccepting ? (
+                                            <>
+                                                <div className="w-3 h-3 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                                                Accepting...
+                                            </>
+                                        ) : 'Accept Order'}
                                     </button>
                                 </div>
                             </div>

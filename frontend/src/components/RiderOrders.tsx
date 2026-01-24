@@ -210,8 +210,13 @@ export default function RiderOrders({ riderId, setShowNotifications, unreadCount
         return true;
     });
 
+    const [acceptingOrderId, setAcceptingOrderId] = useState<string | null>(null);
+
     const handleAcceptOrder = async (orderId: string) => {
+        if (acceptingOrderId) return; // Prevent double clicks
+        
         try {
+            setAcceptingOrderId(orderId);
             const token = JSON.parse(localStorage.getItem("userInfo") || "{}").token;
             await axios.post(
                 `${getApiUrl()}/api/riders/${riderId}/accept-order`,
@@ -220,9 +225,12 @@ export default function RiderOrders({ riderId, setShowNotifications, unreadCount
             );
             toast.success('✅ Order accepted! Let\'s go.');
             fetchOrders();
-        } catch (error) {
+        } catch (error: any) {
             console.error('Error accepting order:', error);
-            toast.error('Failed to accept order');
+            const errorMsg = error.response?.data?.message || 'Failed to accept order';
+            toast.error(errorMsg);
+        } finally {
+            setAcceptingOrderId(null);
         }
     };
 
@@ -681,6 +689,7 @@ export default function RiderOrders({ riderId, setShowNotifications, unreadCount
                                 key={order._id}
                                 order={order}
                                 riderId={riderId}
+                                isAccepting={acceptingOrderId === order._id}
                                 onAccept={handleAcceptOrder}
                                 onPickup={handlePickupOrder}
                                 onDeliver={handleDeliverOrder}
@@ -837,6 +846,7 @@ export default function RiderOrders({ riderId, setShowNotifications, unreadCount
 function OrderCard({ 
     order, 
     riderId, 
+    isAccepting = false,
     onAccept, 
     onPickup, 
     onDeliver, 
@@ -845,6 +855,7 @@ function OrderCard({
 }: { 
     order: any; 
     riderId: string; 
+    isAccepting?: boolean;
     onAccept: (id: string) => void; 
     onPickup: (id: string) => void; 
     onDeliver: (id: string) => void; 
@@ -997,9 +1008,15 @@ function OrderCard({
                 {isAvailable && (
                     <button 
                             onClick={() => onAccept(order._id)}
-                            className="w-full mt-4 bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600 text-white py-3 rounded-xl font-semibold text-xs uppercase tracking-widest shadow-lg shadow-orange-500/20 transition-all active:scale-95"
+                            disabled={isAccepting}
+                            className={`w-full mt-4 bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600 text-white py-3 rounded-xl font-semibold text-xs uppercase tracking-widest shadow-lg shadow-orange-500/20 transition-all active:scale-95 flex items-center justify-center gap-2 ${isAccepting ? 'opacity-70 cursor-not-allowed' : ''}`}
                         >
-                            Accept Order
+                            {isAccepting ? (
+                                <>
+                                    <div className="w-3 h-3 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                                    Accepting...
+                                </>
+                            ) : 'Accept Order'}
                         </button>
                 )}
             </div>
