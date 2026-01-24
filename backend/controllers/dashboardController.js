@@ -22,17 +22,17 @@ const getDashboardStats = async (req, res) => {
         lastWeek.setDate(lastWeek.getDate() - 7);
         lastWeek.setHours(0, 0, 0, 0);
 
-        // 1. Orders Today & Weekly
+        // 1. Orders Today & Weekly (Include all non-cancelled orders for count)
         const ordersToday = await Order.countDocuments({
             restaurant: restaurant._id,
             createdAt: { $gte: today },
-            status: { $in: ['Delivered', 'Completed'] }
+            status: { $ne: 'Cancelled' }
         });
 
         const weeklyOrders = await Order.countDocuments({
             restaurant: restaurant._id,
             createdAt: { $gte: lastWeek },
-            status: { $in: ['Delivered', 'Completed'] }
+            status: { $ne: 'Cancelled' }
         });
 
         // 2. Revenue & Earnings Today & Weekly
@@ -41,7 +41,7 @@ const getDashboardStats = async (req, res) => {
                 $match: {
                     restaurant: restaurant._id,
                     createdAt: { $gte: lastWeek },
-                    status: { $in: ['Delivered', 'Completed'] }
+                    status: { $ne: 'Cancelled' }
                 }
             },
             {
@@ -50,8 +50,24 @@ const getDashboardStats = async (req, res) => {
                         $cond: [{ $gte: ['$createdAt', today] }, 'today', 'weekly']
                     },
                     totalRevenue: { $sum: { $ifNull: ['$subtotal', '$totalPrice'] } },
-                    totalNetEarnings: { $sum: { $ifNull: ['$restaurantEarning', { $multiply: [{ $ifNull: ['$subtotal', '$totalPrice'] }, 0.85] }] } },
-                    totalCommission: { $sum: { $ifNull: ['$commissionAmount', { $multiply: [{ $ifNull: ['$subtotal', '$totalPrice'] }, 0.15] }] } }
+                    totalNetEarnings: { 
+                        $sum: { 
+                            $cond: [
+                                { $in: ['$status', ['Delivered', 'Completed']] },
+                                { $ifNull: ['$restaurantEarning', { $multiply: [{ $ifNull: ['$subtotal', '$totalPrice'] }, 0.85] }] },
+                                0
+                            ]
+                        }
+                    },
+                    totalCommission: { 
+                        $sum: { 
+                            $cond: [
+                                { $in: ['$status', ['Delivered', 'Completed']] },
+                                { $ifNull: ['$commissionAmount', { $multiply: [{ $ifNull: ['$subtotal', '$totalPrice'] }, 0.15] }] },
+                                0
+                            ]
+                        }
+                    }
                 }
             }
         ]);
@@ -83,6 +99,11 @@ const getDashboardStats = async (req, res) => {
         }
 
         // 3. Status-based Order Counts
+        const activeOrdersCount = await Order.countDocuments({
+            restaurant: restaurant._id,
+            status: { $nin: ['Delivered', 'Cancelled', 'Completed'] }
+        });
+
         const pendingCount = await Order.countDocuments({
             restaurant: restaurant._id,
             status: 'Pending'
@@ -122,6 +143,7 @@ const getDashboardStats = async (req, res) => {
 
         res.json({
             ordersToday,
+            activeOrders: activeOrdersCount,
             revenueToday,
             netEarningsToday: netEarningsToday || estimatedNetEarnings,
             commissionToday,

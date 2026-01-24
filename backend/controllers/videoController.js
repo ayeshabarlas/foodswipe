@@ -27,12 +27,25 @@ const getVideoFeed = async (req, res) => {
         }
         
         if (search) {
+            const trimmedSearch = search.trim();
+            // Escape special characters for regex
+            const escapedSearch = trimmedSearch.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+            
+            // Find restaurants matching the search query
+            const matchingRestaurants = await Restaurant.find({
+                name: { $regex: escapedSearch, $options: 'i' }
+            }).select('_id');
+            const restaurantIds = matchingRestaurants.map(r => r._id);
+
             query.$or = [
-                { name: { $regex: search, $options: 'i' } },
-                { description: { $regex: search, $options: 'i' } },
-                { category: { $regex: search, $options: 'i' } },
-                { ingredients: { $in: [new RegExp(search, 'i')] } }
+                { name: { $regex: escapedSearch, $options: 'i' } },
+                { description: { $regex: escapedSearch, $options: 'i' } },
+                { category: { $regex: escapedSearch, $options: 'i' } },
+                { ingredients: { $in: [new RegExp(escapedSearch, 'i')] } },
+                { restaurant: { $in: restaurantIds } }
             ];
+            
+            console.log(`[Search] Matched ${restaurantIds.length} restaurants for "${trimmedSearch}":`, restaurantIds);
         }
 
         console.log(`Fetching video feed with query: ${JSON.stringify(query)}, lat: ${lat}, lng: ${lng}, search: ${search}`);
