@@ -6,6 +6,7 @@ import dynamic from 'next/dynamic';
 import { FaHeart, FaComment, FaShare, FaShoppingCart, FaFilter, FaStar, FaTimes, FaPaperPlane, FaBars, FaChevronRight, FaSearch, FaMapMarkerAlt, FaPlay, FaVolumeUp, FaVolumeMute } from 'react-icons/fa';
 import axios from 'axios';
 import { motion, AnimatePresence, PanInfo } from 'framer-motion';
+import { useSearchParams } from 'next/navigation';
 
 const DishDetails = dynamic(() => import('./DishDetails'), { ssr: false });
 const RestaurantProfile = dynamic(() => import('./RestaurantProfile'), { ssr: false });
@@ -170,37 +171,48 @@ const VideoCard = React.memo(({
 
     const handleShare = async (e: React.MouseEvent) => {
         e.stopPropagation();
+        
+        // Track share in backend (non-blocking)
+        axios.post(`${getApiUrl()}/api/videos/${dish._id}/share`).catch(err => console.error('Share tracking failed:', err));
+        setSharesCount(prev => prev + 1);
+
+        const shareUrl = `${window.location.origin}/?dishId=${dish._id}`;
+        const shareTitle = `Check out ${dish.name} on FoodSwipe!`;
+        const shareText = `Look at this delicious ${dish.name} from ${dish.restaurant.name}. Order now!`;
+
         try {
-            // Track share in backend
-            await axios.post(`${getApiUrl()}/api/videos/${dish._id}/share`);
-            setSharesCount(prev => prev + 1);
-
-            const shareUrl = `${window.location.origin}/dish/${dish._id}`;
-            const shareTitle = `Check out ${dish.name} on FoodSwipe!`;
-            const shareText = `Look at this delicious ${dish.name} from ${dish.restaurant.name}. Order now!`;
-
-            if (navigator.share) {
+            if (navigator.share && /Android|iPhone|iPad|iPod/i.test(navigator.userAgent)) {
                 await navigator.share({
                     title: shareTitle,
                     text: shareText,
                     url: shareUrl
                 });
             } else {
-                // Fallback to clipboard
+                // Fallback to clipboard for desktop or if share API fails
                 await navigator.clipboard.writeText(shareUrl);
                 toast.success('Link copied to clipboard!', {
                     icon: '🔗',
+                    duration: 3000,
                     style: {
-                        borderRadius: '10px',
-                        background: '#333',
+                        borderRadius: '12px',
+                        background: '#1A1A1A',
                         color: '#fff',
+                        border: '1px solid rgba(255,255,255,0.1)',
+                        fontSize: '14px',
+                        fontWeight: '600'
                     },
                 });
             }
         } catch (error: any) {
             if (error.name !== 'AbortError') {
                 console.error('Share failed:', error);
-                toast.error('Could not share. Please try again.');
+                // Last resort fallback if share API was present but failed
+                try {
+                    await navigator.clipboard.writeText(shareUrl);
+                    toast.success('Link copied to clipboard!');
+                } catch (clipboardErr) {
+                    toast.error('Could not share. Please copy the URL manually.');
+                }
             }
         }
     };
@@ -453,6 +465,9 @@ VideoCard.displayName = 'VideoCard';
 export default function VideoFeed() {
     const [dishes, setDishes] = useState<Dish[]>([]);
     const [currentVideoIndex, setCurrentVideoIndex] = useState(0);
+    const scrollContainerRef = useRef<HTMLDivElement>(null);
+    const searchParams = useSearchParams();
+    const dishIdFromUrl = searchParams.get('dishId');
     const [selectedDish, setSelectedDish] = useState<Dish | null>(null);
     const [selectedRestaurant, setSelectedRestaurant] = useState<any | null>(null);
     const [isCartOpen, setIsCartOpen] = useState(false);
@@ -629,6 +644,27 @@ export default function VideoFeed() {
             setTimeout(() => setShowLocationPrompt(true), 1500);
         }
     }, []); // Only run once on mount
+
+    // Handle jumping to shared dish
+    useEffect(() => {
+        if (dishIdFromUrl && filteredDishes.length > 0 && scrollContainerRef.current) {
+            const index = filteredDishes.findIndex(d => d._id === dishIdFromUrl);
+            if (index !== -1) {
+                console.log('🎯 Found shared dish at index:', index);
+                setCurrentVideoIndex(index);
+                // Wait for layout to settle then scroll
+                setTimeout(() => {
+                    if (scrollContainerRef.current) {
+                        const vh = scrollContainerRef.current.clientHeight;
+                        scrollContainerRef.current.scrollTo({
+                            top: index * vh,
+                            behavior: 'auto'
+                        });
+                    }
+                }, 300); // Increased timeout slightly to ensure render
+            }
+        }
+    }, [dishIdFromUrl, filteredDishes.length]);
 
     useEffect(() => {
         const debounceTimer = setTimeout(() => {
@@ -858,6 +894,7 @@ export default function VideoFeed() {
             </div>
 
             <div 
+                ref={scrollContainerRef}
                 className="h-full w-full overflow-y-scroll snap-y snap-mandatory no-scrollbar overscroll-behavior-y-contain touch-pan-y" 
                 onScroll={handleScroll}
                 style={{ 
