@@ -44,7 +44,8 @@ export default function SettingsTab({ restaurant, onUpdate }: SettingsTabProps) 
             iban: '',
             phoneNumber: '',
         },
-        deliveryZones: [] as any[]
+        deliveryZones: [] as any[],
+        businessType: 'restaurant'
     });
     const [saving, setSaving] = useState(false);
     const [uploadingLogo, setUploadingLogo] = useState(false);
@@ -80,7 +81,8 @@ export default function SettingsTab({ restaurant, onUpdate }: SettingsTabProps) 
                     branchCode: restaurant.bankDetails?.branchCode || '',
                     iban: restaurant.bankDetails?.iban || '',
                     phoneNumber: restaurant.bankDetails?.phoneNumber || '',
-                }
+                },
+                businessType: restaurant.businessType || 'restaurant'
             });
         }
     }, [restaurant]);
@@ -264,15 +266,28 @@ export default function SettingsTab({ restaurant, onUpdate }: SettingsTabProps) 
                         General Information
                     </h3>
                     <div className="space-y-4">
-                        <div>
-                            <label className="block text-sm text-gray-600 mb-1.5 font-medium">Restaurant Name</label>
-                            <input
-                                type="text"
-                                value={formData.name}
-                                onChange={e => setFormData({ ...formData, name: e.target.value })}
-                                className="w-full bg-gray-50 text-gray-900 rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-primary border border-gray-200 transition-all"
-                                required
-                            />
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            <div>
+                                <label className="block text-sm text-gray-600 mb-1.5 font-medium">Restaurant Name</label>
+                                <input
+                                    type="text"
+                                    value={formData.name}
+                                    onChange={e => setFormData({ ...formData, name: e.target.value })}
+                                    className="w-full bg-gray-50 text-gray-900 rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-primary border border-gray-200 transition-all"
+                                    required
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-sm text-gray-600 mb-1.5 font-medium">Business Type</label>
+                                <select
+                                    value={formData.businessType}
+                                    onChange={e => setFormData({ ...formData, businessType: e.target.value })}
+                                    className="w-full bg-gray-50 text-gray-900 rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-primary border border-gray-200 transition-all"
+                                >
+                                    <option value="restaurant">Standard Restaurant</option>
+                                    <option value="home-chef">Home Chef</option>
+                                </select>
+                            </div>
                         </div>
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                             <div>

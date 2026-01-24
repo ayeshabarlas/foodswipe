@@ -63,6 +63,7 @@ interface Restaurant {
         coordinates: number[];
     };
     storeStatus?: 'open' | 'closed' | 'busy';
+    businessType?: 'home-chef' | 'restaurant';
 }
 
 interface RestaurantProfileProps {
@@ -424,8 +425,15 @@ export default function RestaurantProfile({ restaurant: initialRestaurant, onBac
                             }`} />
                         </div>
                         <div className="flex-1 pb-1">
-                            <h1 className="text-2xl font-bold text-white mb-2 drop-shadow-md">{restaurantData.name}</h1>
-                <div className="flex items-center gap-4">
+                            <div className="flex items-center gap-2 mb-1">
+                                <h1 className="text-2xl font-bold text-white drop-shadow-md">{restaurantData.name}</h1>
+                                {restaurantData.businessType === 'home-chef' && (
+                                    <span className="bg-[#FF6A00] text-white text-[10px] px-2 py-0.5 rounded-lg font-bold uppercase tracking-wider shadow-lg">
+                                        Home Chef
+                                    </span>
+                                )}
+                            </div>
+                            <div className="flex items-center gap-4">
                                 <div className="flex items-center gap-1.5 bg-black/40 backdrop-blur-md px-3 py-1 rounded-xl border border-white/10">
                                     <FaStar className="text-yellow-400" size={14} />
                                     <span className="text-white font-medium text-sm">

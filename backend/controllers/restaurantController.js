@@ -320,7 +320,7 @@ const updateRestaurant = async (req, res) => {
         // Update fields
         const allowedUpdates = [
             'name', 'address', 'contact', 'description', 'logo',
-            'cuisineTypes', 'priceRange', 'socialMedia', 'openingHours', 'coverImage', 'isActive', 'deliveryZones', 'bankDetails', 'deliveryTime'
+            'cuisineTypes', 'priceRange', 'socialMedia', 'openingHours', 'coverImage', 'isActive', 'deliveryZones', 'bankDetails', 'deliveryTime', 'businessType'
         ];
 
         // Only allow updating location if we didn't just geocode it AND it was provided

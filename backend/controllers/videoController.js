@@ -41,7 +41,7 @@ const getVideoFeed = async (req, res) => {
         let videos = await Dish.find(query)
             .populate({
                  path: 'restaurant',
-                 select: 'name logo rating location address contact verificationStatus isActive',
+                 select: 'name logo rating location address contact verificationStatus isActive businessType',
              })
              .populate('likes', 'name')
              .sort({ createdAt: -1 })

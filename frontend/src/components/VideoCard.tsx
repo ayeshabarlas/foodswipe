@@ -26,6 +26,7 @@ export interface Dish {
         rating: number;
         address: string;
         contact: string;
+        businessType?: 'home-chef' | 'restaurant';
         location?: {
             type: string;
             coordinates: [number, number];
@@ -342,7 +343,14 @@ const VideoCard = React.memo(({
                         }}
                     />
                     <div className="flex flex-col text-left">
-                        <p className="text-white font-bold text-sm">{dish.restaurant.name}</p>
+                        <div className="flex items-center gap-2">
+                            <p className="text-white font-bold text-sm">{dish.restaurant.name}</p>
+                            {dish.restaurant.businessType === 'home-chef' && (
+                                <span className="bg-[#FF6A00] text-white text-[9px] px-1.5 py-0.5 rounded-md font-bold uppercase tracking-wider">
+                                    Home Chef
+                                </span>
+                            )}
+                        </div>
                         {distance && (
                             <p className="text-white/80 text-xs">
                                 {distance === 'Location not set' ? distance : `${distance} away`}
