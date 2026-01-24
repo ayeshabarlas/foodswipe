@@ -1174,11 +1174,15 @@ const getCODLedger = async (req, res) => {
 // @route   POST /api/admin/settle-rider
 // @access  Private/Admin
 const settleRider = async (req, res) => {
+    const session = await mongoose.startSession();
+    session.startTransaction();
     try {
         const { riderId, amountCollected, earningsPaid, transactionId, notes } = req.body;
 
-        const rider = await Rider.findById(riderId);
+        const rider = await Rider.findById(riderId).session(session);
         if (!rider) {
+            await session.abortTransaction();
+            session.endSession();
             return res.status(404).json({ message: 'Rider not found' });
         }
 
@@ -1195,7 +1199,19 @@ const settleRider = async (req, res) => {
             rider.settlementStatus = 'active';
         }
         rider.lastSettlementDate = Date.now();
-        await rider.save();
+        await rider.save({ session });
+
+        // Update RiderWallet as well
+        let riderWallet = await RiderWallet.findOne({ rider: riderId }).session(session);
+        if (riderWallet) {
+            if (amountCollected) {
+                riderWallet.cashCollected = Math.max(0, (riderWallet.cashCollected || 0) - amountCollected);
+            }
+            if (earningsPaid) {
+                riderWallet.availableWithdraw = Math.max(0, (riderWallet.availableWithdraw || 0) - earningsPaid);
+            }
+            await riderWallet.save({ session });
+        }
 
         // Mark related ledger entries as paid
         await CODLedger.updateMany(
@@ -1204,21 +1220,38 @@ const settleRider = async (req, res) => {
                 status: 'paid',
                 settlementDate: Date.now(),
                 transactionId: transactionId || 'Admin-Manual'
-            }
+            },
+            { session }
         );
 
         // Log the settlement
-        await AuditLog.create({
-            user: req.user._id,
-            action: 'SETTLE_RIDER',
-            entityType: 'Rider',
-            entityId: riderId,
-            details: `Settled COD: ${amountCollected}, Paid Earnings: ${earningsPaid}. Notes: ${notes}`
+        await AuditLog.create([{
+            event: 'SETTLE_RIDER',
+            userId: req.user._id,
+            details: {
+                riderId,
+                amountCollected,
+                earningsPaid,
+                notes
+            }
+        }], { session });
+
+        await session.commitTransaction();
+        session.endSession();
+
+        // Trigger real-time update
+        triggerEvent(`rider-${riderId}`, 'wallet_updated', {
+            cod_balance: rider.cod_balance,
+            earnings_balance: rider.earnings_balance,
+            settlementStatus: rider.settlementStatus
         });
 
         res.json({ message: 'Rider settled successfully', rider });
     } catch (error) {
-        res.status(500).json({ message: 'Server error', error: error.message });
+        await session.abortTransaction();
+        session.endSession();
+        console.error('Settlement Error:', error);
+        res.status(500).json({ message: 'Server error during settlement', error: error.message });
     }
 };
 

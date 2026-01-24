@@ -792,7 +792,13 @@ export default function RestaurantProfile({ restaurant: initialRestaurant, onBac
                                                             <button
                                                                 onClick={(e) => {
                                                                     e.stopPropagation();
-                                                                    addToCart({ ...dish, quantity: 1, restaurantId: restaurantData._id, restaurantName: restaurantData.name });
+                                                                    addToCart({ 
+                                                                        ...dish, 
+                                                                        quantity: 1, 
+                                                                        restaurantId: restaurantData._id, 
+                                                                        restaurantName: restaurantData.name,
+                                                                        imageUrl: dish.imageUrl 
+                                                                    });
                                                                 }}
                                                                 className="px-4 py-1.5 bg-gradient-to-r from-orange-500 to-red-600 text-white text-xs font-bold rounded-lg shadow-md hover:shadow-lg active:scale-95 transition-all"
                                                             >

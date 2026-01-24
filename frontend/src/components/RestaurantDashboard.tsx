@@ -837,6 +837,33 @@ export default function RestaurantDashboard() {
                                             {newOrderModal.shippingAddress?.address || 'Address not available'}
                                         </p>
                                     </div>
+
+                                    {/* Cutlery Requirement */}
+                                    <div className={`mt-5 p-4 rounded-3xl border transition-all flex items-center gap-3 ${
+                                        newOrderModal.cutlery 
+                                            ? 'bg-orange-50 border-orange-100 text-orange-700 shadow-sm' 
+                                            : 'bg-gray-50 border-gray-100 text-gray-500'
+                                    }`}>
+                                        <div className={`w-10 h-10 rounded-2xl flex items-center justify-center shadow-sm ${
+                                            newOrderModal.cutlery ? 'bg-orange-500 text-white' : 'bg-gray-200 text-gray-400'
+                                        }`}>
+                                            <FaUtensils size={16} />
+                                        </div>
+                                        <div className="flex-1">
+                                            <p className="text-[10px] font-bold uppercase tracking-widest leading-none mb-1 opacity-60">
+                                                Cutlery Requirement
+                                            </p>
+                                            <p className="text-sm font-black">
+                                                {newOrderModal.cutlery ? 'Cutlery Required' : 'No Cutlery Needed'}
+                                            </p>
+                                        </div>
+                                        {newOrderModal.cutlery && (
+                                            <div className="flex items-center gap-1 bg-orange-500/10 px-2 py-1 rounded-lg">
+                                                <span className="w-1.5 h-1.5 rounded-full bg-orange-500 animate-pulse" />
+                                                <span className="text-[8px] text-orange-600 font-black uppercase">Include</span>
+                                            </div>
+                                        )}
+                                    </div>
                                 </div>
 
                                 {/* Order Items */}

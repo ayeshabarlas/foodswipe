@@ -105,11 +105,13 @@ export default function RiderOrders({ riderId, setShowNotifications, unreadCount
             if (res.data) {
                 setOrders(res.data);
                 // Check for active delivery (any status that isn't Delivered or Cancelled, and assigned to ME)
-                const active = res.data.find((o: any) => 
-                    (o.rider === riderId || o.rider?._id === riderId) &&
-                    ['Accepted', 'Confirmed', 'Preparing', 'Ready', 'OnTheWay', 'Arrived', 'Picked Up', 'ArrivedAtCustomer'].includes(o.status)
-                );
-                setActiveDelivery(active);
+                const active = res.data.find((o: any) => {
+                    if (!o || !o.status) return false;
+                    const oRiderId = o.rider?._id || o.rider;
+                    const isMyOrder = oRiderId && oRiderId.toString() === riderId.toString();
+                    return isMyOrder && ['Accepted', 'Confirmed', 'Preparing', 'Ready', 'OnTheWay', 'Arrived', 'Picked Up', 'ArrivedAtCustomer'].includes(o.status);
+                });
+                setActiveDelivery(active || null);
             }
 
             // Also fetch wallet balance
@@ -169,8 +171,10 @@ export default function RiderOrders({ riderId, setShowNotifications, unreadCount
     // Calculate potential earnings from available orders
     const potentialEarnings = orders
         .filter(o => {
-            const isAvailable = !o.rider && ['Accepted', 'Confirmed', 'Preparing', 'Ready', 'OnTheWay'].includes(o.status);
-            const isMyActive = (o.rider === riderId || o.rider?._id === riderId) && o.status !== 'Delivered';
+            if (!o || !o.status) return false;
+            const oRiderId = o.rider?._id || o.rider;
+            const isAvailable = !oRiderId && ['Accepted', 'Confirmed', 'Preparing', 'Ready', 'OnTheWay'].includes(o.status);
+            const isMyActive = oRiderId && oRiderId.toString() === riderId.toString() && o.status !== 'Delivered' && o.status !== 'Cancelled';
             return isAvailable || isMyActive;
         })
         .reduce((sum, o) => {
@@ -183,18 +187,32 @@ export default function RiderOrders({ riderId, setShowNotifications, unreadCount
             return sum + earnings;
         }, 0);
 
-    const availableOrdersCount = orders.filter(o => !o.rider && ['Accepted', 'Confirmed', 'Preparing', 'Ready', 'OnTheWay'].includes(o.status)).length;
-    const nearbyOrdersCount = orders.filter(o => !o.rider && ['Accepted', 'Confirmed', 'Preparing', 'Ready', 'OnTheWay'].includes(o.status) && (o.distanceKm || 0) < 5).length;
-    const highPayOrdersCount = orders.filter(o => !o.rider && ['Accepted', 'Confirmed', 'Preparing', 'Ready', 'OnTheWay'].includes(o.status) && (o.netRiderEarning || o.earnings || 0) > 300).length;
+    const availableOrdersCount = orders.filter(o => {
+        const oRiderId = o.rider?._id || o.rider;
+        return !oRiderId && ['Accepted', 'Confirmed', 'Preparing', 'Ready', 'OnTheWay'].includes(o.status);
+    }).length;
+    
+    const nearbyOrdersCount = orders.filter(o => {
+        const oRiderId = o.rider?._id || o.rider;
+        return !oRiderId && ['Accepted', 'Confirmed', 'Preparing', 'Ready', 'OnTheWay'].includes(o.status) && (o.distanceKm || 0) < 5;
+    }).length;
+    
+    const highPayOrdersCount = orders.filter(o => {
+        const oRiderId = o.rider?._id || o.rider;
+        return !oRiderId && ['Accepted', 'Confirmed', 'Preparing', 'Ready', 'OnTheWay'].includes(o.status) && (o.netRiderEarning || o.earnings || 0) > 300;
+    }).length;
 
     const filteredOrders = orders.filter(order => {
+        if (!order || !order.status) return false;
+        const oRiderId = order.rider?._id || order.rider;
+
         if (filter === 'active') {
             // If viewing active orders, show both "Available" orders to accept AND orders already assigned to me
             // but prioritize assigned orders by showing them in the tracking card
             if (activeDelivery && order._id === activeDelivery._id) return false;
             
-            const isAvailable = !order.rider && ['Accepted', 'Confirmed', 'Preparing', 'Ready', 'OnTheWay'].includes(order.status);
-            const isAssignedToMe = order.rider === riderId || (order.rider?._id === riderId);
+            const isAvailable = !oRiderId && ['Accepted', 'Confirmed', 'Preparing', 'Ready', 'OnTheWay'].includes(order.status);
+            const isAssignedToMe = oRiderId && oRiderId.toString() === riderId.toString() && order.status !== 'Delivered' && order.status !== 'Cancelled';
             
             if (!isAvailable && !isAssignedToMe) return false;
 

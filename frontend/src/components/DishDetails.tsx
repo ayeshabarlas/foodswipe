@@ -97,7 +97,8 @@ export default function DishDetails({ dish, onClose }: DishDetailsProps) {
             price: finalPrice,
             quantity: quantity,
             restaurantId: dish.restaurant._id,
-            restaurantName: dish.restaurant.name
+            restaurantName: dish.restaurant.name,
+            imageUrl: dish.imageUrl
         });
         onClose();
     };

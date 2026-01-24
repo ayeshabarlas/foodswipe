@@ -109,6 +109,14 @@ const dishSchema = mongoose.Schema(
             type: Number,
             default: 10,
         },
+        rating: {
+            type: Number,
+            default: 0,
+        },
+        reviewCount: {
+            type: Number,
+            default: 0,
+        },
         // Legacy customizations (keep for backward compatibility)
         customizations: [
             {

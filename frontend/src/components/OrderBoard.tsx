@@ -4,7 +4,7 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { getApiUrl } from '../utils/config';
 import { motion, AnimatePresence } from 'framer-motion';
-import { FaTimes, FaCheck, FaClock, FaMapMarkerAlt, FaCommentDots, FaBan, FaMotorcycle, FaShoppingBag, FaPaperPlane } from 'react-icons/fa';
+import { FaTimes, FaCheck, FaClock, FaMapMarkerAlt, FaCommentDots, FaBan, FaMotorcycle, FaShoppingBag, FaPaperPlane, FaUtensils } from 'react-icons/fa';
 import CancelOrderModal from './CancelOrderModal';
 import { initSocket, getSocket, disconnectSocket, subscribeToChannel } from '../utils/socket';
 import toast, { Toaster } from 'react-hot-toast';
@@ -711,9 +711,36 @@ export default function OrderBoard({ restaurant, onUpdate }: OrderBoardProps) {
                              </div>
 
                             {/* Address */}
-                            <div className="flex items-start gap-3 mb-8 px-2 text-gray-500">
+                            <div className="flex items-start gap-3 mb-6 px-2 text-gray-500">
                                 <FaMapMarkerAlt className="mt-1 shrink-0 text-gray-400" size={18} />
                                 <span className="text-sm font-bold leading-relaxed">{newOrderPopup.shippingAddress?.address}</span>
+                            </div>
+
+                            {/* Cutlery Requirement */}
+                            <div className={`flex items-center gap-3 mb-8 px-5 py-4 rounded-3xl border transition-all ${
+                                newOrderPopup.cutlery 
+                                    ? 'bg-orange-50 border-orange-200 text-orange-700 shadow-sm' 
+                                    : 'bg-gray-50 border-gray-100 text-gray-500'
+                            }`}>
+                                <div className={`w-10 h-10 rounded-2xl flex items-center justify-center shadow-sm ${
+                                    newOrderPopup.cutlery ? 'bg-orange-500 text-white' : 'bg-gray-200 text-gray-400'
+                                }`}>
+                                    <FaUtensils size={16} />
+                                </div>
+                                <div className="flex-1">
+                                    <p className="text-[10px] font-bold uppercase tracking-widest leading-none mb-1.5 opacity-60">
+                                        Cutlery Requirement
+                                    </p>
+                                    <p className="text-[15px] font-extrabold">
+                                        {newOrderPopup.cutlery ? 'Cutlery Required' : 'No Cutlery Needed'}
+                                    </p>
+                                </div>
+                                {newOrderPopup.cutlery && (
+                                    <div className="flex items-center gap-1 bg-orange-500/10 px-3 py-1.5 rounded-xl">
+                                        <span className="w-1.5 h-1.5 rounded-full bg-orange-500 animate-pulse" />
+                                        <span className="text-[10px] text-orange-600 font-black uppercase tracking-tighter">Please Include</span>
+                                    </div>
+                                )}
                             </div>
 
                             {/* Items List - Match Screenshot 1 */}

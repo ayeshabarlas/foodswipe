@@ -1,7 +1,7 @@
 'use client';
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { FaTimes, FaClock, FaCreditCard, FaMoneyBillWave, FaWallet, FaCheckCircle, FaMapMarkerAlt, FaEdit, FaGift } from 'react-icons/fa';
+import { FaTimes, FaClock, FaCreditCard, FaMoneyBillWave, FaWallet, FaCheckCircle, FaMapMarkerAlt, FaEdit, FaGift, FaUtensils } from 'react-icons/fa';
 import axios from 'axios';
 import { useCart } from '../context/CartContext';
 import { useRouter } from 'next/navigation';
@@ -32,6 +32,7 @@ export default function CheckoutModal({ isOpen, onClose, cart, total, subtotal, 
     const [walletNumber, setWalletNumber] = useState('');
     const [transactionId, setTransactionId] = useState('');
     const [deliveryInstructions, setDeliveryInstructions] = useState('');
+    const [cutlery, setCutlery] = useState(false);
     const [deliveryAddress, setDeliveryAddress] = useState('');
     const [city, setCity] = useState('');
     const [deliveryLocation, setDeliveryLocation] = useState<{ lat: number, lng: number } | null>(null);
@@ -509,6 +510,7 @@ export default function CheckoutModal({ isOpen, onClose, cart, total, subtotal, 
                 paymentMethod,
                 transactionId: null,
                 deliveryInstructions,
+                cutlery,
                 promoCode: appliedVoucher ? appliedVoucher.code : ''
             };
 
@@ -935,6 +937,38 @@ export default function CheckoutModal({ isOpen, onClose, cart, total, subtotal, 
                                         </div>
                                     </div>
 
+                                    {/* Order Summary */}
+                                    <div className="bg-white rounded-2xl p-5 shadow-sm mb-4 border border-gray-100">
+                                        <h3 className="font-semibold text-gray-900 mb-4 flex items-center gap-2 text-base">
+                                            <FaUtensils className="text-orange-500" /> Order Summary
+                                        </h3>
+                                        <div className="space-y-4">
+                                            {cart.map((item, index) => (
+                                                <div key={index} className="flex items-center justify-between">
+                                                    <div className="flex items-center gap-3">
+                                                        <div className="relative">
+                                                            <img 
+                                                                src={item.imageUrl || 'https://placehold.co/600x400/orange/white?text=FoodSwipe'} 
+                                                                alt={item.name}
+                                                                className="w-12 h-12 rounded-xl object-cover border border-gray-100"
+                                                            />
+                                                            <span className="absolute -top-2 -right-2 bg-orange-500 text-white text-[10px] font-bold w-5 h-5 rounded-full flex items-center justify-center border-2 border-white">
+                                                                {item.quantity}
+                                                            </span>
+                                                        </div>
+                                                        <div>
+                                                            <h4 className="text-sm font-semibold text-gray-900">{item.name}</h4>
+                                                            <p className="text-xs text-gray-500">Rs. {item.price.toLocaleString()} each</p>
+                                                        </div>
+                                                    </div>
+                                                    <p className="text-sm font-bold text-gray-900">
+                                                        Rs. {(item.price * item.quantity).toLocaleString()}
+                                                    </p>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </div>
+
                                     {/* Estimated Delivery */}
                                     <div className="bg-white rounded-2xl p-5 shadow-sm mb-4 border border-gray-100">
                                         <div className="flex items-center justify-between">
@@ -1129,6 +1163,33 @@ export default function CheckoutModal({ isOpen, onClose, cart, total, subtotal, 
                                             placeholder="e.g. Ring doorbell, leave at gate..."
                                             className="w-full bg-white border border-gray-200 rounded-xl px-4 py-3 outline-none focus:border-orange-500 focus:ring-2 focus:ring-orange-100 transition h-24 resize-none text-sm text-gray-900 placeholder:text-gray-400"
                                         />
+                                    </div>
+
+                                    {/* Cutlery Toggle */}
+                                    <div className="bg-white rounded-2xl p-5 shadow-sm mb-4 border border-gray-100">
+                                        <div className="flex items-center justify-between">
+                                            <div className="flex items-center gap-3">
+                                                <div className="w-10 h-10 bg-orange-50 rounded-full flex items-center justify-center">
+                                                    <FaUtensils className="text-orange-500 text-lg" />
+                                                </div>
+                                                <div>
+                                                    <h3 className="font-semibold text-gray-900 text-sm">Cutlery Required?</h3>
+                                                    <p className="text-xs text-gray-500">Add spoons, forks, etc. to your order</p>
+                                                </div>
+                                            </div>
+                                            <button
+                                                onClick={() => setCutlery(!cutlery)}
+                                                className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-orange-500 focus:ring-offset-2 ${
+                                                    cutlery ? 'bg-orange-500' : 'bg-gray-200'
+                                                }`}
+                                            >
+                                                <span
+                                                    className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                                                        cutlery ? 'translate-x-6' : 'translate-x-1'
+                                                    }`}
+                                                />
+                                            </button>
+                                        </div>
                                     </div>
 
                                     {/* Bill Details */}

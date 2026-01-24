@@ -20,6 +20,10 @@ const reviewSchema = mongoose.Schema(
             type: mongoose.Schema.Types.ObjectId,
             ref: 'Dish',
         },
+        order: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: 'Order',
+        },
         rating: {
             type: Number,
             default: 5,

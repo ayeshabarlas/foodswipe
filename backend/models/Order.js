@@ -181,6 +181,10 @@ const orderSchema = mongoose.Schema(
         deliveredAt: {
             type: Date,
         },
+        cutlery: {
+            type: Boolean,
+            default: false,
+        },
         payout: {
             type: mongoose.Schema.Types.ObjectId,
             ref: 'Payout',

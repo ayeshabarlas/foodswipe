@@ -9,24 +9,34 @@ const User = require('../models/User');
  */
 const createReview = async (req, res) => {
     try {
-        const { restaurantId, rating, comment, dishId } = req.body;
+        const { restaurantId, rating, comment, dishId, orderId } = req.body;
 
         const restaurant = await Restaurant.findById(restaurantId);
         if (!restaurant) {
             return res.status(404).json({ message: 'Restaurant not found' });
         }
 
-        // Check if user already reviewed this restaurant
-        // Optional: Allow multiple reviews or limit one per order? 
-        // For now, let's allow multiple but maybe rate limit in future.
-
         const review = await Review.create({
             user: req.user._id,
             restaurant: restaurantId,
             rating,
             comment,
-            dish: dishId || null
+            dish: dishId || null,
+            order: orderId || null
         });
+
+        // Update dish rating if dishId provided
+        if (dishId) {
+            const Dish = require('../models/Dish');
+            const dish = await Dish.findById(dishId);
+            if (dish) {
+                const dishReviews = await Review.find({ dish: dishId });
+                const dishAvgRating = dishReviews.reduce((acc, item) => item.rating + acc, 0) / dishReviews.length;
+                dish.rating = dishAvgRating;
+                dish.reviewCount = dishReviews.length;
+                await dish.save();
+            }
+        }
 
         // Update restaurant rating
         const reviews = await Review.find({ restaurant: restaurantId });

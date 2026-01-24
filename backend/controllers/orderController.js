@@ -40,7 +40,8 @@ const createOrder = async (req, res) => {
             serviceFee,
             tax,
             promoCode,
-            discount
+            discount,
+            cutlery
         } = req.body;
 
         if (!items || items.length === 0) {
@@ -91,8 +92,8 @@ const createOrder = async (req, res) => {
             if (!itemImage && dishId) {
                 try {
                     const dish = await Dish.findById(dishId);
-                    if (dish && dish.image) {
-                        itemImage = dish.image;
+                    if (dish && dish.imageUrl) {
+                        itemImage = dish.imageUrl;
                     }
                 } catch (err) {
                     console.error('Error fetching dish image for order:', err);
@@ -191,7 +192,8 @@ const createOrder = async (req, res) => {
             gatewayFee: (req.body.paymentMethod !== 'COD' && req.body.paymentMethod !== 'CASH') ? (subtotalValue * 0.025) : 0,
             adminEarning: commissionAmount + (finalDeliveryFee - riderEarnings.netEarning) + finalServiceFee + finalTax - ((req.body.paymentMethod !== 'COD' && req.body.paymentMethod !== 'CASH') ? (subtotalValue * 0.025) : 0) - (discount || 0),
             orderAmount: subtotalValue,
-            promoCode: promoCode || ''
+            promoCode: promoCode || '',
+            cutlery: cutlery || false
         });
 
         // Save address to user profile if not already set or first order
