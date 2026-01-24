@@ -322,7 +322,7 @@ export default function DishDetails({ dish, onClose }: DishDetailsProps) {
             </div>
 
             {/* Bottom Action Bar */}
-            <div className="absolute bottom-0 left-0 w-full p-4 bg-white/80 backdrop-blur-lg border-t border-white/20 shadow-[0_-8px_30px_rgb(0,0,0,0.04)] flex items-center justify-between gap-4 z-20">
+            <div className="fixed bottom-0 left-0 w-full p-4 pb-[env(safe-area-inset-bottom,1.5rem)] bg-white/80 backdrop-blur-lg border-t border-white/20 shadow-[0_-8px_30px_rgb(0,0,0,0.04)] flex items-center justify-between gap-4 z-20">
                 <div className="flex items-center gap-4 bg-gray-100/80 backdrop-blur-sm rounded-full px-4 py-2">
                     <button
                         onClick={() => setQuantity(Math.max(1, quantity - 1))}

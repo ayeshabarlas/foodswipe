@@ -29,9 +29,10 @@
 }
 
 html, body {
-  overflow-y: auto !important;
-  height: auto !important;
-  min-height: 100% !important;
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  overscroll-behavior-y: none;
 }
 
 body {

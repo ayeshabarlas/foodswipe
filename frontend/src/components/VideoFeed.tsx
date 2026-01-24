@@ -762,10 +762,10 @@ export default function VideoFeed() {
     }, [dishes, searchTerm]);
 
     return (
-        <div className="relative min-h-screen w-full bg-black">
-            <div className="fixed top-4 left-0 right-0 z-[50] px-4">
+        <div className="relative h-[100dvh] w-full bg-black overflow-hidden">
+            <div className="fixed top-[env(safe-area-inset-top,1rem)] left-0 right-0 z-[50] px-4">
                 <div className="flex items-center gap-2 max-w-2xl mx-auto">
-                    <button onClick={() => setIsNavOpen(true)} className="p-2 text-white flex-shrink-0 cursor-pointer z-50 bg-white/10 backdrop-blur-md rounded-lg" type="button">
+                    <button onClick={() => setIsNavOpen(true)} className="p-2.5 text-white flex-shrink-0 cursor-pointer z-50 bg-white/10 backdrop-blur-md rounded-xl border border-white/10" type="button">
                         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                             <line x1="3" y1="6" x2="21" y2="6" />
                             <line x1="3" y1="12" x2="21" y2="12" />
@@ -774,15 +774,15 @@ export default function VideoFeed() {
                     </button>
 
                     <div className="flex-1 flex items-center gap-2">
-                        <div className="flex-1 relative">
+                        <div className="flex-1 relative group">
+                            <FaSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-white/50 group-focus-within:text-[#FF6A00] transition-colors" size={12} />
                             <input
                                 type="text"
-                                placeholder="Search..."
+                                placeholder="Search dishes or restaurants..."
                                 value={searchTerm}
                                 onChange={(e) => setSearchTerm(e.target.value)}
-                                className="w-full bg-white/10 backdrop-blur-md text-white placeholder-gray-300 rounded-lg px-4 py-2 pl-9 pr-8 outline-none focus:bg-white/20 transition text-sm border border-white/10"
+                                className="w-full bg-white/10 backdrop-blur-md border border-white/20 text-white pl-9 pr-8 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#FF6A00]/50 focus:border-[#FF6A00] transition-all placeholder:text-white/40 text-sm"
                             />
-                            <FaSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-300" size={12} />
                             {searchTerm && (
                                 <button
                                     onClick={() => setSearchTerm('')}
@@ -857,7 +857,16 @@ export default function VideoFeed() {
                 </div>
             </div>
 
-            <div className="h-full w-full overflow-y-scroll snap-y snap-mandatory scroll-smooth no-scrollbar" onScroll={handleScroll}>
+            <div 
+                className="h-full w-full overflow-y-scroll snap-y snap-mandatory no-scrollbar overscroll-behavior-y-contain touch-pan-y" 
+                onScroll={handleScroll}
+                style={{ 
+                    scrollSnapType: 'y mandatory', 
+                    WebkitOverflowScrolling: 'touch',
+                    scrollPaddingTop: 'env(safe-area-inset-top)',
+                    scrollPaddingBottom: 'env(safe-area-inset-bottom)'
+                }}
+            >
                 {filteredDishes.map((dish, index) => {
                     let distance: string | undefined;
                     const normalizeCoords = (coords?: [number, number]) => {

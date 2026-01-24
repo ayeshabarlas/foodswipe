@@ -210,9 +210,19 @@ const RiderDashboard = ({
         });
 
         socket.on('wallet_updated', (data: any) => {
-            if (data.cod_balance !== undefined) {
-                setRiderData((prev: any) => ({ ...prev, cod_balance: data.cod_balance }));
-                toast.success('Your COD balance has been updated!');
+            console.log('Wallet update received:', data);
+            if (data) {
+                setRiderData((prev: any) => ({ 
+                    ...prev, 
+                    ...data,
+                    // Preserve nested objects if not fully provided in data
+                    stats: { ...(prev?.stats || {}), ...(data.stats || {}) },
+                    earnings: { ...(prev?.earnings || {}), ...(data.earnings || {}) }
+                }));
+                
+                if (data.cod_balance !== undefined) {
+                    toast.success('Your COD balance has been updated!');
+                }
             }
         });
 
