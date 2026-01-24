@@ -120,6 +120,12 @@ const createRestaurantVoucher = async (req, res) => {
             voucher: voucher,
         });
 
+        // Specific event for the restaurant dashboard
+        triggerEvent(`restaurant-${restaurant._id}`, 'voucherUpdate', {
+            type: 'created',
+            voucher: voucher
+        });
+
         res.status(201).json(voucher);
     } catch (error) {
         console.error('Create restaurant voucher error:', error);
@@ -219,6 +225,12 @@ const toggleVoucherStatus = async (req, res) => {
 
         voucher.isActive = !voucher.isActive;
         await voucher.save();
+
+        // Specific event for the restaurant dashboard
+        triggerEvent(`restaurant-${restaurant._id}`, 'voucherUpdate', {
+            type: 'updated',
+            voucher: voucher
+        });
 
         res.json(voucher);
     } catch (error) {
@@ -354,7 +366,17 @@ const deleteVoucher = async (req, res) => {
             }
         }
 
+        const voucherId = voucher._id;
+        const restaurantId = voucher.restaurant;
+        
         await voucher.deleteOne();
+
+        // Specific event for the restaurant dashboard
+        triggerEvent(`restaurant-${restaurantId}`, 'voucherUpdate', {
+            type: 'deleted',
+            voucherId: voucherId
+        });
+
         res.json({ message: 'Voucher removed' });
 
     } catch (error) {

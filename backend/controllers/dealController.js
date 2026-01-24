@@ -61,6 +61,12 @@ const createDeal = async (req, res) => {
             deal: deal,
         });
 
+        // Specific event for the restaurant dashboard
+        triggerEvent(`restaurant-${restaurant._id}`, 'dealUpdate', {
+            type: 'created',
+            deal: deal
+        });
+
         res.status(201).json(deal);
     } catch (error) {
         console.error('Create deal error:', error);
@@ -162,6 +168,12 @@ const toggleDealStatus = async (req, res) => {
         deal.isActive = !deal.isActive;
         await deal.save();
 
+        // Specific event for the restaurant dashboard
+        triggerEvent(`restaurant-${restaurant._id}`, 'dealUpdate', {
+            type: 'updated',
+            deal: deal
+        });
+
         res.json(deal);
     } catch (error) {
         res.status(500).json({ message: 'Server error', error: error.message });
@@ -187,7 +199,17 @@ const deleteDeal = async (req, res) => {
             return res.status(403).json({ message: 'Not authorized' });
         }
 
+        const dealId = deal._id;
+        const restaurantId = deal.restaurant;
+        
         await deal.deleteOne();
+
+        // Specific event for the restaurant dashboard
+        triggerEvent(`restaurant-${restaurantId}`, 'dealUpdate', {
+            type: 'deleted',
+            dealId: dealId
+        });
+
         res.json({ message: 'Deal deleted' });
     } catch (error) {
         res.status(500).json({ message: 'Server error', error: error.message });

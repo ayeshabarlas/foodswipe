@@ -8,6 +8,7 @@ import { motion } from 'framer-motion';
 import { FaChartLine, FaUsers, FaPlus, FaTrash, FaTicketAlt, FaTags, FaToggleOn, FaToggleOff, FaClock } from 'react-icons/fa';
 import axios from 'axios';
 import { getApiUrl } from '../utils/config';
+import { initSocket, disconnectSocket } from '../utils/socket';
 import CreateVoucherModal from './CreateVoucherModal';
 import CreateDealModal from './CreateDealModal';
 
@@ -86,7 +87,7 @@ const StatCard = ({ title, value, icon: Icon, color, lightColor }: StatCardProps
     </motion.div>
 );
 
-export default function DashboardPromotions() {
+export default function DashboardPromotions({ restaurant }: { restaurant: any }) {
     const [vouchers, setVouchers] = useState<Voucher[]>([]);
     const [deals, setDeals] = useState<Deal[]>([]);
     const [loading, setLoading] = useState(true);
@@ -114,9 +115,44 @@ export default function DashboardPromotions() {
 
     useEffect(() => {
         fetchData();
-        const interval = setInterval(fetchData, 5000); // Poll every 5s for real-time
-        return () => clearInterval(interval);
-    }, []);
+        
+        // Initialize socket for real-time updates
+        const userInfo = JSON.parse(localStorage.getItem('userInfo') || '{}');
+        const resId = restaurant?._id || userInfo.restaurantId;
+        
+        if (userInfo._id && resId) {
+            const socket = initSocket(userInfo._id, 'restaurant', resId);
+            
+            socket.on('voucherUpdate', (data: any) => {
+                console.log('Real-time voucher update:', data);
+                if (data.type === 'created') {
+                    setVouchers(prev => [data.voucher, ...prev]);
+                } else if (data.type === 'updated') {
+                    setVouchers(prev => prev.map(v => v._id === data.voucher._id ? data.voucher : v));
+                } else if (data.type === 'deleted') {
+                    setVouchers(prev => prev.filter(v => v._id !== data.voucherId));
+                }
+            });
+
+            socket.on('dealUpdate', (data: any) => {
+                console.log('Real-time deal update:', data);
+                if (data.type === 'created') {
+                    setDeals(prev => [data.deal, ...prev]);
+                } else if (data.type === 'updated') {
+                    setDeals(prev => prev.map(d => d._id === data.deal._id ? data.deal : d));
+                } else if (data.type === 'deleted') {
+                    setDeals(prev => prev.filter(d => d._id !== data.dealId));
+                }
+            });
+
+            return () => {
+                socket.off('voucherUpdate');
+                socket.off('dealUpdate');
+                // Don't disconnect socket here as it might be used by other components
+                // but we should ensure we don't have multiple listeners
+            };
+        }
+    }, [restaurant?._id]);
 
     const toggleVoucherStatus = async (id: string) => {
         try {

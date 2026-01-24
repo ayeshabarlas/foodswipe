@@ -471,7 +471,7 @@ export default function RiderOrders({ riderId, setShowNotifications, unreadCount
                                                                         <FaPhone size={10} /> {activeDelivery.user.phone}
                                                                     </p>
                                                                 )}
-                                                                <p className="text-[11px] font-bold text-gray-800 mt-1.5">{(activeDelivery.distanceKm * 1.5).toFixed(1) || '3.5'} km from restaurant</p>
+                                                                <p className="text-[11px] font-bold text-gray-800 mt-1.5">{(activeDelivery.distanceKm || 0).toFixed(1)} km from restaurant</p>
                                                             </div>
                                                         </div>
                                                 </div>
@@ -726,7 +726,7 @@ export default function RiderOrders({ riderId, setShowNotifications, unreadCount
                                 <div className="bg-gray-50 rounded-2xl p-4 space-y-2">
                                     <div className="flex justify-between items-center text-xs">
                                         <span className="text-gray-500">Base Pay</span>
-                                        <span className="font-semibold text-gray-900">Rs. 60</span>
+                                        <span className="font-semibold text-gray-900">Rs. 40</span>
                                     </div>
                                     <div className="flex justify-between items-center text-xs">
                                         <span className="text-gray-500">Distance Pay ({completionData.distanceKm} km x 20)</span>
@@ -806,7 +806,7 @@ export default function RiderOrders({ riderId, setShowNotifications, unreadCount
                                 <div className="bg-blue-50/50 p-5 rounded-3xl border border-blue-100/50">
                                     <h4 className="text-[10px] font-medium text-blue-400 uppercase tracking-widest mb-2">Payment</h4>
                                     <p className="font-semibold text-gray-900 text-lg mb-1">{selectedOrder.paymentMethod || 'COD'}</p>
-                                    <p className="text-xs font-semibold text-blue-600/70">Total: Rs. {selectedOrder.totalAmount || selectedOrder.totalPrice}</p>
+                                    <p className="text-xs font-semibold text-blue-600/70">Total: Rs. {selectedOrder.totalPrice || selectedOrder.totalAmount}</p>
                                 </div>
                             </div>
 
@@ -914,8 +914,8 @@ function OrderCard({
                         <div className="flex items-center gap-2">
                             <h3 className="text-base font-medium text-gray-900">{order.restaurant?.name || 'Restaurant'}</h3>
                             <div className="flex flex-col items-end">
-                                <span className="text-green-600 font-medium text-sm">Rs. {order.netRiderEarning || order.earnings || Math.round(60 + ((order.distanceKm || 4.2) * 20))}</span>
-                                <span className="text-[9px] text-gray-400 font-medium">(60 + {order.distanceKm || 4.2}km)</span>
+                                <span className="text-green-600 font-medium text-sm">Rs. {order.netRiderEarning || order.earnings || Math.round(40 + ((order.distanceKm || 0) * 20))}</span>
+                                <span className="text-[9px] text-gray-400 font-medium">(40 + {order.distanceKm || 0}km)</span>
                             </div>
                         </div>
                         {/* Order Age */}

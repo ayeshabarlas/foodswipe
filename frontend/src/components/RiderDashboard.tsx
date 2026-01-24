@@ -564,7 +564,7 @@ const RiderDashboard = ({
                                     </div>
                                     <div className="flex flex-col items-end gap-2">
                                     <div className="text-right">
-                                        <p className="text-orange-600 font-bold text-base">Rs. {activeOrder.netRiderEarning || activeOrder.riderEarning || activeOrder.earnings || Math.round(60 + ((activeOrder.distanceKm || 1.5) * 20))}</p>
+                                        <p className="text-orange-600 font-bold text-base">Rs. {activeOrder.netRiderEarning || activeOrder.riderEarning || activeOrder.earnings || Math.round(40 + ((activeOrder.distanceKm || 0) * 20))}</p>
                                         <p className="text-gray-700 text-[9px] font-bold uppercase tracking-widest">Your Pay</p>
                                     </div>
                                     <div className="flex gap-2">
