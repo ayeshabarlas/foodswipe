@@ -38,7 +38,8 @@ const dishSchema = mongoose.Schema(
         },
         category: {
             type: String,
-            default: 'General',
+            required: [true, 'Please specify a category'],
+            default: 'Breakfast',
         },
         likes: [
             {

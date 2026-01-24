@@ -38,13 +38,22 @@ interface AddDishModalProps {
     categories?: string[];
 }
 
+const STANDARD_CATEGORIES = [
+    'Breakfast',
+    'Lunch',
+    'Dinner',
+    'Coffee',
+    'Desserts',
+    'Fast Food'
+];
+
 export default function AddDishModal({ isOpen, onClose, onSubmit, editingDish, categories = [] }: AddDishModalProps) {
     const [activeTab, setActiveTab] = useState(0);
     const [formData, setFormData] = useState({
         name: '',
         description: '',
         price: 0,
-        category: categories[0] || '',
+        category: STANDARD_CATEGORIES[0],
         ingredients: '',
         imageUrl: '',
         videoUrl: '',
@@ -56,7 +65,7 @@ export default function AddDishModal({ isOpen, onClose, onSubmit, editingDish, c
                 name: editingDish.name || '',
                 description: editingDish.description || '',
                 price: editingDish.price || 0,
-                category: editingDish.category || categories[0] || '',
+                category: editingDish.category || STANDARD_CATEGORIES[0],
                 ingredients: editingDish.ingredients?.join(', ') || '',
                 imageUrl: editingDish.imageUrl || '',
                 videoUrl: editingDish.videoUrl || '',
@@ -65,14 +74,26 @@ export default function AddDishModal({ isOpen, onClose, onSubmit, editingDish, c
             setAddOns(editingDish.addOns || []);
             setDrinks(editingDish.drinks || []);
             setCombos(editingDish.combos || []);
+        } else {
+            // Reset for new dish
+            setFormData({
+                name: '',
+                description: '',
+                price: 0,
+                category: STANDARD_CATEGORIES[0],
+                ingredients: '',
+                imageUrl: '',
+                videoUrl: '',
+            });
+            setVariants([]);
+            setAddOns([]);
+            setDrinks([]);
+            setCombos([]);
         }
-    }, [editingDish]);
+    }, [editingDish, isOpen]);
 
-    useEffect(() => {
-        if (!editingDish && !formData.category && categories[0]) {
-            setFormData(prev => ({ ...prev, category: categories[0] }));
-        }
-    }, [categories, editingDish, formData.category]);
+    // Use standard categories as the primary source
+    const allCategories = [...new Set([...STANDARD_CATEGORIES, ...categories])];
 
     const [variants, setVariants] = useState<Variant[]>([]);
     const [addOns, setAddOns] = useState<AddOn[]>([]);
@@ -272,12 +293,18 @@ export default function AddDishModal({ isOpen, onClose, onSubmit, editingDish, c
                             <div>
                                 <label className="block text-sm font-medium text-gray-700 mb-1">Category *</label>
                                 <select
+                                    required
                                     value={formData.category}
                                     onChange={e => setFormData({ ...formData, category: e.target.value })}
-                                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 outline-none"
+                                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 outline-none bg-white"
                                 >
-                                    {categories.map(cat => <option key={cat} value={cat}>{cat}</option>)}
+                                    {allCategories.map(cat => (
+                                        <option key={cat} value={cat}>
+                                            {cat}
+                                        </option>
+                                    ))}
                                 </select>
+                                <p className="mt-1 text-xs text-gray-500">Please select one of the standard categories.</p>
                             </div>
                             <div>
                                 <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>

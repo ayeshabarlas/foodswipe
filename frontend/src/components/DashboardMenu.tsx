@@ -27,6 +27,15 @@ interface Dish {
     restaurant: string;
 }
 
+const STANDARD_CATEGORIES = [
+    'Breakfast',
+    'Lunch',
+    'Dinner',
+    'Coffee',
+    'Desserts',
+    'Fast Food'
+];
+
 export default function DashboardMenu({ restaurant: initialRestaurant }: { restaurant?: any }) {
     const [dishes, setDishes] = useState<Dish[]>([]);
     const [searchTerm, setSearchTerm] = useState('');
@@ -193,7 +202,7 @@ export default function DashboardMenu({ restaurant: initialRestaurant }: { resta
 
     const dishCategories = [...new Set(dishes.map(d => d.category))];
     const definedCategories = restaurant?.menuCategories || [];
-    const allCategories = [...new Set([...definedCategories, ...dishCategories])];
+    const allCategories = [...new Set([...STANDARD_CATEGORIES, ...definedCategories, ...dishCategories])];
     const categories = ['All', ...allCategories];
 
     return (

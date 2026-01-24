@@ -1288,11 +1288,12 @@ const getNotificationCounts = async (req, res) => {
             newOrders,
             newUsers
         ] = await Promise.all([
-            Restaurant.countDocuments({ status: 'pending' }),
-            Rider.countDocuments({ status: 'pending' }),
-            Order.countDocuments({ orderStatus: 'placed' }),
+            Restaurant.countDocuments({ verificationStatus: 'pending' }),
+            Rider.countDocuments({ verificationStatus: 'pending' }),
+            Order.countDocuments({ status: 'Pending' }),
             User.countDocuments({
-                createdAt: { $gte: new Date(Date.now() - 24 * 60 * 60 * 1000) }
+                createdAt: { $gte: new Date(Date.now() - 24 * 60 * 60 * 1000) },
+                role: 'customer'
             })
         ]);
 
@@ -1301,7 +1302,7 @@ const getNotificationCounts = async (req, res) => {
             pendingRiders,
             newOrders,
             newUsers,
-            totalNotifications: pendingRestaurants + pendingRiders + newOrders
+            totalNotifications: pendingRestaurants + pendingRiders + newOrders + newUsers
         });
     } catch (error) {
         res.status(500).json({ message: 'Error fetching notification counts', error: error.message });

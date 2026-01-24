@@ -38,6 +38,15 @@ interface Restaurant {
     description: string;
 }
 
+const STANDARD_CATEGORIES = [
+    'Breakfast',
+    'Lunch',
+    'Dinner',
+    'Coffee',
+    'Desserts',
+    'Fast Food'
+];
+
 export default function RestaurantManagement() {
     const [restaurant, setRestaurant] = useState<Restaurant | null>(null);
     const [dishes, setDishes] = useState<Dish[]>([]);
@@ -53,7 +62,7 @@ export default function RestaurantManagement() {
         price: 0,
         videoUrl: '',
         imageUrl: '',
-        category: 'Desi',
+        category: STANDARD_CATEGORIES[0],
     });
 
     useEffect(() => {
@@ -152,7 +161,7 @@ export default function RestaurantManagement() {
                 price: 0,
                 videoUrl: '',
                 imageUrl: '',
-                category: 'Desi',
+                category: STANDARD_CATEGORIES[0],
             });
             fetchRestaurantData();
         } catch (error) {
@@ -244,13 +253,13 @@ export default function RestaurantManagement() {
                             onClick={() => {
                                 setEditingDish(null);
                                 setFormData({
-                                    name: '',
-                                    description: '',
-                                    price: 0,
-                                    videoUrl: '',
-                                    imageUrl: '',
-                                    category: 'Desi',
-                                });
+                                        name: '',
+                                        description: '',
+                                        price: 0,
+                                        videoUrl: '',
+                                        imageUrl: '',
+                                        category: STANDARD_CATEGORIES[0],
+                                    });
                                 setShowAddDish(true);
                             }}
                             className="flex items-center gap-2 bg-primary hover:bg-red-600 text-white px-4 py-2 rounded-lg font-semibold transition"
@@ -368,18 +377,16 @@ export default function RestaurantManagement() {
                                     </div>
 
                                     <div>
-                                        <label className="block text-sm font-medium mb-2">Category</label>
+                                        <label className="block text-sm font-medium mb-2">Category *</label>
                                         <select
+                                            required
                                             value={formData.category}
                                             onChange={(e) => setFormData({ ...formData, category: e.target.value })}
                                             className="w-full bg-gray-700 rounded-lg px-4 py-3 text-white outline-none focus:ring-2 focus:ring-primary"
                                         >
-                                            <option value="Desi">Desi</option>
-                                            <option value="BBQ">BBQ</option>
-                                            <option value="Chinese">Chinese</option>
-                                            <option value="Continental">Continental</option>
-                                            <option value="Rice">Rice</option>
-                                            <option value="Breads">Breads</option>
+                                            {STANDARD_CATEGORIES.map(cat => (
+                                                <option key={cat} value={cat}>{cat}</option>
+                                            ))}
                                         </select>
                                     </div>
                                 </div>

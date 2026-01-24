@@ -11,9 +11,12 @@ const searchDishes = async (req, res) => {
         let query = {};
 
         if (q) {
+            const escapedQ = q.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+            const trimmedQ = q.trim();
             query.$or = [
-                { name: { $regex: q, $options: 'i' } },
-                { description: { $regex: q, $options: 'i' } },
+                { name: { $regex: escapedQ, $options: 'i' } },
+                { description: { $regex: escapedQ, $options: 'i' } },
+                { name: { $regex: `^${trimmedQ}$`, $options: 'i' } } // Exact match for trimmed name
             ];
         }
 
@@ -50,9 +53,12 @@ const searchRestaurants = async (req, res) => {
         let query = { isVerified: true, isActive: true };
 
         if (q) {
+            const escapedQ = q.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+            const trimmedQ = q.trim();
             query.$or = [
-                { name: { $regex: q, $options: 'i' } },
-                { address: { $regex: q, $options: 'i' } },
+                { name: { $regex: escapedQ, $options: 'i' } },
+                { address: { $regex: escapedQ, $options: 'i' } },
+                { name: { $regex: `^${trimmedQ}$`, $options: 'i' } } // Exact match for trimmed name
             ];
         }
 

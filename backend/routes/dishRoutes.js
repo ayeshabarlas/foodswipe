@@ -92,16 +92,17 @@ router.post('/', protect, requireRestaurant, checkRestaurantApproval, async (req
             variants, addOns, drinks, combos, recommendedItems, customizations
         } = req.body;
 
-        // Validation - only name, price, image, and restaurant are required
-        if (!name || !price || !imageUrl || !restaurant) {
+        // Validation - name, price, image, restaurant, and category are required
+        if (!name || !price || !imageUrl || !restaurant || !category) {
             console.log('Validation failed - missing fields:', {
                 hasName: !!name,
                 hasPrice: !!price,
                 hasImage: !!imageUrl,
-                hasRestaurant: !!restaurant
+                hasRestaurant: !!restaurant,
+                hasCategory: !!category
             });
             return res.status(400).json({
-                message: 'Missing required fields: name, price, image, restaurant'
+                message: 'Missing required fields: name, price, image, restaurant, category'
             });
         }
 
