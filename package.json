@@ -5,7 +5,7 @@
   "scripts": {
     "start": "node backend/server.js",
     "render-build": "npm install && cd backend && npm install",
-    "build": "if [ -d \"frontend\" ]; then cd frontend && npm install && npm run build; else npm install && npm run build; fi",
+    "build": "cd frontend && npm install --legacy-peer-deps && npm run build",
     "dev": "nodemon backend/server.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
