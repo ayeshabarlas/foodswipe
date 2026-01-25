@@ -10,6 +10,14 @@ interface CartItem {
     restaurantId: string;
     restaurantName: string;
     imageUrl?: string;
+    variant?: {
+        name: string;
+        price: number;
+    };
+    drinks?: Array<{
+        name: string;
+        price: number;
+    }>;
 }
 
 interface CartContextType {
@@ -62,13 +70,28 @@ export const CartProvider = ({ children }: { children: React.ReactNode }) => {
 
     const addToCart = (item: CartItem) => {
         setCart((prevCart) => {
-            const existingItem = prevCart.find((i) => i._id === item._id);
-            if (existingItem) {
-                return prevCart.map((i) =>
-                    i._id === item._id ? { ...i, quantity: i.quantity + 1 } : i
-                );
+            // Check if adding from a different restaurant
+            if (prevCart.length > 0 && prevCart[0].restaurantId !== item.restaurantId) {
+                // For webapp, we'll just clear and add new for now
+                return [{ ...item, quantity: item.quantity || 1 }];
             }
-            return [...prevCart, { ...item, quantity: 1 }];
+
+            // Find if item with same ID, variant, and drinks already exists
+            const existingItemIndex = prevCart.findIndex((i) => 
+                i._id === item._id && 
+                JSON.stringify(i.variant) === JSON.stringify(item.variant) &&
+                JSON.stringify(i.drinks) === JSON.stringify(item.drinks)
+            );
+
+            if (existingItemIndex > -1) {
+                const newCart = [...prevCart];
+                newCart[existingItemIndex] = { 
+                    ...newCart[existingItemIndex], 
+                    quantity: newCart[existingItemIndex].quantity + (item.quantity || 1) 
+                };
+                return newCart;
+            }
+            return [...prevCart, { ...item, quantity: item.quantity || 1 }];
         });
     };
 

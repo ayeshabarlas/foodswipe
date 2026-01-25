@@ -62,30 +62,51 @@ const createOrder = async (req, res) => {
         }
 
         // Check if restaurant exists and is approved
+        if (!restaurant || !mongoose.Types.ObjectId.isValid(restaurant)) {
+            console.error(`[Order] Invalid Restaurant ID: ${restaurant}`);
+            return res.status(400).json({ message: 'Invalid Restaurant ID' });
+        }
+
         const restaurantExists = await Restaurant.findById(restaurant);
         if (!restaurantExists) {
+            console.error(`[Order] Restaurant not found: ${restaurant}`);
             return res.status(404).json({ message: 'Restaurant not registered or not found' });
         }
 
         if (restaurantExists.verificationStatus !== 'approved') {
+            console.error(`[Order] Restaurant not approved: ${restaurantExists.name}`);
             return res.status(400).json({ message: 'Restaurant is not yet approved for orders' });
         }
 
         // Map frontend data to model schema with fallback for image
-        const orderItems = await Promise.all(items.map(async item => {
+        const orderItems = await Promise.all(items.map(async (item, index) => {
             let itemImage = item.image;
             let dishId = item.dish || item._id || item.product;
             
+            console.log(`[Order] Processing item ${index}: ${item.name}, ID: ${dishId}`);
+
             // Clean dishId if it has suffixes like -combo or -drink
             if (typeof dishId === 'string' && dishId.includes('-')) {
                 dishId = dishId.split('-')[0];
             }
 
             // VALIDATION: Ensure dishId is a valid MongoDB ObjectId
-            if (!mongoose.Types.ObjectId.isValid(dishId)) {
-                console.error(`[Order] Invalid Dish ID detected: ${dishId}. Item name: ${item.name}`);
-                // We can't easily skip here inside Promise.all map without changing logic, 
-                // but let's at least log it. The Order.create will still fail if this is required.
+            if (!dishId || !mongoose.Types.ObjectId.isValid(dishId)) {
+                console.warn(`[Order] Invalid Dish ID for ${item.name}: ${dishId}. Attempting recovery...`);
+                try {
+                    const foundDish = await Dish.findOne({ name: item.name, restaurant: restaurantExists._id });
+                    if (foundDish) {
+                        dishId = foundDish._id;
+                        console.log(`[Order] Recovered dishId ${dishId} for ${item.name}`);
+                    }
+                } catch (e) {
+                    console.error(`[Order] Recovery failed for ${item.name}:`, e.message);
+                }
+            }
+
+            if (!dishId || !mongoose.Types.ObjectId.isValid(dishId)) {
+                console.error(`[Order] Critical: Could not find valid ID for item ${item.name}`);
+                throw new Error(`Invalid product ID for item: ${item.name}`);
             }
 
             // If image is missing, try to fetch it from the Dish model
@@ -96,15 +117,15 @@ const createOrder = async (req, res) => {
                         itemImage = dish.imageUrl;
                     }
                 } catch (err) {
-                    console.error('Error fetching dish image for order:', err);
+                    console.error(`[Order] Error fetching dish image for ${dishId}:`, err.message);
                 }
             }
 
             return {
                 name: item.name,
-                qty: item.quantity || item.qty,
-                image: itemImage || '', // Fallback to empty string if still missing
-                price: item.price,
+                qty: Math.max(1, Number(item.quantity || item.qty) || 1),
+                image: itemImage || '', 
+                price: Math.max(0, Number(item.price) || 0),
                 variant: item.variant || null,
                 drinks: item.drinks || [],
                 product: dishId
@@ -112,64 +133,71 @@ const createOrder = async (req, res) => {
         }));
 
         const shippingAddress = {
-            address: (deliveryAddress || 'No address provided') + (deliveryInstructions ? ` (Note: ${deliveryInstructions})` : ''),
-            city: req.body.city || 'Pakistan', // Use provided city or default
+            address: (deliveryAddress || 'No address provided').trim() + (deliveryInstructions ? ` (Note: ${deliveryInstructions})` : ''),
+            city: req.body.city || 'Pakistan',
             postalCode: req.body.postalCode || '',
             country: 'Pakistan'
         };
 
         // Calculate commission and earnings early for display in dashboard
-        // Use system-wide commission rate if restaurant doesn't have a specific one
         const commissionPercent = (restaurantExists.commissionRate !== undefined && restaurantExists.commissionRate !== null) 
-            ? restaurantExists.commissionRate 
+            ? Number(restaurantExists.commissionRate) 
             : (settings.commissionRate || (restaurantExists.businessType === 'home-chef' ? 10 : 15));
         
-        const subtotalValue = Number(subtotal) || (Number(totalAmount) - (Number(deliveryFee) || 0)) || 0;
+        const subtotalValue = Math.max(0, Number(subtotal) || (Number(totalAmount) - (Number(deliveryFee) || 0)) || 0);
         const commissionAmount = Math.round((subtotalValue * commissionPercent) / 100);
-        const restaurantEarning = subtotalValue - commissionAmount;
+        const restaurantEarning = Math.max(0, subtotalValue - commissionAmount);
 
         // Calculate Distance and Rider Earnings on backend for accuracy
         let distanceKm = 0;
-        let finalDeliveryFee = Number(deliveryFee) || 0;
+        let finalDeliveryFee = Math.max(0, Number(deliveryFee) || 0);
 
-        if (deliveryLocation && restaurantExists.location?.coordinates) {
+        if (deliveryLocation && deliveryLocation.lat && deliveryLocation.lng && restaurantExists.location?.coordinates) {
             const [restLng, restLat] = restaurantExists.location.coordinates;
-            distanceKm = calculateDistance(restLat, restLng, deliveryLocation.lat, deliveryLocation.lng);
-            // If distance is extremely small, use a minimum of 0.5km
+            distanceKm = calculateDistance(restLat, restLng, Number(deliveryLocation.lat), Number(deliveryLocation.lng));
             if (distanceKm < 0.1) distanceKm = 0.5;
             
-            // Calculate using dynamic settings
-            const baseFee = settings.deliveryFeeBase || 40;
-            const perKmFee = settings.deliveryFeePerKm || 20;
-            const maxFee = settings.deliveryFeeMax || 200;
+            const baseFee = Number(settings.deliveryFeeBase) || 40;
+            const perKmFee = Number(settings.deliveryFeePerKm) || 20;
+            const maxFee = Number(settings.deliveryFeeMax) || 200;
             
             finalDeliveryFee = Math.min(maxFee, Math.round(baseFee + (distanceKm * perKmFee)));
         } else {
-            // Fallback distance if location data is missing
-            distanceKm = 0; // Set to 0 if we can't calculate it
-            finalDeliveryFee = settings.deliveryFeeBase || 40; // Default base fee
+            distanceKm = 0;
+            finalDeliveryFee = Number(settings.deliveryFeeBase) || 40;
         }
 
-        // CONSISTENCY FIX: If distance is 0, rider earning should also be based on base fee ONLY
         const riderEarnings = calculateRiderEarning(distanceKm, settings);
-        const finalServiceFee = Number(serviceFee) || settings.serviceFee || 0;
+        const finalServiceFee = Math.max(0, Number(serviceFee) || settings.serviceFee || 0);
         
-        // Calculate tax based on dynamic settings
-        const taxRate = settings.isTaxEnabled ? (settings.taxRate || 8) : 0;
-        const finalTax = tax !== undefined ? Number(tax) : Math.round(subtotalValue * taxRate / 100);
+        const taxRate = settings.isTaxEnabled ? (Number(settings.taxRate) || 8) : 0;
+        const finalTax = Math.max(0, tax !== undefined ? Number(tax) : Math.round(subtotalValue * taxRate / 100));
 
         const calculatedTotalPrice = Math.max(0, subtotalValue + finalDeliveryFee + finalServiceFee + finalTax - (Number(discount) || 0));
 
-        console.log('[Order] Creating order with data:', {
-            user: req.user._id,
-            restaurant,
-            totalPrice: calculatedTotalPrice,
-            paymentMethod: paymentMethod || 'COD'
+        const isOnlinePayment = paymentMethod && 
+                               typeof paymentMethod === 'string' && 
+                               ['COD', 'CASH'].indexOf(paymentMethod.toUpperCase()) === -1;
+        
+        const gatewayFeeAmount = isOnlinePayment ? Math.round(subtotalValue * 0.025) : 0;
+
+        console.log('[Order] Final Calculation:', {
+            subtotal: subtotalValue,
+            delivery: finalDeliveryFee,
+            service: finalServiceFee,
+            tax: finalTax,
+            discount: Number(discount) || 0,
+            total: calculatedTotalPrice,
+            gatewayFee: gatewayFeeAmount
         });
+
+        // Generate a simple order number if not provided
+        const orderCount = await Order.countDocuments();
+        const generatedOrderNumber = `FS-${Date.now().toString().slice(-4)}-${orderCount + 1}`;
 
         const order = await Order.create({
             user: req.user._id,
-            restaurant,
+            restaurant: restaurantExists._id,
             orderItems,
             shippingAddress,
             deliveryLocation: (deliveryLocation && deliveryLocation.lat && deliveryLocation.lng) ? {
@@ -193,21 +221,19 @@ const createOrder = async (req, res) => {
             commissionPercent,
             commissionAmount,
             restaurantEarning,
-            gatewayFee: (req.body.paymentMethod?.toUpperCase() !== 'COD' && req.body.paymentMethod?.toUpperCase() !== 'CASH') ? Math.round(subtotalValue * 0.025) : 0,
-            adminEarning: commissionAmount + (finalDeliveryFee - riderEarnings.netEarning) + finalServiceFee + finalTax - ((req.body.paymentMethod?.toUpperCase() !== 'COD' && req.body.paymentMethod?.toUpperCase() !== 'CASH') ? Math.round(subtotalValue * 0.025) : 0) - (Number(discount) || 0),
+            gatewayFee: gatewayFeeAmount,
+            adminEarning: commissionAmount + (finalDeliveryFee - riderEarnings.netEarning) + finalServiceFee + finalTax - gatewayFeeAmount - (Number(discount) || 0),
             orderAmount: subtotalValue,
             promoCode: promoCode || '',
-            cutlery: cutlery || false
+            cutlery: !!cutlery,
+            orderNumber: generatedOrderNumber
         });
 
         // Save address to user profile if not already set or first order
         try {
             const user = await User.findById(req.user._id);
             if (user) {
-                // Check if this is their first order
                 const orderCount = await Order.countDocuments({ user: user._id });
-                
-                // Save address if user has no address OR if this is their first order
                 if (!user.address || user.address === '' || orderCount <= 1) {
                     user.address = deliveryAddress;
                     user.city = req.body.city || user.city || 'Pakistan';
@@ -219,32 +245,30 @@ const createOrder = async (req, res) => {
                         };
                     }
                     
-                    // Also update phone if provided and not set
                     if (req.body.phone && !user.phone) {
                         user.phone = req.body.phone;
                     }
 
                     await user.save();
-                    console.log(`[User] Address and location auto-saved for user ${user._id} (Order count: ${orderCount})`);
+                    console.log(`[User] Profile updated for ${user._id}`);
                 }
             }
         } catch (addrErr) {
-            console.error('[User] Error auto-saving address:', addrErr);
+            console.error('[User] Error auto-saving address:', addrErr.message);
         }
 
         // Auto-decrement stock for ordered items
-        for (const item of items) {
-            if (item.dish) {
-                const dish = await Dish.findById(item.dish);
-                if (dish && dish.stockQuantity !== null) {
-                    const newStock = dish.stockQuantity - item.quantity;
-                    dish.stockQuantity = Math.max(0, newStock);
-
-                    if (newStock < 0) {
-                        console.warn(`Warning: Dish "${dish.name}" stock went negative. OrderID: ${order._id}`);
+        for (const item of orderItems) {
+            if (item.product) {
+                try {
+                    const dish = await Dish.findById(item.product);
+                    if (dish && dish.stockQuantity !== null) {
+                        const newStock = dish.stockQuantity - item.qty;
+                        dish.stockQuantity = Math.max(0, newStock);
+                        await dish.save();
                     }
-
-                    await dish.save();
+                } catch (stockErr) {
+                    console.error(`[Stock] Error updating stock for ${item.product}:`, stockErr.message);
                 }
             }
         }
@@ -253,23 +277,22 @@ const createOrder = async (req, res) => {
             .populate('user', 'name email phone')
             .populate('restaurant', 'name address contact');
 
-        // Emit Pusher events for real-time update to restaurant and admin
-        triggerEvent(`restaurant-${restaurant.toString()}`, 'newOrder', populatedOrder);
-        
-        // Also notify all riders that a new order is available (if restaurant auto-accepts or it's just available)
-        // Usually riders only see orders after they are 'Accepted' or 'Ready', but we can notify them to check
-        triggerEvent('riders', 'newOrderAvailable', populatedOrder);
+        if (!populatedOrder) {
+            throw new Error('Order created but failed to retrieve populated data');
+        }
 
+        // Emit Pusher events for real-time update
+        triggerEvent(`restaurant-${restaurantExists._id.toString()}`, 'newOrder', populatedOrder);
+        triggerEvent('riders', 'newOrderAvailable', populatedOrder);
         triggerEvent('admin', 'order_created', populatedOrder);
         triggerEvent('admin', 'stats_updated', { type: 'order_created', orderId: populatedOrder._id });
         
-        // Detailed admin notification (Email + Socket) - Do NOT await to avoid timeout
         notifyAdmins(
             'New Order Placed',
             `A new order #${populatedOrder._id.toString().slice(-5)} has been placed for Rs. ${populatedOrder.totalPrice}.`,
             'new_order',
             { orderId: populatedOrder._id, amount: populatedOrder.totalPrice }
-        ).catch(err => console.error('[Order] Background notification error:', err));
+        ).catch(err => console.error('[Order] Background notification error:', err.message));
 
         console.log(`✅ Order ${populatedOrder._id} created successfully`);
         res.status(201).json(populatedOrder);
@@ -516,17 +539,18 @@ const processOrderCompletion = async (order, distanceKm, req = null) => {
 
         // Use restaurant's specific commissionRate, fallback to business type defaults
         const commissionPercent = (restaurant.commissionRate !== undefined && restaurant.commissionRate !== null) 
-            ? restaurant.commissionRate 
+            ? Number(restaurant.commissionRate) 
             : (restaurant.businessType === 'home-chef' ? 10 : 15);
         
         // 2. Calculate split payments
-        const subtotal = order.subtotal || order.totalPrice || 0;
-        const commissionAmount = (subtotal * commissionPercent) / 100;
-        const restaurantEarning = subtotal - commissionAmount;
+        // Priority: Use saved values if they exist, otherwise recalculate
+        const subtotal = Number(order.subtotal || order.orderAmount || order.totalPrice || 0);
+        const commissionAmount = order.commissionAmount || Math.round((subtotal * commissionPercent) / 100);
+        const restaurantEarning = order.restaurantEarning || Math.max(0, subtotal - commissionAmount);
         
         // Rider Pay: Uses dynamic settings from system
         const riderPayCalc = calculateRiderEarning(finalDistance, settings);
-        const riderEarning = riderPayCalc.netEarning;
+        const riderEarning = order.riderEarning || riderPayCalc.netEarning;
 
         console.log(`[Finance] Split: Subtotal=${subtotal}, Commission=${commissionAmount}, RestEarning=${restaurantEarning}, RiderEarning=${riderEarning}`);
         
@@ -536,21 +560,26 @@ const processOrderCompletion = async (order, distanceKm, req = null) => {
         order.commissionAmount = commissionAmount;
         order.restaurantEarning = restaurantEarning;
         order.riderEarning = riderEarning;
-        order.grossRiderEarning = riderPayCalc.grossEarning;
-        order.platformFee = 0;
+        order.grossRiderEarning = order.grossRiderEarning || riderPayCalc.grossEarning;
+        order.platformFee = order.platformFee || 0;
         order.netRiderEarning = riderEarning;
         
         // Calculate Net Platform Profit for this order: Commission + (Delivery Fee - Rider Pay) + Service Fee + Tax - Gateway Fee
-        const deliveryFee = order.deliveryFee || 0;
-        const serviceFee = order.serviceFee || 0;
-        const tax = order.tax || 0;
-        const gatewayFee = (order.paymentMethod?.toUpperCase() !== 'COD' && order.paymentMethod?.toUpperCase() !== 'CASH') ? (subtotal * 0.025) : 0;
+        const deliveryFee = Number(order.deliveryFee || 0);
+        const serviceFee = Number(order.serviceFee || 0);
+        const tax = Number(order.tax || 0);
         
-        // Handle discounts - usually platform bears voucher costs in early stage, 
-        // but if it's a large discount we should track it.
-        const discount = order.discount || 0;
+        // Gateway fee calculation - usually on total paid by customer
+        const isOnlinePayment = order.paymentMethod && 
+                               typeof order.paymentMethod === 'string' && 
+                               ['COD', 'CASH'].indexOf(order.paymentMethod.toUpperCase()) === -1;
         
-        const netProfit = commissionAmount + (deliveryFee - riderEarning) + serviceFee + tax - gatewayFee - discount;
+        const gatewayFee = order.gatewayFee || (isOnlinePayment ? Math.round(Number(order.totalPrice || 0) * 0.025) : 0);
+        
+        // Handle discounts - usually platform bears voucher costs in early stage
+        const discount = Number(order.discount || 0);
+        
+        const netProfit = Math.round(commissionAmount + (deliveryFee - riderEarning) + serviceFee + tax - gatewayFee - discount);
         
         order.gatewayFee = gatewayFee;
         order.adminEarning = netProfit; 
@@ -861,55 +890,84 @@ const cancelOrder = async (req, res) => {
 // @access  Private
 const rateRider = async (req, res) => {
     try {
+        console.log(`[Rating] rateRider initiated for order ${req.params.id}`);
         const { rating, review } = req.body;
+        
+        if (!rating || rating < 1 || rating > 5) {
+            return res.status(400).json({ message: 'Please provide a rating between 1 and 5' });
+        }
+
         const order = await Order.findById(req.params.id);
 
         if (!order) {
+            console.error(`[Rating] Order not found: ${req.params.id}`);
             return res.status(404).json({ message: 'Order not found' });
         }
 
         if (order.user.toString() !== req.user._id.toString()) {
+            console.error(`[Rating] Unauthorized rating attempt. User: ${req.user._id}, Order User: ${order.user}`);
             return res.status(403).json({ message: 'Not authorized to rate this order' });
         }
 
         if (order.status !== 'Delivered') {
+            console.warn(`[Rating] Attempted to rate non-delivered order ${order._id}. Status: ${order.status}`);
             return res.status(400).json({ message: 'Cannot rate rider until order is delivered' });
         }
 
         if (order.riderRating > 0) {
+            console.warn(`[Rating] Order ${order._id} already rated`);
             return res.status(400).json({ message: 'You have already rated the rider for this order' });
         }
 
         order.riderRating = rating;
         order.riderReview = review || '';
         await order.save();
+        console.log(`[Rating] Order ${order._id} rating saved: ${rating}`);
 
         if (order.rider) {
             const rider = await Rider.findById(order.rider);
             if (rider) {
-                const totalRatings = rider.stats.rating * rider.stats.reviewCount;
-                rider.stats.reviewCount += 1;
-                rider.stats.rating = (totalRatings + rating) / rider.stats.reviewCount;
+                console.log(`[Rating] Updating stats for Rider ${rider._id} (${rider.fullName})`);
+                
+                // Initialize stats if missing
+                if (!rider.stats) {
+                    rider.stats = { rating: 0, reviewCount: 0, totalDeliveries: 0, completedDeliveries: 0, cancelledDeliveries: 0 };
+                }
+                
+                const currentRating = Number(rider.stats.rating) || 0;
+                const currentReviewCount = Number(rider.stats.reviewCount) || 0;
+                
+                const totalRatings = currentRating * currentReviewCount;
+                rider.stats.reviewCount = currentReviewCount + 1;
+                rider.stats.rating = Number(((totalRatings + Number(rating)) / rider.stats.reviewCount).toFixed(2));
+                
                 await rider.save();
+                console.log(`[Rating] Rider ${rider._id} new rating: ${rider.stats.rating} (${rider.stats.reviewCount} reviews)`);
 
                 // Notify rider about new rating
-                const riderUserId = rider.user?._id || rider.user;
-                if (riderUserId) {
-                    const notification = await createNotification(
-                        riderUserId,
-                        'New Rating Received',
-                        `A customer rated you ${rating} stars for order #${order.orderNumber || order._id.toString().slice(-6)}`,
-                        'rating',
-                        { orderId: order._id, rating }
-                    );
-                    triggerEvent(`user-${riderUserId}`, 'notification', notification);
+                try {
+                    const riderUserId = rider.user?._id || rider.user;
+                    if (riderUserId) {
+                        const notification = await createNotification(
+                            riderUserId,
+                            'New Rating Received',
+                            `A customer rated you ${rating} stars for order #${order.orderNumber || order._id.toString().slice(-6)}`,
+                            'rating',
+                            { orderId: order._id, rating }
+                        );
+                        triggerEvent(`user-${riderUserId}`, 'notification', notification);
+                    }
+                } catch (notifyErr) {
+                    console.error(`[Rating] Notification error: ${notifyErr.message}`);
                 }
+            } else {
+                console.warn(`[Rating] Rider ${order.rider} profile not found during rating update`);
             }
         }
 
         res.json({ message: 'Rating submitted successfully', order });
     } catch (error) {
-        console.error('Rate rider error:', error);
+        console.error('❌ rateRider Error:', error);
         res.status(500).json({ message: 'Server error', error: error.message });
     }
 };

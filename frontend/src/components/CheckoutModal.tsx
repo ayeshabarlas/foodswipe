@@ -488,6 +488,8 @@ export default function CheckoutModal({ isOpen, onClose, cart, total, subtotal, 
                 quantity: item.quantity,
                 price: item.price,
                 image: item.imageUrl || 'https://placehold.co/600x400/orange/white?text=FoodSwipe',
+                variant: item.variant || null,
+                drinks: item.drinks || [],
             }));
 
             // Combine house number with address
@@ -496,23 +498,23 @@ export default function CheckoutModal({ isOpen, onClose, cart, total, subtotal, 
                 : deliveryAddress;
 
             const orderData = {
-                restaurant: restaurantId,
-                items: items,
-                deliveryAddress: fullAddress,
-                city: city,
-                deliveryLocation: deliveryLocation,
-                subtotal: subtotal,
-                deliveryFee: calculatedFee,
-                serviceFee: serviceFee,
-                tax: calculatedTax,
-                discount: discountAmount,
-                totalAmount: currentTotal,
-                paymentMethod,
-                transactionId: null,
-                deliveryInstructions,
-                cutlery,
-                promoCode: appliedVoucher ? appliedVoucher.code : ''
-            };
+            restaurant: restaurantId,
+            items: items,
+            deliveryAddress: fullAddress,
+            city: city || 'Lahore', // Fallback to Lahore if city not detected
+            deliveryLocation: deliveryLocation,
+            subtotal: subtotal,
+            deliveryFee: calculatedFee,
+            serviceFee: serviceFee,
+            tax: calculatedTax,
+            discount: discountAmount,
+            totalAmount: currentTotal,
+            paymentMethod,
+            transactionId: null,
+            deliveryInstructions,
+            cutlery,
+            promoCode: appliedVoucher ? appliedVoucher.code : ''
+        };
 
             console.log('📡 handlePlaceOrder: Sending order request to API...', orderData);
             const response = await axios.post(

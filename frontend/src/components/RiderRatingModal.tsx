@@ -34,7 +34,28 @@ export default function RiderRatingModal({ isOpen, onClose, orderId, riderName: 
     const fetchOrderDetails = async () => {
         setFetchingOrder(true);
         try {
-            const token = localStorage.getItem('token') || JSON.parse(localStorage.getItem('userInfo') || '{}').token;
+            let token = localStorage.getItem('token');
+            const userInfoStr = localStorage.getItem('userInfo');
+            
+            if (!token && userInfoStr) {
+                try {
+                    const parsedUser = JSON.parse(userInfoStr);
+                    token = parsedUser?.token || null;
+                    if (token) {
+                        localStorage.setItem('token', token);
+                        console.log('🔑 RiderRatingModal: Token recovered from userInfo in fetchOrderDetails');
+                    }
+                } catch (e) {
+                    console.error('Error parsing userInfo for token:', e);
+                }
+            }
+
+            if (!token) {
+                console.warn('No token found for fetching order details');
+                setFetchingOrder(false);
+                return;
+            }
+
             const res = await axios.get(`${getApiUrl()}/api/orders/${orderId}`, {
                 headers: { Authorization: `Bearer ${token}` }
             });

@@ -66,6 +66,9 @@ export default function DishDetails({ dish, onClose }: DishDetailsProps) {
         dish.variants && dish.variants.length > 0 ? dish.variants[0] : null
     );
 
+    // Drinks selection state
+    const [selectedDrinks, setSelectedDrinks] = useState<Drink[]>([]);
+
     // Enable swipe back gesture
     useSwipeBack({ onSwipeBack: onClose });
 
@@ -74,6 +77,16 @@ export default function DishDetails({ dish, onClose }: DishDetailsProps) {
             fetchReviews();
         }
     }, [activeTab]);
+
+    const toggleDrink = (drink: Drink) => {
+        setSelectedDrinks(prev => {
+            const exists = prev.find(d => d.name === drink.name);
+            if (exists) {
+                return prev.filter(d => d.name !== drink.name);
+            }
+            return [...prev, drink];
+        });
+    };
 
     const fetchReviews = async () => {
         setLoadingReviews(true);
@@ -88,17 +101,27 @@ export default function DishDetails({ dish, onClose }: DishDetailsProps) {
     };
 
     const handleAddToCart = () => {
-        const finalPrice = selectedVariant ? selectedVariant.price : dish.price;
-        const itemName = selectedVariant ? `${dish.name} (${selectedVariant.name})` : dish.name;
-
+        const variantPrice = selectedVariant ? selectedVariant.price : dish.price;
+        const drinksPrice = selectedDrinks.reduce((sum, d) => sum + d.price, 0);
+        const finalPrice = variantPrice + drinksPrice;
+        
+        // Pass structured variant and drinks data to CartContext
         addToCart({
             _id: dish._id,
-            name: itemName,
+            name: dish.name,
             price: finalPrice,
             quantity: quantity,
             restaurantId: dish.restaurant._id,
             restaurantName: dish.restaurant.name,
-            imageUrl: dish.imageUrl
+            imageUrl: dish.imageUrl,
+            variant: selectedVariant ? { 
+                name: selectedVariant.name, 
+                price: selectedVariant.price 
+            } : undefined,
+            drinks: selectedDrinks.length > 0 ? selectedDrinks.map(d => ({
+                name: d.name,
+                price: d.price
+            })) : []
         });
         onClose();
     };
@@ -193,7 +216,8 @@ export default function DishDetails({ dish, onClose }: DishDetailsProps) {
                                                  price: combo.price,
                                                  quantity: 1,
                                                  restaurantId: dish.restaurant._id,
-                                                 restaurantName: dish.restaurant.name
+                                                 restaurantName: dish.restaurant.name,
+                                                 imageUrl: dish.imageUrl
                                              });
                                              alert(`${combo.title} added to cart!`);
                                          }}
@@ -215,21 +239,20 @@ export default function DishDetails({ dish, onClose }: DishDetailsProps) {
                             {dish.drinks.map((drink, idx) => (
                                 <div 
                                     key={idx} 
-                                    onClick={() => {
-                                        addToCart({
-                                            _id: `${dish._id}-drink-${idx}`,
-                                            name: `${drink.name}`,
-                                            price: drink.price,
-                                            quantity: 1,
-                                            restaurantId: dish.restaurant._id,
-                                            restaurantName: dish.restaurant.name
-                                        });
-                                        alert(`${drink.name} added to cart!`);
-                                    }}
-                                    className="p-4 rounded-2xl bg-gray-50 border border-gray-100 flex flex-col items-center text-center cursor-pointer hover:border-primary transition"
+                                    onClick={() => toggleDrink(drink)}
+                                    className={`p-4 rounded-2xl border transition-all flex flex-col items-center text-center cursor-pointer ${
+                                        selectedDrinks.some(d => d.name === drink.name)
+                                            ? 'bg-orange-50 border-orange-500 ring-1 ring-orange-500'
+                                            : 'bg-gray-50 border-gray-100 hover:border-gray-200'
+                                    }`}
                                 >
                                     <p className="font-bold text-gray-800">{drink.name}</p>
                                     <p className="text-sm text-primary font-bold">Rs. {drink.price}</p>
+                                    {selectedDrinks.some(d => d.name === drink.name) && (
+                                        <div className="mt-2 text-[10px] bg-orange-500 text-white px-2 py-0.5 rounded-full font-bold">
+                                            Added
+                                        </div>
+                                    )}
                                 </div>
                             ))}
                         </div>
