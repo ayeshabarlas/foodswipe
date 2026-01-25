@@ -66,6 +66,14 @@ export default function AdminDashboard() {
         newUsers: 0,
         totalNotifications: 0
     });
+    // Local state to track "seen" counts so we can reset badges on click
+    const [lastSeenCounts, setLastSeenCounts] = useState({
+        pendingRestaurants: 0,
+        pendingRiders: 0,
+        newOrders: 0,
+        newUsers: 0
+    });
+
     const [showNotifications, setShowNotifications] = useState(false);
     const [loading, setLoading] = useState(true);
     const [mounted, setMounted] = useState(false);
@@ -323,14 +331,7 @@ export default function AdminDashboard() {
         );
     }
 
-    // Local state to track "seen" counts so we can reset badges on click
-    const [lastSeenCounts, setLastSeenCounts] = useState({
-        pendingRestaurants: 0,
-        pendingRiders: 0,
-        newOrders: 0,
-        newUsers: 0
-    });
-
+    // Display counts calculation moved to top scope if needed, or just function here
     const getDisplayCounts = () => {
         return {
             pendingRestaurants: Math.max(0, notificationCounts.pendingRestaurants - lastSeenCounts.pendingRestaurants),

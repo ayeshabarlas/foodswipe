@@ -49,9 +49,17 @@ const getDashboardStats = async (req, res) => {
                     _id: {
                         $cond: [{ $gte: ['$createdAt', today] }, 'today', 'weekly']
                     },
-                    totalRevenue: { $sum: { $ifNull: ['$subtotal', '$totalPrice'] } },
-                    totalNetEarnings: { 
-                        $sum: { 
+                    totalRevenue: {
+                        $sum: {
+                            $cond: [
+                                { $in: ['$status', ['Delivered', 'Completed']] },
+                                { $ifNull: ['$subtotal', '$totalPrice'] },
+                                0
+                            ]
+                        }
+                    },
+                    totalNetEarnings: {
+                        $sum: {
                             $cond: [
                                 { $in: ['$status', ['Delivered', 'Completed']] },
                                 { $ifNull: ['$restaurantEarning', { $multiply: [{ $ifNull: ['$subtotal', '$totalPrice'] }, 0.85] }] },
@@ -59,8 +67,8 @@ const getDashboardStats = async (req, res) => {
                             ]
                         }
                     },
-                    totalCommission: { 
-                        $sum: { 
+                    totalCommission: {
+                        $sum: {
                             $cond: [
                                 { $in: ['$status', ['Delivered', 'Completed']] },
                                 { $ifNull: ['$commissionAmount', { $multiply: [{ $ifNull: ['$subtotal', '$totalPrice'] }, 0.15] }] },
@@ -71,7 +79,7 @@ const getDashboardStats = async (req, res) => {
                 }
             }
         ]);
-        
+
         // Process stats
         let revenueToday = 0;
         let netEarningsToday = 0;
@@ -140,6 +148,9 @@ const getDashboardStats = async (req, res) => {
             { $sort: { count: -1 } },
             { $limit: 5 }
         ]);
+
+        // Optional: Calculate Potential Revenue (include Pending/Active) just for internal tracking if needed
+        // but for now, we stick to the delivered logic as requested.
 
         res.json({
             ordersToday,
