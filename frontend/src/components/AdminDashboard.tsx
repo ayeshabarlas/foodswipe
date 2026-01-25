@@ -94,10 +94,7 @@ export default function AdminDashboard() {
     }, []);
 
     // Save to localStorage whenever it changes
-    const updateLastSeenCounts = (newCounts: any) => {
-        setLastSeenCounts(newCounts);
-        localStorage.setItem('adminLastSeenCounts', JSON.stringify(newCounts));
-    };
+
 
     const handleTabChange = (tab: string) => {
         setActiveTab(tab);

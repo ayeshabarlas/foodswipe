@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { 
   StyleSheet, 
   Text, 
@@ -16,6 +16,7 @@ import {
   FlatList,
   Modal
 } from 'react-native';
+import { useFocusEffect } from '@react-navigation/native';
 import { Colors } from '../theme/colors';
 import * as SecureStore from 'expo-secure-store';
 import { Ionicons } from '@expo/vector-icons';
@@ -58,6 +59,13 @@ export default function CustomerDashboard({ navigation }: any) {
   const [isGettingLocation, setIsGettingLocation] = useState(false);
   const [settings, setSettings] = useState<any>(null);
 
+  // Address Search States
+  const [suggestions, setSuggestions] = useState<any[]>([]);
+  const [loadingAddress, setLoadingAddress] = useState(false);
+  const [showSuggestions, setShowSuggestions] = useState(false);
+  const [sessionToken, setSessionToken] = useState('');
+  const [searchQuery, setSearchQuery] = useState('');
+
   const categories = ['All', 'Pizza', 'Burger', 'Asian', 'Dessert', 'Healthy'];
 
   useEffect(() => {
@@ -67,6 +75,7 @@ export default function CustomerDashboard({ navigation }: any) {
     fetchActiveOrders();
     loadSavedAddress();
     fetchSettings();
+    setSessionToken(Math.random().toString(36).substring(2, 15));
 
     // Subscribe to restaurant updates
     const restChannel = subscribeToChannel('restaurants');
@@ -83,6 +92,12 @@ export default function CustomerDashboard({ navigation }: any) {
       unsubscribeFromChannel('restaurants');
     };
   }, []);
+
+  useFocusEffect(
+    useCallback(() => {
+      loadSavedAddress();
+    }, [])
+  );
 
   const loadSavedAddress = async () => {
     try {
@@ -109,6 +124,75 @@ export default function CustomerDashboard({ navigation }: any) {
       setSettings(res.data);
     } catch (err) {
       console.error('Error fetching settings:', err);
+    }
+  };
+
+  const handleAddressSearch = async (val: string) => {
+    setSearchQuery(val);
+    if (val.length > 2) {
+      setLoadingAddress(true);
+      setShowSuggestions(true);
+      
+      if ((global as any).dashAddressSearchTimeout) {
+        clearTimeout((global as any).dashAddressSearchTimeout);
+      }
+
+      (global as any).dashAddressSearchTimeout = setTimeout(async () => {
+        try {
+          const apiKey = settings?.googleMapsApiKey || GOOGLE_MAPS_API_KEY;
+          const response = await fetch(
+            `https://maps.googleapis.com/maps/api/place/autocomplete/json?input=${encodeURIComponent(val)}&key=${apiKey}&components=country:pk&location=31.5204,74.3587&radius=50000&sessiontoken=${sessionToken}`
+          );
+          const data = await response.json();
+          
+          if (data.status === 'OK') {
+            const formatted = data.predictions.map((p: any) => ({
+              description: p.description,
+              placeId: p.place_id,
+              mainText: p.structured_formatting.main_text,
+              secondaryText: p.structured_formatting.secondary_text
+            }));
+            setSuggestions(formatted);
+          }
+        } catch (err) {
+          console.error('Address search error:', err);
+        } finally {
+          setLoadingAddress(false);
+        }
+      }, 300);
+    } else {
+      setShowSuggestions(false);
+      setSuggestions([]);
+    }
+  };
+
+  const handleSelectAddress = async (item: any) => {
+    setAddress(item.description);
+    setSearchQuery('');
+    setShowSuggestions(false);
+    
+    if (item.placeId) {
+      try {
+        const apiKey = settings?.googleMapsApiKey || GOOGLE_MAPS_API_KEY;
+        const response = await fetch(
+          `https://maps.googleapis.com/maps/api/place/details/json?place_id=${item.placeId}&key=${apiKey}`
+        );
+        const data = await response.json();
+        if (data.status === 'OK') {
+          const loc = data.result.geometry.location;
+          const newLoc = { lat: loc.lat, lng: loc.lng };
+          setDeliveryLocation(newLoc);
+          setMapRegion({
+            ...mapRegion,
+            latitude: loc.lat,
+            longitude: loc.lng,
+          });
+          await SecureStore.setItemAsync('user_address', item.description);
+          await SecureStore.setItemAsync('user_location', JSON.stringify(newLoc));
+        }
+      } catch (err) {
+        console.error('Place details error:', err);
+      }
     }
   };
 
@@ -415,7 +499,20 @@ export default function CustomerDashboard({ navigation }: any) {
             >
               <Ionicons name="close" size={24} color="#000" />
             </TouchableOpacity>
-            <Text style={styles.mapTitle}>Set Delivery Address</Text>
+            <View style={styles.searchBarWrapper}>
+              <Ionicons name="search" size={18} color={Colors.gray} style={styles.searchIcon} />
+              <TextInput
+                style={styles.mapSearchInput}
+                placeholder="Search delivery address..."
+                value={searchQuery}
+                onChangeText={handleAddressSearch}
+              />
+              {searchQuery.length > 0 && (
+                <TouchableOpacity onPress={() => setSearchQuery('')}>
+                  <Ionicons name="close-circle" size={18} color={Colors.gray} />
+                </TouchableOpacity>
+              )}
+            </View>
             <TouchableOpacity 
               style={styles.mapDoneBtn}
               onPress={() => setIsMapVisible(false)}
@@ -425,6 +522,27 @@ export default function CustomerDashboard({ navigation }: any) {
           </View>
 
           <View style={{ flex: 1 }}>
+            {showSuggestions && suggestions.length > 0 && (
+              <View style={styles.suggestionsContainer}>
+                <FlatList
+                  data={suggestions}
+                  keyExtractor={(item, index) => index.toString()}
+                  renderItem={({ item }) => (
+                    <TouchableOpacity 
+                      style={styles.suggestionItem}
+                      onPress={() => handleSelectAddress(item)}
+                    >
+                      <Ionicons name="location-outline" size={20} color={Colors.gray} />
+                      <View style={styles.suggestionTextContainer}>
+                        <Text style={styles.suggestionMainText}>{item.mainText}</Text>
+                        <Text style={styles.suggestionSubText}>{item.secondaryText}</Text>
+                      </View>
+                    </TouchableOpacity>
+                  )}
+                />
+              </View>
+            )}
+            
             <MapView
               style={{ flex: 1 }}
               region={mapRegion}
@@ -710,6 +828,61 @@ const styles = StyleSheet.create({
   mapTitle: {
     fontSize: 16,
     fontWeight: 'bold',
+  },
+  searchBarWrapper: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#F3F4F6',
+    borderRadius: 10,
+    paddingHorizontal: 10,
+    marginHorizontal: 10,
+    height: 40,
+  },
+  searchIcon: {
+    marginRight: 5,
+  },
+  mapSearchInput: {
+    flex: 1,
+    fontSize: 14,
+    color: '#000',
+  },
+  suggestionsContainer: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    backgroundColor: '#fff',
+    zIndex: 1000,
+    maxHeight: 300,
+    borderBottomWidth: 1,
+    borderBottomColor: '#eee',
+    elevation: 5,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+  },
+  suggestionItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 15,
+    borderBottomWidth: 1,
+    borderBottomColor: '#f0f0f0',
+  },
+  suggestionTextContainer: {
+    marginLeft: 15,
+    flex: 1,
+  },
+  suggestionMainText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#333',
+  },
+  suggestionSubText: {
+    fontSize: 12,
+    color: '#666',
+    marginTop: 2,
   },
   mapDoneBtn: {
     padding: 5,

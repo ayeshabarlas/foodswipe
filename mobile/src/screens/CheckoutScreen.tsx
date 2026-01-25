@@ -231,9 +231,13 @@ const CheckoutScreen = ({ navigation }: any) => {
     setAddress(item.description);
     setShowSuggestions(false);
     
+    // Save to SecureStore for future use
+    await SecureStore.setItemAsync('user_address', item.description);
+    
     if (item.location) {
       setDeliveryLocation(item.location);
       updateDeliveryFee(item.location);
+      await SecureStore.setItemAsync('user_location', JSON.stringify(item.location));
       // Update map region if map is used
       setMapRegion({
         latitude: item.location.lat,
@@ -250,8 +254,10 @@ const CheckoutScreen = ({ navigation }: any) => {
         const data = await response.json();
         if (data.status === 'OK') {
           const loc = data.result.geometry.location;
-          setDeliveryLocation(loc);
-          updateDeliveryFee(loc);
+          const newLoc = { lat: loc.lat, lng: loc.lng };
+          setDeliveryLocation(newLoc);
+          updateDeliveryFee(newLoc);
+          await SecureStore.setItemAsync('user_location', JSON.stringify(newLoc));
           
           setMapRegion({
             latitude: loc.lat,
@@ -289,8 +295,12 @@ const CheckoutScreen = ({ navigation }: any) => {
         longitudeDelta: 0.005,
       };
       setMapRegion(newRegion);
-      setDeliveryLocation({ lat: location.coords.latitude, lng: location.coords.longitude });
+      const newLoc = { lat: location.coords.latitude, lng: location.coords.longitude };
+      setDeliveryLocation(newLoc);
       setIsMapVisible(true);
+      
+      // Save to SecureStore
+      await SecureStore.setItemAsync('user_location', JSON.stringify(newLoc));
       
       // Reverse geocode
       reverseGeocode(location.coords.latitude, location.coords.longitude);
@@ -310,22 +320,26 @@ const CheckoutScreen = ({ navigation }: any) => {
       );
       const data = await response.json();
       if (data.status === 'OK' && data.results.length > 0) {
-        setAddress(data.results[0].formatted_address);
+        const addr = data.results[0].formatted_address;
+        setAddress(addr);
         updateDeliveryFee({ lat, lng });
+        await SecureStore.setItemAsync('user_address', addr);
       }
     } catch (err) {
       console.error('Reverse geocode error:', err);
     }
   };
 
-  const handleMapPress = (e: any) => {
+  const handleMapPress = async (e: any) => {
     const coords = e.nativeEvent.coordinate;
-    setDeliveryLocation({ lat: coords.latitude, lng: coords.longitude });
+    const newLoc = { lat: coords.latitude, lng: coords.longitude };
+    setDeliveryLocation(newLoc);
     setMapRegion({
       ...mapRegion,
       latitude: coords.latitude,
       longitude: coords.longitude,
     });
+    await SecureStore.setItemAsync('user_location', JSON.stringify(newLoc));
     reverseGeocode(coords.latitude, coords.longitude);
   };
 
