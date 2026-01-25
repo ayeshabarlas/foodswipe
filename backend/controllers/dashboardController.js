@@ -142,7 +142,15 @@ const getDashboardStats = async (req, res) => {
                     _id: '$orderItems.product',
                     name: { $first: '$orderItems.name' },
                     count: { $sum: '$orderItems.qty' },
-                    revenue: { $sum: { $multiply: ['$orderItems.qty', '$orderItems.price'] } }
+                    revenue: {
+                        $sum: {
+                            $cond: [
+                                { $in: ['$status', ['Delivered', 'Completed']] },
+                                { $multiply: ['$orderItems.qty', '$orderItems.price'] },
+                                0
+                            ]
+                        }
+                    }
                 }
             },
             { $sort: { count: -1 } },
