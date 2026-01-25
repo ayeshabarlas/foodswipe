@@ -19,6 +19,7 @@ import * as SecureStore from 'expo-secure-store';
 import { Colors } from '../theme/colors';
 import { LinearGradient } from 'expo-linear-gradient';
 import { initSocket } from '../utils/socket';
+import PhoneVerificationModal from '../components/PhoneVerificationModal';
 
 const { width } = Dimensions.get('window');
 
@@ -30,6 +31,45 @@ export default function LoginScreen({ navigation }: any) {
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
   const [loading, setLoading] = useState(false);
+  const [showPhoneVerification, setShowPhoneVerification] = useState(false);
+  const [tempAuthData, setTempAuthData] = useState<{token: string, user: any} | null>(null);
+
+  const handleGoogleLogin = async () => {
+    setLoading(true);
+    try {
+      // Real implementation would use expo-auth-session
+      // For now, we simulate a successful Google login for demonstration
+      Alert.alert(
+        'Google Login',
+        'In a production environment, this would open the Google Sign-In portal. For now, do you want to simulate a successful login?',
+        [
+          { text: 'Cancel', onPress: () => setLoading(false), style: 'cancel' },
+          { 
+            text: 'Simulate', 
+            onPress: async () => {
+              try {
+                // Mock API call for social login
+                const response = await apiClient.post('/auth/social-login', {
+                  email: 'google-user@example.com',
+                  name: 'Google User',
+                  provider: 'google',
+                  role: selectedRole
+                });
+                const { token, ...userData } = response.data;
+                await saveAuthData(token, userData);
+              } catch (err: any) {
+                Alert.alert('Error', 'Failed to simulate Google login');
+              } finally {
+                setLoading(false);
+              }
+            } 
+          }
+        ]
+      );
+    } catch (error) {
+      setLoading(false);
+    }
+  };
 
   const handleAuth = async () => {
     if (!email || !password || (mode === 'signup' && (!firstName || !lastName))) {
@@ -48,7 +88,10 @@ export default function LoginScreen({ navigation }: any) {
           role: selectedRole 
         });
         const { token, ...userData } = response.data;
-        await saveAuthData(token, userData);
+        
+        // After signup, we show phone verification
+        setTempAuthData({ token, user: userData });
+        setShowPhoneVerification(true);
       } else {
         const response = await apiClient.post('/auth/login', { 
           identifier: email, 
@@ -78,6 +121,16 @@ export default function LoginScreen({ navigation }: any) {
       Alert.alert('Error', message);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handlePhoneVerificationSuccess = async (verifiedPhone: string) => {
+    if (tempAuthData) {
+      const { token, user } = tempAuthData;
+      // Update user object with verified phone info
+      const updatedUser = { ...user, phoneNumber: verifiedPhone, phoneVerified: true };
+      await saveAuthData(token, updatedUser);
+      setTempAuthData(null);
     }
   };
 
@@ -191,7 +244,10 @@ export default function LoginScreen({ navigation }: any) {
 
               {mode === 'select' ? (
                 <View style={styles.selectContainer}>
-                  <TouchableOpacity style={styles.googleButton}>
+                  <TouchableOpacity 
+                    style={styles.googleButton}
+                    onPress={handleGoogleLogin}
+                  >
                     <Text style={styles.googleButtonText}>G</Text>
                     <Text style={styles.googleButtonLabel}>Continue with Google</Text>
                   </TouchableOpacity>
@@ -311,6 +367,12 @@ export default function LoginScreen({ navigation }: any) {
           </ScrollView>
         </KeyboardAvoidingView>
       </SafeAreaView>
+
+      <PhoneVerificationModal 
+        isVisible={showPhoneVerification}
+        onClose={() => setShowPhoneVerification(false)}
+        onSuccess={handlePhoneVerificationSuccess}
+      />
     </View>
   );
 }

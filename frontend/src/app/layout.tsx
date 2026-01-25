@@ -22,8 +22,13 @@ const plusJakartaSans = Plus_Jakarta_Sans({
 });
 
 export const metadata: Metadata = {
-  title: "Foodswipe",
+  title: "Foodswipe - Delicious Food Delivered",
   description: "TikTok-style food delivery app",
+  icons: {
+    icon: '/logo.svg',
+    shortcut: '/logo.svg',
+    apple: '/logo.svg',
+  }
 };
 
 export const viewport = {

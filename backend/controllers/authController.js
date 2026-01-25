@@ -481,6 +481,51 @@ const verifyOtp = async (req, res) => {
 };
 
 /**
+ * @desc    Social Login (Google/Facebook)
+ * @route   POST /api/auth/social-login
+ * @access  Public
+ */
+const socialLogin = async (req, res) => {
+    const { email, name, provider, role = 'customer' } = req.body;
+
+    if (!email) {
+        return res.status(400).json({ message: 'Email is required for social login' });
+    }
+
+    try {
+        let user = await User.findOne({ email: email.toLowerCase() });
+
+        if (!user) {
+            // Create new user if they don't exist
+            user = await User.create({
+                name,
+                email: email.toLowerCase(),
+                role,
+                is_phone_verified: false,
+                phoneVerified: false,
+                provider: provider || 'google',
+                password: Math.random().toString(36).slice(-10), // Random password for social users
+            });
+        }
+
+        const token = generateToken(user._id);
+
+        res.json({
+            _id: user._id,
+            name: user.name,
+            email: user.email,
+            role: user.role,
+            is_phone_verified: user.is_phone_verified || user.phoneVerified,
+            phoneVerified: user.phoneVerified || user.is_phone_verified,
+            token,
+        });
+    } catch (err) {
+        console.error('Social login error:', err);
+        res.status(500).json({ message: 'Server error during social login' });
+    }
+};
+
+/**
  * @desc    Verify phone number via Firebase and mark as verified
  * @route   POST /api/auth/verify-phone
  * @access  Private
@@ -815,5 +860,5 @@ const updateProfile = async (req, res) => {
 
 module.exports = {
     registerUser, loginUser, getMe, sendOtp, verifyOtp, verifyPhone, verifyFirebaseToken, updateProfile,
-    checkPhoneExists
+    checkPhoneExists, socialLogin
 };

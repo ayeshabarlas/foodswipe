@@ -28,6 +28,7 @@ import { WebView } from 'react-native-webview';
 import ConfettiCannon from 'react-native-confetti-cannon';
 import NetInfo from '@react-native-community/netinfo';
 import { queueOfflineAction } from '../utils/cache';
+import PhoneVerificationModal from '../components/PhoneVerificationModal';
 
 const { width, height } = Dimensions.get('window');
 
@@ -71,6 +72,7 @@ const CheckoutScreen = ({ navigation }: any) => {
   const [checkoutUrl, setCheckoutUrl] = useState<string | null>(null);
   const [placedOrder, setPlacedOrder] = useState<any>(null);
   const [isQueuedOffline, setIsQueuedOffline] = useState(false);
+  const [showPhoneVerification, setShowPhoneVerification] = useState(false);
 
   // Settings & Fees
   const [settings, setSettings] = useState<any>(null);
@@ -477,15 +479,8 @@ const CheckoutScreen = ({ navigation }: any) => {
       const user = JSON.parse(userData);
       const isVerified = user.is_phone_verified === true || user.phoneVerified === true;
       
-      // Check if bypass for development (optional but matches webapp logic for localhost)
       if (!isVerified) {
-        Alert.alert(
-          'Phone Verification Required',
-          'Please verify your phone number before placing an order.',
-          [
-            { text: 'OK', onPress: () => setLoading(false) }
-          ]
-        );
+        setShowPhoneVerification(true);
         setLoading(false);
         return;
       }
@@ -730,6 +725,21 @@ const CheckoutScreen = ({ navigation }: any) => {
       </SafeAreaView>
     );
   }
+
+  const handlePhoneVerificationSuccess = async (phoneNumber: string) => {
+    try {
+      const userDataStr = await SecureStore.getItemAsync('user_data');
+      if (userDataStr) {
+        const user = JSON.parse(userDataStr);
+        const updatedUser = { ...user, phoneNumber, phoneVerified: true, is_phone_verified: true };
+        await SecureStore.setItemAsync('user_data', JSON.stringify(updatedUser));
+      }
+      // Retry placing the order automatically after verification
+      handlePlaceOrder();
+    } catch (err) {
+      console.error('Error updating user data after verification:', err);
+    }
+  };
 
   return (
     <SafeAreaView style={styles.container}>
@@ -1069,6 +1079,12 @@ const CheckoutScreen = ({ navigation }: any) => {
         </TouchableOpacity>
       </View>
       </KeyboardAvoidingView>
+
+      <PhoneVerificationModal 
+        isVisible={showPhoneVerification}
+        onClose={() => setShowPhoneVerification(false)}
+        onSuccess={handlePhoneVerificationSuccess}
+      />
     </SafeAreaView>
   );
 };
