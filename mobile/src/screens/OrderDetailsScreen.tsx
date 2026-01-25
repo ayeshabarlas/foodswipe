@@ -17,12 +17,14 @@ import { Colors } from '../theme/colors';
 import apiClient from '../api/apiClient';
 import { subscribeToChannel, unsubscribeFromChannel } from '../utils/socket';
 import * as SecureStore from 'expo-secure-store';
+import MapView, { Marker, Polyline } from 'react-native-maps';
 
 export default function OrderDetailsScreen({ route, navigation }: any) {
   const { orderId } = route.params;
   const [order, setOrder] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [userRole, setUserRole] = useState<string>('customer');
+  const [riderLocation, setRiderLocation] = useState<{ lat: number, lng: number } | null>(null);
 
   useEffect(() => {
     fetchOrderDetails();
@@ -45,8 +47,31 @@ export default function OrderDetailsScreen({ route, navigation }: any) {
       });
     }
 
+    // Subscribe to rider location updates if it's a customer
+    let userChannel: any;
+    const setupUserChannel = async () => {
+      const userData = await SecureStore.getItemAsync('user_data');
+      if (userData) {
+        const user = JSON.parse(userData);
+        userChannel = subscribeToChannel(`user-${user._id}`);
+        if (userChannel) {
+          userChannel.bind('riderLocationUpdate', (data: any) => {
+            if (data.orderId === orderId) {
+              console.log('📍 Rider location update received:', data.location);
+              setRiderLocation(data.location);
+            }
+          });
+        }
+      }
+    };
+    setupUserChannel();
+
     return () => {
       unsubscribeFromChannel(`order-${orderId}`);
+      if (userChannel) {
+        // We don't unsubscribe from user channel as it might be used elsewhere, 
+        // but we should unbind if needed. For now, keep it simple.
+      }
     };
   }, [orderId]);
 
@@ -92,6 +117,11 @@ export default function OrderDetailsScreen({ route, navigation }: any) {
 
   const currentStep = getStatusStep(order?.status || 'Pending');
 
+  const formatPrice = (price: any) => {
+    const numericPrice = Number(price);
+    return isNaN(numericPrice) ? '0' : numericPrice.toString();
+  };
+
   const openMap = () => {
     if (!order?.deliveryAddress) return;
     const url = Platform.select({
@@ -121,6 +151,88 @@ export default function OrderDetailsScreen({ route, navigation }: any) {
       </View>
 
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.content}>
+        {/* Tracking Map for Customer */}
+        {userRole === 'customer' && order.status !== 'Delivered' && order.status !== 'Cancelled' && (
+          <View style={[styles.card, { padding: 0, overflow: 'hidden', height: 250 }]}>
+            <MapView
+              style={{ flex: 1 }}
+              initialRegion={{
+                latitude: order.deliveryLocation?.lat || 31.5204,
+                longitude: order.deliveryLocation?.lng || 74.3587,
+                latitudeDelta: 0.05,
+                longitudeDelta: 0.05,
+              }}
+              region={riderLocation ? {
+                latitude: (riderLocation.lat + (order.deliveryLocation?.lat || 31.5204)) / 2,
+                longitude: (riderLocation.lng + (order.deliveryLocation?.lng || 74.3587)) / 2,
+                latitudeDelta: Math.abs(riderLocation.lat - (order.deliveryLocation?.lat || 31.5204)) * 1.5 || 0.05,
+                longitudeDelta: Math.abs(riderLocation.lng - (order.deliveryLocation?.lng || 74.3587)) * 1.5 || 0.05,
+              } : undefined}
+            >
+              {/* Delivery Location Marker */}
+              <Marker
+                coordinate={{
+                  latitude: order.deliveryLocation?.lat || 31.5204,
+                  longitude: order.deliveryLocation?.lng || 74.3587,
+                }}
+                title="Delivery Location"
+              >
+                <View style={styles.markerContainer}>
+                  <Ionicons name="location" size={24} color={Colors.primary} />
+                </View>
+              </Marker>
+
+              {/* Rider Marker */}
+              {riderLocation && (
+                <Marker
+                  coordinate={{
+                    latitude: riderLocation.lat,
+                    longitude: riderLocation.lng,
+                  }}
+                  title="Rider Location"
+                >
+                  <View style={[styles.markerContainer, { backgroundColor: '#fff' }]}>
+                    <Ionicons name="bicycle" size={24} color="#10B981" />
+                  </View>
+                </Marker>
+              )}
+
+              {/* Restaurant Marker */}
+              {order.restaurant?.location?.coordinates && (
+                <Marker
+                  coordinate={{
+                    latitude: order.restaurant.location.coordinates[1],
+                    longitude: order.restaurant.location.coordinates[0],
+                  }}
+                  title={order.restaurant.name}
+                >
+                  <View style={[styles.markerContainer, { backgroundColor: '#fff' }]}>
+                    <Ionicons name="restaurant" size={20} color="#FF6A00" />
+                  </View>
+                </Marker>
+              )}
+
+              {/* Route Line */}
+              {riderLocation && (
+                <Polyline
+                  coordinates={[
+                    { latitude: riderLocation.lat, longitude: riderLocation.lng },
+                    { latitude: order.deliveryLocation?.lat || 31.5204, longitude: order.deliveryLocation?.lng || 74.3587 }
+                  ]}
+                  strokeColor={Colors.primary}
+                  strokeWidth={3}
+                  lineDashPattern={[5, 5]}
+                />
+              )}
+            </MapView>
+            {riderLocation && (
+              <View style={styles.mapOverlay}>
+                <Text style={styles.mapOverlayText}>Rider is on the way!</Text>
+              </View>
+            )}
+          </View>
+        )}
+
         {/* Status Tracker */}
         <View style={styles.card}>
           <Text style={styles.cardTitle}>Order Status</Text>
@@ -207,21 +319,21 @@ export default function OrderDetailsScreen({ route, navigation }: any) {
                   ))}
                 </View>
               </View>
-              <Text style={styles.itemPrice}>Rs. {item.price * item.quantity}</Text>
+              <Text style={styles.itemPrice}>Rs. {formatPrice(item.price * item.quantity)}</Text>
             </View>
           ))}
           <View style={styles.divider} />
           <View style={styles.summaryRow}>
             <Text style={styles.summaryLabel}>Subtotal</Text>
-            <Text style={styles.summaryValue}>Rs. {order.totalPrice - 50}</Text>
+            <Text style={styles.summaryValue}>Rs. {formatPrice(order.totalPrice - (order.deliveryFee || 50))}</Text>
           </View>
           <View style={styles.summaryRow}>
             <Text style={styles.summaryLabel}>Delivery Fee</Text>
-            <Text style={styles.summaryValue}>Rs. 50</Text>
+            <Text style={styles.summaryValue}>Rs. {formatPrice(order.deliveryFee || 50)}</Text>
           </View>
           <View style={[styles.summaryRow, { marginTop: 10 }]}>
             <Text style={styles.totalLabel}>Total</Text>
-            <Text style={styles.totalValue}>Rs. {order.totalPrice}</Text>
+            <Text style={styles.totalValue}>Rs. {formatPrice(order.totalPrice)}</Text>
           </View>
           <View style={styles.paymentBadge}>
             <Ionicons name="card-outline" size={16} color={Colors.gray} />
@@ -537,5 +649,32 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontSize: 16,
     fontWeight: 'bold',
-  }
+  },
+  markerContainer: {
+    padding: 5,
+    borderRadius: 20,
+    backgroundColor: '#fff',
+    elevation: 5,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+  },
+  mapOverlay: {
+    position: 'absolute',
+    bottom: 15,
+    left: 15,
+    right: 15,
+    backgroundColor: 'rgba(255, 255, 255, 0.9)',
+    padding: 10,
+    borderRadius: 10,
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
+  },
+  mapOverlayText: {
+    fontSize: 12,
+    fontWeight: 'bold',
+    color: '#10B981',
+  },
 });

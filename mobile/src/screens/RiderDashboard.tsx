@@ -20,6 +20,7 @@ import { Ionicons } from '@expo/vector-icons';
 import apiClient from '../api/apiClient';
 import { initSocket, subscribeToChannel, unsubscribeFromChannel } from '../utils/socket';
 import { getCache, setCache } from '../utils/cache';
+import * as Location from 'expo-location';
 
 const { width } = Dimensions.get('window');
 
@@ -32,10 +33,12 @@ export default function RiderDashboard({ navigation }: any) {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [stats, setStats] = useState({ earnings: 0, orders: 0 });
+  const [locationSubscription, setLocationSubscription] = useState<any>(null);
 
   useEffect(() => {
     loadInitialData();
     return () => {
+      stopLocationUpdates();
       unsubscribeFromChannel('riders');
       if (userData?.id) {
         unsubscribeFromChannel(`user-${userData.id}`);
@@ -45,6 +48,46 @@ export default function RiderDashboard({ navigation }: any) {
       }
     };
   }, [userData?.id, riderProfile?._id]);
+
+  const startLocationUpdates = async (riderId: string) => {
+    try {
+      const { status } = await Location.requestForegroundPermissionsAsync();
+      if (status !== 'granted') {
+        console.warn('Location permission denied');
+        return;
+      }
+
+      const subscription = await Location.watchPositionAsync(
+        {
+          accuracy: Location.Accuracy.Balanced,
+          distanceInterval: 10, // Update every 10 meters
+          timeInterval: 10000, // Or every 10 seconds
+        },
+        async (location) => {
+          const { latitude, longitude } = location.coords;
+          console.log('📍 Sending rider location update:', latitude, longitude);
+          try {
+            await apiClient.put(`/riders/${riderId}/location`, {
+              lat: latitude,
+              lng: longitude,
+            });
+          } catch (err) {
+            console.error('Failed to update rider location:', err);
+          }
+        }
+      );
+      setLocationSubscription(subscription);
+    } catch (err) {
+      console.error('Error starting location updates:', err);
+    }
+  };
+
+  const stopLocationUpdates = () => {
+    if (locationSubscription) {
+      locationSubscription.remove();
+      setLocationSubscription(null);
+    }
+  };
 
   const onRefresh = async () => {
     if (riderProfile?._id) {
@@ -65,6 +108,10 @@ export default function RiderDashboard({ navigation }: any) {
         const res = await apiClient.get('/riders/my-profile');
         setRiderProfile(res.data);
         setIsOnline(res.data.isOnline || false);
+
+        if (res.data.isOnline) {
+          startLocationUpdates(res.data._id);
+        }
         
         // Initialize Socket
         initSocket(user.id, 'rider');
@@ -162,8 +209,10 @@ export default function RiderDashboard({ navigation }: any) {
       await apiClient.put(`/riders/${riderProfile._id}/status`, { isOnline: value });
       if (value) {
         fetchData(riderProfile._id);
+        startLocationUpdates(riderProfile._id);
       } else {
         setAvailableOrders([]);
+        stopLocationUpdates();
       }
     } catch (err) {
       setIsOnline(!value);

@@ -1,3 +1,4 @@
+const mongoose = require('mongoose');
 const Dish = require('../models/Dish');
 const Restaurant = require('../models/Restaurant');
 const Deal = require('../models/Deal');
@@ -418,16 +419,40 @@ const followRestaurant = async (req, res) => {
         }
 
         const followIndex = user.following.findIndex(id => id.toString() === restaurantId);
+        let isFollowing = false;
+        
         if (followIndex > -1) {
+            // Unfollow
             user.following.splice(followIndex, 1);
+            isFollowing = false;
+            
+            // Decrement restaurant followersCount
+            await Restaurant.findByIdAndUpdate(restaurantId, { 
+                $inc: { 'analytics.followersCount': -1 } 
+            });
         } else {
+            // Follow
             user.following.push(restaurantId);
+            isFollowing = true;
+            
+            // Increment restaurant followersCount
+            await Restaurant.findByIdAndUpdate(restaurantId, { 
+                $inc: { 'analytics.followersCount': 1 } 
+            });
         }
 
         await user.save();
+
+        // Get updated restaurant for real-time update
+        const updatedRest = await Restaurant.findById(restaurantId);
+        if (updatedRest) {
+            triggerEvent(`restaurant-${restaurantId}`, 'restaurantUpdate', updatedRest);
+        }
+
         res.json({ 
-            isFollowing: followIndex === -1,
-            followingCount: user.following.length 
+            isFollowing,
+            followingCount: user.following.length,
+            followersCount: updatedRest?.analytics?.followersCount || 0
         });
     } catch (error) {
         console.error('Follow restaurant error:', error);

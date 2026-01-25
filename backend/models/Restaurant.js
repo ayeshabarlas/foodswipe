@@ -145,6 +145,7 @@ const restaurantSchema = mongoose.Schema(
             totalLikes: { type: Number, default: 0 },
             totalShares: { type: Number, default: 0 },
             totalOrders: { type: Number, default: 0 },
+            followersCount: { type: Number, default: 0 },
             profileVisits: { type: Number, default: 0 },
             orderClicks: { type: Number, default: 0 },
             addToCartClicks: { type: Number, default: 0 },

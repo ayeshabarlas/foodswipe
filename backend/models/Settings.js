@@ -62,7 +62,7 @@ const settingsSchema = new mongoose.Schema({
     },
 
     // Maps Config
-    googleMapsApiKey: { type: String, default: 'AIzaSyBBwurPdZPLvTupX_YGiHYZRG3-ct3NWKU' },
+    googleMapsApiKey: { type: String, default: 'AIzaSyB75lradye-bSagnFN6tqmlmZC3PyBXl48' },
 
     updatedBy: {
         type: mongoose.Schema.Types.ObjectId,

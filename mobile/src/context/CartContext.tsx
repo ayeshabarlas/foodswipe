@@ -124,9 +124,34 @@ export const CartProvider = ({ children }: { children: React.ReactNode }) => {
     AsyncStorage.removeItem('foodswipe_cart');
   };
 
+  const applyVoucher = (voucher: { code: string; discount: number; type?: 'percentage' | 'fixed'; minimumAmount?: number }) => {
+    setAppliedVoucher(voucher);
+  };
+
+  const removeVoucher = () => {
+    setAppliedVoucher(null);
+  };
+
   const cartTotal = cart.reduce((total, item) => total + item.price * item.quantity, 0);
   const totalAmount = cartTotal; // Alias for compatibility
   const cartCount = cart.reduce((count, item) => count + item.quantity, 0);
+
+  // Calculate discount (matches webapp logic)
+  let discountAmount = 0;
+  if (appliedVoucher) {
+    if (appliedVoucher.minimumAmount && cartTotal < appliedVoucher.minimumAmount) {
+      discountAmount = 0;
+    } else {
+      if (appliedVoucher.type === 'fixed') {
+        discountAmount = appliedVoucher.discount;
+      } else {
+        // Default to percentage
+        discountAmount = (cartTotal * (appliedVoucher.discount || 0)) / 100;
+      }
+    }
+  }
+
+  const finalTotal = Math.max(0, cartTotal - discountAmount);
 
   return (
     <CartContext.Provider value={{ 
@@ -139,7 +164,11 @@ export const CartProvider = ({ children }: { children: React.ReactNode }) => {
       totalAmount,
       cartCount,
       appliedVoucher,
-      setAppliedVoucher
+      setAppliedVoucher,
+      applyVoucher,
+      removeVoucher,
+      discountAmount,
+      finalTotal
     }}>
       {children}
     </CartContext.Provider>

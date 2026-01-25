@@ -28,7 +28,7 @@ export default function RestaurantDashboard({ navigation }: any) {
   const [orders, setOrders] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
-  const [stats, setStats] = useState({ sales: 0, orders: 0, rating: 0, growth: 12 });
+  const [stats, setStats] = useState<any>(null);
 
   useEffect(() => {
     loadInitialData();
@@ -41,7 +41,10 @@ export default function RestaurantDashboard({ navigation }: any) {
 
   const onRefresh = async () => {
     setRefreshing(true);
-    await fetchOrders();
+    await Promise.all([
+      fetchOrders(),
+      fetchStats()
+    ]);
     setRefreshing(false);
   };
 
@@ -68,10 +71,12 @@ export default function RestaurantDashboard({ navigation }: any) {
             console.log('🔔 New Order Received:', newOrder._id);
             setOrders(prev => [newOrder, ...prev]);
             Alert.alert('New Order!', `You have a new order from ${newOrder.user?.name || 'a customer'}`);
+            fetchStats(); // Update stats on new order
           });
           
           channel.bind('orderCancelled', (data: any) => {
             setOrders(prev => prev.filter(o => o._id !== data.orderId));
+            fetchStats();
           });
 
           channel.bind('orderStatusUpdate', (data: any) => {
@@ -85,16 +90,27 @@ export default function RestaurantDashboard({ navigation }: any) {
               }
               return prev;
             });
+            fetchStats();
           });
         }
 
-        // Fetch Orders
+        // Fetch Data
         fetchOrders();
+        fetchStats();
       }
     } catch (err) {
       console.error('Error loading restaurant data:', err);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchStats = async () => {
+    try {
+      const res = await apiClient.get('/dashboard/stats');
+      setStats(res.data);
+    } catch (err) {
+      console.error('Error fetching dashboard stats:', err);
     }
   };
 
@@ -104,28 +120,14 @@ export default function RestaurantDashboard({ navigation }: any) {
       const cached = await getCache('restaurant_orders');
       if (cached) {
         setOrders(cached);
-        calculateStats(cached);
       }
 
       const res = await apiClient.get('/orders/restaurant/my-orders');
       setOrders(res.data);
-      calculateStats(res.data);
       await setCache('restaurant_orders', res.data);
     } catch (err) {
       console.error('Error fetching orders:', err);
     }
-  };
-
-  const calculateStats = (ordersData: any[]) => {
-    const deliveredOrders = ordersData.filter((o: any) => o.status === 'Delivered');
-    const totalSales = deliveredOrders.reduce((sum: number, o: any) => sum + (o.totalPrice || 0), 0);
-    
-    setStats({
-      sales: totalSales,
-      orders: ordersData.length,
-      rating: 4.5,
-      growth: 12 // Simulated growth percentage
-    });
   };
 
   const updateOrderStatus = async (orderId: string, status: string) => {

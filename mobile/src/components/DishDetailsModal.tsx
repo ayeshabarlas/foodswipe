@@ -20,6 +20,7 @@ import apiClient from '../api/apiClient';
 import { API_URL } from '../utils/config';
 
 import { Video, ResizeMode } from 'expo-av';
+import { LinearGradient } from 'expo-linear-gradient';
 import { queueOfflineAction } from '../utils/cache';
 import NetInfo from '@react-native-community/netinfo';
 
@@ -44,24 +45,38 @@ interface DishDetailsModalProps {
 const DishDetailsModal = ({ isVisible, onClose, dish }: DishDetailsModalProps) => {
   const { addToCart } = useCart();
   const [quantity, setQuantity] = useState(1);
-  const [activeTab, setActiveTab] = useState<'ingredients' | 'reviews'>('ingredients');
+  const [activeTab, setActiveTab] = useState<'ingredients' | 'reviews' | 'nutrition'>('ingredients');
   const [reviews, setReviews] = useState<any[]>([]);
   const [loadingReviews, setLoadingReviews] = useState(false);
   const [selectedVariant, setSelectedVariant] = useState<Variant | null>(null);
   const [selectedDrinks, setSelectedDrinks] = useState<Drink[]>([]);
+  const [selectedCombo, setSelectedCombo] = useState<any>(null);
   const [currentDish, setCurrentDish] = useState(dish);
   const [videoLoading, setVideoLoading] = useState(true);
+  const [isPlaying, setIsPlaying] = useState(true);
+  const videoRef = React.useRef<Video>(null);
 
   useEffect(() => {
     setCurrentDish(dish);
+    if (dish?.variants && dish.variants.length > 0) {
+      setSelectedVariant(dish.variants[0]);
+    }
   }, [dish]);
+
+  const togglePlay = () => {
+    if (videoRef.current) {
+      if (isPlaying) {
+        videoRef.current.pauseAsync();
+      } else {
+        videoRef.current.playAsync();
+      }
+      setIsPlaying(!isPlaying);
+    }
+  };
 
   useEffect(() => {
     if (isVisible && currentDish?._id) {
       fetchReviews();
-      if (currentDish.variants && currentDish.variants.length > 0) {
-        setSelectedVariant(currentDish.variants[0]);
-      }
       
       // Real-time updates for this dish
       const channel = subscribeToChannel(`video-${currentDish._id}`);
@@ -73,7 +88,6 @@ const DishDetailsModal = ({ isVisible, onClose, dish }: DishDetailsModalProps) =
 
         channel.bind('videoUpdate', (data: any) => {
           console.log('🔄 Dish data updated via socket in modal:', data);
-          // Update currentDish with any new data (price, etc.)
           setCurrentDish((prev: any) => ({ ...prev, ...data }));
         });
       }
@@ -84,9 +98,10 @@ const DishDetailsModal = ({ isVisible, onClose, dish }: DishDetailsModalProps) =
     }
   }, [isVisible, currentDish?._id]);
 
-  const priceToDisplay = selectedVariant ? selectedVariant.price : currentDish?.price;
-  const drinksTotal = selectedDrinks.reduce((sum, d) => sum + d.price, 0);
-  const totalPrice = (priceToDisplay + drinksTotal) * quantity;
+  const priceToDisplay = selectedVariant ? selectedVariant.price : (currentDish?.price || 0);
+  const drinksTotal = selectedDrinks.reduce((sum, d) => sum + (d.price || 0), 0);
+  const comboTotal = selectedCombo ? selectedCombo.price : 0;
+  const totalPrice = (priceToDisplay + drinksTotal + comboTotal) * quantity;
 
   const toggleDrink = (drink: Drink) => {
     setSelectedDrinks(prev => 
@@ -139,14 +154,15 @@ const DishDetailsModal = ({ isVisible, onClose, dish }: DishDetailsModalProps) =
     
     const cartItem = {
       _id: currentDish._id,
-      name: selectedVariant ? `${currentDish.name} (${selectedVariant.name})` : currentDish.name,
-      price: priceToDisplay + drinksTotal,
+      name: currentDish.name,
+      price: priceToDisplay + drinksTotal + comboTotal,
       quantity: quantity,
       restaurantId: currentDish.restaurant?._id || (typeof currentDish.restaurant === 'string' ? currentDish.restaurant : null),
       restaurantName: currentDish.restaurant?.name || 'Restaurant',
       imageUrl: currentDish.imageUrl,
       variant: selectedVariant,
-      drinks: selectedDrinks
+      drinks: selectedDrinks,
+      combo: selectedCombo
     };
     addToCart(cartItem);
     onClose();
@@ -161,28 +177,52 @@ const DishDetailsModal = ({ isVisible, onClose, dish }: DishDetailsModalProps) =
     >
       <View style={styles.modalOverlay}>
         <View style={styles.modalContent}>
-          {/* Close Button */}
-          <TouchableOpacity style={styles.closeButton} onPress={onClose}>
-            <Ionicons name="close-circle" size={32} color="#fff" />
-          </TouchableOpacity>
+          {/* Header Sticky */}
+          <View style={styles.stickyHeader}>
+            <TouchableOpacity style={styles.closeButton} onPress={onClose}>
+              <Ionicons name="close" size={24} color="#000" />
+            </TouchableOpacity>
+            <Text style={styles.stickyTitle} numberOfLines={1}>{currentDish.name}</Text>
+            <View style={{ width: 40 }} />
+          </View>
 
-          <ScrollView showsVerticalScrollIndicator={false}>
+          <ScrollView 
+            showsVerticalScrollIndicator={false} 
+            bounces={true}
+            contentContainerStyle={styles.scrollContent}
+          >
             {/* Header Media (Video or Image) */}
-            <View style={styles.mediaContainer}>
+            <TouchableOpacity 
+              activeOpacity={1} 
+              onPress={togglePlay}
+              style={styles.mediaContainer}
+            >
               {currentDish.videoUrl ? (
                 <>
                   <Video
+                    ref={videoRef}
                     source={{ uri: getMediaUrl(currentDish.videoUrl) }}
                     style={styles.dishMedia}
                     resizeMode={ResizeMode.COVER}
-                    shouldPlay={isVisible}
+                    shouldPlay={isVisible && isPlaying}
                     isLooping
                     isMuted={false}
                     onLoad={() => setVideoLoading(false)}
                   />
+                  <LinearGradient
+                    colors={['rgba(0,0,0,0.3)', 'transparent']}
+                    style={styles.mediaGradient}
+                  />
                   {videoLoading && (
                     <View style={styles.mediaPlaceholder}>
                       <ActivityIndicator size="large" color={Colors.primary} />
+                    </View>
+                  )}
+                  {!isPlaying && (
+                    <View style={styles.playOverlay}>
+                      <View style={styles.playIconContainer}>
+                        <Ionicons name="play" size={40} color="#fff" style={{ marginLeft: 5 }} />
+                      </View>
                     </View>
                   )}
                 </>
@@ -193,8 +233,7 @@ const DishDetailsModal = ({ isVisible, onClose, dish }: DishDetailsModalProps) =
                   resizeMode="cover"
                 />
               )}
-              <View style={styles.mediaOverlay} />
-            </View>
+            </TouchableOpacity>
 
             <View style={styles.infoContainer}>
               <View style={styles.handle} />
@@ -207,12 +246,15 @@ const DishDetailsModal = ({ isVisible, onClose, dish }: DishDetailsModalProps) =
                 </View>
                 <View style={styles.ratingBadge}>
                   <Ionicons name="star" size={16} color="#FFD700" />
-                  <Text style={styles.ratingText}>5.0 ({reviews.length})</Text>
+                  <Text style={styles.ratingText}>
+                    {currentDish.rating || currentDish.restaurant?.rating || '5.0'}
+                  </Text>
+                  <Text style={styles.reviewCountSmall}> ({reviews.length})</Text>
                 </View>
               </View>
 
               <View style={styles.priceRow}>
-                <Text style={styles.price}>Rs. {priceToDisplay}</Text>
+                <Text style={styles.price}>Rs. {priceToDisplay.toLocaleString()}</Text>
                 {selectedVariant && (
                   <View style={styles.variantBadge}>
                     <Text style={styles.variantBadgeText}>{selectedVariant.name}</Text>
@@ -220,9 +262,41 @@ const DishDetailsModal = ({ isVisible, onClose, dish }: DishDetailsModalProps) =
                 )}
               </View>
 
-              <Text style={styles.description}>
-                {currentDish.description || 'No description available for this delicious dish.'}
-              </Text>
+              <Text style={styles.description}>{currentDish.description}</Text>
+
+              {/* Combos Section */}
+              {currentDish.combos && currentDish.combos.length > 0 && (
+                <View style={styles.section}>
+                  <Text style={styles.sectionTitle}>Make it a Meal (Combos)</Text>
+                  <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.horizontalScroll}>
+                    {currentDish.combos.map((combo: any, index: number) => (
+                      <TouchableOpacity
+                        key={index}
+                        style={[
+                          styles.comboCard,
+                          selectedCombo?.title === combo.title && styles.activeComboCard
+                        ]}
+                        onPress={() => setSelectedCombo(selectedCombo?.title === combo.title ? null : combo)}
+                      >
+                        <Text style={[styles.comboTitle, selectedCombo?.title === combo.title && styles.activeComboTitle]}>
+                          {combo.title}
+                        </Text>
+                        <Text style={styles.comboPrice}>+ Rs. {combo.price}</Text>
+                        {combo.items && (
+                          <Text style={styles.comboItems} numberOfLines={2}>
+                            {Array.isArray(combo.items) ? combo.items.join(' + ') : combo.items}
+                          </Text>
+                        )}
+                        {selectedCombo?.title === combo.title && (
+                          <View style={styles.selectedCheck}>
+                            <Ionicons name="checkmark-circle" size={20} color={Colors.primary} />
+                          </View>
+                        )}
+                      </TouchableOpacity>
+                    ))}
+                  </ScrollView>
+                </View>
+              )}
 
               {/* Variants Section */}
               {currentDish.variants && currentDish.variants.length > 0 && (
@@ -237,6 +311,7 @@ const DishDetailsModal = ({ isVisible, onClose, dish }: DishDetailsModalProps) =
                           selectedVariant?.name === variant.name && styles.activeVariantBtn
                         ]}
                         onPress={() => setSelectedVariant(variant)}
+                        activeOpacity={0.7}
                       >
                         <Text style={[
                           styles.variantText,
@@ -248,7 +323,7 @@ const DishDetailsModal = ({ isVisible, onClose, dish }: DishDetailsModalProps) =
                           styles.variantPrice,
                           selectedVariant?.name === variant.name && styles.activeVariantPrice
                         ]}>
-                          Rs. {variant.price}
+                          Rs. {variant.price.toLocaleString()}
                         </Text>
                       </TouchableOpacity>
                     ))}
@@ -260,25 +335,27 @@ const DishDetailsModal = ({ isVisible, onClose, dish }: DishDetailsModalProps) =
               {currentDish.drinks && currentDish.drinks.length > 0 && (
                 <View style={styles.section}>
                   <Text style={styles.sectionTitle}>Add Drinks</Text>
-                  <View style={styles.drinksRow}>
+                  <View style={styles.drinksGrid}>
                     {currentDish.drinks.map((drink: Drink, index: number) => {
                       const isSelected = selectedDrinks.find(d => d.name === drink.name);
                       return (
                         <TouchableOpacity
                           key={index}
                           style={[
-                            styles.drinkBtn,
-                            isSelected && styles.activeDrinkBtn
+                            styles.drinkCard,
+                            isSelected && styles.activeDrinkCard
                           ]}
                           onPress={() => toggleDrink(drink)}
+                          activeOpacity={0.7}
                         >
-                          <Ionicons 
-                            name={isSelected ? "checkbox" : "square-outline"} 
-                            size={20} 
-                            color={isSelected ? Colors.primary : "#999"} 
-                          />
-                          <Text style={styles.drinkText}>{drink.name}</Text>
-                          <Text style={styles.drinkPrice}>+Rs. {drink.price}</Text>
+                          <Text style={[styles.drinkName, isSelected && styles.activeDrinkName]}>{drink.name}</Text>
+                          <Text style={styles.drinkPriceText}>+Rs. {drink.price.toLocaleString()}</Text>
+                          {isSelected && (
+                            <View style={styles.addedBadge}>
+                              <Ionicons name="checkmark-circle" size={14} color="#fff" />
+                              <Text style={styles.addedBadgeText}>Added</Text>
+                            </View>
+                          )}
                         </TouchableOpacity>
                       );
                     })}
@@ -286,38 +363,21 @@ const DishDetailsModal = ({ isVisible, onClose, dish }: DishDetailsModalProps) =
                 </View>
               )}
 
-              {/* Combos Section (if any) */}
-              {currentDish.combos && currentDish.combos.length > 0 && (
-                <View style={styles.section}>
-                  <Text style={styles.sectionTitle}>Available Combos</Text>
-                  {currentDish.combos.map((combo: any, index: number) => (
-                    <View key={index} style={styles.comboCard}>
-                      <View style={styles.comboInfo}>
-                        <Text style={styles.comboTitle}>{combo.title}</Text>
-                        <Text style={styles.comboPrice}>Rs. {combo.price}</Text>
-                      </View>
-                      <TouchableOpacity style={styles.addComboBtn}>
-                        <Text style={styles.addComboText}>Add Combo</Text>
-                      </TouchableOpacity>
-                    </View>
-                  ))}
-                </View>
-              )}
-
-              {/* Tabs for Ingredients/Reviews */}
+              {/* Tabs for Ingredients/Reviews/Nutrition */}
               <View style={styles.tabHeader}>
-                <TouchableOpacity 
-                  style={[styles.tab, activeTab === 'ingredients' && styles.activeTab]}
-                  onPress={() => setActiveTab('ingredients')}
-                >
-                  <Text style={[styles.tabLabel, activeTab === 'ingredients' && styles.activeTabLabel]}>Ingredients</Text>
-                </TouchableOpacity>
-                <TouchableOpacity 
-                  style={[styles.tab, activeTab === 'reviews' && styles.activeTab]}
-                  onPress={() => setActiveTab('reviews')}
-                >
-                  <Text style={[styles.tabLabel, activeTab === 'reviews' && styles.activeTabLabel]}>Reviews ({reviews.length})</Text>
-                </TouchableOpacity>
+                {['ingredients', 'reviews', 'nutrition'].map((tab) => (
+                  <TouchableOpacity 
+                    key={tab}
+                    style={[styles.tab, activeTab === tab && styles.activeTab]}
+                    onPress={() => setActiveTab(tab as any)}
+                  >
+                    <Text style={[styles.tabLabel, activeTab === tab && styles.activeTabLabel]}>
+                      {tab.charAt(0).toUpperCase() + tab.slice(1)}
+                      {tab === 'reviews' ? ` (${reviews.length})` : ''}
+                    </Text>
+                    {activeTab === tab && <View style={styles.activeTabUnderline} />}
+                  </TouchableOpacity>
+                ))}
               </View>
 
               <View style={styles.tabContent}>
@@ -334,7 +394,7 @@ const DishDetailsModal = ({ isVisible, onClose, dish }: DishDetailsModalProps) =
                       <Text style={styles.emptyText}>No ingredients listed.</Text>
                     )}
                   </View>
-                ) : (
+                ) : activeTab === 'reviews' ? (
                   <View style={styles.reviewsList}>
                     {loadingReviews ? (
                       <ActivityIndicator size="small" color={Colors.primary} style={{ marginTop: 20 }} />
@@ -367,15 +427,35 @@ const DishDetailsModal = ({ isVisible, onClose, dish }: DishDetailsModalProps) =
                                  ))}
                                </View>
                              </View>
-                             <Text style={styles.reviewDate}>Just now</Text>
+                             <Text style={styles.reviewDate}>
+                               {review.createdAt ? new Date(review.createdAt).toLocaleDateString() : 'Just now'}
+                             </Text>
                            </View>
                            <Text style={styles.reviewComment}>{review.comment || review.text}</Text>
                          </View>
                       ))
                     )}
                   </View>
+                ) : (
+                  <View style={styles.nutritionContent}>
+                    {currentDish.nutrition ? (
+                      Object.entries(currentDish.nutrition).map(([key, value]: [string, any], idx) => (
+                        <View key={idx} style={styles.nutritionRow}>
+                          <Text style={styles.nutritionKey}>{key.charAt(0).toUpperCase() + key.slice(1)}</Text>
+                          <Text style={styles.nutritionValue}>{value}</Text>
+                        </View>
+                      ))
+                    ) : (
+                      <View style={styles.emptyNutrition}>
+                        <Ionicons name="fitness-outline" size={48} color="#ddd" />
+                        <Text style={styles.emptyText}>Nutrition info not available for this dish.</Text>
+                      </View>
+                    )}
+                  </View>
                 )}
               </View>
+              
+              <View style={{ height: 120 }} />
             </View>
           </ScrollView>
 
@@ -385,21 +465,34 @@ const DishDetailsModal = ({ isVisible, onClose, dish }: DishDetailsModalProps) =
               <TouchableOpacity 
                 style={styles.quantityBtn}
                 onPress={() => setQuantity(Math.max(1, quantity - 1))}
+                activeOpacity={0.7}
               >
-                <Ionicons name="remove" size={20} color="#000" />
+                <Ionicons name="remove" size={18} color="#333" />
               </TouchableOpacity>
               <Text style={styles.quantityText}>{quantity}</Text>
               <TouchableOpacity 
                 style={styles.quantityBtn}
                 onPress={() => setQuantity(quantity + 1)}
+                activeOpacity={0.7}
               >
-                <Ionicons name="add" size={20} color="#000" />
+                <Ionicons name="add" size={18} color="#333" />
               </TouchableOpacity>
             </View>
 
-            <TouchableOpacity style={styles.addToCartBtn} onPress={handleAddToCart}>
-              <Ionicons name="cart" size={20} color="#fff" style={{ marginRight: 8 }} />
-              <Text style={styles.addToCartText}>Add to Cart • Rs. {totalPrice}</Text>
+            <TouchableOpacity 
+              style={styles.addToCartBtn} 
+              onPress={handleAddToCart}
+              activeOpacity={0.9}
+            >
+              <LinearGradient
+                colors={['#FF8C00', '#FF4500']}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 0 }}
+                style={styles.gradientBtn}
+              >
+                <Ionicons name="cart-outline" size={20} color="#fff" style={{ marginRight: 8 }} />
+                <Text style={styles.addToCartText}>Add to Cart • Rs. {totalPrice.toLocaleString()}</Text>
+              </LinearGradient>
             </TouchableOpacity>
           </View>
         </View>
@@ -427,125 +520,228 @@ const styles = StyleSheet.create({
     right: 15,
     zIndex: 10,
   },
-  dishImage: {
+  handle: {
+    width: 40,
+    height: 5,
+    backgroundColor: '#E0E0E0',
+    borderRadius: 3,
+    alignSelf: 'center',
+    marginBottom: 20,
+  },
+  mediaContainer: {
     width: '100%',
-    height: 250,
-    borderTopLeftRadius: 25,
-    borderTopRightRadius: 25,
+    height: 350,
+    position: 'relative',
+    backgroundColor: '#000',
+  },
+  dishMedia: {
+    width: '100%',
+    height: '100%',
+  },
+  mediaOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(0,0,0,0.1)',
+  },
+  playOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(0,0,0,0.2)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  playIconContainer: {
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    backgroundColor: 'rgba(255,255,255,0.2)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.3)',
+  },
+  mediaPlaceholder: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: '#1a1a1a',
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   infoContainer: {
-    padding: 20,
+    padding: 24,
+    backgroundColor: '#fff',
+    borderTopLeftRadius: 32,
+    borderTopRightRadius: 32,
+    marginTop: -32,
+    flex: 1,
   },
   headerRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    alignItems: 'flex-start',
-    marginBottom: 8,
+    alignItems: 'center',
+    marginBottom: 12,
   },
   dishName: {
-    fontSize: 24,
-    fontWeight: '700',
-    color: '#111',
+    fontSize: 28,
+    fontWeight: '800',
+    color: '#1A1A1A',
+    letterSpacing: -0.5,
   },
   restaurantName: {
     fontSize: 16,
     color: '#666',
+    fontWeight: '600',
     marginTop: 2,
   },
   ratingBadge: {
-    flexDirection: 'row',
+    flexDirection: 'row', 
     alignItems: 'center',
-    backgroundColor: '#f8f8f8',
-    paddingHorizontal: 10,
-    paddingVertical: 5,
-    borderRadius: 15,
+    backgroundColor: '#FFF9E6',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 20,
   },
   ratingText: {
-    marginLeft: 5,
-    fontWeight: '600',
+    marginLeft: 4,
+    fontWeight: '700',
     fontSize: 14,
+    color: '#1A1A1A',
+  },
+  reviewCountSmall: {
+    fontSize: 14,
+    color: '#666',
+    fontWeight: '500',
+  },
+  priceRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 16,
   },
   price: {
-    fontSize: 22,
-    fontWeight: '700',
+    fontSize: 24,
+    fontWeight: '800', 
     color: Colors.primary,
-    marginBottom: 15,
+  },
+  variantBadge: {
+    backgroundColor: '#FFF0E6',
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 8,
+    marginLeft: 12,
+  },
+  variantBadgeText: {
+    color: Colors.primary,
+    fontSize: 12,
+    fontWeight: '700',
   },
   description: {
     fontSize: 15,
-    color: '#444',
-    lineHeight: 22,
-    marginBottom: 25,
+    color: '#4A4A4A',
+    lineHeight: 24,
+    marginBottom: 24,
+    fontWeight: '500',
   },
   section: {
-    marginBottom: 25,
+    marginBottom: 24,
   },
   sectionTitle: {
-    fontSize: 18,
-    fontWeight: '700',
-    color: '#111',
+    fontSize: 14,
+    fontWeight: '800',
+    color: '#1A1A1A', 
     marginBottom: 12,
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
   },
-  comboCard: {
+  nutritionContent: {
+    paddingVertical: 10,
+  },
+  nutritionRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    alignItems: 'center',
-    padding: 15,
-    backgroundColor: '#f9f9f9',
-    borderRadius: 15,
-    borderWidth: 1,
-    borderColor: '#eee',
-    marginBottom: 10,
+    paddingVertical: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: '#F3F4F6',
   },
-  comboInfo: {
-    flex: 1,
+  nutritionKey: {
+    fontSize: 15,
+    color: '#4B5563',
+    fontWeight: '500',
+  },
+  nutritionValue: {
+    fontSize: 15,
+    color: '#111827',
+    fontWeight: '700',
+  },
+  emptyNutrition: {
+    alignItems: 'center',
+    paddingVertical: 30,
+  },
+  horizontalScroll: {
+    paddingRight: 20,
+  },
+  comboCard: {
+    backgroundColor: '#fff',
+    borderRadius: 16,
+    padding: 16,
+    marginRight: 12,
+    width: 200,
+    borderWidth: 1.5,
+    borderColor: '#F3F4F6',
+    position: 'relative',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 4,
+    elevation: 2,
+  },
+  activeComboCard: {
+    borderColor: Colors.primary,
+    backgroundColor: '#FFF7ED',
   },
   comboTitle: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#111',
+    fontSize: 15,
+    fontWeight: '700',
+    color: '#1F2937',
+    marginBottom: 4,
+  },
+  activeComboTitle: {
+    color: Colors.primary,
   },
   comboPrice: {
     fontSize: 14,
-    color: Colors.primary,
-    fontWeight: '600',
-    marginTop: 2,
+    fontWeight: '600',    color: Colors.primary,
+    marginBottom: 8,
   },
-  addComboBtn: {
-    paddingHorizontal: 15,
-    paddingVertical: 8,
-    borderWidth: 1,
-    borderColor: Colors.primary,
-    borderRadius: 10,
+  comboItems: {
+    fontSize: 12,
+    color: '#6B7280',
+    lineHeight: 16,
   },
-  addComboText: {
-    color: Colors.primary,
-    fontWeight: '600',
-    fontSize: 13,
+  selectedCheck: {
+    position: 'absolute',
+    top: 10,
+    right: 10,
   },
   tabHeader: {
     flexDirection: 'row',
     borderBottomWidth: 1,
-    borderBottomColor: '#eee',
-    marginBottom: 15,
+    borderBottomColor: '#F0F0F0',
+    marginBottom: 20,
   },
   tab: {
     flex: 1,
-    paddingVertical: 12,
+    paddingVertical: 16,
     alignItems: 'center',
     position: 'relative',
   },
   activeTab: {
     borderBottomWidth: 2,
-    borderBottomColor: Colors.primary,
+    borderBottomColor: '#1A1A1A',
   },
   tabLabel: {
     fontSize: 15,
-    color: '#999',
     fontWeight: '600',
+    color: '#999',
   },
   activeTabLabel: {
-    color: '#111',
+    color: '#1A1A1A',
   },
   tabContent: {
     paddingBottom: 100,
@@ -553,88 +749,111 @@ const styles = StyleSheet.create({
   variantsRow: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: 10,
+    gap: 12,
   },
   variantBtn: {
-    paddingHorizontal: 15,
-    paddingVertical: 10,
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: '#eee',
-    backgroundColor: '#fff',
-    minWidth: 100,
-    alignItems: 'center',
+    paddingHorizontal: 20,
+    paddingVertical: 12,
+    borderRadius: 14, 
+    borderWidth: 1.5,
+    borderColor: '#F0F0F0',
+    backgroundColor: '#FAFAFA',
+    flexDirection: 'row',
+    alignItems: 'center', 
+    gap: 8,
   },
   activeVariantBtn: {
     borderColor: Colors.primary,
-    backgroundColor: Colors.primary + '10', // 10% opacity
+    backgroundColor: '#FFF0E6',
   },
   variantText: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#333',
+    color: '#666',
   },
   activeVariantText: {
     color: Colors.primary,
   },
   variantPrice: {
-    fontSize: 12,
-    color: '#999',
-    marginTop: 2,
+    fontSize: 14,
+    fontWeight: '700',
+    color: '#1A1A1A',
   },
   activeVariantPrice: {
     color: Colors.primary,
-    fontWeight: '600',
   },
-  drinksRow: {
-    gap: 10,
-  },
-  drinkBtn: {
+  drinksGrid: {
     flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 12,
+  },
+  drinkCard: {
+    width: (width - 60) / 2,
+    backgroundColor: '#F9FAFB',
+    borderRadius: 16,
+    padding: 16,
     alignItems: 'center',
-    padding: 12,
-    borderRadius: 12,
     borderWidth: 1,
-    borderColor: '#eee',
-    backgroundColor: '#fff',
+    borderColor: '#F3F4F6',
   },
-  activeDrinkBtn: {
+  activeDrinkCard: {
+    backgroundColor: '#FFF7ED',
     borderColor: Colors.primary,
-    backgroundColor: Colors.primary + '05',
+    borderWidth: 1.5,
   },
-  drinkText: {
-    flex: 1,
-    marginLeft: 10,
-    fontSize: 14,
-    color: '#333',
-    fontWeight: '500',
+  drinkName: {
+    fontSize: 15,
+    fontWeight: '700',
+    color: '#374151',
+    textAlign: 'center',
+    marginBottom: 4,
   },
-  drinkPrice: {
-    fontSize: 14,
+  activeDrinkName: {
     color: Colors.primary,
-    fontWeight: '600',
+  },
+  drinkPriceText: {
+    fontSize: 13,
+    fontWeight: '700',
+    color: Colors.primary,
+  },
+  addedBadge: {
+    marginTop: 8,
+    backgroundColor: Colors.primary,
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    borderRadius: 10,
+  },
+  addedBadgeText: {
+    color: '#fff',
+    fontSize: 10,
+    fontWeight: 'bold',
   },
   ingredientsGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
+    gap: 12,
   },
   ingredientItem: {
-    width: '50%',
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 12,
+    backgroundColor: '#F8F8F8',
+    paddingHorizontal: 12,
+    paddingVertical: 8, 
+    borderRadius: 10,
+    width: (width - 60) / 2,
   },
   dot: {
     width: 6,
     height: 6,
     borderRadius: 3,
     backgroundColor: Colors.primary,
-    marginRight: 10,
+    marginRight: 8,
   },
   ingredientText: {
     fontSize: 14,
-    color: '#555',
+    color: '#4A4A4A',
     textTransform: 'capitalize',
+    fontWeight: '500',
   },
   emptyText: {
     textAlign: 'center',
@@ -643,57 +862,65 @@ const styles = StyleSheet.create({
     fontSize: 14,
   },
   bottomBar: {
+    flexDirection: 'row',
+    padding: 16,
+    paddingBottom: Platform.OS === 'ios' ? 34 : 16,
+    backgroundColor: 'rgba(255,255,255,0.9)',
+    borderTopWidth: 1,
+    borderTopColor: '#f0f0f0',
+    alignItems: 'center',
+    justifyContent: 'space-between',
     position: 'absolute',
     bottom: 0,
     left: 0,
     right: 0,
-    backgroundColor: '#fff',
-    padding: 20,
-    paddingBottom: Platform.OS === 'ios' ? 35 : 20,
-    flexDirection: 'row',
-    alignItems: 'center',
-    borderTopWidth: 1,
-    borderTopColor: '#eee',
   },
   quantityContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#f5f5f5',
+    backgroundColor: '#F3F4F6',
     borderRadius: 25,
-    padding: 5,
-    marginRight: 15,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    marginRight: 16,
   },
   quantityBtn: {
-    width: 35,
-    height: 35,
-    borderRadius: 18,
+    width: 32,
+    height: 32,
+    borderRadius: 16,
     backgroundColor: '#fff',
     justifyContent: 'center',
     alignItems: 'center',
+    elevation: 2,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.1,
     shadowRadius: 2,
-    elevation: 2,
   },
   quantityText: {
     fontSize: 16,
-    fontWeight: '700',
-    paddingHorizontal: 15,
+    fontWeight: 'bold',
+    marginHorizontal: 15,
+    minWidth: 20,
+    textAlign: 'center',
   },
   addToCartBtn: {
     flex: 1,
-    backgroundColor: Colors.primary,
-    height: 50,
-    borderRadius: 25,
+    height: 54,
+    borderRadius: 16,
+    overflow: 'hidden',
+  },
+  gradientBtn: {
+    flex: 1,
     flexDirection: 'row',
-    justifyContent: 'center',
     alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 20,
   },
   addToCartText: {
     color: '#fff',
     fontSize: 16,
-    fontWeight: '700',
+    fontWeight: 'bold',
   },
 });
 

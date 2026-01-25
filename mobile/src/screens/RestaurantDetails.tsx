@@ -219,7 +219,7 @@ export default function RestaurantDetails({ route, navigation }: any) {
         {/* Banner & Header */}
         <View style={styles.header}>
           <Image 
-            source={{ uri: getMediaUrl(restaurant.logo) || 'https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=800' }} 
+            source={{ uri: getMediaUrl(restaurant.coverImage || restaurant.logo) || 'https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=800' }} 
             style={styles.banner} 
           />
           <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
@@ -232,12 +232,27 @@ export default function RestaurantDetails({ route, navigation }: any) {
             <View style={{ flex: 1 }}>
               <Text style={styles.name}>{restaurant.name}</Text>
               <View style={styles.ratingRow}>
-                <Ionicons name="star" size={16} color="#FFD700" />
-                <Text style={styles.ratingText}>{restaurant.rating || '5.0'} • </Text>
-                <Text style={styles.categoryText}>{restaurant.businessType || 'Restaurant'}</Text>
-                <View style={[styles.statusDot, { backgroundColor: restaurant.isOpen !== false ? '#10B981' : '#EF4444', marginLeft: 10 }]} />
-                <Text style={[styles.statusText, { color: restaurant.isOpen !== false ? '#10B981' : '#EF4444' }]}>
-                  {restaurant.isOpen !== false ? 'Open' : 'Closed'}
+                <View style={styles.starsRow}>
+                  {[1, 2, 3, 4, 5].map(s => (
+                    <Ionicons 
+                      key={s} 
+                      name={s <= (restaurant.rating || 5) ? "star" : "star-outline"} 
+                      size={14} 
+                      color="#FFD700" 
+                    />
+                  ))}
+                </View>
+                <Text style={styles.ratingText}>
+                  {restaurant.rating > 0 ? restaurant.rating.toFixed(1) : 'New'} • 
+                </Text>
+                <Text style={styles.categoryText}>
+                  {restaurant.cuisineTypes && restaurant.cuisineTypes.length > 0 
+                    ? restaurant.cuisineTypes[0] 
+                    : (restaurant.businessType === 'home-chef' ? 'Home Chef' : 'Restaurant')}
+                </Text>
+                <View style={[styles.statusDot, { backgroundColor: restaurant.storeStatus === 'open' ? '#10B981' : (restaurant.storeStatus === 'busy' ? '#F59E0B' : '#EF4444'), marginLeft: 10 }]} />
+                <Text style={[styles.statusText, { color: restaurant.storeStatus === 'open' ? '#10B981' : (restaurant.storeStatus === 'busy' ? '#F59E0B' : '#EF4444') }]}>
+                  {restaurant.storeStatus === 'open' ? 'Open' : (restaurant.storeStatus === 'busy' ? 'Busy' : 'Closed')}
                 </Text>
               </View>
             </View>
@@ -255,17 +270,30 @@ export default function RestaurantDetails({ route, navigation }: any) {
           {/* Real-time Analytics Bar */}
           <View style={styles.analyticsBar}>
             <View style={styles.analyticItem}>
-              <Text style={styles.analyticValue}>{restaurant.totalOrders || '1.2k+'}</Text>
+              <Text style={styles.analyticValue}>
+                {restaurant.analytics?.followersCount ?? restaurant.followersCount ?? 0}
+              </Text>
+              <Text style={styles.analyticLabel}>Followers</Text>
+            </View>
+            <View style={styles.divider} />
+            <View style={styles.analyticItem}>
+              <Text style={styles.analyticValue}>
+                {restaurant.deliveryTime || restaurant.estimatedDeliveryTime || (restaurant.businessType === 'home-chef' ? '45-60' : '25-35')}
+              </Text>
+              <Text style={styles.analyticLabel}>Mins</Text>
+            </View>
+            <View style={styles.divider} />
+            <View style={styles.analyticItem}>
+              <Text style={styles.analyticValue}>
+                {restaurant.analytics?.totalOrders || restaurant.totalOrders || 0}
+              </Text>
               <Text style={styles.analyticLabel}>Orders</Text>
             </View>
             <View style={styles.divider} />
             <View style={styles.analyticItem}>
-              <Text style={styles.analyticValue}>{restaurant.deliveryTime || '25-35'}</Text>
-              <Text style={styles.analyticLabel}>Min</Text>
-            </View>
-            <View style={styles.divider} />
-            <View style={styles.analyticItem}>
-              <Text style={styles.analyticValue}>{restaurant.reviewsCount || reviews.length}</Text>
+              <Text style={styles.analyticValue}>
+                {reviews.length || restaurant.reviewCount || 0}
+              </Text>
               <Text style={styles.analyticLabel}>Reviews</Text>
             </View>
           </View>
@@ -288,9 +316,15 @@ export default function RestaurantDetails({ route, navigation }: any) {
 
         {activeTab === 'menu' && (
           <View style={styles.menuSection}>
-            <Text style={styles.sectionTitle}>Full Menu</Text>
+            <View style={styles.menuHeader}>
+              <Text style={styles.sectionTitle}>Full Menu</Text>
+              <Text style={styles.menuCount}>{dishes.length} Items</Text>
+            </View>
             {dishes.length === 0 ? (
-              <Text style={styles.emptyText}>No dishes available yet</Text>
+              <View style={styles.emptyContainer}>
+                <Ionicons name="restaurant-outline" size={48} color="#E5E7EB" />
+                <Text style={styles.emptyText}>No dishes available yet</Text>
+              </View>
             ) : (
               dishes.map((dish) => (
                 <TouchableOpacity 
@@ -304,12 +338,30 @@ export default function RestaurantDetails({ route, navigation }: any) {
                   <View style={styles.dishInfo}>
                     <Text style={styles.dishName}>{dish.name}</Text>
                     <Text style={styles.dishDescription} numberOfLines={2}>{dish.description}</Text>
-                    <Text style={styles.dishPrice}>Rs. {dish.price}</Text>
+                    <View style={styles.dishFooter}>
+                      <Text style={styles.dishPrice}>Rs. {dish.price}</Text>
+                      {dish.variants && dish.variants.length > 0 && (
+                        <View style={styles.variantBadge}>
+                          <Text style={styles.variantBadgeText}>Options Available</Text>
+                        </View>
+                      )}
+                    </View>
                   </View>
-                  <Image 
-                    source={{ uri: getMediaUrl(dish.imageUrl) || 'https://via.placeholder.com/100' }} 
-                    style={styles.dishImage} 
-                  />
+                  <View style={styles.dishImageContainer}>
+                    <Image 
+                      source={{ uri: getMediaUrl(dish.imageUrl) || 'https://via.placeholder.com/100' }} 
+                      style={styles.dishImage} 
+                    />
+                    <TouchableOpacity 
+                      style={styles.addDishBtn}
+                      onPress={() => {
+                        setActiveDish(dish);
+                        setIsDetailsVisible(true);
+                      }}
+                    >
+                      <Ionicons name="add" size={20} color="#fff" />
+                    </TouchableOpacity>
+                  </View>
                 </TouchableOpacity>
               ))
             )}
@@ -324,8 +376,13 @@ export default function RestaurantDetails({ route, navigation }: any) {
                 <Text style={styles.ratingBig}>{restaurant.rating || '5.0'}</Text>
                 <View>
                   <View style={styles.starsRow}>
-                    {[1,2,3,4,5].map(s => (
-                      <Ionicons key={s} name="star" size={12} color="#FFD700" />
+                    {[1, 2, 3, 4, 5].map(s => (
+                      <Ionicons 
+                        key={s} 
+                        name={s <= (restaurant.rating || 5) ? "star" : "star-outline"} 
+                        size={12} 
+                        color="#FFD700" 
+                      />
                     ))}
                   </View>
                   <Text style={styles.reviewCount}>{reviews.length} reviews</Text>
@@ -375,14 +432,23 @@ export default function RestaurantDetails({ route, navigation }: any) {
                 <Ionicons name="time-outline" size={20} color={Colors.primary} />
                 <View style={styles.infoTextContainer}>
                   <Text style={styles.infoLabel}>Opening Hours</Text>
-                  <Text style={styles.infoValue}>{restaurant.openingHours || '09:00 AM - 11:00 PM'}</Text>
+                  <Text style={styles.infoValue}>
+                    {(() => {
+                      if (typeof restaurant.openingHours === 'string') return restaurant.openingHours;
+                      const days = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
+                      const today = days[new Date().getDay()];
+                      const hours = restaurant.openingHours?.[today];
+                      if (!hours || hours.isClosed) return 'Closed Today';
+                      return `${hours.open || '09:00'} - ${hours.close || '23:00'}`;
+                    })()}
+                  </Text>
                 </View>
               </View>
               <View style={styles.infoItem}>
                 <Ionicons name="call-outline" size={20} color={Colors.primary} />
                 <View style={styles.infoTextContainer}>
                   <Text style={styles.infoLabel}>Contact</Text>
-                  <Text style={styles.infoValue}>{restaurant.phone || '+92 300 1234567'}</Text>
+                  <Text style={styles.infoValue}>{restaurant.contact || restaurant.phone || 'Not available'}</Text>
                 </View>
               </View>
             </View>
@@ -715,48 +781,112 @@ const styles = StyleSheet.create({
   },
   menuSection: {
     padding: 20,
+    backgroundColor: '#fff',
   },
   sectionTitle: {
     fontSize: 20,
     fontWeight: 'bold',
     marginBottom: 15,
   },
+  menuHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 20,
+  },
+  menuCount: {
+    fontSize: 14,
+    color: '#6B7280',
+    fontWeight: '500',
+  },
+  emptyContainer: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 40,
+  },
+  emptyText: {
+    fontSize: 16,
+    color: '#9CA3AF',
+    marginTop: 10,
+    textAlign: 'center',
+  },
   dishCard: {
     flexDirection: 'row',
     backgroundColor: '#fff',
-    borderRadius: 12,
-    marginBottom: 15,
-    padding: 10,
+    borderRadius: 16,
+    marginBottom: 16,
+    padding: 12,
     borderWidth: 1,
-    borderColor: '#eee',
+    borderColor: '#F3F4F6',
+    elevation: 2,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 4,
   },
   dishInfo: {
     flex: 1,
-    paddingRight: 10,
+    paddingRight: 12,
   },
   dishName: {
-    fontSize: 18,
+    fontSize: 16,
     fontWeight: 'bold',
-    color: '#333',
+    color: '#111827',
+    marginBottom: 4,
   },
   dishDescription: {
-    fontSize: 14,
-    color: '#777',
-    marginVertical: 5,
+    fontSize: 13,
+    color: '#6B7280',
+    lineHeight: 18,
+    marginBottom: 8,
+  },
+  dishFooter: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 'auto',
   },
   dishPrice: {
     fontSize: 16,
-    fontWeight: '600',
+    fontWeight: 'bold',
     color: Colors.primary,
   },
-  dishImage: {
-    width: 80,
-    height: 80,
-    borderRadius: 8,
+  variantBadge: {
+    backgroundColor: '#F3F4F6',
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    borderRadius: 6,
+    marginLeft: 8,
   },
-  emptyText: {
-    textAlign: 'center',
-    color: '#999',
-    marginTop: 20,
+  variantBadgeText: {
+    fontSize: 10,
+    color: '#6B7280',
+    fontWeight: '600',
+  },
+  dishImageContainer: {
+    position: 'relative',
+  },
+  dishImage: {
+    width: 100,
+    height: 100,
+    borderRadius: 12,
+    backgroundColor: '#F3F4F6',
+  },
+  addDishBtn: {
+    position: 'absolute',
+    bottom: -8,
+    right: -8,
+    backgroundColor: Colors.primary,
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 2,
+    borderColor: '#fff',
+    elevation: 4,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 2,
   }
 });

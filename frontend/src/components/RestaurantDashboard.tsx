@@ -105,7 +105,7 @@ export default function RestaurantDashboard() {
     useEffect(() => {
         if (!userInfo) return;
         const resId = restaurant?._id || userInfo.restaurantId;
-        
+
         if (userInfo && userInfo._id && resId) {
             console.log("Initializing dashboard socket with resId:", resId);
             const newSocket = initSocket(userInfo._id, 'restaurant', resId);
@@ -117,11 +117,11 @@ export default function RestaurantDashboard() {
                 console.log(`📡 Dashboard: Subscribed to channel restaurant-${resId}`);
             }
         }
-        
-        return () => { 
+
+        return () => {
             if (socket) {
                 console.log("Disconnecting dashboard socket");
-                disconnectSocket(); 
+                disconnectSocket();
             }
         };
     }, [restaurant?._id, userInfo]);
@@ -134,19 +134,19 @@ export default function RestaurantDashboard() {
 
         try {
             if (!isRefresh) setLoading(true);
-            
+
             const token = userInfo.token;
-            
+
             if (!token) {
                 console.error('No token found in dashboard');
                 if (typeof window !== 'undefined') window.location.href = '/login';
                 return;
             }
-            
+
             const headers = { Authorization: `Bearer ${token}` };
 
             console.log("Dashboard: Fetching data in parallel...");
-            
+
             // Fetch restaurant and stats in parallel
             const [restaurantResult, statsResult] = await Promise.allSettled([
                 axios.get(`${getApiUrl()}/api/restaurants/my-restaurant`, { headers }),
@@ -160,14 +160,14 @@ export default function RestaurantDashboard() {
                     console.log("Dashboard: Restaurant found:", restaurantData.name);
                     setRestaurant(restaurantData);
                     localStorage.setItem("hasRestaurant", "true");
-                    
+
                     // Update userInfo cache if needed
                     let userInfoUpdated = false;
                     const updatedUserInfo = { ...userInfo };
                     if (updatedUserInfo.restaurantId !== restaurantData._id) { updatedUserInfo.restaurantId = restaurantData._id; userInfoUpdated = true; }
                     if (updatedUserInfo.restaurantName !== restaurantData.name) { updatedUserInfo.restaurantName = restaurantData.name; userInfoUpdated = true; }
                     if (updatedUserInfo.restaurantLogo !== restaurantData.logo) { updatedUserInfo.restaurantLogo = restaurantData.logo; userInfoUpdated = true; }
-                    
+
                     if (userInfoUpdated) {
                         setUserInfo(updatedUserInfo);
                         localStorage.setItem('userInfo', JSON.stringify(updatedUserInfo));
@@ -176,7 +176,7 @@ export default function RestaurantDashboard() {
             } else {
                 const err = restaurantResult.reason;
                 console.error('Error fetching restaurant:', err.response?.data || err.message);
-                
+
                 if (err.response?.status === 404) {
                     setRestaurant({ _id: 'new', isNew: true });
                 } else if (err.response?.status === 401) {
@@ -268,7 +268,7 @@ export default function RestaurantDashboard() {
 
         const handleNewChatMessage = (data: any) => {
             console.log('Dashboard: Global new chat message:', data);
-            
+
             // Show notification even if not on orders page
             toast((t) => (
                 <div className="flex items-center gap-4 cursor-pointer" onClick={() => {
@@ -345,9 +345,9 @@ export default function RestaurantDashboard() {
 
     const handleLogoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
         if (!e.target.files || !e.target.files[0]) return;
-        
+
         const file = e.target.files[0];
-        
+
         // Basic validation
         if (!file.type.startsWith('image/')) {
             alert('Please upload an image file');
@@ -401,10 +401,10 @@ export default function RestaurantDashboard() {
             if (restaurant) {
                 setRestaurant({ ...restaurant, logo: uploadedPath });
             }
-            
+
             // 4. Force refresh dashboard data to be sure
             await fetchDashboardData();
-            
+
             alert('Logo updated successfully!');
         } catch (error: any) {
             console.error('Logo upload/update failed:', error);
@@ -425,7 +425,7 @@ export default function RestaurantDashboard() {
     // Force verified status to avoid blocking banners if data is still loading
     const displayRestaurant = (() => {
         const info = userInfo || {};
-        
+
         // If we have a real restaurant object, use it but merge with userInfo fallbacks
         if (restaurant && restaurant._id !== 'loading' && restaurant._id !== 'error') {
             return {
@@ -578,17 +578,16 @@ export default function RestaurantDashboard() {
                                     setIsSidebarOpen(false);
                                 }}
                                 className={`w-full flex items-center gap-4 px-4 py-3.5 rounded-2xl transition-all duration-300 group relative
-                                ${
-                                    activePage === item.id
+                                ${activePage === item.id
                                         ? 'bg-gradient-to-r from-orange-500 to-red-500 text-white shadow-xl shadow-orange-500/40 scale-[1.02]'
                                         : item.disabled
                                             ? 'text-gray-600 opacity-40 cursor-not-allowed'
                                             : 'text-gray-400 hover:bg-white/5 hover:text-white'
-                                }`}
+                                    }`}
                             >
                                 <item.icon className={`text-lg ${activePage === item.id ? 'text-white' : 'text-gray-500 group-hover:text-orange-400'} transition-colors duration-300`} />
                                 <span className="text-[14px] font-medium tracking-wide">{item.label}</span>
-                                
+
                                 {item.id === 'orders' && stats?.pending > 0 && (
                                     <span className={`ml-auto w-5 h-5 flex items-center justify-center rounded-full text-[10px] font-bold
                                         ${activePage === 'orders' ? 'bg-white text-orange-600' : 'bg-orange-500 text-white animate-pulse'}`}>
@@ -652,9 +651,9 @@ export default function RestaurantDashboard() {
                             <button
                                 onClick={() => setShowNotifications(!showNotifications)}
                                 className={`p-2.5 rounded-2xl transition-all duration-300 relative group
-                                ${showNotifications 
-                                    ? 'bg-orange-500 text-white shadow-lg shadow-orange-200' 
-                                    : 'bg-gray-50 text-gray-500 hover:bg-orange-50 hover:text-orange-500'}`}
+                                ${showNotifications
+                                        ? 'bg-orange-500 text-white shadow-lg shadow-orange-200'
+                                        : 'bg-gray-50 text-gray-500 hover:bg-orange-50 hover:text-orange-500'}`}
                             >
                                 <FaBell className={showNotifications ? 'animate-none' : 'group-hover:animate-bounce'} size={18} />
                                 {notifications.filter(n => !n.read).length > 0 && (
@@ -683,7 +682,7 @@ export default function RestaurantDashboard() {
                                             <div className="p-5 border-b border-gray-50 flex items-center justify-between bg-gray-50/50">
                                                 <h3 className="font-bold text-gray-900">Notifications</h3>
                                                 {notifications.filter(n => !n.read).length > 0 && (
-                                                    <button 
+                                                    <button
                                                         onClick={() => {
                                                             notifications.forEach(n => !n.read && markAsRead(n._id));
                                                         }}
@@ -697,7 +696,7 @@ export default function RestaurantDashboard() {
                                                 {notifications.length > 0 ? (
                                                     <div className="divide-y divide-gray-50">
                                                         {notifications.map((notification) => (
-                                                            <div 
+                                                            <div
                                                                 key={notification._id}
                                                                 onClick={() => !notification.read && markAsRead(notification._id)}
                                                                 className={`p-4 hover:bg-gray-50 transition-colors cursor-pointer relative group ${!notification.read ? 'bg-orange-50/30' : ''}`}
@@ -814,151 +813,152 @@ export default function RestaurantDashboard() {
                     </div>
                 </div>
             </main>
-{/* New Order Modal Popup */}
-                <AnimatePresence>
-                    {newOrderModal && (
-                        <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4">
-                            <motion.div
-                                initial={{ opacity: 0 }}
-                                animate={{ opacity: 1 }}
-                                exit={{ opacity: 0 }}
-                                onClick={() => setNewOrderModal(null)}
-                                className="absolute inset-0 bg-black/60 backdrop-blur-md"
-                            />
-                            <motion.div
-                                initial={{ scale: 0.9, opacity: 0, y: 20 }}
-                                animate={{ scale: 1, opacity: 1, y: 0 }}
-                                exit={{ scale: 0.9, opacity: 0, y: 20 }}
-                                className="relative bg-white rounded-[40px] shadow-2xl w-full max-w-lg overflow-hidden border border-gray-100"
-                            >
-                                {/* Modal Header */}
-                                <div className="p-8 pb-4 flex justify-between items-start">
-                                    <div className="flex items-center gap-4">
-                                        <div className="w-14 h-14 rounded-2xl bg-orange-500 flex items-center justify-center text-white shadow-lg shadow-orange-500/30">
-                                            <FaClock className="text-2xl animate-pulse" />
-                                        </div>
-                                        <div>
-                                            <h3 className="text-2xl font-black text-gray-900 leading-tight">New Order Arrived!</h3>
-                                            <p className="text-gray-400 font-bold text-[10px] uppercase tracking-[0.2em] mt-1">Order #{newOrderModal._id.slice(-6).toUpperCase()}</p>
-                                        </div>
+            {/* New Order Modal Popup */}
+            <AnimatePresence>
+                {newOrderModal && (
+                    <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4">
+                        <motion.div
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            exit={{ opacity: 0 }}
+                            onClick={() => setNewOrderModal(null)}
+                            className="absolute inset-0 bg-black/60 backdrop-blur-md"
+                        />
+                        <motion.div
+                            initial={{ scale: 0.9, opacity: 0, y: 20 }}
+                            animate={{ scale: 1, opacity: 1, y: 0 }}
+                            exit={{ scale: 0.9, opacity: 0, y: 20 }}
+                            className="relative bg-white rounded-[40px] shadow-2xl w-full max-w-lg overflow-hidden border border-gray-100"
+                        >
+                            {/* Modal Header */}
+                            <div className="p-8 pb-4 flex justify-between items-start">
+                                <div className="flex items-center gap-4">
+                                    <div className="w-14 h-14 rounded-2xl bg-orange-500 flex items-center justify-center text-white shadow-lg shadow-orange-500/30">
+                                        <FaClock className="text-2xl animate-pulse" />
                                     </div>
-                                    <div className="relative w-16 h-16 flex items-center justify-center">
-                                        <svg className="w-full h-full transform -rotate-90">
-                                            <circle
-                                                cx="32"
-                                                cy="32"
-                                                r="28"
-                                                stroke="currentColor"
-                                                strokeWidth="3"
-                                                fill="transparent"
-                                                className="text-gray-100"
-                                            />
-                                            <circle
-                                                cx="32"
-                                                cy="32"
-                                                r="28"
-                                                stroke="currentColor"
-                                                strokeWidth="3"
-                                                fill="transparent"
-                                                strokeDasharray={175.9}
-                                                strokeDashoffset={175.9 - (175.9 * countdown) / 60}
-                                                className="text-orange-500 transition-all duration-1000"
-                                            />
-                                        </svg>
-                                        <span className="absolute text-sm font-black text-gray-900">{countdown}s</span>
+                                    <div>
+                                        <h3 className="text-2xl font-black text-gray-900 leading-tight">New Order Arrived!</h3>
+                                        <p className="text-gray-400 font-bold text-[10px] uppercase tracking-[0.2em] mt-1">Order #{newOrderModal._id.slice(-6).toUpperCase()}</p>
                                     </div>
                                 </div>
+                                <div className="relative w-16 h-16 flex items-center justify-center">
+                                    <svg className="w-full h-full transform -rotate-90">
+                                        <circle
+                                            cx="32"
+                                            cy="32"
+                                            r="28"
+                                            stroke="currentColor"
+                                            strokeWidth="3"
+                                            fill="transparent"
+                                            className="text-gray-100"
+                                        />
+                                        <circle
+                                            cx="32"
+                                            cy="32"
+                                            r="28"
+                                            stroke="currentColor"
+                                            strokeWidth="3"
+                                            fill="transparent"
+                                            strokeDasharray={175.9}
+                                            strokeDashoffset={175.9 - (175.9 * countdown) / 60}
+                                            className="text-orange-500 transition-all duration-1000"
+                                        />
+                                    </svg>
+                                    <span className="absolute text-sm font-black text-gray-900">{countdown}s</span>
+                                </div>
+                            </div>
 
-                                {/* Customer Info */}
-                                <div className="px-8 mb-6">
-                                    <div className="bg-gray-50/80 rounded-3xl p-5 flex items-center gap-4 border border-gray-100">
-                                        <div className="w-12 h-12 rounded-xl bg-blue-500 flex items-center justify-center text-white font-bold text-lg">
-                                            {newOrderModal.user?.name?.[0].toUpperCase() || 'C'}
-                                        </div>
-                                        <div className="flex-1 min-w-0">
-                                            <h4 className="font-bold text-gray-900 truncate">{newOrderModal.user?.name || 'Customer'}</h4>
-                                            <p className="text-[10px] text-blue-600 font-bold uppercase tracking-wider">Regular Customer</p>
-                                        </div>
+                            {/* Customer Info */}
+                            <div className="px-8 mb-6">
+                                <div className="bg-gray-50/80 rounded-3xl p-5 flex items-center gap-4 border border-gray-100">
+                                    <div className="w-12 h-12 rounded-xl bg-blue-500 flex items-center justify-center text-white font-bold text-lg">
+                                        {newOrderModal.user?.name?.[0].toUpperCase() || 'C'}
                                     </div>
-                                    <div className="flex items-start gap-3 mt-4 px-1">
-                                        <div className="w-5 h-5 rounded-full bg-gray-100 flex items-center justify-center text-gray-400 mt-0.5">
-                                            <FaMapMarkerAlt size={10} />
-                                        </div>
-                                        <p className="text-gray-500 text-xs leading-relaxed font-medium">
-                                            {newOrderModal.shippingAddress?.address || 'Address not available'}
+                                    <div className="flex-1 min-w-0">
+                                        <h4 className="font-bold text-gray-900 truncate">{newOrderModal.user?.name || 'Customer'}</h4>
+                                        <p className="text-[10px] text-blue-600 font-bold uppercase tracking-wider">Regular Customer</p>
+                                    </div>
+                                </div>
+                                <div className="flex items-start gap-3 mt-4 px-1">
+                                    <div className="w-5 h-5 rounded-full bg-gray-100 flex items-center justify-center text-gray-400 mt-0.5">
+                                        <FaMapMarkerAlt size={10} />
+                                    </div>
+                                    <p className="text-gray-500 text-xs leading-relaxed font-medium">
+                                        {newOrderModal.shippingAddress?.address || 'Address not available'}
+                                    </p>
+                                </div>
+
+                                {/* Cutlery Requirement */}
+                                <div className={`mt-5 p-4 rounded-3xl border transition-all flex items-center gap-3 ${newOrderModal.cutlery
+                                        ? 'bg-orange-50 border-orange-100 text-orange-700 shadow-sm'
+                                        : 'bg-gray-50 border-gray-100 text-gray-500'
+                                    }`}>
+                                    <div className={`w-10 h-10 rounded-2xl flex items-center justify-center shadow-sm ${newOrderModal.cutlery ? 'bg-orange-500 text-white' : 'bg-gray-200 text-gray-400'
+                                        }`}>
+                                        <FaUtensils size={16} />
+                                    </div>
+                                    <div className="flex-1">
+                                        <p className="text-[10px] font-bold uppercase tracking-widest leading-none mb-1 opacity-60">
+                                            Cutlery Requirement
+                                        </p>
+                                        <p className="text-sm font-black">
+                                            {newOrderModal.cutlery ? 'Cutlery Required' : 'No Cutlery Needed'}
                                         </p>
                                     </div>
-
-                                    {/* Cutlery Requirement */}
-                                    <div className={`mt-5 p-4 rounded-3xl border transition-all flex items-center gap-3 ${
-                                        newOrderModal.cutlery 
-                                            ? 'bg-orange-50 border-orange-100 text-orange-700 shadow-sm' 
-                                            : 'bg-gray-50 border-gray-100 text-gray-500'
-                                    }`}>
-                                        <div className={`w-10 h-10 rounded-2xl flex items-center justify-center shadow-sm ${
-                                            newOrderModal.cutlery ? 'bg-orange-500 text-white' : 'bg-gray-200 text-gray-400'
-                                        }`}>
-                                            <FaUtensils size={16} />
+                                    {newOrderModal.cutlery && (
+                                        <div className="flex items-center gap-1 bg-orange-500/10 px-2 py-1 rounded-lg">
+                                            <span className="w-1.5 h-1.5 rounded-full bg-orange-500 animate-pulse" />
+                                            <span className="text-[8px] text-orange-600 font-black uppercase">Include</span>
                                         </div>
-                                        <div className="flex-1">
-                                            <p className="text-[10px] font-bold uppercase tracking-widest leading-none mb-1 opacity-60">
-                                                Cutlery Requirement
-                                            </p>
-                                            <p className="text-sm font-black">
-                                                {newOrderModal.cutlery ? 'Cutlery Required' : 'No Cutlery Needed'}
-                                            </p>
-                                        </div>
-                                        {newOrderModal.cutlery && (
-                                            <div className="flex items-center gap-1 bg-orange-500/10 px-2 py-1 rounded-lg">
-                                                <span className="w-1.5 h-1.5 rounded-full bg-orange-500 animate-pulse" />
-                                                <span className="text-[8px] text-orange-600 font-black uppercase">Include</span>
-                                            </div>
-                                        )}
-                                    </div>
+                                    )}
                                 </div>
+                            </div>
 
-                                {/* Order Items */}
-                                <div className="px-8 mb-8">
-                                    <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-4">Order Items</p>
-                                    <div className="space-y-3 max-h-[200px] overflow-y-auto pr-2 custom-scrollbar">
-                                        {newOrderModal.orderItems?.map((item: any, idx: number) => (
-                                            <div key={idx} className="flex justify-between items-center group">
-                                                <div className="flex items-center gap-3">
-                                                    <div className="w-2 h-2 rounded-full bg-gray-200 group-hover:bg-orange-400 transition-colors" />
-                                                    <div>
-                                                        <p className="text-sm font-bold text-gray-800">{item.name}</p>
-                                                        <p className="text-[10px] text-gray-400 font-medium">Qty: {item.qty}</p>
-                                                    </div>
+                            {/* Order Items */}
+                            <div className="px-8 mb-8">
+                                <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-4">Order Items</p>
+                                <div className="space-y-3 max-h-[200px] overflow-y-auto pr-2 custom-scrollbar">
+                                    {newOrderModal.orderItems?.map((item: any, idx: number) => (
+                                        <div key={idx} className="flex justify-between items-start group py-2 border-b border-gray-50 last:border-0">
+                                            <div className="flex items-start gap-3 flex-1">
+                                                <div className="w-2 h-2 rounded-full bg-gray-200 group-hover:bg-orange-400 transition-colors mt-1.5 shrink-0" />
+                                                <div className="flex flex-col">
+                                                    <p className="text-sm font-bold text-gray-800 leading-tight">{item.name}</p>
+                                                    {item.variant && (
+                                                        <p className="text-[11px] text-gray-500 font-medium mt-0.5">{item.variant}</p>
+                                                    )}
+                                                    <p className="text-[10px] text-gray-400 font-medium mt-0.5">Qty: {item.qty}</p>
                                                 </div>
-                                                <p className="text-sm font-bold text-gray-900">Rs. {item.price * item.qty}</p>
                                             </div>
-                                        ))}
-                                    </div>
-                                    <div className="mt-6 pt-6 border-t border-dashed border-gray-200 flex justify-between items-center">
-                                        <span className="text-lg font-bold text-gray-900">Total</span>
-                                        <span className="text-2xl font-black text-orange-600">Rs. {newOrderModal.totalPrice}</span>
-                                    </div>
+                                            <p className="text-sm font-bold text-gray-900 shrink-0 ml-4">Rs. {item.price * item.qty}</p>
+                                        </div>
+                                    ))}
                                 </div>
+                                <div className="mt-6 pt-6 border-t border-dashed border-gray-200 flex justify-between items-center">
+                                    <span className="text-lg font-bold text-gray-900">Total</span>
+                                    <span className="text-2xl font-black text-orange-600">Rs. {newOrderModal.totalPrice}</span>
+                                </div>
+                            </div>
 
-                                {/* Actions */}
-                                <div className="p-8 pt-0 flex gap-4">
-                                    <button
-                                        onClick={() => handleRejectOrder(newOrderModal._id)}
-                                        className="flex-1 py-4 rounded-2xl font-bold text-xs text-red-500 bg-red-50 hover:bg-red-100 transition-colors uppercase tracking-widest"
-                                    >
-                                        Reject
-                                    </button>
-                                    <button
-                                        onClick={() => handleAcceptOrder(newOrderModal._id)}
-                                        className="flex-[2] py-4 rounded-2xl font-bold text-xs text-white bg-gradient-to-r from-emerald-500 to-teal-600 shadow-xl shadow-emerald-500/30 hover:shadow-emerald-500/40 transition-all active:scale-95 uppercase tracking-widest"
-                                    >
-                                        Accept Order
-                                    </button>
-                                </div>
-                            </motion.div>
-                        </div>
-                    )}
-                </AnimatePresence>
-            </div>
+                            {/* Actions */}
+                            <div className="p-8 pt-0 flex gap-4">
+                                <button
+                                    onClick={() => handleRejectOrder(newOrderModal._id)}
+                                    className="flex-1 py-4 rounded-2xl font-bold text-xs text-red-500 bg-red-50 hover:bg-red-100 transition-colors uppercase tracking-widest"
+                                >
+                                    Reject
+                                </button>
+                                <button
+                                    onClick={() => handleAcceptOrder(newOrderModal._id)}
+                                    className="flex-[2] py-4 rounded-2xl font-bold text-xs text-white bg-gradient-to-r from-emerald-500 to-teal-600 shadow-xl shadow-emerald-500/30 hover:shadow-emerald-500/40 transition-all active:scale-95 uppercase tracking-widest"
+                                >
+                                    Accept Order
+                                </button>
+                            </div>
+                        </motion.div>
+                    </div>
+                )}
+            </AnimatePresence>
+        </div>
     );
 }

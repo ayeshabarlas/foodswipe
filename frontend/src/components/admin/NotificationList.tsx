@@ -16,7 +16,15 @@ interface Notification {
     data?: any;
 }
 
-export default function NotificationList({ onClose }: { onClose?: () => void }) {
+export default function NotificationList({ onClose, notificationCounts: counts, onNavigate }: {
+    onClose?: () => void;
+    notificationCounts?: {
+        pendingRestaurants: number;
+        pendingRiders: number;
+        newOrders: number;
+    };
+    onNavigate?: (tab: string) => void;
+}) {
     const [notifications, setNotifications] = useState<Notification[]>([]);
     const [loading, setLoading] = useState(true);
 
@@ -114,9 +122,66 @@ export default function NotificationList({ onClose }: { onClose?: () => void }) 
             </div>
 
             <div className="flex-1 overflow-y-auto p-2 custom-scrollbar">
+                {/* Pending Summaries */}
+                <div className="space-y-2 mb-2">
+                    {counts && counts.newOrders > 0 && (
+                        <div
+                            onClick={() => onNavigate && onNavigate('orders-live')}
+                            className="p-3 rounded-xl bg-orange-50 border border-orange-100 flex gap-3 cursor-pointer hover:bg-orange-100 transition-colors"
+                        >
+                            <div className="mt-1 w-8 h-8 rounded-lg bg-orange-500 flex items-center justify-center flex-shrink-0 text-white shadow-sm">
+                                <FaShoppingBag />
+                            </div>
+                            <div className="flex-1 min-w-0">
+                                <h4 className="text-sm font-bold text-gray-900">Pending Orders</h4>
+                                <p className="text-xs text-gray-600">{counts.newOrders} orders waiting for processing</p>
+                            </div>
+                            <span className="flex items-center justify-center w-6 h-6 rounded-full bg-orange-500 text-white text-[10px] font-bold">
+                                {counts.newOrders}
+                            </span>
+                        </div>
+                    )}
+
+                    {counts && counts.pendingRestaurants > 0 && (
+                        <div
+                            onClick={() => onNavigate && onNavigate('restaurants-pending')}
+                            className="p-3 rounded-xl bg-pink-50 border border-pink-100 flex gap-3 cursor-pointer hover:bg-pink-100 transition-colors"
+                        >
+                            <div className="mt-1 w-8 h-8 rounded-lg bg-pink-500 flex items-center justify-center flex-shrink-0 text-white shadow-sm">
+                                <FaStore />
+                            </div>
+                            <div className="flex-1 min-w-0">
+                                <h4 className="text-sm font-bold text-gray-900">Rest. Approvals</h4>
+                                <p className="text-xs text-gray-600">{counts.pendingRestaurants} restaurants waiting</p>
+                            </div>
+                            <span className="flex items-center justify-center w-6 h-6 rounded-full bg-pink-500 text-white text-[10px] font-bold">
+                                {counts.pendingRestaurants}
+                            </span>
+                        </div>
+                    )}
+
+                    {counts && counts.pendingRiders > 0 && (
+                        <div
+                            onClick={() => onNavigate && onNavigate('riders-pending')}
+                            className="p-3 rounded-xl bg-blue-50 border border-blue-100 flex gap-3 cursor-pointer hover:bg-blue-100 transition-colors"
+                        >
+                            <div className="mt-1 w-8 h-8 rounded-lg bg-blue-500 flex items-center justify-center flex-shrink-0 text-white shadow-sm">
+                                <FaMotorcycle />
+                            </div>
+                            <div className="flex-1 min-w-0">
+                                <h4 className="text-sm font-bold text-gray-900">Rider Approvals</h4>
+                                <p className="text-xs text-gray-600">{counts.pendingRiders} riders waiting</p>
+                            </div>
+                            <span className="flex items-center justify-center w-6 h-6 rounded-full bg-blue-500 text-white text-[10px] font-bold">
+                                {counts.pendingRiders}
+                            </span>
+                        </div>
+                    )}
+                </div>
+
                 {loading ? (
                     <div className="p-8 text-center text-gray-400">Loading alerts...</div>
-                ) : notifications.length === 0 ? (
+                ) : notifications.length === 0 && (!counts || counts.totalNotifications === 0) ? (
                     <div className="p-8 text-center">
                         <div className="w-12 h-12 bg-gray-50 rounded-full flex items-center justify-center mx-auto mb-3">
                             <FaBell className="text-gray-300" />
@@ -125,6 +190,10 @@ export default function NotificationList({ onClose }: { onClose?: () => void }) 
                     </div>
                 ) : (
                     <div className="space-y-2">
+                        {/* Section Header if we have mixed content */}
+                        {(counts?.totalNotifications > 0 && notifications.length > 0) && (
+                            <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider px-2 mt-2 mb-1">Recent Alerts</p>
+                        )}
                         {notifications.map((n) => (
                             <div
                                 key={n._id}

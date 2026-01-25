@@ -36,12 +36,41 @@ const VideoCard = ({ dish, isActive, onOpenComments }: VideoCardProps) => {
   const { addToCart } = useCart();
   const videoRef = useRef<Video>(null);
   const navigation = useNavigation<any>();
-  const [status, setStatus] = useState<any>({});
+  const [distance, setDistance] = useState<string>('1.2 km');
   const [liked, setLiked] = useState(false);
   const [likesCount, setLikesCount] = useState(dish.likes?.length || 0);
   const [sharesCount, setSharesCount] = useState(dish.shares || 0);
   const [loading, setLoading] = useState(true);
   const [isDetailsVisible, setIsDetailsVisible] = useState(false);
+
+  useEffect(() => {
+    // Calculate distance if coordinates available
+    const calculateRealDistance = async () => {
+      try {
+        const userLocString = await SecureStore.getItemAsync('userLocation');
+        if (userLocString && dish.restaurant?.location?.coordinates) {
+          const userLoc = JSON.parse(userLocString);
+          const [restLng, restLat] = dish.restaurant.location.coordinates;
+          
+          // Haversine formula
+          const R = 6371; // Earth's radius in km
+          const dLat = (restLat - userLoc.latitude) * Math.PI / 180;
+          const dLon = (restLng - userLoc.longitude) * Math.PI / 180;
+          const a = 
+            Math.sin(dLat/2) * Math.sin(dLat/2) +
+            Math.cos(userLoc.latitude * Math.PI / 180) * Math.cos(restLat * Math.PI / 180) * 
+            Math.sin(dLon/2) * Math.sin(dLon/2);
+          const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+          const d = R * c;
+          
+          setDistance(d < 1 ? `${(d * 1000).toFixed(0)}m away` : `${d.toFixed(1)} km away`);
+        }
+      } catch (err) {
+        console.log('Error calculating distance:', err);
+      }
+    };
+    calculateRealDistance();
+  }, [dish]);
 
   const [isPlaying, setIsPlaying] = useState(true);
 
@@ -237,7 +266,7 @@ const VideoCard = ({ dish, isActive, onOpenComments }: VideoCardProps) => {
             />
             <View>
               <Text style={styles.topRestaurantName}>{dish.restaurant?.name}</Text>
-              <Text style={styles.distanceText}>1.2 km away</Text>
+              <Text style={styles.distanceText}>{distance}</Text>
             </View>
           </TouchableOpacity>
         </View>

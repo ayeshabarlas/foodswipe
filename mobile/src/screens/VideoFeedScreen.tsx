@@ -42,9 +42,31 @@ const VideoFeedScreen = () => {
   const [currentTab, setCurrentTab] = useState('foryou');
   const [isCategoryDropdownOpen, setIsCategoryDropdownOpen] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState('All');
-  const categories = ['All', 'Burgers', 'Pizza', 'Pasta', 'Chinese', 'Desi', 'Desserts', 'Beverages'];
+  const [activeOrder, setActiveOrder] = useState<any>(null);
+  const categories = ['All', 'Burgers', 'Pizza', 'Pasta', 'Chinese', 'Desi', 'Desserts', 'Beverages', 'Breakfast', 'Lunch', 'Dinner', 'Fast Food'];
   
   const navigation = useNavigation<any>();
+
+  const fetchActiveOrder = async () => {
+    try {
+      const userInfoStr = await SecureStore.getItemAsync('user_info');
+      if (!userInfoStr) return;
+      const response = await apiClient.get('/orders/user/active');
+      if (response.data && response.data.length > 0) {
+        setActiveOrder(response.data[0]);
+      } else {
+        setActiveOrder(null);
+      }
+    } catch (err) {
+      console.log('Error fetching active order:', err);
+    }
+  };
+
+  useEffect(() => {
+    fetchActiveOrder();
+    const interval = setInterval(fetchActiveOrder, 30000);
+    return () => clearInterval(interval);
+  }, []);
 
   const fetchVideos = async (tab = currentTab, category = selectedCategory) => {
     try {
@@ -222,6 +244,18 @@ const VideoFeedScreen = () => {
               </View>
             )}
           </TouchableOpacity>
+
+          {activeOrder && (
+            <TouchableOpacity 
+              style={[styles.cartBtn, { marginLeft: 10, backgroundColor: '#4CAF50' }]} 
+              onPress={() => navigation.navigate('OrderDetails', { orderId: activeOrder._id })}
+            >
+              <Ionicons name="map" color="#fff" size={20} />
+              <View style={[styles.cartBadge, { backgroundColor: '#fff' }]}>
+                <View style={{ width: 6, height: 6, borderRadius: 3, backgroundColor: '#4CAF50' }} />
+              </View>
+            </TouchableOpacity>
+          )}
         </View>
 
         <View style={styles.tabContainer}>
@@ -498,26 +532,37 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     zIndex: 90,
-    backgroundColor: 'rgba(0,0,0,0.8)',
-    paddingVertical: 10,
-    paddingHorizontal: 15,
+    backgroundColor: 'rgba(0,0,0,0.85)',
+    paddingVertical: 15,
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(255,255,255,0.1)',
   },
   categoryItem: {
-    paddingHorizontal: 15,
-    paddingVertical: 8,
-    borderRadius: 20,
-    backgroundColor: 'rgba(255,255,255,0.1)',
-    marginRight: 10,
+    paddingHorizontal: 18,
+    paddingVertical: 10,
+    borderRadius: 22,
+    backgroundColor: 'rgba(255,255,255,0.12)',
+    marginHorizontal: 6,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.08)',
   },
   activeCategoryItem: {
     backgroundColor: '#FF6A00',
+    borderColor: '#FF6A00',
+    shadowColor: '#FF6A00',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 5,
   },
   categoryText: {
-    color: '#fff',
+    color: 'rgba(255,255,255,0.7)',
     fontSize: 14,
+    fontWeight: '600',
   },
   activeCategoryText: {
-    fontWeight: 'bold',
+    color: '#fff',
+    fontWeight: '700',
   },
   modalOverlay: {
     flex: 1,

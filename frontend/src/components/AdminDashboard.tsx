@@ -323,9 +323,56 @@ export default function AdminDashboard() {
         );
     }
 
+    // Local state to track "seen" counts so we can reset badges on click
+    const [lastSeenCounts, setLastSeenCounts] = useState({
+        pendingRestaurants: 0,
+        pendingRiders: 0,
+        newOrders: 0,
+        newUsers: 0
+    });
+
+    const getDisplayCounts = () => {
+        return {
+            pendingRestaurants: Math.max(0, notificationCounts.pendingRestaurants - lastSeenCounts.pendingRestaurants),
+            pendingRiders: Math.max(0, notificationCounts.pendingRiders - lastSeenCounts.pendingRiders),
+            newOrders: Math.max(0, notificationCounts.newOrders - lastSeenCounts.newOrders),
+            newUsers: Math.max(0, notificationCounts.newUsers - lastSeenCounts.newUsers),
+            totalNotifications: notificationCounts.totalNotifications // Total stays real for the bell
+        };
+    };
+
+    const displayCounts = getDisplayCounts();
+    // Calculate total badge count based on displayed (unseen) items only for the sidebar, 
+    // but usually the sidebar sub-badges are what matter. 
+    // The bell icon (totalNotifications) usually stays as the "Backend Total" until "Mark All Read" is clicked or items are processed.
+    // However, the user request specifically asked for "sidebar tab click resets count".
+
     const handleTabChange = (tab: string) => {
         setActiveTab(tab);
         localStorage.setItem('adminActiveTab', tab);
+
+        // Reset counts logic
+        setLastSeenCounts(prev => {
+            const next = { ...prev };
+            if (tab === 'restaurants' || tab === 'restaurants-pending') {
+                next.pendingRestaurants = notificationCounts.pendingRestaurants;
+            }
+            if (tab === 'riders' || tab === 'riders-pending') {
+                next.pendingRiders = notificationCounts.pendingRiders;
+            }
+            if (tab === 'orders' || tab === 'orders-live') {
+                next.newOrders = notificationCounts.newOrders;
+            }
+            if (tab === 'customers') {
+                next.newUsers = notificationCounts.newUsers;
+            }
+            return next;
+        });
+    };
+
+    const handleNavigateFromNotification = (tab: string) => {
+        setShowNotifications(false);
+        handleTabChange(tab);
     };
 
     return (
@@ -339,7 +386,12 @@ export default function AdminDashboard() {
                 <div className="absolute top-[20%] left-[-5%] w-[25%] h-[25%] bg-gradient-to-br from-orange-500/5 to-pink-500/5 blur-[60px] rounded-full"></div>
             </div>
 
-            <Sidebar activeTab={activeTab} setActiveTab={handleTabChange} onLogout={handleLogout} notificationCounts={notificationCounts} />
+            <Sidebar
+                activeTab={activeTab}
+                setActiveTab={handleTabChange}
+                onLogout={handleLogout}
+                notificationCounts={displayCounts}
+            />
 
             <div className="flex-1 w-full md:ml-64 pt-16 md:pt-0 h-screen overflow-y-auto relative z-10 custom-scrollbar">
                 {/* Floating Notification Bell */}
@@ -358,7 +410,11 @@ export default function AdminDashboard() {
 
                     {showNotifications && (
                         <div className="absolute top-14 right-0 animate-in fade-in slide-in-from-top-4 duration-300">
-                            <NotificationList onClose={() => setShowNotifications(false)} />
+                            <NotificationList
+                                onClose={() => setShowNotifications(false)}
+                                notificationCounts={notificationCounts}
+                                onNavigate={handleNavigateFromNotification}
+                            />
                         </div>
                     )}
                 </div>
