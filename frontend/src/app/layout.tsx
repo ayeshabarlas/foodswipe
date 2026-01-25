@@ -25,9 +25,9 @@ export const metadata: Metadata = {
   title: "Foodswipe - Delicious Food Delivered",
   description: "TikTok-style food delivery app",
   icons: {
-    icon: '/logo.svg',
-    shortcut: '/logo.svg',
-    apple: '/logo.svg',
+    icon: '/favicon.png',
+    shortcut: '/favicon.png',
+    apple: '/favicon.png',
   }
 };
 
