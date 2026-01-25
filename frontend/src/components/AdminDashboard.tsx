@@ -406,28 +406,7 @@ export default function AdminDashboard() {
     // The bell icon (totalNotifications) usually stays as the "Backend Total" until "Mark All Read" is clicked or items are processed.
     // However, the user request specifically asked for "sidebar tab click resets count".
 
-    const handleTabChange = (tab: string) => {
-        setActiveTab(tab);
-        localStorage.setItem('adminActiveTab', tab);
 
-        // Reset counts logic
-        setLastSeenCounts(prev => {
-            const next = { ...prev };
-            if (tab === 'restaurants' || tab === 'restaurants-pending') {
-                next.pendingRestaurants = notificationCounts.pendingRestaurants;
-            }
-            if (tab === 'riders' || tab === 'riders-pending') {
-                next.pendingRiders = notificationCounts.pendingRiders;
-            }
-            if (tab === 'orders' || tab === 'orders-live') {
-                next.newOrders = notificationCounts.newOrders;
-            }
-            if (tab === 'customers') {
-                next.newUsers = notificationCounts.newUsers;
-            }
-            return next;
-        });
-    };
 
     const handleNavigateFromNotification = (tab: string) => {
         setShowNotifications(false);
