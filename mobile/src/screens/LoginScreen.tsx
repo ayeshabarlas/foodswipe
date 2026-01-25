@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   StyleSheet, 
   Text, 
@@ -14,6 +14,8 @@ import {
   ScrollView,
   Dimensions
 } from 'react-native';
+import * as WebBrowser from 'expo-web-browser';
+import * as Google from 'expo-auth-session/providers/google';
 import apiClient from '../api/apiClient';
 import * as SecureStore from 'expo-secure-store';
 import { Colors } from '../theme/colors';
@@ -21,10 +23,18 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { initSocket } from '../utils/socket';
 import PhoneVerificationModal from '../components/PhoneVerificationModal';
 
+WebBrowser.maybeCompleteAuthSession();
+
 const { width } = Dimensions.get('window');
 
 export default function LoginScreen({ navigation }: any) {
-  const [mode, setMode] = useState<'login' | 'signup' | 'select'>('login');
+  const [request, response, promptAsync] = Google.useAuthRequest({
+    androidClientId: "YOUR_ANDROID_CLIENT_ID",
+    iosClientId: "YOUR_IOS_CLIENT_ID",
+    webClientId: "YOUR_WEB_CLIENT_ID",
+  });
+
+  const [mode, setMode] = useState<'login' | 'signup' | 'select'>('select');
   const [selectedRole, setSelectedRole] = useState<'customer' | 'restaurant' | 'rider'>('customer');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -34,40 +44,40 @@ export default function LoginScreen({ navigation }: any) {
   const [showPhoneVerification, setShowPhoneVerification] = useState(false);
   const [tempAuthData, setTempAuthData] = useState<{token: string, user: any} | null>(null);
 
-  const handleGoogleLogin = async () => {
+  useEffect(() => {
+    if (response?.type === 'success') {
+      const { authentication } = response;
+      handleGoogleAuthSuccess(authentication?.accessToken);
+    }
+  }, [response]);
+
+  const handleGoogleAuthSuccess = async (token: string | undefined) => {
+    if (!token) return;
     setLoading(true);
     try {
-      // Real implementation would use expo-auth-session
-      // For now, we simulate a successful Google login for demonstration
-      Alert.alert(
-        'Google Login',
-        'In a production environment, this would open the Google Sign-In portal. For now, do you want to simulate a successful login?',
-        [
-          { text: 'Cancel', onPress: () => setLoading(false), style: 'cancel' },
-          { 
-            text: 'Simulate', 
-            onPress: async () => {
-              try {
-                // Mock API call for social login
-                const response = await apiClient.post('/auth/social-login', {
-                  email: 'google-user@example.com',
-                  name: 'Google User',
-                  provider: 'google',
-                  role: selectedRole
-                });
-                const { token, ...userData } = response.data;
-                await saveAuthData(token, userData);
-              } catch (err: any) {
-                Alert.alert('Error', 'Failed to simulate Google login');
-              } finally {
-                setLoading(false);
-              }
-            } 
-          }
-        ]
-      );
-    } catch (error) {
+      // In a real app, you would send the token to your backend
+      // and the backend would verify it with Google.
+      // For now, we simulate this verification with our existing social-login endpoint.
+      const res = await apiClient.post('/auth/social-login', {
+        email: 'google-user@example.com', // In reality, you'd get this from Google profile
+        name: 'Google User',
+        provider: 'google',
+        role: selectedRole
+      });
+      const { token: authToken, ...userData } = res.data;
+      await saveAuthData(authToken, userData);
+    } catch (err) {
+      Alert.alert('Error', 'Google authentication failed');
+    } finally {
       setLoading(false);
+    }
+  };
+
+  const handleGoogleLogin = async () => {
+    try {
+      await promptAsync();
+    } catch (error) {
+      Alert.alert('Error', 'Could not open Google Login');
     }
   };
 
@@ -89,7 +99,10 @@ export default function LoginScreen({ navigation }: any) {
         });
         const { token, ...userData } = response.data;
         
-        // After signup, we show phone verification
+        // After signup, we need to save the token so the phone verification modal can use it
+        // because the /users/send-otp route is protected.
+        await SecureStore.setItemAsync('auth_token', String(token));
+        
         setTempAuthData({ token, user: userData });
         setShowPhoneVerification(true);
       } else {
