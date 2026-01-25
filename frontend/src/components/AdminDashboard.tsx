@@ -74,10 +74,71 @@ export default function AdminDashboard() {
         newUsers: 0
     });
 
+    // Initialize from localStorage on mount
     const [showNotifications, setShowNotifications] = useState(false);
     const [loading, setLoading] = useState(true);
     const [mounted, setMounted] = useState(false);
     const router = useRouter();
+
+    useEffect(() => {
+        if (typeof window !== 'undefined') {
+            const saved = localStorage.getItem('adminLastSeenCounts');
+            if (saved) {
+                try {
+                    setLastSeenCounts(JSON.parse(saved));
+                } catch (e) {
+                    console.error('Failed to parse last seen counts', e);
+                }
+            }
+        }
+    }, []);
+
+    // Save to localStorage whenever it changes
+    const updateLastSeenCounts = (newCounts: any) => {
+        setLastSeenCounts(newCounts);
+        localStorage.setItem('adminLastSeenCounts', JSON.stringify(newCounts));
+    };
+
+    const handleTabChange = (tab: string) => {
+        setActiveTab(tab);
+        localStorage.setItem('adminActiveTab', tab);
+
+        // Reset counts logic
+        setLastSeenCounts(prev => {
+            const next = { ...prev };
+            let changed = false;
+
+            if (tab === 'restaurants' || tab === 'restaurants-pending') {
+                if (next.pendingRestaurants !== notificationCounts.pendingRestaurants) {
+                    next.pendingRestaurants = notificationCounts.pendingRestaurants;
+                    changed = true;
+                }
+            }
+            if (tab === 'riders' || tab === 'riders-pending') {
+                if (next.pendingRiders !== notificationCounts.pendingRiders) {
+                    next.pendingRiders = notificationCounts.pendingRiders;
+                    changed = true;
+                }
+            }
+            if (tab === 'orders' || tab === 'orders-live') {
+                if (next.newOrders !== notificationCounts.newOrders) {
+                    next.newOrders = notificationCounts.newOrders;
+                    changed = true;
+                }
+            }
+            if (tab === 'customers') {
+                if (next.newUsers !== notificationCounts.newUsers) {
+                    next.newUsers = notificationCounts.newUsers;
+                    changed = true;
+                }
+            }
+
+            if (changed) {
+                localStorage.setItem('adminLastSeenCounts', JSON.stringify(next));
+            }
+            return next;
+        });
+    };
 
     // Initial stats fetch and real-time setup
     useEffect(() => {

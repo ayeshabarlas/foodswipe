@@ -13,7 +13,8 @@ import {
   ActivityIndicator,
   RefreshControl,
   Alert,
-  FlatList
+  FlatList,
+  Modal
 } from 'react-native';
 import { Colors } from '../theme/colors';
 import * as SecureStore from 'expo-secure-store';
@@ -24,8 +25,16 @@ import { Video } from 'expo-av';
 import { getMediaUrl } from '../utils/config';
 import { subscribeToChannel, unsubscribeFromChannel } from '../utils/socket';
 import { getCache, setCache } from '../utils/cache';
+import MapView, { Marker } from 'react-native-maps';
+import Constants from 'expo-constants';
+import * as Location from 'expo-location';
 
-const { width } = Dimensions.get('window');
+const { width, height } = Dimensions.get('window');
+
+// Google Maps API Key
+const GOOGLE_MAPS_API_KEY = 
+  Constants.expoConfig?.android?.config?.googleMaps?.apiKey || 
+  Constants.expoConfig?.ios?.config?.googleMapsApiKey;
 
 export default function CustomerDashboard({ navigation }: any) {
   const [userData, setUserData] = useState<any>(null);
@@ -36,6 +45,19 @@ export default function CustomerDashboard({ navigation }: any) {
   const [featuredVideo, setFeaturedVideo] = useState<any>(null);
   const [activeOrders, setActiveOrders] = useState<any[]>([]);
 
+  // Address States
+  const [address, setAddress] = useState('Current Location');
+  const [deliveryLocation, setDeliveryLocation] = useState<{ lat: number, lng: number } | null>(null);
+  const [isMapVisible, setIsMapVisible] = useState(false);
+  const [mapRegion, setMapRegion] = useState({
+    latitude: 31.5204,
+    longitude: 74.3587,
+    latitudeDelta: 0.01,
+    longitudeDelta: 0.01,
+  });
+  const [isGettingLocation, setIsGettingLocation] = useState(false);
+  const [settings, setSettings] = useState<any>(null);
+
   const categories = ['All', 'Pizza', 'Burger', 'Asian', 'Dessert', 'Healthy'];
 
   useEffect(() => {
@@ -43,6 +65,8 @@ export default function CustomerDashboard({ navigation }: any) {
     fetchRestaurants();
     fetchFeaturedVideo();
     fetchActiveOrders();
+    loadSavedAddress();
+    fetchSettings();
 
     // Subscribe to restaurant updates
     const restChannel = subscribeToChannel('restaurants');
@@ -59,6 +83,84 @@ export default function CustomerDashboard({ navigation }: any) {
       unsubscribeFromChannel('restaurants');
     };
   }, []);
+
+  const loadSavedAddress = async () => {
+    try {
+      const savedAddress = await SecureStore.getItemAsync('user_address');
+      const savedLocation = await SecureStore.getItemAsync('user_location');
+      if (savedAddress) setAddress(savedAddress);
+      if (savedLocation) {
+        const loc = JSON.parse(savedLocation);
+        setDeliveryLocation(loc);
+        setMapRegion({
+          ...mapRegion,
+          latitude: loc.lat,
+          longitude: loc.lng
+        });
+      }
+    } catch (err) {
+      console.error('Error loading saved address:', err);
+    }
+  };
+
+  const fetchSettings = async () => {
+    try {
+      const res = await apiClient.get('/settings');
+      setSettings(res.data);
+    } catch (err) {
+      console.error('Error fetching settings:', err);
+    }
+  };
+
+  const handleMapPress = (e: any) => {
+    const { latitude, longitude } = e.nativeEvent.coordinate;
+    const loc = { lat: latitude, lng: longitude };
+    setDeliveryLocation(loc);
+    reverseGeocode(latitude, longitude);
+  };
+
+  const reverseGeocode = async (lat: number, lng: number) => {
+    try {
+      const apiKey = settings?.googleMapsApiKey || GOOGLE_MAPS_API_KEY;
+      const response = await fetch(
+        `https://maps.googleapis.com/maps/api/geocode/json?latlng=${lat},${lng}&key=${apiKey}`
+      );
+      const data = await response.json();
+      if (data.status === 'OK' && data.results.length > 0) {
+        const addr = data.results[0].formatted_address;
+        setAddress(addr);
+        await SecureStore.setItemAsync('user_address', addr);
+        await SecureStore.setItemAsync('user_location', JSON.stringify({ lat, lng }));
+      }
+    } catch (err) {
+      console.error('Reverse geocode error:', err);
+    }
+  };
+
+  const getCurrentLocation = async () => {
+    try {
+      setIsGettingLocation(true);
+      let { status } = await Location.requestForegroundPermissionsAsync();
+      if (status !== 'granted') {
+        Alert.alert('Permission denied', 'Location permission is required to find your address');
+        return;
+      }
+
+      let location = await Location.getCurrentPositionAsync({});
+      const loc = { lat: location.coords.latitude, lng: location.coords.longitude };
+      setDeliveryLocation(loc);
+      setMapRegion({
+        ...mapRegion,
+        latitude: loc.lat,
+        longitude: loc.lng,
+      });
+      reverseGeocode(loc.lat, loc.lng);
+    } catch (err) {
+      console.error('Get location error:', err);
+    } finally {
+      setIsGettingLocation(false);
+    }
+  };
 
   useEffect(() => {
     if (userData?.id) {
@@ -298,12 +400,86 @@ export default function CustomerDashboard({ navigation }: any) {
     <SafeAreaView style={styles.container}>
       <StatusBar barStyle="dark-content" />
       
+      {/* Map Picker Modal */}
+      <Modal
+        visible={isMapVisible}
+        animationType="slide"
+        transparent={false}
+        onRequestClose={() => setIsMapVisible(false)}
+      >
+        <SafeAreaView style={{ flex: 1 }}>
+          <View style={styles.mapHeader}>
+            <TouchableOpacity 
+              style={styles.mapCloseBtn}
+              onPress={() => setIsMapVisible(false)}
+            >
+              <Ionicons name="close" size={24} color="#000" />
+            </TouchableOpacity>
+            <Text style={styles.mapTitle}>Set Delivery Address</Text>
+            <TouchableOpacity 
+              style={styles.mapDoneBtn}
+              onPress={() => setIsMapVisible(false)}
+            >
+              <Text style={styles.mapDoneText}>Done</Text>
+            </TouchableOpacity>
+          </View>
+
+          <View style={{ flex: 1 }}>
+            <MapView
+              style={{ flex: 1 }}
+              region={mapRegion}
+              onPress={handleMapPress}
+              showsUserLocation={true}
+              showsMyLocationButton={true}
+            >
+              {deliveryLocation && (
+                <Marker
+                  coordinate={{
+                    latitude: deliveryLocation.lat,
+                    longitude: deliveryLocation.lng,
+                  }}
+                  title="Delivery Here"
+                />
+              )}
+            </MapView>
+            
+            {/* Address Overlay */}
+            <View style={styles.addressOverlay}>
+              <View style={styles.addressBox}>
+                <Ionicons name="location" size={20} color={Colors.primary} />
+                <Text style={styles.addressBoxText} numberOfLines={2}>
+                  {address || 'Locating...'}
+                </Text>
+              </View>
+              <TouchableOpacity 
+                style={styles.currentLocationBtn}
+                onPress={getCurrentLocation}
+                disabled={isGettingLocation}
+              >
+                {isGettingLocation ? (
+                  <ActivityIndicator size="small" color={Colors.primary} />
+                ) : (
+                  <>
+                    <Ionicons name="locate" size={20} color={Colors.primary} />
+                    <Text style={styles.currentLocationText}>Use Current Location</Text>
+                  </>
+                )}
+              </TouchableOpacity>
+              <Text style={styles.mapTip}>Tap on map to change location</Text>
+            </View>
+          </View>
+        </SafeAreaView>
+      </Modal>
+
       {/* Header */}
       <View style={styles.header}>
-        <View>
+        <View style={{ flex: 1 }}>
           <Text style={styles.greeting}>Deliver to</Text>
-          <TouchableOpacity style={styles.locationContainer}>
-            <Text style={styles.locationText}>Current Location</Text>
+          <TouchableOpacity 
+            style={styles.locationContainer}
+            onPress={() => setIsMapVisible(true)}
+          >
+            <Text style={styles.locationText} numberOfLines={1}>{address}</Text>
             <Ionicons name="chevron-down" size={16} color={Colors.primary} />
           </TouchableOpacity>
         </View>
@@ -518,7 +694,84 @@ const styles = StyleSheet.create({
     paddingHorizontal: 8,
     paddingVertical: 2,
     borderRadius: 10,
-    marginRight: 20,
+  },
+  mapHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    padding: 15,
+    backgroundColor: '#fff',
+    borderBottomWidth: 1,
+    borderBottomColor: '#eee',
+  },
+  mapCloseBtn: {
+    padding: 5,
+  },
+  mapTitle: {
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
+  mapDoneBtn: {
+    padding: 5,
+  },
+  mapDoneText: {
+    color: Colors.primary,
+    fontWeight: 'bold',
+    fontSize: 16,
+  },
+  addressOverlay: {
+    position: 'absolute',
+    bottom: 30,
+    left: 20,
+    right: 20,
+    backgroundColor: 'transparent',
+  },
+  addressBox: {
+    backgroundColor: '#fff',
+    padding: 15,
+    borderRadius: 15,
+    flexDirection: 'row',
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+    elevation: 5,
+    marginBottom: 10,
+  },
+  addressBoxText: {
+    flex: 1,
+    marginLeft: 10,
+    fontSize: 14,
+    color: '#333',
+  },
+  currentLocationBtn: {
+    backgroundColor: '#fff',
+    padding: 15,
+    borderRadius: 15,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+    elevation: 5,
+    marginBottom: 10,
+  },
+  currentLocationText: {
+    marginLeft: 8,
+    color: Colors.primary,
+    fontWeight: 'bold',
+    fontSize: 14,
+  },
+  mapTip: {
+    textAlign: 'center',
+    color: '#fff',
+    fontSize: 12,
+    textShadowColor: 'rgba(0, 0, 0, 0.75)',
+    textShadowOffset: { width: -1, height: 1 },
+    textShadowRadius: 10,
   },
   sectionHeader: {
     flexDirection: 'row',

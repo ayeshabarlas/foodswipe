@@ -13,7 +13,8 @@ import {
   Platform,
   Image,
   KeyboardAvoidingView,
-  FlatList
+  FlatList,
+  Modal
 } from 'react-native';
 import Constants from 'expo-constants';
 import { Ionicons } from '@expo/vector-icons';
@@ -78,12 +79,33 @@ const CheckoutScreen = ({ navigation }: any) => {
 
   useEffect(() => {
     fetchSettings();
+    loadSavedAddress();
     if (cart.length > 0) {
       fetchRestaurantDetails();
     }
     // Generate session token for Google Maps
     setSessionToken(Math.random().toString(36).substring(2, 15));
   }, []);
+
+  const loadSavedAddress = async () => {
+    try {
+      const savedAddress = await SecureStore.getItemAsync('user_address');
+      const savedLocation = await SecureStore.getItemAsync('user_location');
+      if (savedAddress) setAddress(savedAddress);
+      if (savedLocation) {
+        const loc = JSON.parse(savedLocation);
+        setDeliveryLocation(loc);
+        setMapRegion({
+          ...mapRegion,
+          latitude: loc.lat,
+          longitude: loc.lng
+        });
+        updateDeliveryFee(loc);
+      }
+    } catch (err) {
+      console.error('Error loading saved address:', err);
+    }
+  };
 
   const fetchSettings = async () => {
     try {

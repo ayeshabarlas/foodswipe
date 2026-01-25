@@ -42,6 +42,7 @@ const VideoCard = ({ dish, isActive, onOpenComments }: VideoCardProps) => {
   const [sharesCount, setSharesCount] = useState(dish.shares || 0);
   const [loading, setLoading] = useState(true);
   const [isDetailsVisible, setIsDetailsVisible] = useState(false);
+  const [status, setStatus] = useState({});
 
   useEffect(() => {
     // Calculate distance if coordinates available

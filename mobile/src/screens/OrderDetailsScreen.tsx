@@ -270,7 +270,8 @@ export default function OrderDetailsScreen({ route, navigation }: any) {
             <Ionicons name="location" size={20} color={Colors.primary} />
             <Text style={styles.cardTitle}> Delivery Address</Text>
           </View>
-          <Text style={styles.addressText}>{order.deliveryAddress}</Text>
+          <Text style={styles.addressText}>{order.shippingAddress?.address || order.deliveryAddress}</Text>
+          {order.shippingAddress?.city && <Text style={styles.addressText}>{order.shippingAddress.city}</Text>}
           {order.deliveryInstructions && (
             <Text style={styles.instructionsText}>Note: {order.deliveryInstructions}</Text>
           )}
@@ -310,22 +311,22 @@ export default function OrderDetailsScreen({ route, navigation }: any) {
           {order.orderItems.map((item: any, index: number) => (
             <View key={index} style={styles.itemRow}>
               <View style={styles.itemMain}>
-                <Text style={styles.itemQuantity}>{item.quantity}x</Text>
+                <Text style={styles.itemQuantity}>{item.qty || item.quantity}x</Text>
                 <View>
-                  <Text style={styles.itemName}>{item.dish?.name || 'Dish'}</Text>
+                  <Text style={styles.itemName}>{item.name || item.dish?.name || 'Dish'}</Text>
                   {item.variant && <Text style={styles.itemExtra}>{item.variant.name}</Text>}
                   {item.drinks?.map((d: any) => (
                     <Text key={d._id} style={styles.itemExtra}>+ {d.name}</Text>
                   ))}
                 </View>
               </View>
-              <Text style={styles.itemPrice}>Rs. {formatPrice(item.price * item.quantity)}</Text>
+              <Text style={styles.itemPrice}>Rs. {formatPrice(item.price * (item.qty || item.quantity))}</Text>
             </View>
           ))}
           <View style={styles.divider} />
           <View style={styles.summaryRow}>
             <Text style={styles.summaryLabel}>Subtotal</Text>
-            <Text style={styles.summaryValue}>Rs. {formatPrice(order.totalPrice - (order.deliveryFee || 50))}</Text>
+            <Text style={styles.summaryValue}>Rs. {formatPrice(order.subtotal || (order.totalPrice - (order.deliveryFee || 50)))}</Text>
           </View>
           <View style={styles.summaryRow}>
             <Text style={styles.summaryLabel}>Delivery Fee</Text>
