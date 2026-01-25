@@ -15,7 +15,13 @@ const { connectDB, getDbStatus } = require('./config/db');
 
 const app = express();
 
-// 🚀 1. CORS & MIDDLEWARE
+// 🚀 1. REQUEST LOGGING (Moved to top)
+app.use((req, res, next) => {
+    console.log(`📡 [${new Date().toISOString()}] ${req.method} ${req.url}`);
+    next();
+});
+
+// 🚀 2. CORS & MIDDLEWARE
 const allowedOrigins = [
     'http://localhost:3000',
     'http://localhost:3001',
@@ -66,12 +72,6 @@ app.use((req, res, next) => {
             details: dbStatus.lastError
         });
     }
-    next();
-});
-
-// 🚀 3. REQUEST LOGGING
-app.use((req, res, next) => {
-    console.log(`📡 [${new Date().toISOString()}] ${req.method} ${req.url}`);
     next();
 });
 
@@ -155,6 +155,7 @@ try {
     app.use('/api/verifications', require('./routes/verificationRoutes'));
     app.use('/api/tickets', require('./routes/ticketRoutes'));
     app.use('/api/settings', require('./routes/settingsRoutes'));
+    app.use('/api/pusher', require('./routes/pusherRoutes'));
     console.log('✅ All Routes Loaded');
 } catch (routeErr) {
     console.error('🔥 ROUTE LOADING ERROR:', routeErr.message);

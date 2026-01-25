@@ -461,6 +461,19 @@ const acceptOrder = async (req, res) => {
 
         triggerEvent(`restaurant-${order.restaurant._id}`, 'orderStatusUpdate', updatedOrder);
 
+        // Notify anyone watching the order that a rider has been assigned
+        triggerEvent(`order-${order._id}`, 'riderAssigned', {
+            orderId: order._id,
+            rider: {
+                _id: rider._id,
+                name: rider.fullName || rider.user?.name,
+                phone: rider.user?.phone,
+                location: rider.location
+            },
+            status: 'Rider Assigned'
+        });
+        triggerEvent(`order-${order._id}`, 'orderStatusUpdate', updatedOrder);
+
         // Notify customer about order status update
         if (order.user) {
             triggerEvent(`user-${order.user._id}`, 'orderStatusUpdate', updatedOrder);

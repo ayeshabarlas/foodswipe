@@ -1,6 +1,8 @@
 const Dish = require('../models/Dish');
 const Restaurant = require('../models/Restaurant');
 const Deal = require('../models/Deal');
+const User = require('../models/User');
+const { triggerEvent } = require('../socket');
 
 /**
  * @desc    Create a new video (Legacy - now handled by Dish creation)
@@ -191,6 +193,20 @@ const likeVideo = async (req, res) => {
 
         await dish.save();
 
+        // Trigger real-time update
+        triggerEvent(`video-${dish._id}`, 'videoUpdate', {
+            likes: dish.likes.length,
+            isLiked: likeIndex === -1,
+        });
+
+        // Also trigger on public feed for count updates
+        triggerEvent('public-feed', 'dish_updated', {
+            _id: dish._id,
+            likes: dish.likes,
+            shares: dish.shares,
+            views: dish.views
+        });
+
         res.json({
             likes: dish.likes.length,
             isLiked: likeIndex === -1,
@@ -217,6 +233,10 @@ const trackVideoView = async (req, res) => {
         dish.views += 1;
         await dish.save();
 
+        triggerEvent(`video-${dish._id}`, 'videoUpdate', {
+            views: dish.views
+        });
+
         res.json({ views: dish.views });
     } catch (error) {
         console.error('Track video view error:', error);
@@ -230,8 +250,23 @@ const trackVideoView = async (req, res) => {
  * @access  Public
  */
 const trackOrderClick = async (req, res) => {
-    // Placeholder - Dish model doesn't have orderClicks yet
-    res.json({ message: 'Tracked' });
+    try {
+        const dish = await Dish.findById(req.params.id);
+        if (!dish) {
+            return res.status(404).json({ message: 'Dish not found' });
+        }
+        dish.orderClicks = (dish.orderClicks || 0) + 1;
+        await dish.save();
+
+        triggerEvent(`video-${dish._id}`, 'videoUpdate', {
+            orderClicks: dish.orderClicks
+        });
+
+        res.json({ orderClicks: dish.orderClicks });
+    } catch (error) {
+        console.error('Track order click error:', error);
+        res.status(500).json({ message: 'Failed to track order click', error: error.message });
+    }
 };
 
 /**
@@ -240,8 +275,23 @@ const trackOrderClick = async (req, res) => {
  * @access  Public
  */
 const trackCartClick = async (req, res) => {
-    // Placeholder - Dish model doesn't have addToCartClicks yet
-    res.json({ message: 'Tracked' });
+    try {
+        const dish = await Dish.findById(req.params.id);
+        if (!dish) {
+            return res.status(404).json({ message: 'Dish not found' });
+        }
+        dish.addToCartClicks = (dish.addToCartClicks || 0) + 1;
+        await dish.save();
+
+        triggerEvent(`video-${dish._id}`, 'videoUpdate', {
+            addToCartClicks: dish.addToCartClicks
+        });
+
+        res.json({ addToCartClicks: dish.addToCartClicks });
+    } catch (error) {
+        console.error('Track cart click error:', error);
+        res.status(500).json({ message: 'Failed to track cart click', error: error.message });
+    }
 };
 
 /**
@@ -264,6 +314,11 @@ const shareVideo = async (req, res) => {
         }
         dish.shares += 1;
         await dish.save();
+
+        triggerEvent(`video-${dish._id}`, 'videoUpdate', {
+            shares: dish.shares
+        });
+
         res.json({ shares: dish.shares });
     } catch (error) {
         console.error('Share video error:', error);
@@ -294,7 +349,9 @@ const commentVideo = async (req, res) => {
             rating: rating || 5,
         });
 
-        const populatedReview = await Review.findById(review._id).populate('user', 'name');
+        const populatedReview = await Review.findById(review._id).populate('user', 'name profilePicture');
+
+        triggerEvent(`video-${dish._id}`, 'newComment', populatedReview);
 
         res.status(201).json(populatedReview);
     } catch (error) {
@@ -320,9 +377,68 @@ const getVideoComments = async (req, res) => {
     }
 };
 
+/**
+ * @desc    Get following video feed
+ * @route   GET /api/videos/following
+ * @access  Private
+ */
+const getFollowingFeed = async (req, res) => {
+    try {
+        const user = await User.findById(req.user._id);
+        if (!user || !user.following || user.following.length === 0) {
+            return res.json({ videos: [] });
+        }
+
+        const videos = await Dish.find({
+            restaurant: { $in: user.following },
+            videoUrl: { $exists: true, $ne: '' }
+        })
+        .populate('restaurant', 'name logo')
+        .sort({ createdAt: -1 });
+
+        res.json({ videos });
+    } catch (error) {
+        console.error('Get following feed error:', error);
+        res.status(500).json({ message: 'Failed to get following feed', error: error.message });
+    }
+};
+
+/**
+ * @desc    Follow/Unfollow restaurant
+ * @route   POST /api/videos/restaurant/:id/follow
+ * @access  Private
+ */
+const followRestaurant = async (req, res) => {
+    try {
+        const user = await User.findById(req.user._id);
+        const restaurantId = req.params.id;
+
+        if (!mongoose.Types.ObjectId.isValid(restaurantId)) {
+            return res.status(400).json({ message: 'Invalid restaurant ID' });
+        }
+
+        const followIndex = user.following.findIndex(id => id.toString() === restaurantId);
+        if (followIndex > -1) {
+            user.following.splice(followIndex, 1);
+        } else {
+            user.following.push(restaurantId);
+        }
+
+        await user.save();
+        res.json({ 
+            isFollowing: followIndex === -1,
+            followingCount: user.following.length 
+        });
+    } catch (error) {
+        console.error('Follow restaurant error:', error);
+        res.status(500).json({ message: 'Failed to follow restaurant', error: error.message });
+    }
+};
+
 module.exports = {
     createVideo,
     getVideoFeed,
+    getFollowingFeed,
     getRestaurantVideos,
     updateVideo,
     deleteVideo,
@@ -333,4 +449,5 @@ module.exports = {
     shareVideo,
     commentVideo,
     getVideoComments,
+    followRestaurant,
 };

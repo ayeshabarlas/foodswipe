@@ -16,6 +16,25 @@ const createReview = async (req, res) => {
             return res.status(404).json({ message: 'Restaurant not found' });
         }
 
+        // Check if user already reviewed this dish for this order (Idempotency)
+        if (orderId) {
+            const query = {
+                user: req.user._id,
+                order: orderId,
+                dish: dishId || null
+            };
+            
+            const existingReview = await Review.findOne(query);
+            if (existingReview) {
+                return res.status(400).json({ 
+                    message: dishId 
+                        ? 'You have already reviewed this dish for this order' 
+                        : 'You have already reviewed this order',
+                    review: existingReview 
+                });
+            }
+        }
+
         const review = await Review.create({
             user: req.user._id,
             restaurant: restaurantId,

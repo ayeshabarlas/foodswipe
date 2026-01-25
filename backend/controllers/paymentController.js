@@ -143,7 +143,8 @@ const verifySafepayPayment = async (req, res) => {
         };
         
         // If it was a JazzCash/EasyPaisa order, we can also set the transactionId to the tracker
-        if (order.paymentMethod === 'jazzcash' || order.paymentMethod === 'easypaisa' || order.paymentMethod === 'card') {
+        const method = order.paymentMethod?.toLowerCase();
+        if (method === 'jazzcash' || method === 'easypaisa' || method === 'card') {
             order.transactionId = tracker;
         }
 

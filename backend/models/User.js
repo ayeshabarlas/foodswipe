@@ -87,6 +87,10 @@ const userSchema = mongoose.Schema(
             type: Date,
             default: null,
         },
+        following: [{
+            type: mongoose.Schema.Types.ObjectId,
+            ref: 'Restaurant'
+        }],
     },
     {
         timestamps: true,

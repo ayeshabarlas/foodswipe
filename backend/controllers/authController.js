@@ -193,22 +193,18 @@ const loginUser = async (req, res) => {
         const user = await User.findOne(query);
 
         if (!user) {
-            console.log(`Login failed: User NOT found for "${identifierLower}" with role "${role}"`);
-
-            // Check if user exists with ANY role to give a better error message
-            const existingAnyRole = await User.findOne({
+            console.log(`❌ Login failed: User NOT found for "${identifierLower}" with role "${role}"`);
+            // Check if user exists with ANY role
+            const anyRoleUser = await User.findOne({
                 $or: [
                     { email: { $regex: new RegExp(`^${identifierLower}$`, 'i') } },
                     { phone: identifier.trim() }
                 ]
             });
-
-            if (existingAnyRole) {
-                return res.status(401).json({
-                    message: `Account found as "${existingAnyRole.role}", but you are trying to login as "${role}". Please select the correct role.`
-                });
+            if (anyRoleUser) {
+                console.log(`ℹ️ User found but with DIFFERENT role: ${anyRoleUser.role}`);
+                return res.status(401).json({ message: `Account found as ${anyRoleUser.role}. Please select correct role.` });
             }
-
             return res.status(401).json({ message: 'Invalid credentials' });
         }
 

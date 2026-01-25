@@ -110,6 +110,14 @@ const dishSchema = mongoose.Schema(
             type: Number,
             default: 10,
         },
+        orderClicks: {
+            type: Number,
+            default: 0,
+        },
+        addToCartClicks: {
+            type: Number,
+            default: 0,
+        },
         rating: {
             type: Number,
             default: 0,

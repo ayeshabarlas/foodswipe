@@ -70,27 +70,75 @@ export default function RiderRatingModal({ isOpen, onClose, orderId, riderName: 
     };
 
     const submitAll = async () => {
+        if (loading) return;
+        
         setLoading(true);
         try {
-            const token = localStorage.getItem('token') || JSON.parse(localStorage.getItem('userInfo') || '{}').token;
-            const config = { headers: { Authorization: `Bearer ${token}` } };
+            // Token recovery logic similar to CheckoutModal
+            let token = localStorage.getItem('token');
+            const userInfoStr = localStorage.getItem('userInfo');
+            
+            if (!token && userInfoStr) {
+                try {
+                    const parsedUser = JSON.parse(userInfoStr);
+                    if (parsedUser.token) {
+                        token = parsedUser.token;
+                        localStorage.setItem('token', token || '');
+                        console.log('🔑 RiderRatingModal: Token recovered from userInfo');
+                    }
+                } catch (e) {
+                    console.error('❌ RiderRatingModal: Error parsing userInfo for token:', e);
+                }
+            }
 
-            // 1. Submit Rider Rating
-            await axios.post(
-                `${getApiUrl()}/api/orders/${orderId}/rate-rider`,
-                { rating: riderRating, review: riderReview },
-                config
-            );
+            if (!token) {
+                toast.error('Please login to submit feedback');
+                setLoading(false);
+                return;
+            }
+
+            const config = { 
+                headers: { Authorization: `Bearer ${token}` },
+                timeout: 15000 // 15 second timeout for ratings
+            };
+
+            // 1. Check if already rated (Idempotency)
+            if (order && order.riderRating > 0) {
+                console.log('⚠️ Order already rated, skipping rider rating submission');
+            } else {
+                // Submit Rider Rating
+                try {
+                    await axios.post(
+                        `${getApiUrl()}/api/orders/${orderId}/rate-rider`,
+                        { rating: riderRating, review: riderReview },
+                        config
+                    );
+                } catch (err: any) {
+                    // If already rated error from server, just log and continue to dishes
+                    if (err.response?.status === 400 && err.response?.data?.message?.includes('already rated')) {
+                        console.log('ℹ️ Rider already rated on server');
+                    } else {
+                        throw err; // Re-throw other errors
+                    }
+                }
+            }
 
             // 2. Submit Dish Ratings
             const dishReviewPromises = Object.entries(dishRatings).map(([dishId, data]) => {
+                // Only submit if a rating was actually given (rating > 0)
+                if (data.rating === 0) return Promise.resolve();
+                
                 return axios.post(`${getApiUrl()}/api/reviews`, {
-                    restaurantId: order.restaurant._id || order.restaurant,
+                    restaurantId: order.restaurant?._id || order.restaurant,
                     dishId,
                     orderId,
                     rating: data.rating,
                     comment: data.comment || 'Good food!'
-                }, config);
+                }, config).catch(err => {
+                    console.error(`Failed to submit review for dish ${dishId}:`, err);
+                    // Don't fail the whole process if one dish review fails
+                    return null;
+                });
             });
 
             if (dishReviewPromises.length > 0) {
@@ -101,8 +149,22 @@ export default function RiderRatingModal({ isOpen, onClose, orderId, riderName: 
             if (onSuccess) onSuccess();
             onClose();
         } catch (error: any) {
-            console.error('Error submitting ratings:', error);
-            toast.error(error.response?.data?.message || 'Failed to submit feedback');
+            console.error('❌ RiderRatingModal: Error submitting ratings:', error);
+            
+            if (error.code === 'ECONNABORTED') {
+                toast.error('Rating submission timed out. Please check your internet and try again.');
+            } else if (error.response) {
+                // The request was made and the server responded with a status code
+                // that falls out of the range of 2xx
+                const errorMessage = error.response.data?.message || 'Server error occurred';
+                toast.error(errorMessage);
+            } else if (error.request) {
+                // The request was made but no response was received
+                toast.error('No response from server. Please check your connection.');
+            } else {
+                // Something happened in setting up the request that triggered an Error
+                toast.error(error.message || 'Failed to submit feedback');
+            }
         } finally {
             setLoading(false);
         }

@@ -18,6 +18,16 @@ const orderSchema = mongoose.Schema(
                 qty: { type: Number, required: true },
                 image: { type: String, required: false },
                 price: { type: Number, required: true },
+                variant: {
+                    name: String,
+                    price: Number
+                },
+                drinks: [
+                    {
+                        name: String,
+                        price: Number
+                    }
+                ],
                 product: {
                     type: mongoose.Schema.Types.ObjectId,
                     ref: 'Dish',

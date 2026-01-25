@@ -39,7 +39,7 @@ const splitPayment = async (order) => {
         commissionRate = restaurant ? (restaurant.commissionRate || (restaurant.businessType === 'home-chef' ? 10 : 15)) : 15;
     }
 
-    const gatewayFee = order.paymentMethod !== 'COD' ? subtotal * 0.025 : 0; // 2.5% gateway fee for online payments
+    const gatewayFee = (order.paymentMethod?.toUpperCase() !== 'COD' && order.paymentMethod?.toUpperCase() !== 'CASH') ? subtotal * 0.025 : 0; // 2.5% gateway fee for online payments
 
     const commissionAmount = (subtotal * commissionRate) / 100;
     const restaurantEarning = subtotal - commissionAmount;

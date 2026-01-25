@@ -105,6 +105,8 @@ const createOrder = async (req, res) => {
                 qty: item.quantity || item.qty,
                 image: itemImage || '', // Fallback to empty string if still missing
                 price: item.price,
+                variant: item.variant || null,
+                drinks: item.drinks || [],
                 product: dishId
             };
         }));
@@ -122,13 +124,13 @@ const createOrder = async (req, res) => {
             ? restaurantExists.commissionRate 
             : (settings.commissionRate || (restaurantExists.businessType === 'home-chef' ? 10 : 15));
         
-        const subtotalValue = subtotal || (totalAmount - (deliveryFee || 0));
-        const commissionAmount = (subtotalValue * commissionPercent) / 100;
+        const subtotalValue = Number(subtotal) || (Number(totalAmount) - (Number(deliveryFee) || 0)) || 0;
+        const commissionAmount = Math.round((subtotalValue * commissionPercent) / 100);
         const restaurantEarning = subtotalValue - commissionAmount;
 
         // Calculate Distance and Rider Earnings on backend for accuracy
         let distanceKm = 0;
-        let finalDeliveryFee = deliveryFee || 0;
+        let finalDeliveryFee = Number(deliveryFee) || 0;
 
         if (deliveryLocation && restaurantExists.location?.coordinates) {
             const [restLng, restLat] = restaurantExists.location.coordinates;
@@ -150,16 +152,18 @@ const createOrder = async (req, res) => {
 
         // CONSISTENCY FIX: If distance is 0, rider earning should also be based on base fee ONLY
         const riderEarnings = calculateRiderEarning(distanceKm, settings);
-        const finalServiceFee = serviceFee || settings.serviceFee || 0;
+        const finalServiceFee = Number(serviceFee) || settings.serviceFee || 0;
         
         // Calculate tax based on dynamic settings
         const taxRate = settings.isTaxEnabled ? (settings.taxRate || 8) : 0;
-        const finalTax = tax !== undefined ? tax : Math.round(subtotalValue * taxRate / 100);
+        const finalTax = tax !== undefined ? Number(tax) : Math.round(subtotalValue * taxRate / 100);
+
+        const calculatedTotalPrice = Math.max(0, subtotalValue + finalDeliveryFee + finalServiceFee + finalTax - (Number(discount) || 0));
 
         console.log('[Order] Creating order with data:', {
             user: req.user._id,
             restaurant,
-            totalPrice: subtotalValue + finalDeliveryFee + finalServiceFee + finalTax - (discount || 0),
+            totalPrice: calculatedTotalPrice,
             paymentMethod: paymentMethod || 'COD'
         });
 
@@ -173,15 +177,15 @@ const createOrder = async (req, res) => {
                 lng: Number(deliveryLocation.lng)
             } : null,
             paymentMethod: paymentMethod || 'COD',
-            totalPrice: Math.max(0, subtotalValue + finalDeliveryFee + finalServiceFee + finalTax - (discount || 0)), 
+            totalPrice: calculatedTotalPrice, 
             subtotal: subtotalValue,
             deliveryFee: finalDeliveryFee,
             serviceFee: finalServiceFee,
             tax: finalTax,
-            discount: discount || 0,
+            discount: Number(discount) || 0,
             deliveryFeeCustomerPaid: finalDeliveryFee,
             distanceKm: distanceKm,
-            riderEarning: riderEarnings.netEarning, // Added missing field
+            riderEarning: riderEarnings.netEarning,
             grossRiderEarning: riderEarnings.grossEarning,
             netRiderEarning: riderEarnings.netEarning,
             platformFee: riderEarnings.platformFee,
@@ -189,8 +193,8 @@ const createOrder = async (req, res) => {
             commissionPercent,
             commissionAmount,
             restaurantEarning,
-            gatewayFee: (req.body.paymentMethod !== 'COD' && req.body.paymentMethod !== 'CASH') ? (subtotalValue * 0.025) : 0,
-            adminEarning: commissionAmount + (finalDeliveryFee - riderEarnings.netEarning) + finalServiceFee + finalTax - ((req.body.paymentMethod !== 'COD' && req.body.paymentMethod !== 'CASH') ? (subtotalValue * 0.025) : 0) - (discount || 0),
+            gatewayFee: (req.body.paymentMethod?.toUpperCase() !== 'COD' && req.body.paymentMethod?.toUpperCase() !== 'CASH') ? Math.round(subtotalValue * 0.025) : 0,
+            adminEarning: commissionAmount + (finalDeliveryFee - riderEarnings.netEarning) + finalServiceFee + finalTax - ((req.body.paymentMethod?.toUpperCase() !== 'COD' && req.body.paymentMethod?.toUpperCase() !== 'CASH') ? Math.round(subtotalValue * 0.025) : 0) - (Number(discount) || 0),
             orderAmount: subtotalValue,
             promoCode: promoCode || '',
             cutlery: cutlery || false
@@ -404,9 +408,12 @@ const updateOrderStatus = async (req, res) => {
             triggerEvent('riders', 'newOrderAvailable', updatedOrder);
         }
 
-        // Always notify admin about any order status update
+        // Notify admin about any order status update
         triggerEvent('admin', 'order_updated', updatedOrder);
         triggerEvent('admin', 'stats_updated', { type: 'order_status_updated', orderId: updatedOrder._id });
+        
+        // Notify the specific order channel for anyone watching this order
+        triggerEvent(`order-${order._id}`, 'orderStatusUpdate', updatedOrder);
 
         // When order is ready, notify all available riders
         if (status === 'Ready') {
@@ -537,7 +544,7 @@ const processOrderCompletion = async (order, distanceKm, req = null) => {
         const deliveryFee = order.deliveryFee || 0;
         const serviceFee = order.serviceFee || 0;
         const tax = order.tax || 0;
-        const gatewayFee = order.paymentMethod !== 'COD' ? (subtotal * 0.025) : 0;
+        const gatewayFee = (order.paymentMethod?.toUpperCase() !== 'COD' && order.paymentMethod?.toUpperCase() !== 'CASH') ? (subtotal * 0.025) : 0;
         
         // Handle discounts - usually platform bears voucher costs in early stage, 
         // but if it's a large discount we should track it.
@@ -987,7 +994,7 @@ const completeOrder = async (req, res) => {
         triggerEvent('admin', 'order_updated', updatedOrder);
         triggerEvent('admin', 'stats_updated', { type: 'order_delivered', orderId: updatedOrder._id });
 
-        triggerEvent(`order-${order._id}`, 'statusUpdate', { status: 'Delivered', order: updatedOrder });
+        triggerEvent(`order-${order._id}`, 'orderStatusUpdate', updatedOrder);
 
         res.json({ message: 'Order marked as delivered', order: updatedOrder });
     } catch (error) {
