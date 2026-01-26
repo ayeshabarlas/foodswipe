@@ -356,7 +356,8 @@ const getOrderById = async (req, res) => {
         }
 
         // Check if user is authorized to see this order
-        const isOwner = order.user._id.toString() === req.user._id.toString();
+        const orderUserId = order.user._id ? order.user._id.toString() : order.user.toString();
+        const isOwner = orderUserId === req.user._id.toString();
         const isAdmin = req.user.role === 'admin';
         const isRestaurant = req.user.role === 'restaurant' && order.restaurant?._id?.toString() === req.user.restaurantId?.toString();
         
@@ -365,10 +366,15 @@ const getOrderById = async (req, res) => {
             // Find the rider associated with this user
             const rider = await Rider.findOne({ user: req.user._id });
             if (rider) {
+                const riderIdStr = rider._id.toString();
                 // Authorized if they are the assigned rider
-                const isAssignedRider = order.rider && order.rider._id.toString() === rider._id.toString();
+                const assignedRiderId = order.rider?._id ? order.rider._id.toString() : (order.rider ? order.rider.toString() : null);
+                const isAssignedRider = assignedRiderId === riderIdStr;
+                
                 // Or if the order is available for any rider (unassigned and in pickup-able status)
-                const isAvailableForRider = !order.rider && ['Accepted', 'Confirmed', 'Preparing', 'Ready'].includes(order.status);
+                // Expanded list of statuses to include all potential "available" states
+                const availableStatuses = ['Accepted', 'Confirmed', 'Preparing', 'Ready', 'OnTheWay', 'Arrived', 'Picked Up'];
+                const isAvailableForRider = !order.rider && availableStatuses.includes(order.status);
                 
                 isAuthorizedRider = isAssignedRider || isAvailableForRider;
             }
