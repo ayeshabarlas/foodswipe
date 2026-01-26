@@ -16,7 +16,8 @@ import {
   Image,
   TextInput,
   Modal,
-  Platform
+  Platform,
+  Linking
 } from 'react-native';
 import { Colors } from '../theme/colors';
 import * as SecureStore from 'expo-secure-store';
@@ -46,6 +47,14 @@ export default function RiderDashboard({ navigation }: any) {
   const [bankDetails, setBankDetails] = useState({ bankName: '', accountTitle: '', accountNumber: '' });
   const [isEditingBank, setIsEditingBank] = useState(false);
   const [savingBank, setSavingBank] = useState(false);
+
+  const [showPrivacyModal, setShowPrivacyModal] = useState(false);
+  const [showTermsModal, setShowTermsModal] = useState(false);
+  const [showDepositModal, setShowDepositModal] = useState(false);
+  const [showProfileModal, setShowProfileModal] = useState(false);
+  const [showSettingsModal, setShowSettingsModal] = useState(false);
+
+  const [newOrderPopup, setNewOrderPopup] = useState<any>(null);
 
   useEffect(() => {
     loadInitialData();
@@ -216,6 +225,22 @@ export default function RiderDashboard({ navigation }: any) {
               }
               return prev;
             });
+            // Update active order if it's the one being tracked
+            if (activeOrder?._id === data._id) {
+              setActiveOrder(data);
+            }
+          });
+
+          riderChannel.bind('wallet_updated', (data: any) => {
+            console.log('💰 Wallet updated via socket:', data);
+            setStats(prev => ({
+              ...prev,
+              wallet: data.walletBalance || data.earnings_balance || prev.wallet,
+              cod_balance: data.cod_balance || prev.cod_balance,
+              earnings: data.stats?.totalEarnings || prev.earnings
+            }));
+            // Optionally refetch earnings data to be sure
+            fetchEarningsData();
           });
         }
 
@@ -223,7 +248,7 @@ export default function RiderDashboard({ navigation }: any) {
           personalChannel.bind('orderAssigned', (order: any) => {
             setMyOrders(prev => [order, ...prev]);
             setAvailableOrders(prev => prev.filter(o => o._id !== order._id));
-            Alert.alert('Order Assigned!', `Order #${order._id.slice(-6).toUpperCase()} has been assigned to you.`);
+            setNewOrderPopup(order);
           });
         }
 
@@ -370,7 +395,15 @@ export default function RiderDashboard({ navigation }: any) {
     return (
       <TouchableOpacity 
         style={styles.verifyBanner}
-        onPress={() => riderProfile?.verificationStatus !== 'pending' && Alert.alert('Registration', 'Please complete your registration on our website.')}
+        onPress={() => {
+          if (riderProfile?.verificationStatus === 'pending') {
+            Alert.alert('Status', 'Your profile is under review.');
+          } else if (riderProfile?.verificationStatus === 'rejected') {
+            navigation.navigate('RiderRegistration');
+          } else {
+            navigation.navigate('RiderRegistration');
+          }
+        }}
       >
         <Ionicons name="alert-circle" size={20} color="#9A3412" />
         <View style={{ flex: 1, marginLeft: 10 }}>
@@ -439,15 +472,73 @@ export default function RiderDashboard({ navigation }: any) {
         </View>
 
         <TouchableOpacity 
-          style={styles.manageBtn}
+          style={styles.manageBtnLarge}
           onPress={() => navigation.navigate('OrderDetails', { orderId: activeOrder._id })}
         >
-          <Text style={styles.manageBtnText}>Manage Order</Text>
-          <Ionicons name="arrow-forward" size={18} color="#fff" />
+          <View style={styles.manageBtnContent}>
+            <View>
+              <Text style={styles.manageBtnTitle}>Manage Delivery</Text>
+              <Text style={styles.manageBtnSubtitle}>Current Status: {activeOrder.status}</Text>
+            </View>
+            <View style={styles.manageBtnIconContainer}>
+              <Ionicons name="arrow-forward" size={24} color="#fff" />
+            </View>
+          </View>
         </TouchableOpacity>
       </View>
     );
   };
+
+  const renderAvailableOrderItem = ({ item }: { item: any }) => (
+    <View style={styles.orderCard}>
+      <View style={styles.orderHeader}>
+        <View style={styles.restaurantInfo}>
+          <Image 
+            source={{ uri: item.restaurant?.image || 'https://via.placeholder.com/100' }} 
+            style={styles.restaurantImage} 
+          />
+          <View>
+            <Text style={styles.restaurantName}>{item.restaurant?.name || 'Restaurant'}</Text>
+            <View style={styles.locationRow}>
+              <Ionicons name="location-sharp" size={14} color={Colors.primary} />
+              <Text style={styles.distanceText}>{(item.distance || 0).toFixed(1)} km away</Text>
+            </View>
+          </View>
+        </View>
+        <View style={styles.earningBadge}>
+          <Text style={styles.earningText}>Rs. {item.riderEarning || 0}</Text>
+        </View>
+      </View>
+
+      <View style={styles.orderDivider} />
+
+      <View style={styles.addressInfo}>
+        <View style={styles.addressRow}>
+          <View style={styles.dot} />
+          <Text style={styles.addressText} numberOfLines={1}>{item.restaurant?.address}</Text>
+        </View>
+        <View style={[styles.addressRow, { marginTop: 10 }]}>
+          <View style={[styles.dot, { backgroundColor: Colors.primary }]} />
+          <Text style={styles.addressText} numberOfLines={1}>{item.deliveryAddress}</Text>
+        </View>
+      </View>
+
+      <View style={styles.orderFooter}>
+        <TouchableOpacity 
+          style={styles.detailsBtn}
+          onPress={() => navigation.navigate('OrderDetails', { orderId: item._id })}
+        >
+          <Text style={styles.detailsBtnText}>View Details</Text>
+        </TouchableOpacity>
+        <TouchableOpacity 
+          style={styles.acceptBtn}
+          onPress={() => acceptOrder(item._id)}
+        >
+          <Text style={styles.acceptBtnText}>Accept Order</Text>
+        </TouchableOpacity>
+      </View>
+    </View>
+  );
 
   const renderHomeTab = () => (
     <ScrollView 
@@ -493,15 +584,15 @@ export default function RiderDashboard({ navigation }: any) {
           </View>
           <Text style={styles.quickActionLabel}>Wallet</Text>
         </TouchableOpacity>
-        <TouchableOpacity style={styles.quickAction}>
-          <View style={[styles.quickActionIcon, { backgroundColor: '#E0E7FF' }]}>
-            <Ionicons name="time" size={24} color="#6366F1" />
+        <TouchableOpacity style={styles.quickAction} onPress={() => setActiveTab('orders')}>
+          <View style={[styles.quickActionIcon, { backgroundColor: '#E0F2FE' }]}>
+            <Ionicons name="time" size={24} color="#0EA5E9" />
           </View>
           <Text style={styles.quickActionLabel}>History</Text>
         </TouchableOpacity>
-        <TouchableOpacity style={styles.quickAction}>
-          <View style={[styles.quickActionIcon, { backgroundColor: '#F3F4F6' }]}>
-            <Ionicons name="help-circle" size={24} color="#4B5563" />
+        <TouchableOpacity style={styles.quickAction} onPress={() => Linking.openURL('https://wa.me/923001234567')}>
+          <View style={[styles.quickActionIcon, { backgroundColor: '#F0FDF4' }]}>
+            <Ionicons name="help-buoy" size={24} color="#10B981" />
           </View>
           <Text style={styles.quickActionLabel}>Support</Text>
         </TouchableOpacity>
@@ -589,7 +680,7 @@ export default function RiderDashboard({ navigation }: any) {
           <Text style={styles.codLabel}>Cash to be deposited</Text>
           <Text style={styles.codValue}>Rs. {stats.cod_balance}</Text>
         </View>
-        <TouchableOpacity style={styles.depositBtn}>
+        <TouchableOpacity style={styles.depositBtn} onPress={() => setShowDepositModal(true)}>
           <Text style={styles.depositBtnText}>Deposit Cash</Text>
         </TouchableOpacity>
       </View>
@@ -649,24 +740,29 @@ export default function RiderDashboard({ navigation }: any) {
       </LinearGradient>
 
       <View style={styles.profileMenu}>
-        <TouchableOpacity style={styles.menuItem}>
+        <TouchableOpacity style={styles.menuItem} onPress={() => setShowProfileModal(true)}>
           <Ionicons name="person-outline" size={22} color={Colors.gray} />
           <Text style={styles.menuText}>Personal Details</Text>
           <Ionicons name="chevron-forward" size={18} color={Colors.gray} />
         </TouchableOpacity>
-        <TouchableOpacity style={styles.menuItem}>
+        <TouchableOpacity style={styles.menuItem} onPress={() => navigation.navigate('RiderRegistration')}>
           <Ionicons name="document-text-outline" size={22} color={Colors.gray} />
           <Text style={styles.menuText}>My Documents</Text>
           <Ionicons name="chevron-forward" size={18} color={Colors.gray} />
         </TouchableOpacity>
-        <TouchableOpacity style={styles.menuItem}>
+        <TouchableOpacity style={styles.menuItem} onPress={() => setShowSettingsModal(true)}>
           <Ionicons name="settings-outline" size={22} color={Colors.gray} />
           <Text style={styles.menuText}>Settings</Text>
           <Ionicons name="chevron-forward" size={18} color={Colors.gray} />
         </TouchableOpacity>
-        <TouchableOpacity style={styles.menuItem}>
+        <TouchableOpacity style={styles.menuItem} onPress={() => setShowPrivacyModal(true)}>
           <Ionicons name="shield-checkmark-outline" size={22} color={Colors.gray} />
           <Text style={styles.menuText}>Privacy Policy</Text>
+          <Ionicons name="chevron-forward" size={18} color={Colors.gray} />
+        </TouchableOpacity>
+        <TouchableOpacity style={styles.menuItem} onPress={() => setShowTermsModal(true)}>
+          <Ionicons name="document-attach-outline" size={22} color={Colors.gray} />
+          <Text style={styles.menuText}>Terms of Service</Text>
           <Ionicons name="chevron-forward" size={18} color={Colors.gray} />
         </TouchableOpacity>
         <TouchableOpacity style={[styles.menuItem, { marginTop: 20 }]} onPress={handleLogout}>
@@ -746,6 +842,105 @@ export default function RiderDashboard({ navigation }: any) {
         {activeTab === 'profile' && renderProfileTab()}
       </View>
 
+      {/* Privacy Policy Modal */}
+      <Modal visible={showPrivacyModal} animationType="slide" transparent={false}>
+        <SafeAreaView style={styles.modalFullContent}>
+          <View style={styles.modalHeaderFull}>
+            <TouchableOpacity onPress={() => setShowPrivacyModal(false)}>
+              <Ionicons name="close" size={28} color="#111827" />
+            </TouchableOpacity>
+            <Text style={styles.modalTitleFull}>Privacy Policy</Text>
+            <View style={{ width: 28 }} />
+          </View>
+          <ScrollView contentContainerStyle={styles.modalScroll}>
+            <Text style={styles.policyHeading}>1. Information We Collect</Text>
+            <Text style={styles.policyText}>We collect information you provide directly to us, such as when you create or modify your account, request delivery services, contact customer support, or otherwise communicate with us.</Text>
+            
+            <Text style={styles.policyHeading}>2. How We Use Information</Text>
+            <Text style={styles.policyText}>We use the information we collect to provide, maintain, and improve our Services, including to facilitate payments, send receipts, provide products and services you request (and send related information), and develop new features.</Text>
+            
+            <Text style={styles.policyHeading}>3. Location Information</Text>
+            <Text style={styles.policyText}>To facilitate delivery, we collect precise location data of the rider when the FoodSwipe app is running in the foreground or background.</Text>
+            
+            <Text style={styles.policyHeading}>4. Data Security</Text>
+            <Text style={styles.policyText}>We use appropriate technical and organizational measures to protect your personal information against unauthorized or unlawful processing.</Text>
+          </ScrollView>
+        </SafeAreaView>
+      </Modal>
+
+      {/* Terms of Service Modal */}
+      <Modal visible={showTermsModal} animationType="slide" transparent={false}>
+        <SafeAreaView style={styles.modalFullContent}>
+          <View style={styles.modalHeaderFull}>
+            <TouchableOpacity onPress={() => setShowTermsModal(false)}>
+              <Ionicons name="close" size={28} color="#111827" />
+            </TouchableOpacity>
+            <Text style={styles.modalTitleFull}>Terms of Service</Text>
+            <View style={{ width: 28 }} />
+          </View>
+          <ScrollView contentContainerStyle={styles.modalScroll}>
+            <Text style={styles.policyHeading}>1. Acceptance of Terms</Text>
+            <Text style={styles.policyText}>By accessing or using the FoodSwipe platform, you agree to be bound by these Terms of Service and all terms incorporated by reference.</Text>
+            
+            <Text style={styles.policyHeading}>2. Rider Conduct</Text>
+            <Text style={styles.policyText}>Riders must maintain a professional demeanor, follow traffic laws, and ensure food safety during transit. Failure to do so may result in account suspension.</Text>
+            
+            <Text style={styles.policyHeading}>3. Payments and Earnings</Text>
+            <Text style={styles.policyText}>Earnings are calculated based on distance and order value. Payouts are processed weekly to the provided bank account, subject to minimum balance requirements.</Text>
+            
+            <Text style={styles.policyHeading}>4. Account Termination</Text>
+            <Text style={styles.policyText}>FoodSwipe reserves the right to terminate or suspend your account at any time for violations of these terms or for any other reason at our sole discretion.</Text>
+          </ScrollView>
+        </SafeAreaView>
+      </Modal>
+
+      {/* New Order Popup */}
+      <Modal visible={!!newOrderPopup} transparent={true} animationType="fade">
+        <View style={styles.popupOverlay}>
+          <View style={styles.popupContent}>
+            <View style={styles.popupIconContainer}>
+              <MaterialCommunityIcons name="moped" size={40} color={Colors.primary} />
+            </View>
+            <Text style={styles.popupTitle}>New Order Assigned!</Text>
+            <Text style={styles.popupSubtitle}>Order #{newOrderPopup?._id?.slice(-6).toUpperCase()}</Text>
+            
+            <View style={styles.popupDetails}>
+              <View style={styles.popupRow}>
+                <Ionicons name="restaurant" size={16} color={Colors.gray} />
+                <Text style={styles.popupDetailText}>{newOrderPopup?.restaurant?.name}</Text>
+              </View>
+              <View style={styles.popupRow}>
+                <Ionicons name="location" size={16} color={Colors.gray} />
+                <Text style={styles.popupDetailText} numberOfLines={1}>{newOrderPopup?.deliveryAddress}</Text>
+              </View>
+              <View style={styles.popupRow}>
+                <Ionicons name="cash" size={16} color="#059669" />
+                <Text style={[styles.popupDetailText, { color: '#059669', fontWeight: 'bold' }]}>
+                  Earnings: Rs. {newOrderPopup?.netRiderEarning || newOrderPopup?.riderEarning || 0}
+                </Text>
+              </View>
+            </View>
+
+            <TouchableOpacity 
+              style={styles.popupActionBtn}
+              onPress={() => {
+                const orderId = newOrderPopup._id;
+                setNewOrderPopup(null);
+                navigation.navigate('OrderDetails', { orderId });
+              }}
+            >
+              <Text style={styles.popupActionBtnText}>View Details</Text>
+            </TouchableOpacity>
+            <TouchableOpacity 
+              style={styles.popupCloseBtn}
+              onPress={() => setNewOrderPopup(null)}
+            >
+              <Text style={styles.popupCloseBtnText}>Dismiss</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
+
       <BottomNav />
 
       {/* Bank Details Modal */}
@@ -793,6 +988,124 @@ export default function RiderDashboard({ navigation }: any) {
               disabled={savingBank}
             >
               {savingBank ? <ActivityIndicator color="#fff" /> : <Text style={styles.saveBtnText}>Save Details</Text>}
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
+
+      {/* Deposit Cash Modal */}
+      <Modal visible={showDepositModal} animationType="slide" transparent={true}>
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>Deposit Cash</Text>
+              <TouchableOpacity onPress={() => setShowDepositModal(false)}>
+                <Ionicons name="close" size={24} color={Colors.gray} />
+              </TouchableOpacity>
+            </View>
+            <ScrollView style={{ maxHeight: height * 0.6 }}>
+              <Text style={styles.depositInfoText}>
+                Please deposit the cash collected from COD orders to any of the following accounts:
+              </Text>
+              
+              <View style={styles.accountCard}>
+                <Text style={styles.accountName}>JazzCash</Text>
+                <Text style={styles.accountNumber}>0300 1234567</Text>
+                <Text style={styles.accountHolder}>FoodSwipe Pvt Ltd</Text>
+              </View>
+
+              <View style={styles.accountCard}>
+                <Text style={styles.accountName}>EasyPaisa</Text>
+                <Text style={styles.accountNumber}>0311 7654321</Text>
+                <Text style={styles.accountHolder}>FoodSwipe Pvt Ltd</Text>
+              </View>
+
+              <Text style={[styles.depositInfoText, { marginTop: 15, fontWeight: 'bold' }]}>
+                Important:
+              </Text>
+              <Text style={styles.depositInfoText}>
+                After depositing, please send a screenshot of the receipt to our support WhatsApp with your Rider ID (#{riderProfile?._id?.slice(-6).toUpperCase()}).
+              </Text>
+            </ScrollView>
+            
+            <TouchableOpacity 
+              style={[styles.saveBtn, { marginTop: 20 }]} 
+              onPress={() => {
+                setShowDepositModal(false);
+                Linking.openURL('https://wa.me/923001234567?text=Deposit%20Receipt%20for%20Rider%20ID:%20' + riderProfile?._id?.slice(-6).toUpperCase());
+              }}
+            >
+              <Text style={styles.saveBtnText}>Send Receipt via WhatsApp</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
+
+      {/* Personal Details Modal */}
+      <Modal visible={showProfileModal} animationType="slide" transparent={true}>
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>Personal Details</Text>
+              <TouchableOpacity onPress={() => setShowProfileModal(false)}>
+                <Ionicons name="close" size={24} color={Colors.gray} />
+              </TouchableOpacity>
+            </View>
+            <View style={styles.formGroup}>
+              <Text style={styles.inputLabel}>Full Name</Text>
+              <TextInput style={styles.input} value={userData?.name} editable={false} />
+            </View>
+            <View style={styles.formGroup}>
+              <Text style={styles.inputLabel}>Email Address</Text>
+              <TextInput style={styles.input} value={userData?.email} editable={false} />
+            </View>
+            <View style={styles.formGroup}>
+              <Text style={styles.inputLabel}>Phone Number</Text>
+              <TextInput style={styles.input} value={riderProfile?.phone || 'Not provided'} editable={false} />
+            </View>
+            <Text style={styles.noteText}>Note: Contact support to change your profile information.</Text>
+            <TouchableOpacity 
+              style={[styles.saveBtn, { marginTop: 20 }]} 
+              onPress={() => setShowProfileModal(false)}
+            >
+              <Text style={styles.saveBtnText}>Close</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
+
+      {/* Settings Modal */}
+      <Modal visible={showSettingsModal} animationType="slide" transparent={true}>
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>Settings</Text>
+              <TouchableOpacity onPress={() => setShowSettingsModal(false)}>
+                <Ionicons name="close" size={24} color={Colors.gray} />
+              </TouchableOpacity>
+            </View>
+            
+            <View style={styles.settingItem}>
+              <View>
+                <Text style={styles.settingLabel}>Notifications</Text>
+                <Text style={styles.settingDesc}>Get order alerts</Text>
+              </View>
+              <Switch value={true} trackColor={{ false: '#D1D5DB', true: Colors.primary }} />
+            </View>
+
+            <View style={styles.settingItem}>
+              <View>
+                <Text style={styles.settingLabel}>Order Auto-Accept</Text>
+                <Text style={styles.settingDesc}>Automatically accept nearby orders</Text>
+              </View>
+              <Switch value={false} trackColor={{ false: '#D1D5DB', true: Colors.primary }} />
+            </View>
+
+            <TouchableOpacity 
+              style={[styles.saveBtn, { marginTop: 20 }]} 
+              onPress={() => setShowSettingsModal(false)}
+            >
+              <Text style={styles.saveBtnText}>Save Settings</Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -1052,6 +1365,40 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     marginTop: 10,
     gap: 8,
+  },
+  manageBtnLarge: {
+    backgroundColor: Colors.primary,
+    borderRadius: 20,
+    marginTop: 15,
+    padding: 15,
+    elevation: 4,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.2,
+    shadowRadius: 8,
+  },
+  manageBtnContent: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  manageBtnTitle: {
+    color: '#fff',
+    fontSize: 18,
+    fontWeight: 'bold',
+  },
+  manageBtnSubtitle: {
+    color: 'rgba(255,255,255,0.8)',
+    fontSize: 12,
+    marginTop: 2,
+  },
+  manageBtnIconContainer: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: 'rgba(255,255,255,0.2)',
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   manageBtnText: {
     color: '#fff',
@@ -1441,12 +1788,13 @@ const styles = StyleSheet.create({
     marginTop: 40,
   },
   emptyText: {
-    fontSize: 16,
+    fontSize: 14,
     color: Colors.gray,
-    textAlign: 'center',
     marginTop: 15,
+    textAlign: 'center',
+    fontWeight: '500',
   },
-  availableCard: {
+  orderCard: {
     backgroundColor: '#fff',
     borderRadius: 20,
     padding: 15,
@@ -1459,60 +1807,259 @@ const styles = StyleSheet.create({
     shadowRadius: 8,
     elevation: 2,
   },
-  orderMainInfo: {
+  orderHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    alignItems: 'flex-start',
-    marginBottom: 12,
+    alignItems: 'center',
   },
-  restInfo: {
+  restaurantInfo: {
+    flexDirection: 'row',
+    alignItems: 'center',
     flex: 1,
   },
-  restName: {
-    fontSize: 16,
+  restaurantImage: {
+    width: 44,
+    height: 44,
+    borderRadius: 12,
+    marginRight: 12,
+  },
+  restaurantName: {
+    fontSize: 15,
     fontWeight: 'bold',
     color: '#111827',
-  },
-  distanceText: {
-    fontSize: 12,
-    color: Colors.primary,
-    fontWeight: '600',
-    marginTop: 2,
-  },
-  earningBadge: {
-    backgroundColor: '#ECFDF5',
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderRadius: 8,
-  },
-  earningText: {
-    fontSize: 14,
-    fontWeight: 'bold',
-    color: '#059669',
   },
   locationRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 15,
-    backgroundColor: '#F9FAFB',
-    padding: 10,
-    borderRadius: 10,
+    marginTop: 2,
   },
-  locationText: {
+  distanceText: {
+    fontSize: 11,
+    color: Colors.gray,
+    marginLeft: 4,
+  },
+  earningBadge: {
+    backgroundColor: '#ECFDF5',
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 8,
+  },
+  earningText: {
+    fontSize: 13,
+    fontWeight: 'bold',
+    color: '#059669',
+  },
+  orderDivider: {
+    height: 1,
+    backgroundColor: '#F3F4F6',
+    marginVertical: 15,
+  },
+  addressInfo: {
+    gap: 10,
+  },
+  addressRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  dot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+    backgroundColor: '#D1D5DB',
+    marginRight: 10,
+  },
+  addressText: {
     fontSize: 13,
     color: '#4B5563',
-    marginLeft: 8,
     flex: 1,
   },
+  orderFooter: {
+    flexDirection: 'row',
+    marginTop: 15,
+    gap: 10,
+  },
+  detailsBtn: {
+    flex: 1,
+    paddingVertical: 10,
+    borderRadius: 10,
+    backgroundColor: '#F3F4F6',
+    alignItems: 'center',
+  },
+  detailsBtnText: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: '#4B5563',
+  },
   acceptBtn: {
+    flex: 1,
+    paddingVertical: 10,
+    borderRadius: 10,
     backgroundColor: Colors.primary,
-    paddingVertical: 12,
-    borderRadius: 12,
     alignItems: 'center',
   },
   acceptBtnText: {
-    color: '#fff',
+    fontSize: 13,
     fontWeight: 'bold',
-    fontSize: 15,
+    color: '#fff',
+  },
+  modalFullContent: {
+    flex: 1,
+    backgroundColor: '#fff',
+  },
+  modalHeaderFull: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: 20,
+    paddingVertical: 15,
+    borderBottomWidth: 1,
+    borderBottomColor: '#F3F4F6',
+  },
+  modalTitleFull: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#111827',
+  },
+  modalScroll: {
+    padding: 20,
+  },
+  policyHeading: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#111827',
+    marginTop: 20,
+    marginBottom: 10,
+  },
+  policyText: {
+    fontSize: 14,
+    color: '#4B5563',
+    lineHeight: 22,
+  },
+  popupOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.6)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 20,
+  },
+  popupContent: {
+    backgroundColor: '#fff',
+    borderRadius: 30,
+    padding: 25,
+    width: '100%',
+    alignItems: 'center',
+  },
+  popupIconContainer: {
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    backgroundColor: '#FFF1F2',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 20,
+  },
+  popupTitle: {
+    fontSize: 22,
+    fontWeight: 'bold',
+    color: '#111827',
+    marginBottom: 5,
+  },
+  popupSubtitle: {
+    fontSize: 14,
+    color: Colors.gray,
+    marginBottom: 20,
+  },
+  popupDetails: {
+    width: '100%',
+    backgroundColor: '#F9FAFB',
+    padding: 15,
+    borderRadius: 15,
+    marginBottom: 25,
+  },
+  popupRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 10,
+    gap: 10,
+  },
+  popupDetailText: {
+    fontSize: 14,
+    color: '#4B5563',
+    flex: 1,
+  },
+  popupActionBtn: {
+    backgroundColor: Colors.primary,
+    width: '100%',
+    paddingVertical: 15,
+    borderRadius: 15,
+    alignItems: 'center',
+    marginBottom: 10,
+  },
+  popupActionBtnText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
+  popupCloseBtn: {
+    paddingVertical: 10,
+  },
+  popupCloseBtnText: {
+    color: Colors.gray,
+    fontSize: 14,
+    fontWeight: '500',
+  },
+  depositInfoText: {
+    fontSize: 14,
+    color: '#4B5563',
+    lineHeight: 20,
+    marginBottom: 10,
+  },
+  accountCard: {
+    backgroundColor: '#F9FAFB',
+    padding: 15,
+    borderRadius: 12,
+    marginVertical: 5,
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
+  },
+  accountName: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: Colors.primary,
+  },
+  accountNumber: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#111827',
+    marginVertical: 4,
+  },
+  accountHolder: {
+    fontSize: 12,
+    color: Colors.gray,
+  },
+  noteText: {
+    fontSize: 12,
+    color: Colors.gray,
+    fontStyle: 'italic',
+    marginTop: 10,
+    textAlign: 'center',
+  },
+  settingItem: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: 15,
+    borderBottomWidth: 1,
+    borderBottomColor: '#F3F4F6',
+  },
+  settingLabel: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#111827',
+  },
+  settingDesc: {
+    fontSize: 12,
+    color: Colors.gray,
+    marginTop: 2,
   },
 });

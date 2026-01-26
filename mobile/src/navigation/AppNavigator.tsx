@@ -5,6 +5,8 @@ import HomeScreen from '../screens/HomeScreen';
 import LoginScreen from '../screens/LoginScreen';
 import CustomerDashboard from '../screens/CustomerDashboard';
 import RiderDashboard from '../screens/RiderDashboard';
+import RiderRegistrationScreen from '../screens/RiderRegistrationScreen';
+import RiderDocumentUploadScreen from '../screens/RiderDocumentUploadScreen';
 import RestaurantDashboard from '../screens/RestaurantDashboard';
 import VideoFeedScreen from '../screens/VideoFeedScreen';
 import RestaurantDetails from '../screens/RestaurantDetails';
@@ -27,6 +29,8 @@ export default function AppNavigator() {
         <Stack.Screen name="Login" component={LoginScreen} />
         <Stack.Screen name="CustomerDashboard" component={CustomerDashboard} />
         <Stack.Screen name="RiderDashboard" component={RiderDashboard} />
+        <Stack.Screen name="RiderRegistration" component={RiderRegistrationScreen} />
+        <Stack.Screen name="RiderDocumentUpload" component={RiderDocumentUploadScreen} />
         <Stack.Screen name="RestaurantDashboard" component={RestaurantDashboard} />
         <Stack.Screen name="VideoFeed" component={VideoFeedScreen} />
         <Stack.Screen name="RestaurantDetails" component={RestaurantDetails} />

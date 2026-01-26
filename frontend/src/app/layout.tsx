@@ -26,10 +26,11 @@ export const metadata: Metadata = {
   description: "TikTok-style food delivery app",
   icons: {
     icon: [
-      { url: '/favicon.png', sizes: 'any' },
+      { url: '/favicon.ico', sizes: 'any' },
       { url: '/favicon.png', type: 'image/png' },
+      { url: '/logo.svg', type: 'image/svg+xml' },
     ],
-    shortcut: '/favicon.png',
+    shortcut: '/favicon.ico',
     apple: '/favicon.png',
   }
 };

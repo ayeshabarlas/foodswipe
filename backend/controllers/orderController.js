@@ -355,13 +355,28 @@ const getOrderById = async (req, res) => {
             return res.status(404).json({ message: 'Order not found' });
         }
 
-        // Check if user owns this order or is admin/restaurant
-        if (
-            order.user._id.toString() !== req.user._id.toString() &&
-            req.user.role !== 'admin' &&
-            req.user.role !== 'restaurant'
-        ) {
-            return res.status(403).json({ message: 'Not authorized' });
+        // Check if user is authorized to see this order
+        const isOwner = order.user._id.toString() === req.user._id.toString();
+        const isAdmin = req.user.role === 'admin';
+        const isRestaurant = req.user.role === 'restaurant' && order.restaurant?._id?.toString() === req.user.restaurantId?.toString();
+        
+        let isAuthorizedRider = false;
+        if (req.user.role === 'rider') {
+            // Find the rider associated with this user
+            const rider = await Rider.findOne({ user: req.user._id });
+            if (rider) {
+                // Authorized if they are the assigned rider
+                const isAssignedRider = order.rider && order.rider._id.toString() === rider._id.toString();
+                // Or if the order is available for any rider (unassigned and in pickup-able status)
+                const isAvailableForRider = !order.rider && ['Accepted', 'Confirmed', 'Preparing', 'Ready'].includes(order.status);
+                
+                isAuthorizedRider = isAssignedRider || isAvailableForRider;
+            }
+        }
+
+        if (!isOwner && !isAdmin && !isRestaurant && !isAuthorizedRider) {
+            console.error(`[Order] Unauthorized access attempt to order ${order._id} by user ${req.user._id} (Role: ${req.user.role})`);
+            return res.status(403).json({ message: 'Not authorized to view this order' });
         }
 
         res.json(order);

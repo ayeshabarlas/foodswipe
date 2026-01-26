@@ -30,7 +30,10 @@ const { width } = Dimensions.get('window');
 export default function LoginScreen({ navigation }: any) {
   const [request, response, promptAsync] = Google.useAuthRequest({
     webClientId: "975401301298-6hvoo0ch3glki4m84j6dqkblrm5m7m1k.apps.googleusercontent.com",
-    androidClientId: "975401301298-6hvoo0ch3glki4m84j6dqkblrm5m7m1k.apps.googleusercontent.com", // Temporary using web client id for Expo Go
+    androidClientId: "975401301298-6hvoo0ch3glki4m84j6dqkblrm5m7m1k.apps.googleusercontent.com",
+    iosClientId: "975401301298-6hvoo0ch3glki4m84j6dqkblrm5m7m1k.apps.googleusercontent.com",
+  }, {
+    projectNameForProxy: "@ayeshabarlas/mobile",
   });
 
   const [mode, setMode] = useState<'login' | 'signup' | 'select'>('select');
@@ -54,12 +57,16 @@ export default function LoginScreen({ navigation }: any) {
     if (!token) return;
     setLoading(true);
     try {
-      // In a real app, you would send the token to your backend
-      // and the backend would verify it with Google.
-      // For now, we simulate this verification with our existing social-login endpoint.
+      // Fetch user info from Google
+      const userInfoResponse = await fetch('https://www.googleapis.com/userinfo/v2/me', {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const userProfile = await userInfoResponse.json();
+
       const res = await apiClient.post('/auth/social-login', {
-        email: 'google-user@example.com', // In reality, you'd get this from Google profile
-        name: 'Google User',
+        email: userProfile.email,
+        name: userProfile.name,
+        picture: userProfile.picture,
         provider: 'google',
         role: selectedRole
       });
@@ -126,6 +133,8 @@ export default function LoginScreen({ navigation }: any) {
         message = 'Server database is currently offline. Please try again later.';
       } else if (error.response?.data?.message) {
         message = error.response.data.message;
+      } else if (error.message.includes('timeout')) {
+        message = 'Connection timeout. The server is taking too long to respond. Please check if your backend is running and you are on the same network.';
       } else if (error.message.includes('Network Error')) {
         message = 'Cannot reach server. Check your connection or server IP.';
       }
@@ -366,12 +375,23 @@ export default function LoginScreen({ navigation }: any) {
                   </View>
                   
                   {mode !== 'select' && (
-                    <TouchableOpacity 
-                      style={styles.backToSelect}
-                      onPress={() => setMode('select')}
-                    >
-                      <Text style={styles.backToSelectText}>Back to options</Text>
-                    </TouchableOpacity>
+                    <View style={{ alignItems: 'center', marginTop: 10 }}>
+                      <TouchableOpacity 
+                        style={styles.backToSelect}
+                        onPress={() => setMode('select')}
+                      >
+                        <Text style={styles.backToSelectText}>Back to options</Text>
+                      </TouchableOpacity>
+
+                      <TouchableOpacity 
+                        style={{ marginTop: 20 }}
+                        onPress={checkConnectivity}
+                      >
+                        <Text style={{ color: '#9CA3AF', fontSize: 12, textDecorationLine: 'underline' }}>
+                          Check Connection Status
+                        </Text>
+                      </TouchableOpacity>
+                    </View>
                   )}
                 </View>
               )}
