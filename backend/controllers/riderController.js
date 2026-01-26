@@ -482,6 +482,10 @@ const acceptOrder = async (req, res) => {
         // Notify all riders that this order is no longer available
         triggerEvent('riders', 'orderStatusUpdate', updatedOrder);
 
+        // Notify admins for Live Orders dashboard
+        triggerEvent('admin', 'order_updated', updatedOrder);
+        triggerEvent('admin', 'stats_updated');
+
         // Create Notification for Rider
         const notification = await createNotification(
             rider.user._id,

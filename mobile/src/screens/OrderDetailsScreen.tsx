@@ -143,16 +143,30 @@ export default function OrderDetailsScreen({ route, navigation }: any) {
     return s1 === s2;
   };
 
+  const isAssignedToMe = () => {
+    if (userRole !== 'rider') return false;
+    if (!order?.rider) return false;
+
+    // Check by Rider ID
+    if (compareIds(order.rider, currentRiderId)) return true;
+
+    // Check by User ID (if order.rider is populated and contains user)
+    const riderUserId = order.rider?.user?._id || order.rider?.user;
+    if (riderUserId && compareIds(riderUserId, currentUserId)) return true;
+
+    return false;
+  };
+
   const handleStepPress = (index: number) => {
     if (userRole !== 'rider') return;
 
-    // Enhanced rider check
-    const isAssignedRider = compareIds(order?.rider, currentRiderId);
-    
-    if (!isAssignedRider) {
-      console.log('Rider ID mismatch:', {
+    // Robust rider check
+    if (!isAssignedToMe()) {
+      console.log('Rider ID mismatch debug:', {
         orderRider: order?.rider?._id || order?.rider,
-        currentRiderId: currentRiderId
+        orderRiderUser: order?.rider?.user?._id || order?.rider?.user,
+        currentRiderId,
+        currentUserId
       });
       Alert.alert('Notice', 'Only the assigned rider can update status.');
       return;
@@ -556,7 +570,7 @@ export default function OrderDetailsScreen({ route, navigation }: any) {
       )}
 
       {/* RIDER: Arrived at Restaurant */}
-      {userRole === 'rider' && compareIds(order.rider, currentRiderId) && 
+      {userRole === 'rider' && isAssignedToMe() && 
        ['Accepted', 'Confirmed', 'Preparing', 'Ready', 'Ready for Pickup'].includes(order.status) && (
         <View style={styles.footer}>
           <TouchableOpacity 
@@ -570,7 +584,7 @@ export default function OrderDetailsScreen({ route, navigation }: any) {
       )}
 
       {/* RIDER: Confirm Pickup */}
-      {userRole === 'rider' && compareIds(order.rider, currentRiderId) && 
+      {userRole === 'rider' && isAssignedToMe() && 
        order.status === 'Arrived' && (
         <View style={styles.footer}>
           <TouchableOpacity 
@@ -584,7 +598,7 @@ export default function OrderDetailsScreen({ route, navigation }: any) {
       )}
 
       {/* RIDER: Arrived at Customer */}
-      {userRole === 'rider' && compareIds(order.rider, currentRiderId) && 
+      {userRole === 'rider' && isAssignedToMe() && 
        ['Picked Up', 'OnTheWay'].includes(order.status) && (
         <View style={styles.footer}>
           <TouchableOpacity 
@@ -598,7 +612,7 @@ export default function OrderDetailsScreen({ route, navigation }: any) {
       )}
 
       {/* RIDER: Mark as Delivered */}
-      {userRole === 'rider' && compareIds(order.rider, currentRiderId) && 
+      {userRole === 'rider' && isAssignedToMe() && 
        order.status === 'ArrivedAtCustomer' && (
         <View style={styles.footer}>
           <TouchableOpacity 
@@ -617,12 +631,18 @@ export default function OrderDetailsScreen({ route, navigation }: any) {
     try {
       setLoading(true);
       // We need the rider ID. We can get it from my-profile or user data if stored.
-      const res = await apiClient.get('/riders/my-profile');
-      const riderId = res.data._id;
+      const profileRes = await apiClient.get('/riders/my-profile');
+      const riderId = profileRes.data._id;
       
       await apiClient.post(`/riders/${riderId}/accept-order`, { orderId });
+      
+      // Refresh both order and rider profile to ensure local state is perfect
+      await Promise.all([
+        fetchOrderDetails(),
+        getUserRole()
+      ]);
+      
       Alert.alert('Success', 'Order accepted!');
-      fetchOrderDetails();
     } catch (err: any) {
       Alert.alert('Error', err.response?.data?.message || 'Failed to accept order');
     } finally {
