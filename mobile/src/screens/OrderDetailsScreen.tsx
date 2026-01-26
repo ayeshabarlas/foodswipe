@@ -136,9 +136,24 @@ export default function OrderDetailsScreen({ route, navigation }: any) {
 
   const currentStep = getStatusStep(order?.status || 'Pending');
 
+  const compareIds = (id1: any, id2: any) => {
+    if (!id1 || !id2) return false;
+    const s1 = typeof id1 === 'object' ? (id1._id || id1).toString() : id1.toString();
+    const s2 = typeof id2 === 'object' ? (id2._id || id2).toString() : id2.toString();
+    return s1 === s2;
+  };
+
   const handleStepPress = (index: number) => {
     if (userRole !== 'rider') return;
-    if (!order.rider || (order.rider._id !== currentRiderId && order.rider !== currentRiderId)) {
+
+    // Enhanced rider check
+    const isAssignedRider = compareIds(order?.rider, currentRiderId);
+    
+    if (!isAssignedRider) {
+      console.log('Rider ID mismatch:', {
+        orderRider: order?.rider?._id || order?.rider,
+        currentRiderId: currentRiderId
+      });
       Alert.alert('Notice', 'Only the assigned rider can update status.');
       return;
     }
@@ -541,7 +556,7 @@ export default function OrderDetailsScreen({ route, navigation }: any) {
       )}
 
       {/* RIDER: Arrived at Restaurant */}
-      {userRole === 'rider' && order.rider && (order.rider._id === currentRiderId || order.rider === currentRiderId) && 
+      {userRole === 'rider' && compareIds(order.rider, currentRiderId) && 
        ['Accepted', 'Confirmed', 'Preparing', 'Ready', 'Ready for Pickup'].includes(order.status) && (
         <View style={styles.footer}>
           <TouchableOpacity 
@@ -555,7 +570,7 @@ export default function OrderDetailsScreen({ route, navigation }: any) {
       )}
 
       {/* RIDER: Confirm Pickup */}
-      {userRole === 'rider' && order.rider && (order.rider._id === currentRiderId || order.rider === currentRiderId) && 
+      {userRole === 'rider' && compareIds(order.rider, currentRiderId) && 
        order.status === 'Arrived' && (
         <View style={styles.footer}>
           <TouchableOpacity 
@@ -569,7 +584,7 @@ export default function OrderDetailsScreen({ route, navigation }: any) {
       )}
 
       {/* RIDER: Arrived at Customer */}
-      {userRole === 'rider' && order.rider && (order.rider._id === currentRiderId || order.rider === currentRiderId) && 
+      {userRole === 'rider' && compareIds(order.rider, currentRiderId) && 
        ['Picked Up', 'OnTheWay'].includes(order.status) && (
         <View style={styles.footer}>
           <TouchableOpacity 
@@ -583,7 +598,7 @@ export default function OrderDetailsScreen({ route, navigation }: any) {
       )}
 
       {/* RIDER: Mark as Delivered */}
-      {userRole === 'rider' && order.rider && (order.rider._id === currentRiderId || order.rider === currentRiderId) && 
+      {userRole === 'rider' && compareIds(order.rider, currentRiderId) && 
        order.status === 'ArrivedAtCustomer' && (
         <View style={styles.footer}>
           <TouchableOpacity 
