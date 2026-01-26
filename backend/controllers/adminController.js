@@ -216,29 +216,13 @@ const getDashboardStats = async (req, res) => {
                     _id: null,
                     totalRevenue: { $sum: { $ifNull: ['$totalPrice', 0] } },
                     totalCommission: { $sum: { $ifNull: ['$commissionAmount', 0] } },
-                    totalRiderEarnings: {
-                        $sum: {
-                            $cond: [
-                                { $gt: [{ $toDouble: { $ifNull: ['$riderEarning', 0] } }, 200] },
-                                200,
-                                { $toDouble: { $ifNull: ['$riderEarning', 0] } }
-                            ]
-                        }
-                    },
+                    totalRiderEarnings: { $sum: { $toDouble: { $ifNull: ['$riderEarning', 0] } } },
                     totalRestaurantEarnings: { $sum: { $toDouble: { $ifNull: ['$restaurantEarning', 0] } } },
                     totalServiceFees: { $sum: { $toDouble: { $ifNull: ['$serviceFee', 0] } } },
                     totalTax: { $sum: { $toDouble: { $ifNull: ['$tax', 0] } } },
                     totalGatewayFees: { $sum: { $toDouble: { $ifNull: ['$gatewayFee', 0] } } },
                     totalDiscounts: { $sum: { $toDouble: { $ifNull: ['$discount', 0] } } },
-                    totalDeliveryFees: {
-                        $sum: {
-                            $cond: [
-                                { $gt: [{ $toDouble: { $ifNull: ['$deliveryFee', 0] } }, 200] },
-                                200,
-                                { $toDouble: { $ifNull: ['$deliveryFee', 0] } }
-                            ]
-                        }
-                    }
+                    totalDeliveryFees: { $sum: { $toDouble: { $ifNull: ['$deliveryFee', 0] } } }
                 }
             }
         ]);
@@ -272,7 +256,7 @@ const getDashboardStats = async (req, res) => {
             { $group: { _id: null, totalPending: { $sum: '$pendingPayout' } } }
         ]);
         const riderWalletStats = await RiderWallet.aggregate([
-            { $group: { _id: null, totalPending: { $sum: '$pendingPayout' } } }
+            { $group: { _id: null, totalPending: { $sum: '$availableWithdraw' } } }
         ]);
         const totalPendingPayouts = (resWalletStats[0]?.totalPending || 0) + (riderWalletStats[0]?.totalPending || 0);
 

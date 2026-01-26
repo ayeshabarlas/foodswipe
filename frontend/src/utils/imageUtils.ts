@@ -29,7 +29,11 @@ export const getImageUrl = (path: string | undefined | null) => {
     const pathWithoutUploads = hasUploads ? cleanPath.replace(/^uploads\//, '') : cleanPath;
 
     const API_URL = getApiUrl();
-    const baseUrl = API_URL.endsWith('/') ? API_URL.slice(0, -1) : API_URL;
+    // Remove /api from the end if it exists, as static files are served from root
+    let baseUrl = API_URL.endsWith('/') ? API_URL.slice(0, -1) : API_URL;
+    if (baseUrl.endsWith('/api')) {
+        baseUrl = baseUrl.slice(0, -4);
+    }
     
     // Ensure we always return a valid URL starting with /uploads/
     // If the path already includes 'uploads', we use the path without double 'uploads'

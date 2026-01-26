@@ -289,7 +289,7 @@ export default function RiderDashboard({ navigation }: any) {
               ...prev,
               wallet: data.walletBalance || data.earnings_balance || prev.wallet,
               cod_balance: data.cod_balance || prev.cod_balance,
-              earnings: data.stats?.totalEarnings || prev.earnings
+              earnings: data.earnings?.today || data.stats?.totalEarnings || prev.earnings
             }));
             // Optionally refetch earnings data to be sure
             fetchEarningsData();

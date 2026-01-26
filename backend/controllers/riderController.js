@@ -518,7 +518,11 @@ const rejectOrder = async (req, res) => {
     }
 };
 
-// @desc    Get rider earnings
+const RiderWallet = require('../models/RiderWallet');
+
+// @desc    Get rider earnings stats
+// @route   GET /api/riders/:id/earnings
+// @access  Private
 const getEarnings = async (req, res) => {
     try {
         const rider = await Rider.findById(req.params.id);
@@ -527,8 +531,12 @@ const getEarnings = async (req, res) => {
             return res.status(404).json({ message: 'Rider not found' });
         }
 
-        // Calculate totals from rider model
-        const totalEarnings = rider.earnings?.total || 0;
+        // Try to get data from RiderWallet as the source of truth for money
+        const riderWallet = await RiderWallet.findOne({ rider: req.params.id });
+
+        // Calculate totals from rider model or wallet
+        const totalEarnings = riderWallet ? riderWallet.totalEarnings : (rider.earnings?.total || 0);
+        const pendingPayout = riderWallet ? riderWallet.availableWithdraw : (rider.walletBalance || 0);
         const completedDeliveries = rider.stats?.completedDeliveries || 0;
         
         // MVP Logic: Use dynamic settings if available, otherwise base 40
@@ -549,7 +557,7 @@ const getEarnings = async (req, res) => {
             bonuses: 0,
             tips: totalTips,
             deliveries: completedDeliveries,
-            pendingPayout: rider.walletBalance || 0,
+            pendingPayout: pendingPayout,
             nextPayoutDate: getNextPayoutDate(),
             today: todayEarnings,
             thisWeek: weekEarnings
@@ -616,16 +624,21 @@ const getDeliveryHistory = async (req, res) => {
             .sort({ createdAt: -1 })
             .limit(50);
 
-        const formattedDeliveries = deliveries.map(order => ({
-            _id: order._id,
-            orderNumber: order.orderNumber,
-            restaurant: order.restaurant,
-            status: order.status,
-            createdAt: order.createdAt,
-            earnings: order.riderEarning || order.netRiderEarning || (order.status === 'Cancelled' ? 0 : 250),
-            rating: '5.0',
-            timeAgo: getTimeAgo(order.createdAt)
-        }));
+        const formattedDeliveries = deliveries.map(order => {
+            const riderEarning = order.riderEarning || order.netRiderEarning || (order.status === 'Cancelled' ? 0 : 250);
+            return {
+                _id: order._id,
+                orderNumber: order.orderNumber,
+                restaurant: order.restaurant,
+                status: order.status,
+                createdAt: order.createdAt,
+                earnings: riderEarning,
+                riderEarning: riderEarning,
+                netRiderEarning: riderEarning,
+                rating: '5.0',
+                timeAgo: getTimeAgo(order.createdAt)
+            };
+        });
 
         res.json(formattedDeliveries);
     } catch (error) {

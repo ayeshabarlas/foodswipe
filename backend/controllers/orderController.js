@@ -668,6 +668,14 @@ const processOrderCompletion = async (order, distanceKm, req = null) => {
             rider.stats.completedDeliveries = (rider.stats.completedDeliveries || 0) + 1;
             rider.stats.totalDeliveries = (rider.stats.totalDeliveries || 0) + 1;
             
+            // Update rider earnings and wallet balance
+            rider.earnings.today = (rider.earnings.today || 0) + riderEarning;
+            rider.earnings.thisWeek = (rider.earnings.thisWeek || 0) + riderEarning;
+            rider.earnings.thisMonth = (rider.earnings.thisMonth || 0) + riderEarning;
+            rider.earnings.total = (rider.earnings.total || 0) + riderEarning;
+            rider.walletBalance = (rider.walletBalance || 0) + riderEarning;
+            rider.earnings_balance = (rider.earnings_balance || 0) + riderEarning;
+            
             // Mark current order as null since it's completed
             rider.currentOrder = null;
             
@@ -697,6 +705,7 @@ const processOrderCompletion = async (order, distanceKm, req = null) => {
                 cod_balance: rider.cod_balance,
                 earnings_balance: rider.earnings_balance,
                 walletBalance: rider.walletBalance,
+                earnings: rider.earnings,
                 stats: rider.stats
             });
 
