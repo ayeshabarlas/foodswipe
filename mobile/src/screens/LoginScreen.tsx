@@ -29,9 +29,8 @@ const { width } = Dimensions.get('window');
 
 export default function LoginScreen({ navigation }: any) {
   const [request, response, promptAsync] = Google.useAuthRequest({
-    androidClientId: "YOUR_ANDROID_CLIENT_ID",
-    iosClientId: "YOUR_IOS_CLIENT_ID",
-    webClientId: "YOUR_WEB_CLIENT_ID",
+    webClientId: "975401301298-6hvoo0ch3glki4m84j6dqkblrm5m7m1k.apps.googleusercontent.com",
+    androidClientId: "975401301298-6hvoo0ch3glki4m84j6dqkblrm5m7m1k.apps.googleusercontent.com", // Temporary using web client id for Expo Go
   });
 
   const [mode, setMode] = useState<'login' | 'signup' | 'select'>('select');

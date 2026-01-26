@@ -14,13 +14,13 @@
     },
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.yourname.foodswipe",
+      "bundleIdentifier": "com.foodswipe.app",
       "config": {
         "googleMapsApiKey": "AIzaSyB75lradye-bSagnFN6tqmlmZC3PyBXl48"
       }
     },
     "android": {
-      "package": "com.yourname.foodswipe",
+      "package": "com.foodswipe.app",
       "config": {
         "googleMaps": {
           "apiKey": "AIzaSyB75lradye-bSagnFN6tqmlmZC3PyBXl48"
@@ -37,7 +37,8 @@
       "favicon": "./assets/favicon.png"
     },
     "plugins": [
-      "expo-secure-store"
+      "expo-secure-store",
+      "expo-web-browser"
     ]
   }
 }
