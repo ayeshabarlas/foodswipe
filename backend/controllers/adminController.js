@@ -180,7 +180,7 @@ const getAllOrders = async (req, res) => {
             .populate('restaurant', 'name address')
             .populate({
                 path: 'rider',
-                populate: { path: 'user', select: 'name phone' }
+                populate: { path: 'user', select: 'name phone email' }
             })
             .sort({ createdAt: -1 });
 
@@ -365,7 +365,14 @@ const getDashboardStats = async (req, res) => {
         ]);
 
         // Recent Activity (Orders, New Restaurants, New Riders)
-        const recentOrders = await Order.find().sort({ createdAt: -1 }).limit(5).populate('restaurant', 'name');
+        const recentOrders = await Order.find()
+            .sort({ createdAt: -1 })
+            .limit(5)
+            .populate('restaurant', 'name')
+            .populate({
+                path: 'rider',
+                populate: { path: 'user', select: 'name' }
+            });
         const recentRestaurants = await Restaurant.find().sort({ createdAt: -1 }).limit(3).populate('owner', 'name email status');
         const recentRiders = await Rider.find().sort({ createdAt: -1 }).limit(3).populate('user', 'name email status');
 
@@ -374,7 +381,7 @@ const getDashboardStats = async (req, res) => {
                 id: o._id,
                 type: 'order',
                 text: `New order completed`,
-                subtext: `Order #${o._id.toString().slice(-5)} delivered successfully`,
+                subtext: `Order #${o._id.toString().slice(-5)} ${o.rider ? `(Rider: ${o.rider.fullName || (o.rider.user && o.rider.user.name) || 'Assigned'})` : ''} delivered successfully`,
                 time: o.createdAt
             })),
             ...recentRestaurants.map(r => ({
@@ -548,7 +555,8 @@ const getAllRiders = async (req, res) => {
             {
                 $addFields: {
                     wallet: { $ifNull: [{ $arrayElemAt: ['$walletDetails', 0] }, {}] },
-                    totalOrders: { $size: '$allOrders' }
+                    totalOrders: { $size: '$allOrders' },
+                    documents: { $ifNull: ['$documents', {}] }
                 }
             },
             {

@@ -37,6 +37,7 @@ export default function RiderDashboard({ navigation }: any) {
   const [availableOrders, setAvailableOrders] = useState<any[]>([]);
   const [myOrders, setMyOrders] = useState<any[]>([]);
   const [activeTab, setActiveTab] = useState<'home' | 'orders' | 'earnings' | 'profile'>('home');
+  const [showHistory, setShowHistory] = useState(false);
   const [orderFilter, setOrderFilter] = useState<'all' | 'nearby' | 'high_pay'>('all');
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -44,10 +45,22 @@ export default function RiderDashboard({ navigation }: any) {
   const [stats, setStats] = useState({ earnings: 0, orders: 0, rating: 5.0, wallet: 0, cod_balance: 0 });
   const [locationSubscription, setLocationSubscription] = useState<any>(null);
   const [activeOrder, setActiveOrder] = useState<any>(null);
+  const [historyOrders, setHistoryOrders] = useState<any[]>([]);
   const [transactions, setTransactions] = useState<any[]>([]);
   const [bankDetails, setBankDetails] = useState({ bankName: '', accountTitle: '', accountNumber: '' });
   const [isEditingBank, setIsEditingBank] = useState(false);
   const [savingBank, setSavingBank] = useState(false);
+
+  const isOnlineRef = React.useRef(isOnline);
+  const riderProfileRef = React.useRef(riderProfile);
+
+  useEffect(() => {
+    isOnlineRef.current = isOnline;
+  }, [isOnline]);
+
+  useEffect(() => {
+    riderProfileRef.current = riderProfile;
+  }, [riderProfile]);
 
   const [showPrivacyModal, setShowPrivacyModal] = useState(false);
   const [showTermsModal, setShowTermsModal] = useState(false);
@@ -93,20 +106,26 @@ export default function RiderDashboard({ navigation }: any) {
   }, [activeTab, riderProfile?._id]);
 
   const fetchEarningsData = async () => {
+    const profile = riderProfileRef.current || riderProfile;
+    if (!profile?._id) {
+      console.log('DEBUG: Cannot fetch earnings, riderProfile is null');
+      return;
+    }
+    
     try {
       const [earningsRes, transRes] = await Promise.all([
-        apiClient.get(`/riders/${riderProfile._id}/earnings`),
-        apiClient.get(`/riders/${riderProfile._id}/transactions`)
+        apiClient.get(`/riders/${profile._id}/earnings`),
+        apiClient.get(`/riders/${profile._id}/transactions`)
       ]);
       setStats(prev => ({
         ...prev,
-        earnings: earningsRes.data.todayEarnings || 0,
-        wallet: earningsRes.data.walletBalance || 0,
-        cod_balance: riderProfile.cod_balance || 0
+        earnings: earningsRes.data.today || 0,
+        wallet: earningsRes.data.pendingPayout || 0,
+        cod_balance: profile.cod_balance || 0
       }));
       setTransactions(transRes.data || []);
-      if (riderProfile.bankDetails) {
-        setBankDetails(riderProfile.bankDetails);
+      if (profile.bankDetails) {
+        setBankDetails(profile.bankDetails);
       }
     } catch (err) {
       console.error('Error fetching earnings data:', err);
@@ -198,7 +217,8 @@ export default function RiderDashboard({ navigation }: any) {
       const data = await SecureStore.getItemAsync('user_data');
       if (data) {
         const user = JSON.parse(data);
-        const userId = user._id || user.id;
+        console.log('👤 User data loaded:', { id: user.id, _id: user._id, role: user.role });
+        const userId = user._id || user.id || user.userId;
         setUserData(user);
         
         // Fetch Rider Profile
@@ -218,11 +238,25 @@ export default function RiderDashboard({ navigation }: any) {
 
         if (ridersChannel) {
           ridersChannel.bind('newOrderAvailable', (order: any) => {
-            console.log('🔔 New Delivery Request:', order._id);
-            if (isOnline) {
-              setAvailableOrders(prev => [order, ...prev]);
+            console.log('🔔 New Delivery Request:', order._id, 'Rider Online Status (ref):', isOnlineRef.current);
+            if (isOnlineRef.current) {
+              setAvailableOrders(prev => {
+                const exists = prev.some(o => o._id === order._id);
+                if (exists) return prev;
+                return [order, ...prev];
+              });
               setNewOrderPopup(order);
               setTimer(60); // Set timer for the popup
+            }
+          });
+
+          ridersChannel.bind('orderStatusUpdate', (updatedOrder: any) => {
+            console.log('📦 Order update on riders channel:', updatedOrder._id, updatedOrder.status);
+            // If order now has a rider, remove it from available orders for everyone else
+            if (updatedOrder.rider) {
+              setAvailableOrders(prev => prev.filter(o => o._id !== updatedOrder._id));
+              // If this was the order currently showing in the popup, close it
+              setNewOrderPopup(current => (current?._id === updatedOrder._id ? null : current));
             }
           });
         }
@@ -294,15 +328,17 @@ export default function RiderDashboard({ navigation }: any) {
         setActiveOrder(active || null);
       }
 
-      const [ordersRes, availableRes, earningsRes] = await Promise.all([
+      const [ordersRes, availableRes, earningsRes, historyRes] = await Promise.all([
         apiClient.get(`/riders/${riderId}/orders`),
         apiClient.get(`/riders/${riderId}/available-orders`),
-        apiClient.get(`/riders/${riderId}/earnings`)
+        apiClient.get(`/riders/${riderId}/earnings`),
+        apiClient.get(`/riders/${riderId}/deliveries`)
       ]);
       
       const allMyOrders = ordersRes.data;
       const activeMyOrders = allMyOrders.filter((o: any) => o.status !== 'Delivered' && o.status !== 'Cancelled');
       const newAvailableOrders = availableRes.data;
+      const historyData = historyRes.data;
       
       // Find active order for tracking
       const active = activeMyOrders.find((o: any) => 
@@ -311,20 +347,22 @@ export default function RiderDashboard({ navigation }: any) {
       setActiveOrder(active || null);
 
       const newStats = {
-        earnings: earningsRes.data.todayEarnings || 0,
-        orders: allMyOrders.filter((o: any) => o.status === 'Delivered').length,
+        earnings: earningsRes.data.today || 0,
+        orders: historyData.filter((o: any) => o.status === 'Delivered' || o.status === 'Completed').length,
         rating: riderProfile?.stats?.rating || 5.0,
-        wallet: earningsRes.data.walletBalance || 0,
+        wallet: earningsRes.data.pendingPayout || 0,
         cod_balance: riderProfile?.cod_balance || 0
       };
 
       setMyOrders(allMyOrders);
       setAvailableOrders(newAvailableOrders);
+      setHistoryOrders(historyData);
       setStats(newStats);
 
       await setCache(`rider_data_${riderId}`, {
         myOrders: allMyOrders,
         availableOrders: newAvailableOrders,
+        historyOrders: historyData,
         stats: newStats
       });
     } catch (err) {
@@ -353,10 +391,12 @@ export default function RiderDashboard({ navigation }: any) {
     if (isAccepting) return;
     setIsAccepting(true);
     try {
-      await apiClient.post(`/riders/${riderProfile._id}/accept-order`, { orderId });
+      const res = await apiClient.post(`/riders/${riderProfile._id}/accept-order`, { orderId });
       Alert.alert('Success', 'Order accepted!');
       setNewOrderPopup(null);
       fetchData(riderProfile._id);
+      // Navigate to order details immediately
+      navigation.navigate('OrderDetails', { orderId });
     } catch (err: any) {
       Alert.alert('Error', err.response?.data?.message || 'Failed to accept order');
     } finally {
@@ -512,6 +552,32 @@ export default function RiderDashboard({ navigation }: any) {
     );
   };
 
+  const renderHistoryItem = ({ item }: { item: any }) => (
+    <TouchableOpacity 
+      style={styles.orderCard}
+      onPress={() => navigation.navigate('OrderDetails', { orderId: item._id })}
+    >
+      <View style={styles.orderHeader}>
+        <View style={styles.restaurantInfo}>
+          <View style={[styles.statIcon, { backgroundColor: item.status === 'Delivered' ? '#ECFDF5' : '#FEF2F2' }]}>
+            <Ionicons 
+              name={item.status === 'Delivered' ? "checkmark-circle" : "close-circle"} 
+              size={24} 
+              color={item.status === 'Delivered' ? "#059669" : "#EF4444"} 
+            />
+          </View>
+          <View>
+            <Text style={styles.restaurantName}>{item.restaurant?.name || 'Restaurant'}</Text>
+            <Text style={styles.distanceText}>{new Date(item.createdAt).toLocaleDateString()} • {item.status}</Text>
+          </View>
+        </View>
+        <View style={styles.earningBadge}>
+          <Text style={styles.earningText}>Rs. {item.riderEarning || 0}</Text>
+        </View>
+      </View>
+    </TouchableOpacity>
+  );
+
   const renderAvailableOrderItem = ({ item }: { item: any }) => (
     <View style={styles.orderCard}>
       <View style={styles.orderHeader}>
@@ -607,7 +673,10 @@ export default function RiderDashboard({ navigation }: any) {
           </View>
           <Text style={styles.quickActionLabel}>Wallet</Text>
         </TouchableOpacity>
-        <TouchableOpacity style={styles.quickAction} onPress={() => setActiveTab('orders')}>
+        <TouchableOpacity style={styles.quickAction} onPress={() => {
+          setActiveTab('orders');
+          setShowHistory(true);
+        }}>
           <View style={[styles.quickActionIcon, { backgroundColor: '#E0F2FE' }]}>
             <Ionicons name="time" size={24} color="#0EA5E9" />
           </View>
@@ -633,33 +702,55 @@ export default function RiderDashboard({ navigation }: any) {
     return (
       <View style={styles.tabContent}>
         <LinearGradient colors={[Colors.primary, '#f43f5e']} style={styles.tabHeader}>
-          <Text style={styles.tabHeaderTitle}>Available Orders</Text>
-          <View style={styles.filterRow}>
-            {['all', 'nearby', 'high_pay'].map((f) => (
-              <TouchableOpacity 
-                key={f} 
-                style={[styles.filterBtn, orderFilter === f && styles.filterBtnActive]}
-                onPress={() => setOrderFilter(f as any)}
-              >
-                <Text style={[styles.filterBtnText, orderFilter === f && styles.filterBtnTextActive]}>
-                  {f === 'all' ? 'All' : f === 'nearby' ? 'Nearby' : 'High Pay'}
-                </Text>
-              </TouchableOpacity>
-            ))}
+          <View style={styles.tabToggleRow}>
+            <TouchableOpacity 
+              style={[styles.tabToggleBtn, !showHistory && styles.tabToggleBtnActive]}
+              onPress={() => setShowHistory(false)}
+            >
+              <Text style={[styles.tabToggleText, !showHistory && styles.tabToggleTextActive]}>Available</Text>
+            </TouchableOpacity>
+            <TouchableOpacity 
+              style={[styles.tabToggleBtn, showHistory && styles.tabToggleBtnActive]}
+              onPress={() => setShowHistory(true)}
+            >
+              <Text style={[styles.tabToggleText, showHistory && styles.tabToggleTextActive]}>History</Text>
+            </TouchableOpacity>
           </View>
+
+          {!showHistory && (
+            <View style={styles.filterRow}>
+              {['all', 'nearby', 'high_pay'].map((f) => (
+                <TouchableOpacity 
+                  key={f} 
+                  style={[styles.filterBtn, orderFilter === f && styles.filterBtnActive]}
+                  onPress={() => setOrderFilter(f as any)}
+                >
+                  <Text style={[styles.filterBtnText, orderFilter === f && styles.filterBtnTextActive]}>
+                    {f === 'all' ? 'All' : f === 'nearby' ? 'Nearby' : 'High Pay'}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+          )}
         </LinearGradient>
 
         <FlatList
-          data={isOnline ? filteredOrders : []}
+          data={showHistory ? historyOrders : (isOnline ? filteredOrders : [])}
           keyExtractor={(item) => item._id}
-          renderItem={renderAvailableOrderItem}
+          renderItem={showHistory ? renderHistoryItem : renderAvailableOrderItem}
           refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={[Colors.primary]} />}
           contentContainerStyle={styles.listContent}
           ListEmptyComponent={
             <View style={styles.emptyState}>
-              <Ionicons name={isOnline ? "bicycle-outline" : "moon-outline"} size={64} color={Colors.gray} />
+              <Ionicons 
+                name={showHistory ? "time-outline" : (isOnline ? "bicycle-outline" : "moon-outline")} 
+                size={64} 
+                color={Colors.gray} 
+              />
               <Text style={styles.emptyText}>
-                {!isOnline ? 'Go online to see available orders' : 'No orders available right now'}
+                {showHistory 
+                  ? 'No order history yet' 
+                  : (!isOnline ? 'Go online to see available orders' : 'No orders available right now')}
               </Text>
             </View>
           }
@@ -1585,9 +1676,33 @@ const styles = StyleSheet.create({
   tabHeader: {
     paddingHorizontal: 20,
     paddingTop: 40,
-    paddingBottom: 30,
+    paddingBottom: 25,
     borderBottomLeftRadius: 30,
     borderBottomRightRadius: 30,
+  },
+  tabToggleRow: {
+    flexDirection: 'row',
+    backgroundColor: 'rgba(255,255,255,0.2)',
+    borderRadius: 15,
+    padding: 4,
+    marginBottom: 15,
+  },
+  tabToggleBtn: {
+    flex: 1,
+    paddingVertical: 8,
+    alignItems: 'center',
+    borderRadius: 12,
+  },
+  tabToggleBtnActive: {
+    backgroundColor: '#fff',
+  },
+  tabToggleText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#fff',
+  },
+  tabToggleTextActive: {
+    color: Colors.primary,
   },
   tabHeaderTitle: {
     fontSize: 24,

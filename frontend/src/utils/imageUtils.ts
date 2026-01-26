@@ -10,24 +10,30 @@ export const getImageUrl = (path: string | undefined | null) => {
     // Normalize slashes
     let cleanPath = path.replace(/\\/g, '/');
     
-    // If it's already a full URL, return it
-    if (cleanPath.startsWith('http')) {
+    // If it's already a full URL or base64, return it
+    if (cleanPath.startsWith('http') || cleanPath.startsWith('data:')) {
         return cleanPath;
     }
     
-    // Remove any leading slashes or 'uploads/' prefix
-    // We do this repeatedly to handle cases like '/uploads/uploads/file.jpg'
+    // Remove leading ./ ../ / 
     let oldPath;
     do {
         oldPath = cleanPath;
-        cleanPath = cleanPath.replace(/^(\.\/|\.\.\/|\/|uploads\/)+/, '');
+        // Specifically avoid removing 'uploads/' if it's already at the start
+        if (cleanPath.startsWith('uploads/')) break;
+        cleanPath = cleanPath.replace(/^(\.\/|\.\.\/|\/)+/, '');
     } while (cleanPath !== oldPath);
     
+    // If it starts with 'uploads/', don't remove it, just ensure we don't double it later
+    const hasUploads = cleanPath.startsWith('uploads/');
+    const pathWithoutUploads = hasUploads ? cleanPath.replace(/^uploads\//, '') : cleanPath;
+
     const API_URL = getApiUrl();
     const baseUrl = API_URL.endsWith('/') ? API_URL.slice(0, -1) : API_URL;
     
-    // Always return with /uploads/ prefix
-    return `${baseUrl}/uploads/${cleanPath}`;
+    // Ensure we always return a valid URL starting with /uploads/
+    // If the path already includes 'uploads', we use the path without double 'uploads'
+    return `${baseUrl}/uploads/${pathWithoutUploads}`;
 };
 
 /**

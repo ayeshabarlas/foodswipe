@@ -1,4 +1,4 @@
-// Deploy Trigger: 2026-01-24 00:30 - Final Production Sync (Repo Public)
+// Deploy Trigger: 2026-01-26 14:00 - Fixed Vercel API URL priority and image paths
 // Lazy-loaded constants to avoid TDZ (Temporal Dead Zone) errors
 let cachedApiUrl: string | null = null;
 let cachedSocketUrl: string | null = null;
@@ -6,8 +6,12 @@ let cachedSocketUrl: string | null = null;
 export function getApiUrl() {
   if (cachedApiUrl) return cachedApiUrl;
   
-  // Priority 1: Use Environment variable if provided (from .env.local)
-  let url = process.env.NEXT_PUBLIC_API_URL;
+  // Priority 1: Use Environment variable if provided (from .env.local or Vercel)
+  const ENV_URL = process.env.NEXT_PUBLIC_API_URL;
+  if (ENV_URL) {
+    cachedApiUrl = ENV_URL.endsWith('/') ? ENV_URL.slice(0, -1) : ENV_URL;
+    return cachedApiUrl;
+  }
 
   // Priority 2: Force localhost/local IP if we are on a local network in browser
   if (typeof window !== 'undefined' && (
@@ -26,14 +30,12 @@ export function getApiUrl() {
     return cachedApiUrl;
   }
 
-  const RENDER_URL = process.env.NEXT_PUBLIC_API_URL || 'https://foodswipe-6178.onrender.com';
+  const RENDER_URL = 'https://foodswipe-6178.onrender.com';
   
   if (typeof window !== 'undefined') {
-    const isLocal = window.location.hostname === 'localhost' || 
-                   window.location.hostname === '127.0.0.1' ||
-                   window.location.hostname.startsWith('192.168.');
+    const isVercel = window.location.hostname.includes('vercel.app') || window.location.hostname.includes('foodswipe.pk');
                    
-    if (!isLocal || window.location.hostname.includes('vercel.app')) {
+    if (isVercel) {
       cachedApiUrl = RENDER_URL;
       return cachedApiUrl;
     }
@@ -44,7 +46,7 @@ export function getApiUrl() {
     return cachedApiUrl;
   }
   
-  if (!url) url = 'http://localhost:5000';
+  let url = 'http://localhost:5000';
   if (!url.startsWith('http')) url = `https://${url}`;
   
   url = url.endsWith('/') ? url.slice(0, -1) : url;

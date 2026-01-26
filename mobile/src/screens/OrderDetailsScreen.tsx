@@ -146,16 +146,32 @@ export default function OrderDetailsScreen({ route, navigation }: any) {
   };
 
   const isAssignedToMe = () => {
-    if (userRole !== 'rider') return false;
-    if (!order?.rider) return false;
+    if (userRole !== 'rider') {
+      console.log('DEBUG: User role is not rider:', userRole);
+      return false;
+    }
+    if (!order?.rider) {
+      console.log('DEBUG: Order has no rider assigned yet');
+      return false;
+    }
 
     // Check by Rider ID
-    const riderId = order.rider?._id || order.rider;
-    if (compareIds(riderId, currentRiderId)) return true;
+    const riderId = (order.rider?._id || order.rider || '').toString();
+    const myRiderId = (currentRiderId || '').toString();
+    
+    console.log('DEBUG: Comparing Rider IDs:', { orderRiderId: riderId, myRiderId });
+    if (riderId && myRiderId && riderId === myRiderId) return true;
 
     // Check by User ID (if order.rider is populated and contains user)
-    const riderUserId = order.rider?.user?._id || order.rider?.user;
-    if (riderUserId && compareIds(riderUserId, currentUserId)) return true;
+    const riderUserId = (order.rider?.user?._id || order.rider?.user || '').toString();
+    const myUserId = (currentUserId || '').toString();
+    
+    console.log('DEBUG: Comparing User IDs:', { orderRiderUserId: riderUserId, myUserId });
+    if (riderUserId && myUserId && riderUserId === myUserId) return true;
+
+    // Last ditch effort: if order.rider is just a string and matches currentUserId or currentRiderId
+    const orderRiderStr = (typeof order.rider === 'string' ? order.rider : order.rider?._id || '').toString();
+    if (orderRiderStr && (orderRiderStr === myUserId || orderRiderStr === myRiderId)) return true;
 
     return false;
   };
@@ -464,8 +480,8 @@ export default function OrderDetailsScreen({ route, navigation }: any) {
           </View>
         )}
 
-        {/* Rider Info */}
-        {order.rider && (
+        {/* Rider Info (Show to Customer) */}
+        {userRole === 'customer' && order.rider && (
           <View style={styles.card}>
             <Text style={styles.cardTitle}>Delivery Rider</Text>
             <View style={styles.riderRow}>
@@ -482,6 +498,30 @@ export default function OrderDetailsScreen({ route, navigation }: any) {
               >
                 <Ionicons name="call" size={20} color="#fff" />
               </TouchableOpacity>
+            </View>
+          </View>
+        )}
+
+        {/* Customer Info (Show to Rider) */}
+        {userRole === 'rider' && order.user && (
+          <View style={styles.card}>
+            <Text style={styles.cardTitle}>Customer Details</Text>
+            <View style={styles.riderRow}>
+              <View style={styles.avatar}>
+                <Ionicons name="person" size={24} color={Colors.primary} />
+              </View>
+              <View style={styles.riderInfo}>
+                <Text style={styles.riderName}>{order.user.name || 'Customer'}</Text>
+                <Text style={styles.riderPhone}>{order.user.phone || 'No phone provided'}</Text>
+              </View>
+              {order.user.phone && (
+                <TouchableOpacity 
+                  style={styles.callButton}
+                  onPress={() => Linking.openURL(`tel:${order.user.phone}`)}
+                >
+                  <Ionicons name="call" size={20} color="#fff" />
+                </TouchableOpacity>
+              )}
             </View>
           </View>
         )}

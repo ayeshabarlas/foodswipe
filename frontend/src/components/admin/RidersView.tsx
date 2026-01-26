@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import axios from 'axios';
 import { getSocket } from '../../utils/socket';
 import { getApiUrl } from '../../utils/config';
+import { getImageUrl, getImageFallback } from '../../utils/imageUtils';
 import toast from 'react-hot-toast';
 import { 
     FaUser, FaMotorcycle, FaSearch, FaFilter, FaMapMarkerAlt, 
@@ -609,7 +610,7 @@ export default function RidersView() {
                                         {/* Documents Section */}
                                         <div className="space-y-4">
                                             <h4 className="text-[13px] font-medium text-[#6B7280] uppercase tracking-wider border-b border-gray-50 pb-2">Verification Documents</h4>
-                                            {selectedRider.documents ? (
+                                            {selectedRider.documents && Object.keys(selectedRider.documents).length > 0 && Object.values(selectedRider.documents).some(v => v) ? (
                                                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                                                     {Object.entries(selectedRider.documents).map(([key, value]) => (
                                                         value && (
@@ -617,13 +618,17 @@ export default function RidersView() {
                                                                 <p className="text-[11px] font-medium text-[#9CA3AF] uppercase mb-2 tracking-tight truncate">{key.replace(/([A-Z])/g, ' $1').trim()}</p>
                                                                 <div className="aspect-[4/3] relative overflow-hidden rounded-xl bg-white">
                                                                     <img 
-                                                                        src={`${getApiUrl()}/${value}`} 
+                                                                        src={getImageUrl(value as string)} 
                                                                         alt={key} 
                                                                         className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" 
+                                                                        onError={(e) => {
+                                                                            const target = e.target as HTMLImageElement;
+                                                                            target.src = getImageFallback('document');
+                                                                        }}
                                                                     />
                                                                     <div className="absolute inset-0 bg-gray-900/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
                                                                         <a 
-                                                                            href={`${getApiUrl()}/${value}`} 
+                                                                            href={getImageUrl(value as string)} 
                                                                             target="_blank" 
                                                                             rel="noopener noreferrer"
                                                                             className="bg-white text-gray-900 p-2 rounded-xl hover:bg-[#FF6A00] hover:text-white transition-all shadow-xl"

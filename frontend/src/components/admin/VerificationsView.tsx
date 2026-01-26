@@ -251,6 +251,10 @@ export default function VerificationsView({ initialTab = 'restaurants' }: { init
                                                                 src={getImageUrl(selectedItem.documents?.[docKey])}
                                                                 alt={docKey}
                                                                 className="w-full h-full object-contain bg-gray-50 transition-transform duration-700 group-hover:scale-110"
+                                                                onError={(e) => {
+                                                                    const target = e.target as HTMLImageElement;
+                                                                    target.src = getImageFallback('document');
+                                                                }}
                                                             />
                                                             <div className="absolute inset-0 bg-[#111827]/0 group-hover:bg-[#111827]/5 transition-colors pointer-events-none" />
                                                             <a
@@ -271,6 +275,58 @@ export default function VerificationsView({ initialTab = 'restaurants' }: { init
                                                 </div>
                                             </div>
                                         ))}
+
+                                        {/* Kitchen Photos (for Home Chefs) */}
+                                        {selectedItem.kitchenPhotos?.map((photo: string, idx: number) => (
+                                            <div key={`kitchen-${idx}`} className="group relative">
+                                                <p className="text-[11px] font-bold text-[#6B7280] mb-3 uppercase tracking-widest">Kitchen Photo {idx + 1}</p>
+                                                <div className="aspect-[4/3] bg-gray-50 rounded-3xl overflow-hidden border border-gray-100 relative shadow-inner group-hover:border-[#FF6A00]/30 transition-all duration-300">
+                                                    <img
+                                                        src={getImageUrl(photo)}
+                                                        alt="Kitchen"
+                                                        className="w-full h-full object-contain bg-gray-50 transition-transform duration-700 group-hover:scale-110"
+                                                        onError={(e) => {
+                                                            const target = e.target as HTMLImageElement;
+                                                            target.src = getImageFallback('document');
+                                                        }}
+                                                    />
+                                                    <a
+                                                        href={getImageUrl(photo)}
+                                                        target="_blank"
+                                                        rel="noreferrer"
+                                                        className="absolute bottom-4 right-4 bg-white px-4 py-2 rounded-xl text-[11px] font-bold text-[#111827] shadow-xl opacity-0 group-hover:opacity-100 transition-all duration-300 translate-y-2 group-hover:translate-y-0 flex items-center gap-2 hover:bg-[#111827] hover:text-white"
+                                                    >
+                                                        <FaEye className="text-sm" /> Full View
+                                                    </a>
+                                                </div>
+                                            </div>
+                                        ))}
+
+                                        {/* Sample Dish Photos (for Home Chefs) */}
+                                        {selectedItem.sampleDishPhotos?.map((photo: string, idx: number) => (
+                                            <div key={`dish-${idx}`} className="group relative">
+                                                <p className="text-[11px] font-bold text-[#6B7280] mb-3 uppercase tracking-widest">Sample Dish {idx + 1}</p>
+                                                <div className="aspect-[4/3] bg-gray-50 rounded-3xl overflow-hidden border border-gray-100 relative shadow-inner group-hover:border-[#FF6A00]/30 transition-all duration-300">
+                                                    <img
+                                                        src={getImageUrl(photo)}
+                                                        alt="Dish"
+                                                        className="w-full h-full object-contain bg-gray-50 transition-transform duration-700 group-hover:scale-110"
+                                                        onError={(e) => {
+                                                            const target = e.target as HTMLImageElement;
+                                                            target.src = getImageFallback('dish');
+                                                        }}
+                                                    />
+                                                    <a
+                                                        href={getImageUrl(photo)}
+                                                        target="_blank"
+                                                        rel="noreferrer"
+                                                        className="absolute bottom-4 right-4 bg-white px-4 py-2 rounded-xl text-[11px] font-bold text-[#111827] shadow-xl opacity-0 group-hover:opacity-100 transition-all duration-300 translate-y-2 group-hover:translate-y-0 flex items-center gap-2 hover:bg-[#111827] hover:text-white"
+                                                    >
+                                                        <FaEye className="text-sm" /> Full View
+                                                    </a>
+                                                </div>
+                                            </div>
+                                        ))}
                                     </div>
                                 </div>
 
@@ -288,6 +344,10 @@ export default function VerificationsView({ initialTab = 'restaurants' }: { init
                                                         src={getImageUrl(selectedItem.storefrontPhoto)}
                                                         alt="Storefront"
                                                         className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
+                                                        onError={(e) => {
+                                                            const target = e.target as HTMLImageElement;
+                                                            target.src = getImageFallback('document');
+                                                        }}
                                                     />
                                                     <a
                                                         href={getImageUrl(selectedItem.storefrontPhoto)}
@@ -314,6 +374,10 @@ export default function VerificationsView({ initialTab = 'restaurants' }: { init
                                                                 src={getImageUrl(photo)}
                                                                 alt={`Menu ${index + 1}`}
                                                                 className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
+                                                                onError={(e) => {
+                                                                    const target = e.target as HTMLImageElement;
+                                                                    target.src = getImageFallback('document');
+                                                                }}
                                                             />
                                                             <a
                                                                 href={getImageUrl(photo)}

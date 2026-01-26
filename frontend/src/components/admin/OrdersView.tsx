@@ -11,7 +11,11 @@ interface Order {
     orderNumber: string;
     user: { name: string; phone: string; email?: string };
     restaurant: { name: string; address: string };
-    rider?: { user: { name: string; phone?: string }; phone?: string };
+    rider?: { 
+        fullName?: string;
+        user: { name: string; phone?: string }; 
+        phone?: string 
+    };
     orderItems: any[];
     totalPrice: number;
     status: string;
@@ -197,7 +201,7 @@ export default function OrdersView() {
                                         <p className="text-[11px] text-[#9CA3AF] uppercase font-semibold mb-1 tracking-wider">Rider</p>
                                         <div className="flex items-center gap-2">
                                             <FaMotorcycle className="text-blue-500 text-[13px]" />
-                                            <span className="text-[14px] font-semibold text-[#111827]">{order.rider?.user?.name || 'Not Assigned'}</span>
+                                            <span className="text-[14px] font-semibold text-[#111827]">{order.rider?.fullName || order.rider?.user?.name || 'Not Assigned'}</span>
                                         </div>
                                     </div>
                                 </div>

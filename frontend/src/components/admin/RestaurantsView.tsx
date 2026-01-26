@@ -592,6 +592,14 @@ export default function RestaurantsView() {
                                                         </div>
                                                         <p className="text-[14px] font-normal text-[#111827]">CNIC: {selectedRestaurant.ownerCNIC || 'Not provided'}</p>
                                                     </div>
+                                                    {selectedRestaurant.taxNumber && (
+                                                        <div className="flex items-center gap-3">
+                                                            <div className="w-8 h-8 rounded-xl bg-gray-50 flex items-center justify-center text-[#9CA3AF]">
+                                                                <FaFileAlt size={14} />
+                                                            </div>
+                                                            <p className="text-[14px] font-normal text-[#111827]">Tax ID: {selectedRestaurant.taxNumber}</p>
+                                                        </div>
+                                                    )}
                                                     <div className="flex items-center gap-3">
                                                         <div className="w-8 h-8 rounded-xl bg-gray-50 flex items-center justify-center text-[#9CA3AF]">
                                                             <FaClock size={14} />
@@ -605,9 +613,10 @@ export default function RestaurantsView() {
                                         {/* Documents Section */}
                                         <div className="space-y-4">
                                             <h4 className="text-[13px] font-medium text-[#6B7280] uppercase tracking-wider border-b border-gray-50 pb-2">Verification Documents</h4>
-                                            {selectedRestaurant.documents ? (
+                                            {(selectedRestaurant.documents || (selectedRestaurant.kitchenPhotos && selectedRestaurant.kitchenPhotos.length > 0) || (selectedRestaurant.sampleDishPhotos && selectedRestaurant.sampleDishPhotos.length > 0)) ? (
                                                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                                                    {Object.entries(selectedRestaurant.documents).map(([key, value]) => (
+                                                    {/* Standard Documents (CNIC, License, Menu) */}
+                                                    {selectedRestaurant.documents && Object.entries(selectedRestaurant.documents).map(([key, value]) => (
                                                         value && (
                                                             <div key={key} className="group relative border border-gray-100 rounded-2xl p-2 bg-gray-50/50 hover:border-[#FF6A00]/30 transition-all hover:shadow-lg">
                                                                 <p className="text-[11px] font-medium text-[#9CA3AF] uppercase mb-2 tracking-tight truncate">{key.replace(/([A-Z])/g, ' $1').trim()}</p>
@@ -634,6 +643,118 @@ export default function RestaurantsView() {
                                                                 </div>
                                                             </div>
                                                         )
+                                                    ))}
+
+                                                    {/* Kitchen Photos */}
+                                                    {selectedRestaurant.kitchenPhotos && selectedRestaurant.kitchenPhotos.map((photo: string, index: number) => (
+                                                        <div key={`kitchen-${index}`} className="group relative border border-gray-100 rounded-2xl p-2 bg-gray-50/50 hover:border-[#FF6A00]/30 transition-all hover:shadow-lg">
+                                                            <p className="text-[11px] font-medium text-[#9CA3AF] uppercase mb-2 tracking-tight truncate">Kitchen Photo {index + 1}</p>
+                                                            <div className="aspect-[4/3] relative overflow-hidden rounded-xl bg-white">
+                                                                <img 
+                                                                    src={getImageUrl(photo)} 
+                                                                    alt={`Kitchen ${index + 1}`} 
+                                                                    className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" 
+                                                                    onError={(e) => {
+                                                                        const target = e.target as HTMLImageElement;
+                                                                        target.src = getImageFallback('document');
+                                                                    }}
+                                                                />
+                                                                <div className="absolute inset-0 bg-gray-900/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
+                                                                    <a 
+                                                                        href={getImageUrl(photo)} 
+                                                                        target="_blank" 
+                                                                        rel="noopener noreferrer"
+                                                                        className="bg-white text-gray-900 p-2 rounded-xl hover:bg-[#FF6A00] hover:text-white transition-all shadow-xl"
+                                                                    >
+                                                                        <FaExternalLinkAlt size={12} />
+                                                                    </a>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    ))}
+
+                                                    {/* Sample Dish Photos */}
+                                                    {selectedRestaurant.sampleDishPhotos && selectedRestaurant.sampleDishPhotos.map((photo: string, index: number) => (
+                                                        <div key={`dish-${index}`} className="group relative border border-gray-100 rounded-2xl p-2 bg-gray-50/50 hover:border-[#FF6A00]/30 transition-all hover:shadow-lg">
+                                                            <p className="text-[11px] font-medium text-[#9CA3AF] uppercase mb-2 tracking-tight truncate">Sample Dish {index + 1}</p>
+                                                            <div className="aspect-[4/3] relative overflow-hidden rounded-xl bg-white">
+                                                                <img 
+                                                                    src={getImageUrl(photo)} 
+                                                                    alt={`Dish ${index + 1}`} 
+                                                                    className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" 
+                                                                    onError={(e) => {
+                                                                        const target = e.target as HTMLImageElement;
+                                                                        target.src = getImageFallback('dish');
+                                                                    }}
+                                                                />
+                                                                <div className="absolute inset-0 bg-gray-900/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
+                                                                    <a 
+                                                                        href={getImageUrl(photo)} 
+                                                                        target="_blank" 
+                                                                        rel="noopener noreferrer"
+                                                                        className="bg-white text-gray-900 p-2 rounded-xl hover:bg-[#FF6A00] hover:text-white transition-all shadow-xl"
+                                                                    >
+                                                                        <FaExternalLinkAlt size={12} />
+                                                                    </a>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    ))}
+
+                                                    {/* Storefront Photo */}
+                                                    {selectedRestaurant.storefrontPhoto && (
+                                                        <div className="group relative border border-gray-100 rounded-2xl p-2 bg-gray-50/50 hover:border-[#FF6A00]/30 transition-all hover:shadow-lg">
+                                                            <p className="text-[11px] font-medium text-[#9CA3AF] uppercase mb-2 tracking-tight truncate">Storefront View</p>
+                                                            <div className="aspect-[4/3] relative overflow-hidden rounded-xl bg-white">
+                                                                <img 
+                                                                    src={getImageUrl(selectedRestaurant.storefrontPhoto)} 
+                                                                    alt="Storefront" 
+                                                                    className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" 
+                                                                    onError={(e) => {
+                                                                        const target = e.target as HTMLImageElement;
+                                                                        target.src = getImageFallback('document');
+                                                                    }}
+                                                                />
+                                                                <div className="absolute inset-0 bg-gray-900/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
+                                                                    <a 
+                                                                        href={getImageUrl(selectedRestaurant.storefrontPhoto)} 
+                                                                        target="_blank" 
+                                                                        rel="noopener noreferrer"
+                                                                        className="bg-white text-gray-900 p-2 rounded-xl hover:bg-[#FF6A00] hover:text-white transition-all shadow-xl"
+                                                                    >
+                                                                        <FaExternalLinkAlt size={12} />
+                                                                    </a>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    )}
+
+                                                    {/* Menu Photos */}
+                                                    {selectedRestaurant.menuPhotos && selectedRestaurant.menuPhotos.map((photo: string, index: number) => (
+                                                        <div key={`menu-${index}`} className="group relative border border-gray-100 rounded-2xl p-2 bg-gray-50/50 hover:border-[#FF6A00]/30 transition-all hover:shadow-lg">
+                                                            <p className="text-[11px] font-medium text-[#9CA3AF] uppercase mb-2 tracking-tight truncate">Menu Page {index + 1}</p>
+                                                            <div className="aspect-[4/3] relative overflow-hidden rounded-xl bg-white">
+                                                                <img 
+                                                                    src={getImageUrl(photo)} 
+                                                                    alt={`Menu ${index + 1}`} 
+                                                                    className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" 
+                                                                    onError={(e) => {
+                                                                        const target = e.target as HTMLImageElement;
+                                                                        target.src = getImageFallback('document');
+                                                                    }}
+                                                                />
+                                                                <div className="absolute inset-0 bg-gray-900/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
+                                                                    <a 
+                                                                        href={getImageUrl(photo)} 
+                                                                        target="_blank" 
+                                                                        rel="noopener noreferrer"
+                                                                        className="bg-white text-gray-900 p-2 rounded-xl hover:bg-[#FF6A00] hover:text-white transition-all shadow-xl"
+                                                                    >
+                                                                        <FaExternalLinkAlt size={12} />
+                                                                    </a>
+                                                                </div>
+                                                            </div>
+                                                        </div>
                                                     ))}
                                                 </div>
                                             ) : (

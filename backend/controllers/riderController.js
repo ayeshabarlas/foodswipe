@@ -610,16 +610,19 @@ const getDeliveryHistory = async (req, res) => {
     try {
         const deliveries = await Order.find({
             rider: req.params.id,
-            status: { $in: ['Delivered', 'Completed'] }
+            status: { $in: ['Delivered', 'Completed', 'Cancelled'] }
         })
             .populate('restaurant', 'name')
             .sort({ createdAt: -1 })
-            .limit(5);
+            .limit(50);
 
         const formattedDeliveries = deliveries.map(order => ({
+            _id: order._id,
             orderNumber: order.orderNumber,
             restaurant: order.restaurant,
-            earnings: order.riderEarning || order.netRiderEarning || 250,
+            status: order.status,
+            createdAt: order.createdAt,
+            earnings: order.riderEarning || order.netRiderEarning || (order.status === 'Cancelled' ? 0 : 250),
             rating: '5.0',
             timeAgo: getTimeAgo(order.createdAt)
         }));
@@ -759,14 +762,28 @@ const updateBankDetails = async (req, res) => {
 const updateLocation = async (req, res) => {
     try {
         const { lat, lng } = req.body;
+        const riderId = req.params.id;
+
+        if (!riderId || riderId === 'undefined' || riderId === 'null') {
+            return res.status(400).json({ message: 'Invalid rider ID' });
+        }
+
+        console.log(`📍 Updating location for rider ${riderId}:`, { lat, lng });
+
+        // Update rider's current location in profile
+        await Rider.findByIdAndUpdate(riderId, {
+            location: { lat, lng },
+            lastLocationUpdate: new Date()
+        });
 
         // If there's an active order, update its rider location
         const activeOrder = await Order.findOne({
-            rider: req.params.id,
+            rider: riderId,
             status: { $in: ['Accepted', 'Preparing', 'Ready', 'OnTheWay', 'Arrived', 'Picked Up', 'ArrivedAtCustomer'] }
         }).populate('user').populate('restaurant');
 
         if (activeOrder) {
+            console.log(`📦 Updating active order ${activeOrder._id} with rider location`);
             activeOrder.riderLocation = { lat, lng };
             await activeOrder.save();
 
