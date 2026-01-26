@@ -83,7 +83,7 @@ export default function OrderDetailsScreen({ route, navigation }: any) {
     if (userData) {
       const user = JSON.parse(userData);
       setUserRole(user.role || 'customer');
-      setCurrentUserId(user._id);
+      setCurrentUserId(user._id || user.id);
 
       if (user.role === 'rider') {
         try {
@@ -104,8 +104,8 @@ export default function OrderDetailsScreen({ route, navigation }: any) {
       setOrder(res.data);
     } catch (err) {
       console.error('Error fetching order details:', err);
-      Alert.alert('Error', 'Could not fetch order details');
-      navigation.goBack();
+      // Alert.alert('Error', 'Could not fetch order details');
+      // navigation.goBack();
     } finally {
       setLoading(false);
     }
@@ -116,6 +116,8 @@ export default function OrderDetailsScreen({ route, navigation }: any) {
       case 'Accepted':
       case 'Confirmed': return 0;
       case 'Preparing': return 1;
+      case 'Ready':
+      case 'Ready for Pickup':
       case 'Arrived': return 2;
       case 'Picked Up':
       case 'OnTheWay': return 3;
@@ -148,7 +150,8 @@ export default function OrderDetailsScreen({ route, navigation }: any) {
     if (!order?.rider) return false;
 
     // Check by Rider ID
-    if (compareIds(order.rider, currentRiderId)) return true;
+    const riderId = order.rider?._id || order.rider;
+    if (compareIds(riderId, currentRiderId)) return true;
 
     // Check by User ID (if order.rider is populated and contains user)
     const riderUserId = order.rider?.user?._id || order.rider?.user;
@@ -173,30 +176,30 @@ export default function OrderDetailsScreen({ route, navigation }: any) {
     }
 
     const step = steps[index];
-    const nextPossibleStep = currentStep; // The index of the next step to be completed
-
-    // Rules for updating status via clicking icons:
-    // 1. Can only update to the "next" logical status
-    // 2. Some statuses are updated by restaurant (Preparing, Ready)
     
+    // Can only update if it's the current or next step
     if (index < currentStep) {
-      Alert.alert('Notice', 'This step is already completed.');
-      return;
+      // Allow re-updating if status is same or just slightly different but in same step
+      // For example, if it's 'Ready' but we want to mark 'Arrived'
     }
 
-    if (index > currentStep) {
+    if (index > currentStep + 1) {
       Alert.alert('Notice', 'Please complete the previous steps first.');
       return;
     }
 
-    // If it's the current step (the one that needs to be clicked to complete)
     const statusToUpdate = step.status;
     
     // Check if rider is allowed to trigger this status
     const riderStatuses = ['Arrived', 'Picked Up', 'ArrivedAtCustomer', 'Delivered'];
     if (!riderStatuses.includes(statusToUpdate)) {
-      Alert.alert('Notice', 'This status is updated by the restaurant.');
-      return;
+      // Special case: Arrived at restaurant is allowed if order is Preparing/Ready
+      if (statusToUpdate === 'Arrived') {
+        // Continue
+      } else {
+        Alert.alert('Notice', 'This status is typically updated by the restaurant.');
+        return;
+      }
     }
 
     Alert.alert(

@@ -495,7 +495,8 @@ const updateOrderStatus = async (req, res) => {
                 distance: distance,
                 distanceKm: distance,
                 earnings: earnings.netEarning,
-                netRiderEarning: earnings.netEarning
+                netRiderEarning: earnings.netEarning,
+                riderEarning: earnings.netEarning
             });
         }
 

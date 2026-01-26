@@ -40,6 +40,7 @@ export default function RiderDashboard({ navigation }: any) {
   const [orderFilter, setOrderFilter] = useState<'all' | 'nearby' | 'high_pay'>('all');
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  const [isAccepting, setIsAccepting] = useState(false);
   const [stats, setStats] = useState({ earnings: 0, orders: 0, rating: 5.0, wallet: 0, cod_balance: 0 });
   const [locationSubscription, setLocationSubscription] = useState<any>(null);
   const [activeOrder, setActiveOrder] = useState<any>(null);
@@ -55,6 +56,21 @@ export default function RiderDashboard({ navigation }: any) {
   const [showSettingsModal, setShowSettingsModal] = useState(false);
 
   const [newOrderPopup, setNewOrderPopup] = useState<any>(null);
+  const [timer, setTimer] = useState(60);
+
+  // New Order Popup Timer Logic
+  useEffect(() => {
+    let interval: any;
+    if (newOrderPopup && timer > 0) {
+      interval = setInterval(() => {
+        setTimer((prev) => prev - 1);
+      }, 1000);
+    } else if (timer === 0) {
+      setNewOrderPopup(null);
+      setTimer(60);
+    }
+    return () => clearInterval(interval);
+  }, [newOrderPopup, timer]);
 
   useEffect(() => {
     loadInitialData();
@@ -182,6 +198,7 @@ export default function RiderDashboard({ navigation }: any) {
       const data = await SecureStore.getItemAsync('user_data');
       if (data) {
         const user = JSON.parse(data);
+        const userId = user._id || user.id;
         setUserData(user);
         
         // Fetch Rider Profile
@@ -194,9 +211,9 @@ export default function RiderDashboard({ navigation }: any) {
         }
         
         // Initialize Socket
-        initSocket(user.id, 'rider');
+        initSocket(userId, 'rider');
         const ridersChannel = subscribeToChannel('riders');
-        const personalChannel = subscribeToChannel(`user-${user.id}`);
+        const personalChannel = subscribeToChannel(`user-${userId}`);
         const riderChannel = subscribeToChannel(`rider-${res.data._id}`);
 
         if (ridersChannel) {
@@ -204,7 +221,8 @@ export default function RiderDashboard({ navigation }: any) {
             console.log('🔔 New Delivery Request:', order._id);
             if (isOnline) {
               setAvailableOrders(prev => [order, ...prev]);
-              Alert.alert('New Delivery Request!', `Order from ${order.restaurant?.name || 'Restaurant'}`);
+              setNewOrderPopup(order);
+              setTimer(60); // Set timer for the popup
             }
           });
         }
@@ -332,12 +350,17 @@ export default function RiderDashboard({ navigation }: any) {
   };
 
   const acceptOrder = async (orderId: string) => {
+    if (isAccepting) return;
+    setIsAccepting(true);
     try {
       await apiClient.post(`/riders/${riderProfile._id}/accept-order`, { orderId });
       Alert.alert('Success', 'Order accepted!');
+      setNewOrderPopup(null);
       fetchData(riderProfile._id);
     } catch (err: any) {
       Alert.alert('Error', err.response?.data?.message || 'Failed to accept order');
+    } finally {
+      setIsAccepting(false);
     }
   };
 
@@ -894,49 +917,142 @@ export default function RiderDashboard({ navigation }: any) {
         </SafeAreaView>
       </Modal>
 
-      {/* New Order Popup */}
+      {/* New Order Popup (TikTok Style) */}
       <Modal visible={!!newOrderPopup} transparent={true} animationType="fade">
         <View style={styles.popupOverlay}>
-          <View style={styles.popupContent}>
-            <View style={styles.popupIconContainer}>
-              <MaterialCommunityIcons name="moped" size={40} color={Colors.primary} />
-            </View>
-            <Text style={styles.popupTitle}>New Order Assigned!</Text>
-            <Text style={styles.popupSubtitle}>Order #{newOrderPopup?._id?.slice(-6).toUpperCase()}</Text>
-            
-            <View style={styles.popupDetails}>
-              <View style={styles.popupRow}>
-                <Ionicons name="restaurant" size={16} color={Colors.gray} />
-                <Text style={styles.popupDetailText}>{newOrderPopup?.restaurant?.name}</Text>
+          <View style={styles.modernPopupContainer}>
+            <LinearGradient
+              colors={['#ffffff', '#fdfdfd']}
+              style={styles.modernPopupContent}
+            >
+              {/* Top Banner with Pulse Effect */}
+              <View style={styles.popupHeader}>
+                <View>
+                  <Text style={styles.popupMainTitle}>New Order!</Text>
+                  <View style={styles.liveIndicator}>
+                    <View style={styles.liveDot} />
+                    <Text style={styles.liveText}>LIVE REQUEST</Text>
+                  </View>
+                </View>
+                <View style={styles.timerBadge}>
+                  <Text style={styles.timerText}>{timer}s</Text>
+                </View>
               </View>
-              <View style={styles.popupRow}>
-                <Ionicons name="location" size={16} color={Colors.gray} />
-                <Text style={styles.popupDetailText} numberOfLines={1}>{newOrderPopup?.deliveryAddress}</Text>
-              </View>
-              <View style={styles.popupRow}>
-                <Ionicons name="cash" size={16} color="#059669" />
-                <Text style={[styles.popupDetailText, { color: '#059669', fontWeight: 'bold' }]}>
-                  Earnings: Rs. {newOrderPopup?.netRiderEarning || newOrderPopup?.riderEarning || 0}
-                </Text>
-              </View>
-            </View>
 
-            <TouchableOpacity 
-              style={styles.popupActionBtn}
-              onPress={() => {
-                const orderId = newOrderPopup._id;
-                setNewOrderPopup(null);
-                navigation.navigate('OrderDetails', { orderId });
-              }}
-            >
-              <Text style={styles.popupActionBtnText}>View Details</Text>
-            </TouchableOpacity>
-            <TouchableOpacity 
-              style={styles.popupCloseBtn}
-              onPress={() => setNewOrderPopup(null)}
-            >
-              <Text style={styles.popupCloseBtnText}>Dismiss</Text>
-            </TouchableOpacity>
+              {/* Earnings Card - Very Prominent */}
+              <View style={styles.earningsHighlight}>
+                <LinearGradient
+                  colors={[Colors.primary, '#f43f5e']}
+                  start={{ x: 0, y: 0 }}
+                  end={{ x: 1, y: 0 }}
+                  style={styles.earningsInfo}
+                >
+                  <View style={styles.earningsIconBg}>
+                    <Ionicons name="wallet" size={26} color={Colors.primary} />
+                  </View>
+                  <View>
+                    <Text style={[styles.earningsLabel, { color: 'rgba(255,255,255,0.8)' }]}>YOUR ESTIMATED PAY</Text>
+                    <Text style={[styles.earningsValue, { color: '#fff', fontSize: 24 }]}>
+                      Rs. {newOrderPopup?.netRiderEarning || newOrderPopup?.riderEarning || Math.round(40 + ((newOrderPopup?.distanceKm || 0) * 20))}
+                    </Text>
+                  </View>
+                </LinearGradient>
+              </View>
+
+              <ScrollView style={styles.popupScroll} showsVerticalScrollIndicator={false}>
+                <View style={styles.popupInfoSection}>
+                  {/* Restaurant Info */}
+                  <View style={styles.popupInfoRow}>
+                    <View style={[styles.infoIconBg, { backgroundColor: '#FFF7ED' }]}>
+                      <Ionicons name="restaurant" size={18} color="#F97316" />
+                    </View>
+                    <View style={styles.infoContent}>
+                      <Text style={styles.infoLabel}>PICKUP FROM</Text>
+                      <Text style={styles.infoTitle}>{newOrderPopup?.restaurant?.name || 'Restaurant'}</Text>
+                      <Text style={styles.infoSubtitle} numberOfLines={1}>{newOrderPopup?.restaurant?.address || 'Restaurant Address'}</Text>
+                    </View>
+                  </View>
+
+                  {/* Delivery Info */}
+                  <View style={styles.popupInfoRow}>
+                    <View style={[styles.infoIconBg, { backgroundColor: '#EFF6FF' }]}>
+                      <Ionicons name="location" size={18} color="#3B82F6" />
+                    </View>
+                    <View style={styles.infoContent}>
+                      <Text style={styles.infoLabel}>DELIVER TO</Text>
+                      <Text style={styles.infoTitle} numberOfLines={2}>{newOrderPopup?.shippingAddress?.address || newOrderPopup?.deliveryAddress || 'Customer Address'}</Text>
+                      <View style={styles.distanceTag}>
+                        <Ionicons name="navigate-circle" size={14} color="#3B82F6" />
+                        <Text style={styles.distanceText}>
+                          {typeof newOrderPopup?.distanceKm === 'number' ? `${newOrderPopup.distanceKm.toFixed(1)} km away` : 'Calculating distance...'}
+                        </Text>
+                      </View>
+                    </View>
+                  </View>
+
+                  {/* Payment Info */}
+                  <View style={styles.popupInfoRow}>
+                    <View style={[styles.infoIconBg, { backgroundColor: '#F5F3FF' }]}>
+                      <Ionicons name="card" size={18} color="#8B5CF6" />
+                    </View>
+                    <View style={styles.infoContent}>
+                      <Text style={styles.infoLabel}>PAYMENT METHOD</Text>
+                      <Text style={styles.infoTitle}>{newOrderPopup?.paymentMethod === 'COD' ? 'Cash on Delivery' : 'Paid Online'}</Text>
+                      {newOrderPopup?.paymentMethod === 'COD' && (
+                        <Text style={styles.collectAmount}>Collect from customer: Rs. {newOrderPopup?.totalPrice}</Text>
+                      )}
+                    </View>
+                  </View>
+
+                  {/* Order Items Summary */}
+                  {newOrderPopup?.orderItems && (
+                    <View style={styles.popupInfoRow}>
+                      <View style={[styles.infoIconBg, { backgroundColor: '#F0FDF4' }]}>
+                        <Ionicons name="basket" size={18} color="#22C55E" />
+                      </View>
+                      <View style={styles.infoContent}>
+                        <Text style={styles.infoLabel}>ORDER ITEMS ({newOrderPopup.orderItems.length})</Text>
+                        <View style={styles.itemsContainer}>
+                          {newOrderPopup.orderItems.map((item: any, idx: number) => (
+                            <View key={idx} style={styles.itemTag}>
+                              <Text style={styles.itemTagText}>{item.qty}x {item.name}</Text>
+                            </View>
+                          ))}
+                        </View>
+                      </View>
+                    </View>
+                  )}
+                </View>
+              </ScrollView>
+
+              <View style={styles.popupActions}>
+                <TouchableOpacity 
+                  style={styles.declineBtn}
+                  onPress={() => setNewOrderPopup(null)}
+                >
+                  <Text style={styles.declineBtnText}>DECLINE</Text>
+                </TouchableOpacity>
+                <TouchableOpacity 
+                  style={styles.acceptBtn}
+                  onPress={() => acceptOrder(newOrderPopup?._id)}
+                  disabled={isAccepting}
+                >
+                  {isAccepting ? (
+                    <ActivityIndicator color="#fff" size="small" />
+                  ) : (
+                    <LinearGradient
+                      colors={['#22C55E', '#16A34A']}
+                      start={{ x: 0, y: 0 }}
+                      end={{ x: 1, y: 0 }}
+                      style={styles.acceptBtnGradient}
+                    >
+                      <Text style={[styles.acceptBtnText, { fontSize: 16 }]}>ACCEPT ORDER</Text>
+                      <Ionicons name="chevron-forward" size={24} color="#fff" />
+                    </LinearGradient>
+                  )}
+                </TouchableOpacity>
+              </View>
+            </LinearGradient>
           </View>
         </View>
       </Modal>
@@ -1938,9 +2054,239 @@ const styles = StyleSheet.create({
   popupOverlay: {
     flex: 1,
     backgroundColor: 'rgba(0,0,0,0.6)',
+    justifyContent: 'flex-end',
+  },
+  modernPopupContainer: {
+    backgroundColor: '#fff',
+    borderTopLeftRadius: 40,
+    borderTopRightRadius: 40,
+    paddingBottom: Platform.OS === 'ios' ? 40 : 20,
+    maxHeight: height * 0.85,
+  },
+  modernPopupContent: {
+    borderTopLeftRadius: 40,
+    borderTopRightRadius: 40,
+    padding: 24,
+  },
+  popupHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 20,
+  },
+  popupMainTitle: {
+    fontSize: 24,
+    fontWeight: '900',
+    color: '#111827',
+    textTransform: 'uppercase',
+  },
+  liveIndicator: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 4,
+  },
+  liveDot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+    backgroundColor: '#22C55E',
+    marginRight: 6,
+  },
+  liveText: {
+    fontSize: 10,
+    fontWeight: 'bold',
+    color: '#22C55E',
+    letterSpacing: 1,
+  },
+  timerBadge: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    backgroundColor: '#fff',
     justifyContent: 'center',
     alignItems: 'center',
+    borderWidth: 3,
+    borderColor: '#F97316',
+    shadowColor: '#F97316',
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 4,
+  },
+  timerText: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#F97316',
+  },
+  earningsHighlight: {
+    borderRadius: 24,
+    marginBottom: 20,
+    overflow: 'hidden',
+    elevation: 8,
+    shadowColor: Colors.primary,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.2,
+    shadowRadius: 12,
+  },
+  earningsInfo: {
+    flexDirection: 'row',
+    alignItems: 'center',
     padding: 20,
+  },
+  earningsIconBg: {
+    width: 52,
+    height: 52,
+    borderRadius: 18,
+    backgroundColor: '#fff',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 16,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+  },
+  earningsLabel: {
+    fontSize: 10,
+    fontWeight: 'bold',
+    color: Colors.gray,
+    letterSpacing: 0.5,
+  },
+  earningsValue: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: '#111827',
+  },
+  popupScroll: {
+    maxHeight: height * 0.4,
+  },
+  popupInfoSection: {
+    gap: 16,
+  },
+  popupInfoRow: {
+    flexDirection: 'row',
+    paddingVertical: 4,
+  },
+  infoIconBg: {
+    width: 36,
+    height: 36,
+    borderRadius: 10,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 12,
+  },
+  infoContent: {
+    flex: 1,
+  },
+  infoLabel: {
+    fontSize: 9,
+    fontWeight: 'bold',
+    color: Colors.gray,
+    letterSpacing: 0.5,
+    marginBottom: 2,
+  },
+  infoTitle: {
+    fontSize: 14,
+    fontWeight: 'bold',
+    color: '#111827',
+    lineHeight: 20,
+  },
+  infoSubtitle: {
+    fontSize: 12,
+    color: Colors.gray,
+    marginTop: 2,
+  },
+  distanceTag: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    alignSelf: 'flex-start',
+    backgroundColor: '#EFF6FF',
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 8,
+    marginTop: 8,
+    gap: 4,
+  },
+  distanceText: {
+    fontSize: 12,
+    fontWeight: 'bold',
+    color: '#3B82F6',
+  },
+  collectAmount: {
+    fontSize: 13,
+    fontWeight: 'bold',
+    color: Colors.primary,
+    marginTop: 6,
+    backgroundColor: '#FFF1F2',
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 6,
+    alignSelf: 'flex-start',
+  },
+  itemsContainer: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 6,
+    marginTop: 6,
+  },
+  itemTag: {
+    backgroundColor: '#f9fafb',
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#f3f4f6',
+  },
+  itemTagText: {
+    fontSize: 11,
+    color: '#4B5563',
+    fontWeight: '500',
+  },
+  popupActions: {
+    flexDirection: 'row',
+    gap: 12,
+    marginTop: 24,
+  },
+  declineBtn: {
+    flex: 1,
+    height: 64,
+    backgroundColor: '#F9FAFB',
+    borderRadius: 20,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
+  },
+  declineBtnText: {
+    fontSize: 14,
+    fontWeight: 'bold',
+    color: '#6B7280',
+    letterSpacing: 0.5,
+  },
+  acceptBtn: {
+    flex: 2,
+    height: 64,
+    borderRadius: 20,
+    overflow: 'hidden',
+    shadowColor: '#22C55E',
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.3,
+    shadowRadius: 12,
+    elevation: 8,
+  },
+  acceptBtnGradient: {
+    flex: 1,
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    gap: 10,
+    paddingHorizontal: 20,
+  },
+  acceptBtnText: {
+    fontSize: 16,
+    fontWeight: '800',
+    color: '#fff',
+    letterSpacing: 1,
   },
   popupContent: {
     backgroundColor: '#fff',

@@ -326,6 +326,7 @@ const getAvailableOrders = async (req, res) => {
                 distanceKm: distance,
                 earnings: (order.netRiderEarning && order.netRiderEarning > 0) ? order.netRiderEarning : earnings.netEarning,
                 netRiderEarning: (order.netRiderEarning && order.netRiderEarning > 0) ? order.netRiderEarning : earnings.netEarning,
+                riderEarning: (order.netRiderEarning && order.netRiderEarning > 0) ? order.netRiderEarning : earnings.netEarning,
                 estimatedTime: Math.round(distance * 3) + 10, // ~3 mins per km + 10 mins prep/wait
                 totalAmount: order.totalPrice
             };
