@@ -317,40 +317,68 @@ export default function OrderDetailsScreen({ route, navigation }: any) {
   };
 
   const openMap = (targetAddress: string, lat?: number, lng?: number) => {
-    if (!targetAddress && (!lat || !lng)) return;
+    if (!targetAddress && (!lat || !lng)) {
+      console.log('📍 openMap: No address or coordinates provided');
+      return;
+    }
     
-    // Official Google Maps Universal Link (More reliable than custom schemes)
-    // This will open the Google Maps app if installed, or the browser if not.
+    // Normalize coordinates - handle cases where they might be strings or in different fields
+    const latitude = Number(lat);
+    const longitude = Number(lng);
+    const hasCoords = !isNaN(latitude) && !isNaN(longitude) && latitude !== 0 && longitude !== 0;
+
+    console.log('📍 Opening Map:', { targetAddress, latitude, longitude, hasCoords });
+
+    // Official Google Maps Universal Link (Very reliable)
+    // Using 'dir' for directions, or 'search' for an exact pin if coordinates are provided
     let url = "";
-    if (lat && lng && lat !== 0 && lng !== 0) {
-      url = `https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}&travelmode=driving`;
+    if (hasCoords) {
+      // dir API is best for navigation from current location to destination coordinates
+      url = `https://www.google.com/maps/dir/?api=1&destination=${latitude},${longitude}&travelmode=driving`;
     } else {
       const encodedAddress = encodeURIComponent(targetAddress);
       url = `https://www.google.com/maps/dir/?api=1&destination=${encodedAddress}&travelmode=driving`;
     }
 
-    // Try to open Google Maps app directly if possible (better for directions)
-    const googleMapsAppUrl = Platform.OS === 'android' 
-      ? (lat && lng ? `google.navigation:q=${lat},${lng}` : `google.navigation:q=${encodeURIComponent(targetAddress)}`)
-      : (lat && lng ? `comgooglemaps://?daddr=${lat},${lng}&directionsmode=driving` : `comgooglemaps://?daddr=${encodeURIComponent(targetAddress)}&directionsmode=driving`);
+    // Platform specific deep links for direct app opening with high precision
+    let googleMapsAppUrl = "";
+    if (Platform.OS === 'android') {
+      // geo:lat,lng?q=lat,lng(Label) is very precise and shows a labeled pin
+      googleMapsAppUrl = hasCoords 
+        ? `geo:${latitude},${longitude}?q=${latitude},${longitude}(${encodeURIComponent(targetAddress)})` 
+        : `geo:0,0?q=${encodeURIComponent(targetAddress)}`;
+        
+      // If we want to FORCE navigation mode immediately on Android:
+      // googleMapsAppUrl = hasCoords ? `google.navigation:q=${latitude},${longitude}` : `google.navigation:q=${encodeURIComponent(targetAddress)}`;
+    } else {
+      // iOS: comgooglemaps://?daddr=lat,lng is standard for directions
+      // We use both daddr (for the route) and q (for the labeled pin)
+      googleMapsAppUrl = hasCoords 
+        ? `comgooglemaps://?daddr=${latitude},${longitude}&q=${latitude},${longitude}&directionsmode=driving` 
+        : `comgooglemaps://?daddr=${encodeURIComponent(targetAddress)}&directionsmode=driving`;
+    }
 
     Linking.canOpenURL(googleMapsAppUrl).then(supported => {
       if (supported) {
+        console.log('📍 Opening via Google Maps App Scheme');
         Linking.openURL(googleMapsAppUrl);
       } else {
         Linking.canOpenURL(url).then(supportedUrl => {
           if (supportedUrl) {
+            console.log('📍 Opening via Universal Link');
             Linking.openURL(url);
           } else {
             // Fallback to Apple Maps on iOS
-            const appleUrl = (lat && lng && lat !== 0 && lng !== 0)
-              ? `http://maps.apple.com/?daddr=${lat},${lng}&dirflg=d` 
+            console.log('📍 Falling back to Apple Maps');
+            const appleUrl = hasCoords
+              ? `http://maps.apple.com/?daddr=${latitude},${longitude}&dirflg=d` 
               : `http://maps.apple.com/?daddr=${encodeURIComponent(targetAddress)}&dirflg=d`;
             Linking.openURL(appleUrl);
           }
         });
       }
-    }).catch(() => {
+    }).catch((err) => {
+      console.error('📍 Error opening map:', err);
       Linking.openURL(url);
     });
   };
@@ -613,9 +641,18 @@ export default function OrderDetailsScreen({ route, navigation }: any) {
                     <TouchableOpacity 
                       style={styles.gmapsCircleBtn}
                       onPress={() => {
-                        const target = (['Picked Up', 'OnTheWay', 'ArrivedAtCustomer'].includes(order.status))
-                          ? { addr: order.deliveryAddress, lat: order.deliveryLocation?.lat, lng: order.deliveryLocation?.lng }
-                          : { addr: order.restaurant?.address, lat: order.restaurant?.location?.coordinates?.[1], lng: order.restaurant?.location?.coordinates?.[0] };
+                        const isHeadingToCustomer = ['Picked Up', 'OnTheWay', 'ArrivedAtCustomer'].includes(order.status);
+                        const target = isHeadingToCustomer
+                          ? { 
+                              addr: order.shippingAddress?.address || order.deliveryAddress, 
+                              lat: order.deliveryLocation?.lat, 
+                              lng: order.deliveryLocation?.lng 
+                            }
+                          : { 
+                              addr: order.restaurant?.address, 
+                              lat: order.restaurant?.location?.coordinates?.[1], 
+                              lng: order.restaurant?.location?.coordinates?.[0] 
+                            };
                         openMap(target.addr, target.lat, target.lng);
                       }}
                     >
@@ -661,11 +698,15 @@ export default function OrderDetailsScreen({ route, navigation }: any) {
                         onPress={() => {
                           const isHeadingToCustomer = ['Picked Up', 'OnTheWay', 'ArrivedAtCustomer'].includes(order.status);
                           if (isHeadingToCustomer) {
-                            openMap(order.shippingAddress?.address || order.deliveryAddress, order.deliveryLocation?.lat, order.deliveryLocation?.lng);
+                            const addr = order.shippingAddress?.address || order.deliveryAddress;
+                            const lat = order.deliveryLocation?.lat;
+                            const lng = order.deliveryLocation?.lng;
+                            openMap(addr, lat, lng);
                           } else {
+                            const addr = order.restaurant?.address;
                             const lat = order.restaurant?.location?.coordinates?.[1];
                             const lng = order.restaurant?.location?.coordinates?.[0];
-                            openMap(order.restaurant?.address, lat, lng);
+                            openMap(addr, lat, lng);
                           }
                         }}
                       >
@@ -774,9 +815,10 @@ export default function OrderDetailsScreen({ route, navigation }: any) {
             <TouchableOpacity 
               style={[styles.mapButton, { backgroundColor: '#10B981', marginBottom: 10 }]} 
               onPress={() => {
+                const addr = order.restaurant?.address;
                 const lat = order.restaurant?.location?.coordinates?.[1];
                 const lng = order.restaurant?.location?.coordinates?.[0];
-                openMap(order.restaurant?.address, lat, lng);
+                openMap(addr, lat, lng);
               }}
             >
               <Ionicons name="navigate-outline" size={20} color="#fff" />

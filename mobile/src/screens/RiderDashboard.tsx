@@ -536,41 +536,64 @@ export default function RiderDashboard({ navigation }: any) {
     if (!activeOrder) return null;
 
     const openMap = (targetAddress: string, lat?: number, lng?: number) => {
-      if (!targetAddress && (!lat || !lng)) return;
+      if (!targetAddress && (!lat || !lng)) {
+        console.log('📍 openMap: No address or coordinates provided');
+        return;
+      }
       
-      // Official Google Maps Universal Link (More reliable than custom schemes)
-      // This will open the Google Maps app if installed, or the browser if not.
+      // Normalize coordinates
+      const latitude = Number(lat);
+      const longitude = Number(lng);
+      const hasCoords = !isNaN(latitude) && !isNaN(longitude) && latitude !== 0 && longitude !== 0;
+
+      console.log('📍 Opening Map:', { targetAddress, latitude, longitude, hasCoords });
+
+      // Official Google Maps Universal Link
       let url = "";
-      if (lat && lng && lat !== 0 && lng !== 0) {
-        url = `https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}&travelmode=driving`;
+      if (hasCoords) {
+        url = `https://www.google.com/maps/dir/?api=1&destination=${latitude},${longitude}&travelmode=driving`;
       } else {
         const encodedAddress = encodeURIComponent(targetAddress);
         url = `https://www.google.com/maps/dir/?api=1&destination=${encodedAddress}&travelmode=driving`;
       }
 
-      // Try to open Google Maps app directly if possible (better for directions)
-      const googleMapsAppUrl = Platform.OS === 'android' 
-        ? (lat && lng ? `google.navigation:q=${lat},${lng}` : `google.navigation:q=${encodeURIComponent(targetAddress)}`)
-        : (lat && lng ? `comgooglemaps://?daddr=${lat},${lng}&directionsmode=driving` : `comgooglemaps://?daddr=${encodeURIComponent(targetAddress)}&directionsmode=driving`);
+      // Platform specific deep links
+      let googleMapsAppUrl = "";
+      if (Platform.OS === 'android') {
+        // google.navigation:q=lat,lng is the most direct way to start navigation on Android
+        // We use geo: as a fallback if needed, but navigation is better for riders
+        googleMapsAppUrl = hasCoords 
+          ? `google.navigation:q=${latitude},${longitude}` 
+          : `google.navigation:q=${encodeURIComponent(targetAddress)}`;
+      } else {
+        // iOS: comgooglemaps://?daddr=lat,lng is standard for directions
+        // We use both daddr (for the route) and q (for the labeled pin)
+        googleMapsAppUrl = hasCoords 
+          ? `comgooglemaps://?daddr=${latitude},${longitude}&q=${latitude},${longitude}&directionsmode=driving` 
+          : `comgooglemaps://?daddr=${encodeURIComponent(targetAddress)}&directionsmode=driving`;
+      }
 
       Linking.canOpenURL(googleMapsAppUrl).then(supported => {
         if (supported) {
+          console.log('📍 Opening via Google Maps App Scheme');
           Linking.openURL(googleMapsAppUrl);
         } else {
           Linking.canOpenURL(url).then(supportedUrl => {
             if (supportedUrl) {
+              console.log('📍 Opening via Universal Link');
               Linking.openURL(url);
             } else {
               // Fallback to Apple Maps on iOS
-              const appleUrl = (lat && lng && lat !== 0 && lng !== 0)
-                ? `http://maps.apple.com/?daddr=${lat},${lng}&dirflg=d` 
+              console.log('📍 Falling back to Apple Maps');
+              const appleUrl = hasCoords
+                ? `http://maps.apple.com/?daddr=${latitude},${longitude}&dirflg=d` 
                 : `http://maps.apple.com/?daddr=${encodeURIComponent(targetAddress)}&dirflg=d`;
               Linking.openURL(appleUrl);
             }
           });
         }
-      }).catch(() => {
-        // Just try opening the URL if check fails
+      }).catch((err) => {
+        console.error('📍 Error opening map:', err);
         Linking.openURL(url);
       });
     };
