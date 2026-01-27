@@ -10,14 +10,19 @@ import {
   ActivityIndicator,
   Alert,
   Linking,
-  Platform
+  Platform,
+  Modal
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { LinearGradient } from 'expo-linear-gradient';
 import { Colors } from '../theme/colors';
 import apiClient from '../api/apiClient';
 import { subscribeToChannel, unsubscribeFromChannel } from '../utils/socket';
 import * as SecureStore from 'expo-secure-store';
 import MapView, { Marker, Polyline } from 'react-native-maps';
+import MapViewDirections from 'react-native-maps-directions';
+import * as Location from 'expo-location';
+import { GOOGLE_MAPS_API_KEY } from '../utils/config';
 
 export default function OrderDetailsScreen({ route, navigation }: any) {
   const { orderId } = route.params;
@@ -28,10 +33,69 @@ export default function OrderDetailsScreen({ route, navigation }: any) {
   const [currentRiderId, setCurrentRiderId] = useState<string | null>(null);
   const [hasActiveOrder, setHasActiveOrder] = useState(false);
   const [riderLocation, setRiderLocation] = useState<{ lat: number, lng: number } | null>(null);
+  const [showCompletionModal, setShowCompletionModal] = useState(false);
+  const [isRider, setIsRider] = useState(false);
+  const [navigationSteps, setNavigationSteps] = useState<any[]>([]);
+  const [currentNavStep, setCurrentNavStep] = useState<string>('');
+  const [totalDistance, setTotalDistance] = useState<string>('');
+  const [totalDuration, setTotalDuration] = useState<string>('');
+  const [mapHeading, setMapHeading] = useState<number>(0);
+  const [isNavigating, setIsNavigating] = useState(false);
+  const [directionsReady, setDirectionsReady] = useState(false);
+  const mapRef = React.useRef<MapView>(null);
 
   useEffect(() => {
     fetchOrderDetails();
     getUserRole();
+
+    let locationSubscription: any;
+
+    const setupLocation = async () => {
+      const userData = await SecureStore.getItemAsync('user_data');
+      if (userData) {
+        const user = JSON.parse(userData);
+        if (user.role === 'rider') {
+          setIsRider(true);
+          const { status } = await Location.requestForegroundPermissionsAsync();
+          if (status === 'granted') {
+            locationSubscription = await Location.watchPositionAsync(
+              {
+                accuracy: Location.Accuracy.High,
+                distanceInterval: 10,
+                timeInterval: 5000,
+              },
+              (location) => {
+                const newLocation = {
+                  lat: location.coords.latitude,
+                  lng: location.coords.longitude,
+                };
+                setRiderLocation(newLocation);
+                
+                if (location.coords.heading !== null && location.coords.heading !== undefined) {
+                  setMapHeading(location.coords.heading);
+                }
+
+                // Auto-center map if in navigation mode
+                if (isNavigating && mapRef.current) {
+                  mapRef.current.animateCamera({
+                    center: {
+                      latitude: newLocation.lat,
+                      longitude: newLocation.lng,
+                    },
+                    heading: location.coords.heading || 0,
+                    pitch: 45,
+                    altitude: 1000,
+                    zoom: 18,
+                  }, { duration: 1000 });
+                }
+              }
+            );
+          }
+        }
+      }
+    };
+
+    setupLocation();
 
     const channel = subscribeToChannel(`order-${orderId}`);
     if (channel) {
@@ -74,6 +138,9 @@ export default function OrderDetailsScreen({ route, navigation }: any) {
       if (userChannel) {
         // We don't unsubscribe from user channel as it might be used elsewhere, 
         // but we should unbind if needed. For now, keep it simple.
+      }
+      if (locationSubscription) {
+        locationSubscription.remove();
       }
     };
   }, [orderId]);
@@ -155,23 +222,39 @@ export default function OrderDetailsScreen({ route, navigation }: any) {
       return false;
     }
 
-    // Check by Rider ID
-    const riderId = (order.rider?._id || order.rider || '').toString();
-    const myRiderId = (currentRiderId || '').toString();
+    // Extract all possible IDs from the order rider
+    const orderRiderId = (order.rider?._id || (typeof order.rider === 'string' ? order.rider : '')).toString();
+    const orderRiderUserId = (order.rider?.user?._id || order.rider?.user || '').toString();
     
-    console.log('DEBUG: Comparing Rider IDs:', { orderRiderId: riderId, myRiderId });
-    if (riderId && myRiderId && riderId === myRiderId) return true;
-
-    // Check by User ID (if order.rider is populated and contains user)
-    const riderUserId = (order.rider?.user?._id || order.rider?.user || '').toString();
+    // Extract all possible IDs from current user/rider
+    const myRiderId = (currentRiderId || '').toString();
     const myUserId = (currentUserId || '').toString();
     
-    console.log('DEBUG: Comparing User IDs:', { orderRiderUserId: riderUserId, myUserId });
-    if (riderUserId && myUserId && riderUserId === myUserId) return true;
+    console.log('DEBUG: Assignment Check:', {
+      orderRiderId,
+      orderRiderUserId,
+      myRiderId,
+      myUserId
+    });
 
-    // Last ditch effort: if order.rider is just a string and matches currentUserId or currentRiderId
-    const orderRiderStr = (typeof order.rider === 'string' ? order.rider : order.rider?._id || '').toString();
-    if (orderRiderStr && (orderRiderStr === myUserId || orderRiderStr === myRiderId)) return true;
+    // Check if any order-related ID matches any of our IDs
+    if (orderRiderId) {
+      if (myRiderId && orderRiderId === myRiderId) return true;
+      if (myUserId && orderRiderId === myUserId) return true;
+    }
+    
+    if (orderRiderUserId) {
+      if (myRiderId && orderRiderUserId === myRiderId) return true;
+      if (myUserId && orderRiderUserId === myUserId) return true;
+    }
+
+    // One more check: if the rider object has a name and we have user data, maybe compare names? 
+    // No, IDs are better. Let's see if the order object itself has a riderId field directly
+    if (order.riderId) {
+      const oRId = order.riderId.toString();
+      if (myRiderId && oRId === myRiderId) return true;
+      if (myUserId && oRId === myUserId) return true;
+    }
 
     return false;
   };
@@ -239,24 +322,33 @@ export default function OrderDetailsScreen({ route, navigation }: any) {
     
     // For directions, we use 'daddr' on iOS and 'google.navigation:q' on Android
     const url = Platform.select({
-      ios: lat && lng 
-        ? `http://maps.apple.com/?daddr=${lat},${lng}&dirflg=d` 
-        : `http://maps.apple.com/?daddr=${encodedAddress}&dirflg=d`,
-      android: lat && lng
+      ios: (lat && lng && lat !== 0 && lng !== 0)
+        ? `comgooglemaps://?daddr=${lat},${lng}&directionsmode=driving`
+        : `comgooglemaps://?daddr=${encodedAddress}&directionsmode=driving`,
+      android: (lat && lng && lat !== 0 && lng !== 0)
         ? `google.navigation:q=${lat},${lng}`
         : `google.navigation:q=${encodedAddress}`
     });
+    
+    const appleMapsUrl = (lat && lng && lat !== 0 && lng !== 0)
+      ? `http://maps.apple.com/?daddr=${lat},${lng}&dirflg=d` 
+      : `http://maps.apple.com/?daddr=${encodedAddress}&dirflg=d`;
+
+    const googleMapsWebUrl = (lat && lng && lat !== 0 && lng !== 0)
+      ? `https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}&travelmode=driving`
+      : `https://www.google.com/maps/dir/?api=1&destination=${encodedAddress}&travelmode=driving`;
     
     if (url) {
       Linking.canOpenURL(url).then(supported => {
         if (supported) {
           Linking.openURL(url);
         } else {
-          // Fallback to browser with directions mode
-          const webUrl = lat && lng
-            ? `https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}`
-            : `https://www.google.com/maps/dir/?api=1&destination=${encodedAddress}`;
-          Linking.openURL(webUrl);
+          // Fallback to Apple Maps on iOS or Web Browser
+          if (Platform.OS === 'ios') {
+            Linking.openURL(appleMapsUrl);
+          } else {
+            Linking.openURL(googleMapsWebUrl);
+          }
         }
       });
     }
@@ -305,10 +397,15 @@ export default function OrderDetailsScreen({ route, navigation }: any) {
       </View>
 
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.content}>
-        {/* Tracking Map for Customer */}
-        {userRole === 'customer' && order.status !== 'Delivered' && order.status !== 'Cancelled' && (
-          <View style={[styles.card, { padding: 0, overflow: 'hidden', height: 250 }]}>
+        {/* Tracking Map */}
+        {(userRole === 'customer' || userRole === 'rider') && order.status !== 'Delivered' && order.status !== 'Cancelled' && (
+          <View style={[
+            styles.card, 
+            { padding: 0, overflow: 'hidden', height: 250 },
+            isNavigating && styles.fullScreenMapContainer
+          ]}>
             <MapView
+              ref={mapRef}
               style={{ flex: 1 }}
               initialRegion={{
                 latitude: order.deliveryLocation?.lat || 31.5204,
@@ -316,12 +413,26 @@ export default function OrderDetailsScreen({ route, navigation }: any) {
                 latitudeDelta: 0.05,
                 longitudeDelta: 0.05,
               }}
-              region={riderLocation ? {
-                latitude: (riderLocation.lat + (order.deliveryLocation?.lat || 31.5204)) / 2,
-                longitude: (riderLocation.lng + (order.deliveryLocation?.lng || 74.3587)) / 2,
-                latitudeDelta: Math.abs(riderLocation.lat - (order.deliveryLocation?.lat || 31.5204)) * 1.5 || 0.05,
-                longitudeDelta: Math.abs(riderLocation.lng - (order.deliveryLocation?.lng || 74.3587)) * 1.5 || 0.05,
-              } : undefined}
+              region={isNavigating ? undefined : (riderLocation ? {
+                latitude: (riderLocation.lat + (
+                  (userRole === 'rider' && !['Picked Up', 'OnTheWay', 'ArrivedAtCustomer'].includes(order.status))
+                    ? (order.restaurant?.location?.coordinates?.[1] || order.deliveryLocation?.lat || 31.5204)
+                    : (order.deliveryLocation?.lat || 31.5204)
+                )) / 2,
+                longitude: (riderLocation.lng + (
+                  (userRole === 'rider' && !['Picked Up', 'OnTheWay', 'ArrivedAtCustomer'].includes(order.status))
+                    ? (order.restaurant?.location?.coordinates?.[0] || order.deliveryLocation?.lng || 74.3587)
+                    : (order.deliveryLocation?.lng || 74.3587)
+                )) / 2,
+                latitudeDelta: 0.05,
+                longitudeDelta: 0.05,
+              } : undefined)}
+              showsUserLocation={userRole === 'rider'}
+              followsUserLocation={isNavigating}
+              showsCompass={true}
+              rotateEnabled={true}
+              scrollEnabled={!isNavigating}
+              pitchEnabled={true}
             >
               {/* Delivery Location Marker */}
               <Marker
@@ -343,7 +454,7 @@ export default function OrderDetailsScreen({ route, navigation }: any) {
                     latitude: riderLocation.lat,
                     longitude: riderLocation.lng,
                   }}
-                  title="Rider Location"
+                  title={userRole === 'rider' ? "Your Location" : "Rider Location"}
                 >
                   <View style={[styles.markerContainer, { backgroundColor: '#fff' }]}>
                     <Ionicons name="bicycle" size={24} color="#10B981" />
@@ -368,21 +479,208 @@ export default function OrderDetailsScreen({ route, navigation }: any) {
 
               {/* Route Line */}
               {riderLocation && (
-                <Polyline
-                  coordinates={[
-                    { latitude: riderLocation.lat, longitude: riderLocation.lng },
-                    { latitude: order.deliveryLocation?.lat || 31.5204, longitude: order.deliveryLocation?.lng || 74.3587 }
-                  ]}
-                  strokeColor={Colors.primary}
-                  strokeWidth={3}
-                  lineDashPattern={[5, 5]}
-                />
+                <>
+                  <MapViewDirections
+                    origin={{ latitude: riderLocation.lat, longitude: riderLocation.lng }}
+                    destination={{ 
+                      latitude: (userRole === 'rider' && !['Picked Up', 'OnTheWay', 'ArrivedAtCustomer'].includes(order.status))
+                        ? (order.restaurant?.location?.coordinates?.[1] || order.deliveryLocation?.lat || 31.5204)
+                        : (order.deliveryLocation?.lat || 31.5204), 
+                      longitude: (userRole === 'rider' && !['Picked Up', 'OnTheWay', 'ArrivedAtCustomer'].includes(order.status))
+                        ? (order.restaurant?.location?.coordinates?.[0] || order.deliveryLocation?.lng || 74.3587)
+                        : (order.deliveryLocation?.lng || 74.3587) 
+                    }}
+                    apikey={GOOGLE_MAPS_API_KEY}
+                    strokeWidth={4}
+                    strokeColor={Colors.primary}
+                    optimizeWaypoints={true}
+                    mode="DRIVING"
+                    onReady={(result) => {
+                      setDirectionsReady(true);
+                      setTotalDistance(result.distance.toFixed(1) + " km");
+                      setTotalDuration(Math.ceil(result.duration) + " mins");
+                      if (result.legs && result.legs[0] && result.legs[0].steps) {
+                        setNavigationSteps(result.legs[0].steps);
+                        // Clean HTML tags from step instructions
+                        const firstStep = result.legs[0].steps[0].html_instructions.replace(/<[^>]*>?/gm, '');
+                        setCurrentNavStep(firstStep);
+                        
+                        // Fit map to route if not currently in live navigation mode
+                        if (!isNavigating && mapRef.current) {
+                          mapRef.current.fitToCoordinates(result.coordinates, {
+                            edgePadding: {
+                              right: 50,
+                              bottom: 100,
+                              left: 50,
+                              top: 150,
+                            },
+                            animated: true,
+                          });
+                        }
+                      }
+                    }}
+                    onError={(errorMessage) => {
+                      console.log('MapViewDirections Error:', errorMessage);
+                      setDirectionsReady(false);
+                    }}
+                  />
+                  {/* Fallback Polyline only if directions API fails */}
+                  {!directionsReady && (
+                    <Polyline
+                      coordinates={[
+                        { latitude: riderLocation.lat, longitude: riderLocation.lng },
+                        { 
+                          latitude: (userRole === 'rider' && !['Picked Up', 'OnTheWay', 'ArrivedAtCustomer'].includes(order.status))
+                            ? (order.restaurant?.location?.coordinates?.[1] || order.deliveryLocation?.lat || 31.5204)
+                            : (order.deliveryLocation?.lat || 31.5204), 
+                          longitude: (userRole === 'rider' && !['Picked Up', 'OnTheWay', 'ArrivedAtCustomer'].includes(order.status))
+                            ? (order.restaurant?.location?.coordinates?.[0] || order.deliveryLocation?.lng || 74.3587)
+                            : (order.deliveryLocation?.lng || 74.3587) 
+                        }
+                      ]}
+                      strokeColor={Colors.primary}
+                      strokeWidth={3}
+                      lineDashPattern={[5, 5]}
+                      opacity={0.7}
+                    />
+                  )}
+                </>
               )}
             </MapView>
-            {riderLocation && (
+            
+            {isNavigating && (
+              <View style={styles.mapControlsContainer}>
+                <TouchableOpacity 
+                  style={styles.mapControlBtn}
+                  onPress={() => {
+                    if (riderLocation && mapRef.current) {
+                      mapRef.current.animateCamera({
+                        center: {
+                          latitude: riderLocation.lat,
+                          longitude: riderLocation.lng,
+                        },
+                        heading: mapHeading,
+                        pitch: 45,
+                        zoom: 18,
+                      }, { duration: 1000 });
+                    }
+                  }}
+                >
+                  <Ionicons name="locate" size={24} color={Colors.primary} />
+                </TouchableOpacity>
+
+                <TouchableOpacity 
+                  style={[styles.mapControlBtn, { marginTop: 10 }]}
+                  onPress={() => {
+                    if (mapRef.current) {
+                      const destination = (userRole === 'rider' && !['Picked Up', 'OnTheWay', 'ArrivedAtCustomer'].includes(order.status))
+                        ? { 
+                            latitude: order.restaurant?.location?.coordinates?.[1] || 31.5204,
+                            longitude: order.restaurant?.location?.coordinates?.[0] || 74.3587
+                          }
+                        : {
+                            latitude: order.deliveryLocation?.lat || 31.5204,
+                            longitude: order.deliveryLocation?.lng || 74.3587
+                          };
+
+                      if (riderLocation) {
+                        mapRef.current.fitToCoordinates([
+                          { latitude: riderLocation.lat, longitude: riderLocation.lng },
+                          destination
+                        ], {
+                          edgePadding: { top: 150, right: 50, bottom: 100, left: 50 },
+                          animated: true
+                        });
+                      }
+                    }
+                  }}
+                >
+                  <Ionicons name="map-outline" size={24} color={Colors.primary} />
+                </TouchableOpacity>
+              </View>
+            )}
+
+            {riderLocation && userRole === 'customer' && (
               <View style={styles.mapOverlay}>
                 <Text style={styles.mapOverlayText}>Rider is on the way!</Text>
               </View>
+            )}
+            {riderLocation && userRole === 'rider' && (
+              <>
+                {isNavigating && currentNavStep ? (
+                  <View style={styles.navInstructionBox}>
+                    <TouchableOpacity 
+                      style={styles.gmapsCircleBtn}
+                      onPress={() => {
+                        const target = (['Picked Up', 'OnTheWay', 'ArrivedAtCustomer'].includes(order.status))
+                          ? { addr: order.deliveryAddress, lat: order.deliveryLocation?.lat, lng: order.deliveryLocation?.lng }
+                          : { addr: order.restaurant?.address, lat: order.restaurant?.location?.coordinates?.[1], lng: order.restaurant?.location?.coordinates?.[0] };
+                        openMap(target.addr, target.lat, target.lng);
+                      }}
+                    >
+                      <Ionicons name="logo-google" size={24} color="#fff" />
+                    </TouchableOpacity>
+
+                    <View style={{ marginLeft: 12, flex: 1 }}>
+                      <Text style={styles.navInstructionText} numberOfLines={2}>{currentNavStep}</Text>
+                      <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 4 }}>
+                        <Text style={styles.navStatsText}>{totalDistance}</Text>
+                        <View style={styles.statsDot} />
+                        <Text style={styles.navStatsText}>{totalDuration}</Text>
+                      </View>
+                    </View>
+                    
+                    <TouchableOpacity 
+                      style={styles.closeNavBtn}
+                      onPress={() => setIsNavigating(false)}
+                    >
+                      <View style={{ backgroundColor: 'rgba(255,255,255,0.2)', borderRadius: 20, padding: 4 }}>
+                        <Ionicons name="close" size={24} color="#fff" />
+                      </View>
+                      <Text style={{ color: '#fff', fontSize: 10, textAlign: 'center' }}>Exit</Text>
+                    </TouchableOpacity>
+                  </View>
+                      <View style={{ backgroundColor: 'rgba(255,255,255,0.2)', borderRadius: 20, padding: 4 }}>
+                        <Ionicons name="close" size={24} color="#fff" />
+                      </View>
+                      <Text style={{ color: '#fff', fontSize: 10, textAlign: 'center' }}>Exit</Text>
+                    </TouchableOpacity>
+                  </View>
+                ) : (
+                  <View style={styles.mapOverlay}>
+                    <Text style={styles.mapOverlayText}>
+                      {['Picked Up', 'OnTheWay', 'ArrivedAtCustomer'].includes(order.status) 
+                        ? "Heading to Customer" 
+                        : "Heading to Restaurant"}
+                    </Text>
+                    <View style={{ flexDirection: 'row', gap: 8 }}>
+                      <TouchableOpacity 
+                        style={styles.floatingNavButton}
+                        onPress={() => setIsNavigating(true)}
+                      >
+                        <Ionicons name="navigate" size={20} color="#fff" />
+                        <Text style={styles.floatingNavText}>Live Nav</Text>
+                      </TouchableOpacity>
+                      <TouchableOpacity 
+                        style={[styles.floatingNavButton, { backgroundColor: '#4285F4' }]}
+                        onPress={() => {
+                          const isHeadingToCustomer = ['Picked Up', 'OnTheWay', 'ArrivedAtCustomer'].includes(order.status);
+                          if (isHeadingToCustomer) {
+                            openMap(order.shippingAddress?.address || order.deliveryAddress, order.deliveryLocation?.lat, order.deliveryLocation?.lng);
+                          } else {
+                            const lat = order.restaurant?.location?.coordinates?.[1];
+                            const lng = order.restaurant?.location?.coordinates?.[0];
+                            openMap(order.restaurant?.address, lat, lng);
+                          }
+                        }}
+                      >
+                        <Ionicons name="logo-google" size={18} color="#fff" />
+                         <Text style={styles.floatingNavText}>Open G-Maps App</Text>
+                       </TouchableOpacity>
+                    </View>
+                  </View>
+                )}
+              </>
             )}
           </View>
         )}
@@ -421,6 +719,53 @@ export default function OrderDetailsScreen({ route, navigation }: any) {
             <Text style={styles.currentStatusText}>Current Status: <Text style={{ color: Colors.primary }}>{order.status}</Text></Text>
           </View>
         </View>
+
+        {/* Order Completion Modal */}
+        <Modal
+          visible={showCompletionModal}
+          transparent={true}
+          animationType="fade"
+        >
+          <View style={styles.completionOverlay}>
+            <View style={styles.completionModal}>
+              <LinearGradient
+                colors={['#4ade80', '#22c55e']}
+                style={styles.completionHeader}
+              >
+                <View style={styles.checkCircle}>
+                  <Ionicons name="checkmark" size={40} color="#fff" />
+                </View>
+                <Text style={styles.completionTitle}>Order Delivered!</Text>
+                <Text style={styles.completionSubtitle}>Great job on completing this delivery</Text>
+              </LinearGradient>
+
+              <View style={styles.completionBody}>
+                <View style={styles.summaryRow}>
+                  <Text style={styles.summaryLabel}>Order ID</Text>
+                  <Text style={styles.summaryValue}>#{orderId.slice(-6).toUpperCase()}</Text>
+                </View>
+                <View style={styles.summaryRow}>
+                  <Text style={styles.summaryLabel}>Earnings</Text>
+                  <Text style={[styles.summaryValue, { color: '#22c55e' }]}>Rs. {order?.netRiderEarning || order?.riderEarning || 0}</Text>
+                </View>
+                <View style={styles.summaryRow}>
+                  <Text style={styles.summaryLabel}>Customer</Text>
+                  <Text style={styles.summaryValue}>{order?.user?.name || 'Customer'}</Text>
+                </View>
+
+                <TouchableOpacity 
+                  style={styles.completionCloseBtn}
+                  onPress={() => {
+                    setShowCompletionModal(false);
+                    navigation.navigate('RiderDashboard');
+                  }}
+                >
+                  <Text style={styles.completionCloseBtnText}>Go to Dashboard</Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+          </View>
+        </Modal>
 
         {/* Delivery Info */}
         <View style={styles.card}>
@@ -557,18 +902,18 @@ export default function OrderDetailsScreen({ route, navigation }: any) {
             <Text style={styles.totalLabel}>Total</Text>
             <Text style={styles.totalValue}>Rs. {formatPrice(order.totalPrice)}</Text>
           </View>
-          <View style={[styles.paymentBadge, order.paymentMethod === 'cod' && { backgroundColor: '#FEF3C7' }]}>
+          <View style={[styles.paymentBadge, order.paymentMethod?.toLowerCase() === 'cod' && { backgroundColor: '#FEF3C7' }]}>
             <Ionicons 
-              name={order.paymentMethod === 'cod' ? "cash-outline" : "card-outline"} 
+              name={order.paymentMethod?.toLowerCase() === 'cod' ? "cash-outline" : "card-outline"} 
               size={16} 
-              color={order.paymentMethod === 'cod' ? "#D97706" : Colors.gray} 
+              color={order.paymentMethod?.toLowerCase() === 'cod' ? "#D97706" : Colors.gray} 
             />
-            <Text style={[styles.paymentText, order.paymentMethod === 'cod' && { color: '#D97706' }]}>
-              {order.paymentMethod === 'cod' ? 'CASH ON DELIVERY' : `PAID VIA ${order.paymentMethod.toUpperCase()}`}
+            <Text style={[styles.paymentText, order.paymentMethod?.toLowerCase() === 'cod' && { color: '#D97706' }]}>
+              {order.paymentMethod?.toLowerCase() === 'cod' ? 'CASH ON DELIVERY' : `PAID VIA ${order.paymentMethod.toUpperCase()}`}
             </Text>
           </View>
 
-          {order.paymentMethod === 'cod' && (
+          {order.paymentMethod?.toLowerCase() === 'cod' && (
             <View style={styles.codAlert}>
               <Ionicons name="alert-circle" size={20} color="#D97706" />
               <Text style={styles.codAlertText}>
@@ -697,8 +1042,13 @@ export default function OrderDetailsScreen({ route, navigation }: any) {
     try {
       setLoading(true);
       await apiClient.put(`/orders/${orderId}/status`, { status: newStatus });
-      fetchOrderDetails();
-      Alert.alert('Success', `Order status updated to ${newStatus}`);
+      
+      if (newStatus === 'Delivered') {
+        setShowCompletionModal(true);
+      } else {
+        fetchOrderDetails();
+        Alert.alert('Success', `Order status updated to ${newStatus}`);
+      }
     } catch (err) {
       Alert.alert('Error', 'Failed to update status');
     } finally {
@@ -716,6 +1066,84 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
+  },
+  completionOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.7)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 20,
+  },
+  completionModal: {
+    backgroundColor: '#fff',
+    borderRadius: 30,
+    width: '100%',
+    maxWidth: 400,
+    overflow: 'hidden',
+    elevation: 10,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.3,
+    shadowRadius: 20,
+  },
+  completionHeader: {
+    padding: 30,
+    alignItems: 'center',
+  },
+  checkCircle: {
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    backgroundColor: 'rgba(255,255,255,0.2)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 15,
+    borderWidth: 4,
+    borderColor: '#fff',
+  },
+  completionTitle: {
+    fontSize: 24,
+    fontWeight: '900',
+    color: '#fff',
+    marginBottom: 5,
+  },
+  completionSubtitle: {
+    fontSize: 14,
+    color: 'rgba(255,255,255,0.9)',
+    textAlign: 'center',
+  },
+  completionBody: {
+    padding: 25,
+  },
+  summaryRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: '#F3F4F6',
+  },
+  summaryLabel: {
+    fontSize: 14,
+    color: Colors.gray,
+    fontWeight: '500',
+  },
+  summaryValue: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#111827',
+  },
+  completionCloseBtn: {
+    backgroundColor: '#111827',
+    paddingVertical: 16,
+    borderRadius: 16,
+    alignItems: 'center',
+    marginTop: 25,
+  },
+  completionCloseBtnText: {
+    color: '#fff',
+    fontWeight: 'bold',
+    fontSize: 16,
   },
   header: {
     flexDirection: 'row',
@@ -1046,5 +1474,98 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontWeight: 'bold',
     color: '#10B981',
+  },
+  floatingNavButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#4285F4', // Google Maps Blue
+    paddingVertical: 6,
+    paddingHorizontal: 12,
+    borderRadius: 8,
+    marginTop: 8,
+  },
+  floatingNavText: {
+    color: '#fff',
+    fontSize: 12,
+    fontWeight: 'bold',
+    marginLeft: 6,
+  },
+  navInstructionBox: {
+    position: 'absolute',
+    top: Platform.OS === 'ios' ? 50 : 20,
+    left: 10,
+    right: 10,
+    backgroundColor: '#0F5132', // Dark Google Maps Green
+    padding: 15,
+    borderRadius: 16,
+    flexDirection: 'row',
+    alignItems: 'center',
+    elevation: 10,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 5,
+    zIndex: 1100,
+  },
+  gmapsCircleBtn: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: '#4285F4', // Google Blue
+    justifyContent: 'center',
+    alignItems: 'center',
+    elevation: 3,
+  },
+  navInstructionText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
+  navStatsText: {
+    color: 'rgba(255,255,255,0.8)',
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  statsDot: {
+    width: 4,
+    height: 4,
+    borderRadius: 2,
+    backgroundColor: 'rgba(255,255,255,0.5)',
+    marginHorizontal: 8,
+  },
+  navDistanceText: {
+    color: 'rgba(255, 255, 255, 0.8)',
+    fontSize: 14,
+    marginTop: 2,
+  },
+  closeNavBtn: {
+     padding: 5,
+   },
+   mapControlsContainer: {
+     position: 'absolute',
+     bottom: 30,
+     right: 20,
+     zIndex: 1100,
+   },
+   mapControlBtn: {
+     backgroundColor: '#fff',
+     padding: 12,
+     borderRadius: 30,
+     elevation: 5,
+     shadowColor: '#000',
+     shadowOffset: { width: 0, height: 2 },
+     shadowOpacity: 0.25,
+     shadowRadius: 3.84,
+     marginBottom: 10,
+   },
+   fullScreenMapContainer: {
+    position: 'absolute',
+    top: -100, // Cover header
+    left: 0,
+    right: 0,
+    bottom: 0,
+    height: Platform.OS === 'ios' ? 1000 : 2000, // High enough to cover screen
+    zIndex: 1000,
+    borderRadius: 0,
   },
 });

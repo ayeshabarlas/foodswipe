@@ -550,6 +550,15 @@ const getEarnings = async (req, res) => {
         const todayEarnings = rider.earnings?.today || 0;
         const weekEarnings = rider.earnings?.thisWeek || 0;
 
+        // SELF-HEALING: Sync COD balance from ledger
+        const pendingTx = await CODLedger.find({ rider: rider._id, status: 'pending' });
+        const totalCod = pendingTx.reduce((sum, tx) => sum + (tx.cod_collected || 0), 0);
+        if (rider.cod_balance !== totalCod) {
+            console.log(`[Rider] Syncing COD balance in getEarnings for ${rider.fullName}: ${rider.cod_balance} -> ${totalCod}`);
+            rider.cod_balance = totalCod;
+            await rider.save();
+        }
+
         res.json({
             total: totalEarnings,
             basePay: totalBasePay, 
@@ -558,6 +567,7 @@ const getEarnings = async (req, res) => {
             tips: totalTips,
             deliveries: completedDeliveries,
             pendingPayout: pendingPayout,
+            cod_balance: rider.cod_balance || 0,
             nextPayoutDate: getNextPayoutDate(),
             today: todayEarnings,
             thisWeek: weekEarnings
@@ -895,6 +905,14 @@ const cashout = async (req, res) => {
             return res.status(400).json({ message: 'Minimum cashout amount is Rs. 500' });
         }
 
+        // Update RiderWallet model if it exists
+        const RiderWallet = require('../models/RiderWallet');
+        let riderWallet = await RiderWallet.findOne({ rider: rider._id });
+        if (riderWallet) {
+            riderWallet.availableWithdraw = 0;
+            await riderWallet.save();
+        }
+
         // Create payout record
         const payout = await Payout.create({
             rider: rider._id,
@@ -906,7 +924,6 @@ const cashout = async (req, res) => {
         });
 
         // Update rider wallet balance
-        const oldBalance = rider.walletBalance;
         rider.walletBalance = 0;
         await rider.save();
 

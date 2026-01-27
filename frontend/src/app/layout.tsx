@@ -1,3 +1,4 @@
+// Vercel Redeploy Trigger: 2026-01-26 15:45 - Fix broken images and update admin dashboard stats
 import type { Metadata } from "next";
 import { Poppins, Plus_Jakarta_Sans, Inter } from "next/font/google";
 import "./globals.css";

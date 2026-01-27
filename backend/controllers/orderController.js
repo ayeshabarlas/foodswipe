@@ -342,7 +342,7 @@ const getOrderById = async (req, res) => {
     try {
         const order = await Order.findById(req.params.id)
             .populate('user', 'name email phone')
-            .populate('restaurant', 'name address contact logo')
+            .populate('restaurant', 'name address contact logo location')
             .populate({
                 path: 'rider',
                 populate: {
@@ -448,7 +448,8 @@ const updateOrderStatus = async (req, res) => {
         }
 
         // When order status changes to something riders can pick up, notify all riders
-        if (['Accepted', 'Ready'].includes(status)) {
+        // ONLY if no rider is assigned yet
+        if (['Accepted', 'Ready'].includes(status) && !order.rider) {
             triggerEvent('riders', 'newOrderAvailable', updatedOrder);
         }
 
@@ -459,8 +460,8 @@ const updateOrderStatus = async (req, res) => {
         // Notify the specific order channel for anyone watching this order
         triggerEvent(`order-${order._id}`, 'orderStatusUpdate', updatedOrder);
 
-        // When order is ready, notify all available riders
-        if (status === 'Ready') {
+        // When order is ready, notify all available riders if no rider is assigned
+        if (status === 'Ready' && !order.rider) {
             // Calculate potential earnings for riders
             let distance = updatedOrder.distanceKm || 0;
             if (distance === 0 && updatedOrder.restaurant?.location?.coordinates && updatedOrder.deliveryLocation?.lat) {
@@ -498,11 +499,6 @@ const updateOrderStatus = async (req, res) => {
                 netRiderEarning: earnings.netEarning,
                 riderEarning: earnings.netEarning
             });
-        }
-
-        // Also notify specifically assigned rider if any
-        if (order.rider) {
-            triggerEvent(`rider-${order.rider.toString()}`, 'orderStatusUpdate', updatedOrder);
         }
 
         // Add special event for ArrivedAtCustomer status

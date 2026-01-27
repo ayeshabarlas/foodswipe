@@ -14,6 +14,7 @@ const { triggerEvent } = require('../socket');
 const AuditLog = require('../models/AuditLog');
 const Admin = require('../models/Admin');
 const sendEmail = require('../utils/email');
+const { calculateRiderEarning } = require('../utils/paymentUtils');
 
 // Helper to notify admin
 const notifyAdmin = async (subject, message) => {
@@ -216,29 +217,13 @@ const getDashboardStats = async (req, res) => {
                     _id: null,
                     totalRevenue: { $sum: { $ifNull: ['$totalPrice', 0] } },
                     totalCommission: { $sum: { $ifNull: ['$commissionAmount', 0] } },
-                    totalRiderEarnings: {
-                        $sum: {
-                            $cond: [
-                                { $gt: [{ $toDouble: { $ifNull: ['$riderEarning', 0] } }, 200] },
-                                200,
-                                { $toDouble: { $ifNull: ['$riderEarning', 0] } }
-                            ]
-                        }
-                    },
+                    totalRiderEarnings: { $sum: { $toDouble: { $ifNull: ['$riderEarning', 0] } } },
                     totalRestaurantEarnings: { $sum: { $toDouble: { $ifNull: ['$restaurantEarning', 0] } } },
                     totalServiceFees: { $sum: { $toDouble: { $ifNull: ['$serviceFee', 0] } } },
                     totalTax: { $sum: { $toDouble: { $ifNull: ['$tax', 0] } } },
                     totalGatewayFees: { $sum: { $toDouble: { $ifNull: ['$gatewayFee', 0] } } },
                     totalDiscounts: { $sum: { $toDouble: { $ifNull: ['$discount', 0] } } },
-                    totalDeliveryFees: {
-                        $sum: {
-                            $cond: [
-                                { $gt: [{ $toDouble: { $ifNull: ['$deliveryFee', 0] } }, 200] },
-                                200,
-                                { $toDouble: { $ifNull: ['$deliveryFee', 0] } }
-                            ]
-                        }
-                    }
+                    totalDeliveryFees: { $sum: { $toDouble: { $ifNull: ['$deliveryFee', 0] } } }
                 }
             }
         ]);
@@ -448,7 +433,7 @@ const getAllRestaurants = async (req, res) => {
     try {
         console.log('Fetching all restaurants for admin...');
         const restaurants = await Restaurant.find()
-            .populate('owner', 'name email status')
+            .populate('owner', 'name email status phone')
             .lean();
 
         console.log(`Found ${restaurants.length} restaurants. Enriching with stats...`);
@@ -478,7 +463,9 @@ const getAllRestaurants = async (req, res) => {
                     ...restaurant,
                     totalOrders: stat.totalOrders,
                     revenue: stat.revenue,
-                    commission: stat.commission
+                    commission: stat.commission,
+                    // Ensure documents are explicitly included if lean() missed them or they need formatting
+                    documents: restaurant.documents || {}
                 };
             } catch (err) {
                 console.error(`Error enriching restaurant ${restaurant._id}:`, err);
@@ -1088,29 +1075,22 @@ const cleanupMockData = async (req, res) => {
         // 1. Run fixInflatedOrders logic first to clean up any bad historical data
         console.log('🛠️ FIXING INFLATED ORDERS AS PART OF CLEANUP');
         const ordersToFix = await Order.find({
-            $or: [
-                { riderEarning: { $gt: 200 } },
-                { deliveryFee: { $gt: 200 } }
-            ]
+            riderEarning: { $exists: true }
         });
 
         for (let order of ordersToFix) {
-            const oldEarning = order.riderEarning;
-            const newEarning = 200; // Cap it to 200
-
-            if (order.riderEarning > 200) {
-                order.riderEarning = newEarning;
-                order.netRiderEarning = newEarning;
-                order.grossRiderEarning = newEarning;
-
-                // Recalculate admin earning for this order
+            // Ensure netRiderEarning and grossRiderEarning match riderEarning
+            if (order.riderEarning) {
+                order.netRiderEarning = order.riderEarning;
+                order.grossRiderEarning = order.riderEarning;
+                
+                // Recalculate admin earning for this order without caps
                 const commissionAmount = order.commissionAmount || 0;
                 const deliveryFee = order.deliveryFee || 0;
-                order.adminEarning = commissionAmount + (deliveryFee - newEarning);
+                order.adminEarning = commissionAmount + (deliveryFee - order.riderEarning);
+                
+                await order.save();
             }
-
-            if (order.deliveryFee > 200) order.deliveryFee = 200;
-            await order.save();
         }
 
         // 2. Fix RiderWallets
@@ -1366,36 +1346,19 @@ const fixInflatedOrders = async (req, res) => {
     try {
         console.log('🛠️ FIX INFLATED ORDERS INITIATED');
 
-        // 1. Fix Orders (Cap riderEarning and deliveryFee at 200)
-        const orders = await Order.find({
-            $or: [
-                { riderEarning: { $gt: 200 } },
-                { deliveryFee: { $gt: 200 } }
-            ]
-        });
+        // 1. Fix Orders (Remove any artificial caps)
+        const orders = await Order.find({});
 
-        console.log(`Found ${orders.length} inflated orders`);
+        console.log(`Checking ${orders.length} orders for balance sync`);
         let fixedOrdersCount = 0;
         for (let order of orders) {
-            const oldEarning = order.riderEarning;
-            const newEarning = 200;
-
-            if (order.riderEarning > 200) {
-                order.riderEarning = newEarning;
-                order.netRiderEarning = newEarning;
-                order.grossRiderEarning = newEarning;
-
-                // Recalculate admin earning for this order
-                const commissionAmount = order.commissionAmount || 0;
-                const deliveryFee = order.deliveryFee || 0;
-                const actualDeliveryFee = deliveryFee > 200 ? 200 : deliveryFee;
-                order.deliveryFee = actualDeliveryFee;
-                order.adminEarning = commissionAmount + (actualDeliveryFee - newEarning);
+            // Just ensure netRiderEarning and grossRiderEarning match riderEarning
+            if (order.riderEarning) {
+                order.netRiderEarning = order.riderEarning;
+                order.grossRiderEarning = order.riderEarning;
+                await order.save();
+                fixedOrdersCount++;
             }
-
-            if (order.deliveryFee > 200) order.deliveryFee = 200;
-            await order.save();
-            fixedOrdersCount++;
         }
 
         // 2. Fix RiderWallets and Rider Profiles (Recalculate based on fixed orders)
@@ -1483,6 +1446,83 @@ const markNotificationRead = async (req, res) => {
     }
 };
 
+/**
+ * @desc    Manually assign a rider to an order
+ * @route   POST /api/admin/orders/:id/assign-rider
+ * @access  Private/Admin
+ */
+const assignRiderToOrder = async (req, res) => {
+    try {
+        const { riderId } = req.body;
+        const orderId = req.params.id;
+
+        const order = await Order.findById(orderId);
+        if (!order) {
+            return res.status(404).json({ message: 'Order not found' });
+        }
+
+        const rider = await Rider.findById(riderId).populate('user');
+        if (!rider) {
+            return res.status(404).json({ message: 'Rider not found' });
+        }
+
+        // 1. Handle previous rider if any
+        if (order.rider && order.rider.toString() !== riderId) {
+            const prevRider = await Rider.findById(order.rider);
+            if (prevRider) {
+                prevRider.currentOrder = null;
+                prevRider.status = 'Available';
+                await prevRider.save();
+                
+                // Notify previous rider
+                triggerEvent(`rider-${prevRider._id}`, 'orderUnassigned', { orderId });
+                triggerEvent(`rider-${prevRider._id}`, 'orderStatusUpdate', { _id: orderId, status: 'Unassigned' });
+            }
+        }
+
+        // 2. Assign new rider to order
+        order.rider = riderId;
+        order.riderAcceptedAt = order.riderAcceptedAt || new Date();
+        
+        // Calculate earnings if not present
+        if (!order.netRiderEarning) {
+            const settings = await Settings.getSettings();
+            let distance = order.distanceKm || 0;
+            const earnings = calculateRiderEarning(distance, settings);
+            order.netRiderEarning = earnings.netEarning;
+            order.grossRiderEarning = earnings.grossEarning;
+            order.riderEarning = earnings.netEarning;
+        }
+
+        await order.save();
+
+        // 3. Update new rider status
+        rider.currentOrder = orderId;
+        rider.status = 'Busy';
+        await rider.save();
+
+        const updatedOrder = await Order.findById(orderId)
+            .populate('user', 'name phone')
+            .populate('restaurant', 'name address location contact')
+            .populate({
+                path: 'rider',
+                populate: { path: 'user', select: 'name phone' }
+            });
+
+        // 4. Trigger events
+        triggerEvent(`rider-${riderId}`, 'orderAssigned', updatedOrder);
+        triggerEvent(`rider-${riderId}`, 'orderStatusUpdate', updatedOrder);
+        triggerEvent(`user-${order.user}`, 'orderStatusUpdate', updatedOrder);
+        triggerEvent(`restaurant-${order.restaurant}`, 'orderStatusUpdate', updatedOrder);
+        triggerEvent('admin', 'order_updated', updatedOrder);
+
+        res.json({ message: 'Rider assigned successfully', order: updatedOrder });
+    } catch (error) {
+        console.error('Assign rider error:', error);
+        res.status(500).json({ message: 'Server error', error: error.message });
+    }
+};
+
 module.exports = {
     getPendingRestaurants,
     approveRestaurant,
@@ -1513,5 +1553,6 @@ module.exports = {
     getAdminNotifications,
     markNotificationRead,
     nuclearWipe,
-    fixInflatedOrders
+    fixInflatedOrders,
+    assignRiderToOrder
 };

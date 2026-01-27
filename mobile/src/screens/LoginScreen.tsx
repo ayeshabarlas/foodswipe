@@ -1,3 +1,4 @@
+import * as WebBrowser from 'expo-web-browser';
 import React, { useState, useEffect } from 'react';
 import { 
   StyleSheet, 
@@ -45,6 +46,8 @@ export default function LoginScreen({ navigation }: any) {
   const [loading, setLoading] = useState(false);
   const [showPhoneVerification, setShowPhoneVerification] = useState(false);
   const [tempAuthData, setTempAuthData] = useState<{token: string, user: any} | null>(null);
+
+  const [showTermsModal, setShowTermsModal] = useState(false);
 
   useEffect(() => {
     if (response?.type === 'success') {
@@ -280,9 +283,57 @@ export default function LoginScreen({ navigation }: any) {
                     <Text style={styles.emailButtonText}>✉  Continue with Email</Text>
                   </TouchableOpacity>
 
-                  <Text style={styles.termsText}>
-                    By continuing, you agree to our Terms of Service & Privacy Policy.
-                  </Text>
+                  <TouchableOpacity onPress={() => setShowTermsModal(true)}>
+                    <Text style={styles.termsText}>
+                      By continuing, you agree to our Terms of Service & Privacy Policy.
+                    </Text>
+                  </TouchableOpacity>
+
+                  <Modal visible={showTermsModal} animationType="slide" transparent={false}>
+                    <SafeAreaView style={{ flex: 1, backgroundColor: '#fff' }}>
+                      <View style={{
+                        flexDirection: 'row',
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                        padding: 16,
+                        borderBottomWidth: 1,
+                        borderBottomColor: '#F3F4F6'
+                      }}>
+                        <TouchableOpacity onPress={() => setShowTermsModal(false)}>
+                          <Ionicons name="close" size={28} color="#111827" />
+                        </TouchableOpacity>
+                        <Text style={{ fontSize: 18, fontWeight: '700', color: '#111827' }}>Terms of Service</Text>
+                        <View style={{ width: 28 }} />
+                      </View>
+                      <ScrollView contentContainerStyle={{ padding: 20 }}>
+                        <Text style={{ fontSize: 18, fontWeight: '700', color: '#111827', marginBottom: 12 }}>1. Business Information</Text>
+                        <Text style={{ fontSize: 14, color: '#4B5563', lineHeight: 20, marginBottom: 8 }}>Registered Name: FoodSwipe (Private) Limited</Text>
+                        <Text style={{ fontSize: 14, color: '#4B5563', lineHeight: 20, marginBottom: 8 }}>Business Address: Plot #12, Block B-3, Gulberg III, Lahore, Punjab, Pakistan</Text>
+                        <Text style={{ fontSize: 14, color: '#4B5563', lineHeight: 20, marginBottom: 16 }}>Contact: +923295599855 | Email: app.foodswipehelp@gmail.com</Text>
+
+                        <Text style={{ fontSize: 18, fontWeight: '700', color: '#111827', marginBottom: 12 }}>2. Service Usage</Text>
+                        <Text style={{ fontSize: 14, color: '#4B5563', lineHeight: 20, marginBottom: 16 }}>You must be 18 years or older to use FoodSwipe. Provide accurate information during registration. Keep your account credentials secure. FoodSwipe reserves the right to suspend accounts for violations.</Text>
+
+                        <Text style={{ fontSize: 18, fontWeight: '700', color: '#111827', marginBottom: 12 }}>3. Orders & Payments</Text>
+                        <Text style={{ fontSize: 14, color: '#4B5563', lineHeight: 20, marginBottom: 16 }}>All orders are subject to restaurant availability. Prices may vary and are confirmed at checkout. Payment is processed securely through our platform. Taxes and delivery fees are calculated based on location.</Text>
+
+                        <Text style={{ fontSize: 18, fontWeight: '700', color: '#111827', marginBottom: 12 }}>4. Refund & Cancellation Policy</Text>
+                        <Text style={{ fontSize: 14, color: '#4B5563', lineHeight: 20, marginBottom: 8 }}>Order Cancellation: Orders can only be cancelled before the restaurant accepts them.</Text>
+                        <Text style={{ fontSize: 14, color: '#4B5563', lineHeight: 20, marginBottom: 8 }}>Refunds: Refunds are processed within 5-7 business days for eligible cancelled orders.</Text>
+                        <Text style={{ fontSize: 14, color: '#4B5563', lineHeight: 20, marginBottom: 8 }}>Incorrect Orders: If you receive an incorrect or damaged item, please report it via the Support section within 2 hours.</Text>
+                        <Text style={{ fontSize: 14, color: '#4B5563', lineHeight: 20, marginBottom: 16 }}>Delivery Failure: If a delivery fails due to incorrect address or unavailability, no refund will be issued.</Text>
+
+                        <Text style={{ fontSize: 18, fontWeight: '700', color: '#111827', marginBottom: 12 }}>5. Customer Complaint Handling</Text>
+                        <Text style={{ fontSize: 14, color: '#4B5563', lineHeight: 20, marginBottom: 8 }}>We value your feedback and take complaints seriously.</Text>
+                        <Text style={{ fontSize: 14, color: '#4B5563', lineHeight: 20, marginBottom: 8 }}>Mechanism: You can lodge a complaint via the "Support" tab in the app or email us at app.foodswipehelp@gmail.com.</Text>
+                        <Text style={{ fontSize: 14, color: '#4B5563', lineHeight: 20, marginBottom: 8 }}>Resolution: Our team will acknowledge your complaint within 24 hours and aim for resolution within 48-72 hours.</Text>
+                        <Text style={{ fontSize: 14, color: '#4B5563', lineHeight: 20, marginBottom: 16 }}>Appeals: If unsatisfied with the resolution, you may escalate to management@foodswipe.com.</Text>
+
+                        <Text style={{ fontSize: 18, fontWeight: '700', color: '#111827', marginBottom: 12 }}>6. Jurisdiction & Governing Law</Text>
+                        <Text style={{ fontSize: 14, color: '#4B5563', lineHeight: 20, marginBottom: 16 }}>These Terms and Conditions shall be governed by and construed in accordance with the laws of the Islamic Republic of Pakistan. Any dispute arising out of or in connection with these terms shall be subject to the exclusive jurisdiction of the courts of Lahore, Pakistan.</Text>
+                      </ScrollView>
+                    </SafeAreaView>
+                  </Modal>
 
                   <TouchableOpacity 
                     style={styles.checkConnButton}

@@ -31,7 +31,8 @@ const {
     getAdminNotifications,
     markNotificationRead,
     nuclearWipe,
-    fixInflatedOrders
+    fixInflatedOrders,
+    assignRiderToOrder
 } = require('../controllers/adminController');
 const { loginAdmin, getAdminMe, registerAdmin, inviteAdmin, acceptInvite, getAllAdmins, deleteAdmin, debugAdminStatus } = require('../controllers/adminAuthController');
 
@@ -64,6 +65,7 @@ router.delete('/restaurants/:id', deleteRestaurant);
 
 // Order management
 router.get('/orders', getAllOrders);
+router.post('/orders/:id/assign-rider', assignRiderToOrder);
 
 // Rider management
 router.get('/riders', getAllRiders);

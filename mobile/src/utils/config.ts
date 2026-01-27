@@ -30,6 +30,7 @@ const getBaseUrl = () => {
 
 export const API_URL = getBaseUrl();
 export const SOCKET_URL = getBaseUrl();
+export const GOOGLE_MAPS_API_KEY = 'AIzaSyB75lradye-bSagnFN6tqmlmZC3PyBXl48';
 
 /**
  * Formats a media path (image/video) to a full URL

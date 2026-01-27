@@ -42,6 +42,7 @@ export default function RiderDashboard({ navigation }: any) {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [isAccepting, setIsAccepting] = useState(false);
+  const [isCashoutLoading, setIsCashoutLoading] = useState(false);
   const [stats, setStats] = useState({ earnings: 0, orders: 0, rating: 5.0, wallet: 0, cod_balance: 0 });
   const [locationSubscription, setLocationSubscription] = useState<any>(null);
   const [activeOrder, setActiveOrder] = useState<any>(null);
@@ -53,6 +54,7 @@ export default function RiderDashboard({ navigation }: any) {
 
   const isOnlineRef = React.useRef(isOnline);
   const riderProfileRef = React.useRef(riderProfile);
+  const activeOrderRef = React.useRef(activeOrder);
 
   useEffect(() => {
     isOnlineRef.current = isOnline;
@@ -62,6 +64,10 @@ export default function RiderDashboard({ navigation }: any) {
     riderProfileRef.current = riderProfile;
   }, [riderProfile]);
 
+  useEffect(() => {
+    activeOrderRef.current = activeOrder;
+  }, [activeOrder]);
+
   const [showPrivacyModal, setShowPrivacyModal] = useState(false);
   const [showTermsModal, setShowTermsModal] = useState(false);
   const [showDepositModal, setShowDepositModal] = useState(false);
@@ -69,6 +75,7 @@ export default function RiderDashboard({ navigation }: any) {
   const [showSettingsModal, setShowSettingsModal] = useState(false);
 
   const [newOrderPopup, setNewOrderPopup] = useState<any>(null);
+  const [completionPopup, setCompletionPopup] = useState<any>(null);
   const [timer, setTimer] = useState(60);
 
   // New Order Popup Timer Logic
@@ -121,7 +128,7 @@ export default function RiderDashboard({ navigation }: any) {
         ...prev,
         earnings: earningsRes.data.today || 0,
         wallet: earningsRes.data.pendingPayout || 0,
-        cod_balance: profile.cod_balance || 0
+        cod_balance: earningsRes.data.cod_balance ?? prev.cod_balance
       }));
       setTransactions(transRes.data || []);
       if (profile.bankDetails) {
@@ -155,13 +162,29 @@ export default function RiderDashboard({ navigation }: any) {
       setIsEditingBank(true);
       return;
     }
-    try {
-      await apiClient.post(`/riders/${riderProfile._id}/cashout`, {});
-      Alert.alert('Success', 'Cashout request submitted successfully!');
-      fetchEarningsData();
-    } catch (err: any) {
-      Alert.alert('Error', err.response?.data?.message || 'Failed to process cashout');
-    }
+
+    Alert.alert(
+      'Confirm Cashout',
+      `Are you sure you want to cash out Rs. ${stats.wallet}?`,
+      [
+        { text: 'Cancel', style: 'cancel' },
+        { 
+          text: 'Cash Out', 
+          onPress: async () => {
+            setIsCashoutLoading(true);
+            try {
+              await apiClient.post(`/riders/${riderProfile._id}/cashout`, {});
+              Alert.alert('Success', 'Cashout request submitted successfully!');
+              fetchEarningsData();
+            } catch (err: any) {
+              Alert.alert('Error', err.response?.data?.message || 'Failed to process cashout');
+            } finally {
+              setIsCashoutLoading(false);
+            }
+          }
+        }
+      ]
+    );
   };
 
   const startLocationUpdates = async (riderId: string) => {
@@ -264,6 +287,13 @@ export default function RiderDashboard({ navigation }: any) {
         if (riderChannel) {
           riderChannel.bind('orderStatusUpdate', (data: any) => {
             console.log('📦 Rider Order updated via socket:', data.status);
+            
+            // Show completion popup if order is delivered
+            if (data.status === 'Delivered') {
+              setCompletionPopup(data);
+              fetchEarningsData(); // Refresh earnings
+            }
+
             setMyOrders(prev => {
               const index = prev.findIndex(o => o._id === data._id);
               if (index > -1) {
@@ -271,24 +301,35 @@ export default function RiderDashboard({ navigation }: any) {
                 newOrders[index] = data;
                 // If delivered, remove from active orders
                 if (data.status === 'Delivered' || data.status === 'Cancelled') {
+                  if (activeOrderRef.current?._id === data._id) {
+                    setActiveOrder(null);
+                  }
                   return newOrders.filter(o => o._id !== data._id);
                 }
                 return newOrders;
               }
               return prev;
             });
-            // Update active order if it's the one being tracked
-            if (activeOrder?._id === data._id) {
+            // Update active order if it's the one being tracked and not completed
+            if (activeOrderRef.current?._id === data._id && !['Delivered', 'Cancelled'].includes(data.status)) {
               setActiveOrder(data);
+            } else if (activeOrderRef.current?._id === data._id && ['Delivered', 'Cancelled'].includes(data.status)) {
+              setActiveOrder(null);
             }
           });
 
-          riderChannel.bind('wallet_updated', (data: any) => {
+          riderChannel.bind('wallet_updated', async (data: any) => {
             console.log('💰 Wallet updated via socket:', data);
+            
+            // Clear cache to ensure next full fetch is fresh
+            if (riderProfile?._id) {
+              await setCache(`rider_data_${riderProfile._id}`, null);
+            }
+
             setStats(prev => ({
               ...prev,
               wallet: data.walletBalance || data.earnings_balance || prev.wallet,
-              cod_balance: data.cod_balance || prev.cod_balance,
+              cod_balance: data.cod_balance !== undefined ? data.cod_balance : prev.cod_balance,
               earnings: data.earnings?.today || data.stats?.totalEarnings || prev.earnings
             }));
             // Optionally refetch earnings data to be sure
@@ -351,7 +392,7 @@ export default function RiderDashboard({ navigation }: any) {
         orders: historyData.filter((o: any) => o.status === 'Delivered' || o.status === 'Completed').length,
         rating: riderProfile?.stats?.rating || 5.0,
         wallet: earningsRes.data.pendingPayout || 0,
-        cod_balance: riderProfile?.cod_balance || 0
+        cod_balance: earningsRes.data.cod_balance ?? 0
       };
 
       setMyOrders(allMyOrders);
@@ -501,8 +542,12 @@ export default function RiderDashboard({ navigation }: any) {
             <MaterialCommunityIcons name="moped" size={16} color={Colors.primary} />
             <Text style={styles.activeOrderBadgeText}>Active Delivery</Text>
           </View>
-          <TouchableOpacity onPress={() => navigation.navigate('OrderDetails', { orderId: activeOrder._id })}>
-            <Text style={styles.viewMapText}>View Map</Text>
+          <TouchableOpacity 
+            style={styles.directionsButtonHeader}
+            onPress={() => navigation.navigate('OrderDetails', { orderId: activeOrder._id })}
+          >
+            <Ionicons name="navigate-circle" size={18} color={Colors.primary} />
+            <Text style={styles.viewMapText}> Directions</Text>
           </TouchableOpacity>
         </View>
 
@@ -778,11 +823,15 @@ export default function RiderDashboard({ navigation }: any) {
           <Ionicons name="wallet-outline" size={32} color={Colors.primary} />
         </View>
         <TouchableOpacity 
-          style={[styles.cashoutBtn, stats.wallet < 500 && styles.cashoutBtnDisabled]}
+          style={[styles.cashoutBtn, (stats.wallet < 500 || isCashoutLoading) && styles.cashoutBtnDisabled]}
           onPress={handleCashout}
-          disabled={stats.wallet < 500}
+          disabled={stats.wallet < 500 || isCashoutLoading}
         >
-          <Text style={styles.cashoutBtnText}>Cash Out Now</Text>
+          {isCashoutLoading ? (
+            <ActivityIndicator color="#fff" size="small" />
+          ) : (
+            <Text style={styles.cashoutBtnText}>Cash Out Now</Text>
+          )}
         </TouchableOpacity>
       </View>
 
@@ -956,6 +1005,50 @@ export default function RiderDashboard({ navigation }: any) {
         {activeTab === 'profile' && renderProfileTab()}
       </View>
 
+      {/* Order Completion Popup */}
+      <Modal
+        visible={!!completionPopup}
+        transparent={true}
+        animationType="fade"
+      >
+        <View style={styles.completionOverlay}>
+          <View style={styles.completionModal}>
+            <LinearGradient
+              colors={['#4ade80', '#22c55e']}
+              style={styles.completionHeader}
+            >
+              <View style={styles.checkCircle}>
+                <Ionicons name="checkmark" size={40} color="#fff" />
+              </View>
+              <Text style={styles.completionTitle}>Order Delivered!</Text>
+              <Text style={styles.completionSubtitle}>Great job on completing this delivery</Text>
+            </LinearGradient>
+
+            <View style={styles.completionBody}>
+              <View style={styles.summaryRow}>
+                <Text style={styles.summaryLabel}>Order ID</Text>
+                <Text style={styles.summaryValue}>#{completionPopup?._id?.slice(-6).toUpperCase()}</Text>
+              </View>
+              <View style={styles.summaryRow}>
+                <Text style={styles.summaryLabel}>Earnings</Text>
+                <Text style={[styles.summaryValue, { color: '#22c55e' }]}>Rs. {completionPopup?.netRiderEarning || completionPopup?.riderEarning || 0}</Text>
+              </View>
+              <View style={styles.summaryRow}>
+                <Text style={styles.summaryLabel}>Customer</Text>
+                <Text style={styles.summaryValue}>{completionPopup?.user?.name || 'Customer'}</Text>
+              </View>
+
+              <TouchableOpacity 
+                style={styles.completionCloseBtn}
+                onPress={() => setCompletionPopup(null)}
+              >
+                <Text style={styles.completionCloseBtnText}>Close</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
+
       {/* Privacy Policy Modal */}
       <Modal visible={showPrivacyModal} animationType="slide" transparent={false}>
         <SafeAreaView style={styles.modalFullContent}>
@@ -993,16 +1086,39 @@ export default function RiderDashboard({ navigation }: any) {
             <View style={{ width: 28 }} />
           </View>
           <ScrollView contentContainerStyle={styles.modalScroll}>
-            <Text style={styles.policyHeading}>1. Acceptance of Terms</Text>
-            <Text style={styles.policyText}>By accessing or using the FoodSwipe platform, you agree to be bound by these Terms of Service and all terms incorporated by reference.</Text>
+            <Text style={styles.policyHeading}>1. Business Information</Text>
+            <Text style={styles.policyText}>Registered Name: FoodSwipe (Private) Limited</Text>
+            <Text style={styles.policyText}>Business Address: Plot #12, Block B-3, Gulberg III, Lahore, Punjab, Pakistan</Text>
+            <Text style={styles.policyText}>Contact: +923295599855 | Email: app.foodswipehelp@gmail.com</Text>
+
+            <Text style={styles.policyHeading}>2. Service Usage</Text>
+            <Text style={styles.policyText}>You must be 18 years or older to use FoodSwipe. Provide accurate information during registration. Keep your account credentials secure. FoodSwipe reserves the right to suspend accounts for violations.</Text>
+
+            <Text style={styles.policyHeading}>3. Orders & Payments</Text>
+            <Text style={styles.policyText}>All orders are subject to restaurant availability. Prices may vary and are confirmed at checkout. Payment is processed securely through our platform. Taxes and delivery fees are calculated based on location.</Text>
+
+            <Text style={styles.policyHeading}>4. Refund & Cancellation Policy</Text>
+            <Text style={styles.policyText}>Order Cancellation: Orders can only be cancelled before the restaurant accepts them.</Text>
+            <Text style={styles.policyText}>Refunds: Refunds are processed within 5-7 business days for eligible cancelled orders.</Text>
+            <Text style={styles.policyText}>Incorrect Orders: If you receive an incorrect or damaged item, please report it via the Support section within 2 hours.</Text>
+            <Text style={styles.policyText}>Delivery Failure: If a delivery fails due to incorrect address or unavailability, no refund will be issued.</Text>
+
+            <Text style={styles.policyHeading}>5. Customer Complaint Handling</Text>
+            <Text style={styles.policyText}>We value your feedback and take complaints seriously.</Text>
+            <Text style={styles.policyText}>Mechanism: You can lodge a complaint via the "Support" tab in the app or email us at app.foodswipehelp@gmail.com.</Text>
+            <Text style={styles.policyText}>Resolution: Our team will acknowledge your complaint within 24 hours and aim for resolution within 48-72 hours.</Text>
+            <Text style={styles.policyText}>Appeals: If unsatisfied with the resolution, you may escalate to management@foodswipe.com.</Text>
+
+            <Text style={styles.policyHeading}>6. Jurisdiction & Governing Law</Text>
+            <Text style={styles.policyText}>These Terms and Conditions shall be governed by and construed in accordance with the laws of the Islamic Republic of Pakistan. Any dispute arising out of or in connection with these terms shall be subject to the exclusive jurisdiction of the courts of Lahore, Pakistan.</Text>
             
-            <Text style={styles.policyHeading}>2. Rider Conduct</Text>
+            <Text style={styles.policyHeading}>7. Rider Conduct</Text>
             <Text style={styles.policyText}>Riders must maintain a professional demeanor, follow traffic laws, and ensure food safety during transit. Failure to do so may result in account suspension.</Text>
             
-            <Text style={styles.policyHeading}>3. Payments and Earnings</Text>
+            <Text style={styles.policyHeading}>8. Payments and Earnings</Text>
             <Text style={styles.policyText}>Earnings are calculated based on distance and order value. Payouts are processed weekly to the provided bank account, subject to minimum balance requirements.</Text>
             
-            <Text style={styles.policyHeading}>4. Account Termination</Text>
+            <Text style={styles.policyHeading}>9. Account Termination</Text>
             <Text style={styles.policyText}>FoodSwipe reserves the right to terminate or suspend your account at any time for violations of these terms or for any other reason at our sole discretion.</Text>
           </ScrollView>
         </SafeAreaView>
@@ -1088,8 +1204,8 @@ export default function RiderDashboard({ navigation }: any) {
                     </View>
                     <View style={styles.infoContent}>
                       <Text style={styles.infoLabel}>PAYMENT METHOD</Text>
-                      <Text style={styles.infoTitle}>{newOrderPopup?.paymentMethod === 'COD' ? 'Cash on Delivery' : 'Paid Online'}</Text>
-                      {newOrderPopup?.paymentMethod === 'COD' && (
+                      <Text style={styles.infoTitle}>{newOrderPopup?.paymentMethod?.toUpperCase() === 'COD' ? 'Cash on Delivery' : 'Paid Online'}</Text>
+                      {newOrderPopup?.paymentMethod?.toUpperCase() === 'COD' && (
                         <Text style={styles.collectAmount}>Collect from customer: Rs. {newOrderPopup?.totalPrice}</Text>
                       )}
                     </View>
@@ -1500,6 +1616,14 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     color: Colors.primary,
   },
+  directionsButtonHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: Colors.primary + '15',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 20,
+  },
   activeRestName: {
     fontSize: 18,
     fontWeight: 'bold',
@@ -1747,7 +1871,7 @@ const styles = StyleSheet.create({
     fontWeight: '500',
   },
   earningsValue: {
-    fontSize: 40,
+    fontSize: 32,
     fontWeight: 'bold',
     color: '#fff',
     marginTop: 5,
@@ -2274,6 +2398,84 @@ const styles = StyleSheet.create({
   },
   popupScroll: {
     maxHeight: height * 0.4,
+  },
+  completionOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.7)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 20,
+  },
+  completionModal: {
+    backgroundColor: '#fff',
+    borderRadius: 30,
+    width: '100%',
+    maxWidth: 400,
+    overflow: 'hidden',
+    elevation: 10,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.3,
+    shadowRadius: 20,
+  },
+  completionHeader: {
+    padding: 30,
+    alignItems: 'center',
+  },
+  checkCircle: {
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    backgroundColor: 'rgba(255,255,255,0.2)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 15,
+    borderWidth: 4,
+    borderColor: '#fff',
+  },
+  completionTitle: {
+    fontSize: 24,
+    fontWeight: '900',
+    color: '#fff',
+    marginBottom: 5,
+  },
+  completionSubtitle: {
+    fontSize: 14,
+    color: 'rgba(255,255,255,0.9)',
+    textAlign: 'center',
+  },
+  completionBody: {
+    padding: 25,
+  },
+  summaryRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: '#F3F4F6',
+  },
+  summaryLabel: {
+    fontSize: 14,
+    color: Colors.gray,
+    fontWeight: '500',
+  },
+  summaryValue: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#111827',
+  },
+  completionCloseBtn: {
+    backgroundColor: '#111827',
+    paddingVertical: 16,
+    borderRadius: 16,
+    alignItems: 'center',
+    marginTop: 25,
+  },
+  completionCloseBtnText: {
+    color: '#fff',
+    fontWeight: 'bold',
+    fontSize: 16,
   },
   popupInfoSection: {
     gap: 16,

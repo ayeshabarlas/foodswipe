@@ -89,32 +89,51 @@ export default function Settings({ isOpen, onClose }: SettingsProps) {
             title: 'Terms of Service',
             content: `Welcome to FoodSwipe! By using our service, you agree to these terms.
 
-1. Service Usage
-   - You must be 18 years or older to use FoodSwipe
-   - Provide accurate information during registration
-   - Keep your account credentials secure
+1. Business Information
+   - Registered Name: FoodSwipe (Private) Limited
+   - Business Address: Plot #12, Block B-3, Gulberg III, Lahore, Punjab, Pakistan
+   - Contact: {settings?.supportPhone || '+923295599855'}
+   - Email: {settings?.supportEmail || 'app.foodswipehelp@gmail.com'}
 
-2. Orders & Payments
-   - All orders are subject to restaurant availability
-   - Prices may vary and are confirmed at checkout
-   - Payment is processed securely through our platform
+2. Service Usage
+   - You must be 18 years or older to use FoodSwipe.
+   - Provide accurate information during registration.
+   - Keep your account credentials secure.
+   - FoodSwipe reserves the right to suspend accounts for violations.
 
-3. Delivery
-   - Delivery times are estimates and may vary
-   - We are not responsible for delays beyond our control
-   - You must be available to receive your order
+3. Orders & Payments
+   - All orders are subject to restaurant availability.
+   - Prices may vary and are confirmed at checkout.
+   - Payment is processed securely through our platform.
+   - Taxes and delivery fees are calculated based on location.
 
-4. User Conduct
-   - Use the service respectfully and lawfully
-   - Do not misuse or abuse the platform
-   - Provide honest reviews and ratings
+4. Delivery
+   - Delivery times are estimates and may vary due to traffic or weather.
+   - We are not responsible for delays beyond our control.
+   - You must be available at the provided address to receive your order.
 
-5. Liability
-   - FoodSwipe acts as a platform connecting customers with restaurants
-   - Food quality and preparation are the restaurant's responsibility
-   - We strive for the best service but cannot guarantee perfection
+5. Refund & Cancellation Policy
+   - Order Cancellation: Orders can only be cancelled before the restaurant accepts them.
+   - Refunds: Refunds are processed within 5-7 business days for eligible cancelled orders.
+   - Incorrect Orders: If you receive an incorrect or damaged item, please report it via the Support section within 2 hours.
+   - Delivery Failure: If a delivery fails due to incorrect address or unavailability, no refund will be issued.
 
-Last updated: November 2024`
+6. Customer Complaint Handling
+   - We value your feedback and take complaints seriously.
+   - Mechanism: You can lodge a complaint via the "Support" tab in the app or email us at {settings?.supportEmail || 'app.foodswipehelp@gmail.com'}.
+   - Resolution: Our team will acknowledge your complaint within 24 hours and aim for resolution within 48-72 hours.
+   - Appeals: If unsatisfied with the resolution, you may escalate to management@foodswipe.com.
+
+7. User Conduct
+   - Use the service respectfully and lawfully.
+   - Do not misuse or abuse the platform.
+   - Provide honest reviews and ratings.
+
+8. Jurisdiction & Governing Law
+   - These Terms and Conditions shall be governed by and construed in accordance with the laws of the Islamic Republic of Pakistan.
+   - Any dispute arising out of or in connection with these terms shall be subject to the exclusive jurisdiction of the courts of Lahore, Pakistan.
+
+Last updated: January 2026`
         },
         privacy: {
             title: 'Privacy Policy',
@@ -122,35 +141,35 @@ Last updated: November 2024`
 
 1. Information We Collect
    - Account details (name, email, phone number)
-   - Delivery addresses
+   - Delivery addresses and GPS location
    - Order history and preferences
-   - Payment information (securely processed)
+   - Payment information (processed securely via third-party providers)
 
 2. How We Use Your Information
-   - Process and deliver your orders
-   - Improve our services and user experience
-   - Send order updates and notifications
-   - Provide customer support
+   - Process and deliver your orders.
+   - Improve our services and user experience.
+   - Send order updates and promotional notifications.
+   - Provide real-time customer support.
 
 3. Information Sharing
-   - We share necessary details with restaurants and delivery partners
-   - We never sell your personal information
-   - Third-party services are used only for payment processing
+   - We share necessary details with restaurants and delivery partners.
+   - We never sell your personal information to third parties.
+   - Third-party services are used only for payment processing and analytics.
 
 4. Data Security
-   - We use industry-standard encryption
-   - Regular security audits and updates
-   - Secure payment processing
+   - We use industry-standard SSL encryption.
+   - Regular security audits and database backups.
+   - Secure payment processing compliant with PCI-DSS.
 
 5. Your Rights
-   - Access your personal data
-   - Request data deletion
-   - Opt-out of marketing communications
-   - Update your information anytime
+   - Access and update your personal data.
+   - Request data deletion via account settings.
+   - Opt-out of marketing communications.
+   - Right to be informed about data breaches.
 
 For questions, contact us at privacy@foodswipe.com
 
-Last updated: November 2024`
+Last updated: January 2026`
         },
         about: {
             title: 'About FoodSwipe',
@@ -176,6 +195,7 @@ We're a passionate team of food lovers and tech enthusiasts dedicated to making 
 📧 Contact Us:
    Email: {settings?.supportEmail || 'app.foodswipehelp@gmail.com'}
    Phone: {settings?.supportPhone || '+923295599855'}
+   Address: Plot #12, Block B-3, Gulberg III, Lahore, Pakistan
 
 Follow us on social media:
    Instagram: @foodswipe

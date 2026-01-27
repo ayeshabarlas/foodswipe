@@ -102,7 +102,9 @@ const restaurantSchema = mongoose.Schema(
         },
         commissionRate: {
             type: Number,
-            default: 15, // 15% for restaurants, 10% for home-chefs (handled in logic)
+            default: function() {
+                return this.businessType === 'home-chef' ? 10 : 15;
+            }
         },
         storefrontPhoto: {
             type: String,

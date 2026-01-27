@@ -1040,9 +1040,9 @@ function ActionItem({ icon, label, sublabel, onClick }: any) {
                                         <div>
                                             <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-0.5">Payment Details</p>
                                             <p className="text-[11px] font-bold text-gray-900 leading-tight">
-                                                {newOrderPopup.paymentMethod === 'COD' ? 'Cash on Delivery' : 'Paid Online'}
+                                                {newOrderPopup.paymentMethod?.toUpperCase() === 'COD' ? 'Cash on Delivery' : 'Paid Online'}
                                             </p>
-                                            {newOrderPopup.paymentMethod === 'COD' && (
+                                            {newOrderPopup.paymentMethod?.toUpperCase() === 'COD' && (
                                                 <p className="text-[10px] font-bold text-red-500 mt-1">
                                                     Collect: Rs. {newOrderPopup.totalPrice}
                                                 </p>
