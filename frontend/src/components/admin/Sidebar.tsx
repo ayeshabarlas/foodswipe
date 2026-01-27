@@ -240,10 +240,10 @@ export default function Sidebar({ activeTab, setActiveTab, onLogout, notificatio
                     <div className="px-4 py-3 bg-gray-50 rounded-xl mb-2">
                         <p className="text-[11px] text-[#9CA3AF] font-semibold uppercase tracking-wider mb-1">Support</p>
                         <a 
-                            href={`mailto:${settings?.supportEmail || 'app.foodswipehelp@gmail.com'}`}
-                            className="text-[12px] font-medium text-[#6B7280] hover:text-[#FF6A00] transition-colors truncate block"
+                            href="mailto:app.foodswipehelp@gmail.com"
+                            className="block text-sm text-gray-500 hover:text-orange-500 transition-colors truncate"
                         >
-                            {settings?.supportEmail || 'app.foodswipehelp@gmail.com'}
+                            app.foodswipehelp@gmail.com
                         </a>
                     </div>
                     

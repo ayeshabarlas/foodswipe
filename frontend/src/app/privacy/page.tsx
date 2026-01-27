@@ -68,7 +68,7 @@ export default function PrivacyPage() {
                     </section>
 
                     <footer className="pt-8 border-t border-gray-100 text-sm text-gray-400">
-                        For questions, contact us at privacy@foodswipe.com<br />
+                        For questions, contact us at app.foodswipehelp@gmail.com<br />
                         Last updated: January 2026
                     </footer>
                 </div>

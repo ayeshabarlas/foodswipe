@@ -91,9 +91,9 @@ export default function Settings({ isOpen, onClose }: SettingsProps) {
 
 1. Business Information
    - Registered Name: FoodSwipe (Private) Limited
-   - Business Address: Plot #12, Block B-3, Gulberg III, Lahore, Punjab, Pakistan
-   - Contact: {settings?.supportPhone || '+923295599855'}
-   - Email: {settings?.supportEmail || 'app.foodswipehelp@gmail.com'}
+   - Business Address: Allama Iqbal Town, Lahore
+   - Contact: +923295599855
+   - Email: app.foodswipehelp@gmail.com
 
 2. Service Usage
    - You must be 18 years or older to use FoodSwipe.
@@ -120,9 +120,9 @@ export default function Settings({ isOpen, onClose }: SettingsProps) {
 
 6. Customer Complaint Handling
    - We value your feedback and take complaints seriously.
-   - Mechanism: You can lodge a complaint via the "Support" tab in the app or email us at {settings?.supportEmail || 'app.foodswipehelp@gmail.com'}.
+   - Mechanism: You can lodge a complaint via the "Support" tab in the app or email us at app.foodswipehelp@gmail.com.
    - Resolution: Our team will acknowledge your complaint within 24 hours and aim for resolution within 48-72 hours.
-   - Appeals: If unsatisfied with the resolution, you may escalate to management@foodswipe.com.
+   - Appeals: If unsatisfied with the resolution, you may escalate to app.foodswipehelp@gmail.com.
 
 7. User Conduct
    - Use the service respectfully and lawfully.
@@ -167,7 +167,7 @@ Last updated: January 2026`
    - Opt-out of marketing communications.
    - Right to be informed about data breaches.
 
-For questions, contact us at privacy@foodswipe.com
+For questions, contact us at app.foodswipehelp@gmail.com
 
 Last updated: January 2026`
         },
@@ -193,9 +193,9 @@ To revolutionize food delivery by providing a seamless experience that brings yo
 We're a passionate team of food lovers and tech enthusiasts dedicated to making your dining experience exceptional.
 
 📧 Contact Us:
-   Email: {settings?.supportEmail || 'app.foodswipehelp@gmail.com'}
-   Phone: {settings?.supportPhone || '+923295599855'}
-   Address: Plot #12, Block B-3, Gulberg III, Lahore, Pakistan
+   Email: app.foodswipehelp@gmail.com
+   Phone: +923295599855
+   Address: Allama Iqbal Town, Lahore
 
 Follow us on social media:
    Instagram: @foodswipe

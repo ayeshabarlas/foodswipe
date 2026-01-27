@@ -1088,7 +1088,7 @@ export default function RiderDashboard({ navigation }: any) {
           <ScrollView contentContainerStyle={styles.modalScroll}>
             <Text style={styles.policyHeading}>1. Business Information</Text>
             <Text style={styles.policyText}>Registered Name: FoodSwipe (Private) Limited</Text>
-            <Text style={styles.policyText}>Business Address: Plot #12, Block B-3, Gulberg III, Lahore, Punjab, Pakistan</Text>
+            <Text style={styles.policyText}>Business Address: Allama Iqbal Town, Lahore</Text>
             <Text style={styles.policyText}>Contact: +923295599855 | Email: app.foodswipehelp@gmail.com</Text>
 
             <Text style={styles.policyHeading}>2. Service Usage</Text>
@@ -1107,7 +1107,7 @@ export default function RiderDashboard({ navigation }: any) {
             <Text style={styles.policyText}>We value your feedback and take complaints seriously.</Text>
             <Text style={styles.policyText}>Mechanism: You can lodge a complaint via the "Support" tab in the app or email us at app.foodswipehelp@gmail.com.</Text>
             <Text style={styles.policyText}>Resolution: Our team will acknowledge your complaint within 24 hours and aim for resolution within 48-72 hours.</Text>
-            <Text style={styles.policyText}>Appeals: If unsatisfied with the resolution, you may escalate to management@foodswipe.com.</Text>
+            <Text style={styles.policyText}>Appeals: If unsatisfied with the resolution, you may escalate to app.foodswipehelp@gmail.com.</Text>
 
             <Text style={styles.policyHeading}>6. Jurisdiction & Governing Law</Text>
             <Text style={styles.policyText}>These Terms and Conditions shall be governed by and construed in accordance with the laws of the Islamic Republic of Pakistan. Any dispute arising out of or in connection with these terms shall be subject to the exclusive jurisdiction of the courts of Lahore, Pakistan.</Text>

@@ -308,7 +308,7 @@ export default function LoginScreen({ navigation }: any) {
                       <ScrollView contentContainerStyle={{ padding: 20 }}>
                         <Text style={{ fontSize: 18, fontWeight: '700', color: '#111827', marginBottom: 12 }}>1. Business Information</Text>
                         <Text style={{ fontSize: 14, color: '#4B5563', lineHeight: 20, marginBottom: 8 }}>Registered Name: FoodSwipe (Private) Limited</Text>
-                        <Text style={{ fontSize: 14, color: '#4B5563', lineHeight: 20, marginBottom: 8 }}>Business Address: Plot #12, Block B-3, Gulberg III, Lahore, Punjab, Pakistan</Text>
+                        <Text style={{ fontSize: 14, color: '#4B5563', lineHeight: 20, marginBottom: 8 }}>Business Address: Allama Iqbal Town, Lahore</Text>
                         <Text style={{ fontSize: 14, color: '#4B5563', lineHeight: 20, marginBottom: 16 }}>Contact: +923295599855 | Email: app.foodswipehelp@gmail.com</Text>
 
                         <Text style={{ fontSize: 18, fontWeight: '700', color: '#111827', marginBottom: 12 }}>2. Service Usage</Text>
@@ -327,7 +327,7 @@ export default function LoginScreen({ navigation }: any) {
                         <Text style={{ fontSize: 14, color: '#4B5563', lineHeight: 20, marginBottom: 8 }}>We value your feedback and take complaints seriously.</Text>
                         <Text style={{ fontSize: 14, color: '#4B5563', lineHeight: 20, marginBottom: 8 }}>Mechanism: You can lodge a complaint via the "Support" tab in the app or email us at app.foodswipehelp@gmail.com.</Text>
                         <Text style={{ fontSize: 14, color: '#4B5563', lineHeight: 20, marginBottom: 8 }}>Resolution: Our team will acknowledge your complaint within 24 hours and aim for resolution within 48-72 hours.</Text>
-                        <Text style={{ fontSize: 14, color: '#4B5563', lineHeight: 20, marginBottom: 16 }}>Appeals: If unsatisfied with the resolution, you may escalate to management@foodswipe.com.</Text>
+                        <Text style={{ fontSize: 14, color: '#4B5563', lineHeight: 20, marginBottom: 16 }}>Appeals: If unsatisfied with the resolution, you may escalate to app.foodswipehelp@gmail.com.</Text>
 
                         <Text style={{ fontSize: 18, fontWeight: '700', color: '#111827', marginBottom: 12 }}>6. Jurisdiction & Governing Law</Text>
                         <Text style={{ fontSize: 14, color: '#4B5563', lineHeight: 20, marginBottom: 16 }}>These Terms and Conditions shall be governed by and construed in accordance with the laws of the Islamic Republic of Pakistan. Any dispute arising out of or in connection with these terms shall be subject to the exclusive jurisdiction of the courts of Lahore, Pakistan.</Text>

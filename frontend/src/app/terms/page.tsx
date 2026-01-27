@@ -23,7 +23,7 @@ export default function TermsPage() {
                         <h2 className="text-xl font-bold text-gray-900 mb-4">1. Business Information</h2>
                         <ul className="list-disc pl-5 space-y-2">
                             <li>Registered Name: FoodSwipe (Private) Limited</li>
-                            <li>Business Address: Plot #12, Block B-3, Gulberg III, Lahore, Punjab, Pakistan</li>
+                            <li>Business Address: Allama Iqbal Town, Lahore</li>
                             <li>Contact: +923295599855</li>
                             <li>Email: app.foodswipehelp@gmail.com</li>
                         </ul>
@@ -74,7 +74,7 @@ export default function TermsPage() {
                             <li>We value your feedback and take complaints seriously.</li>
                             <li>Mechanism: You can lodge a complaint via the "Support" tab in the app or email us at app.foodswipehelp@gmail.com.</li>
                             <li>Resolution: Our team will acknowledge your complaint within 24 hours and aim for resolution within 48-72 hours.</li>
-                            <li>Appeals: If unsatisfied with the resolution, you may escalate to management@foodswipe.com.</li>
+                            <li>Appeals: If unsatisfied with the resolution, you may escalate to app.foodswipehelp@gmail.com.</li>
                         </ul>
                     </section>
 

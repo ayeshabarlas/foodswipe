@@ -494,7 +494,7 @@ export default function RestaurantDashboard() {
             {restaurant?.owner?.status === 'suspended' && (
                 <div className="fixed top-0 left-0 right-0 bg-red-600 text-white px-4 py-2 text-center text-xs font-bold z-[9999] shadow-lg flex items-center justify-center gap-2">
                     <FaBan />
-                    <span>YOUR ACCOUNT HAS BEEN SUSPENDED. Please contact support at {settings?.supportEmail || 'app.foodswipehelp@gmail.com'}</span>
+                    <span>YOUR ACCOUNT HAS BEEN SUSPENDED. Please contact support at app.foodswipehelp@gmail.com</span>
                 </div>
             )}
 
