@@ -318,40 +318,41 @@ export default function OrderDetailsScreen({ route, navigation }: any) {
 
   const openMap = (targetAddress: string, lat?: number, lng?: number) => {
     if (!targetAddress && (!lat || !lng)) return;
-    const encodedAddress = encodeURIComponent(targetAddress);
     
-    // For directions, we use 'daddr' on iOS and 'google.navigation:q' on Android
-    const url = Platform.select({
-      ios: (lat && lng && lat !== 0 && lng !== 0)
-        ? `comgooglemaps://?daddr=${lat},${lng}&directionsmode=driving`
-        : `comgooglemaps://?daddr=${encodedAddress}&directionsmode=driving`,
-      android: (lat && lng && lat !== 0 && lng !== 0)
-        ? `google.navigation:q=${lat},${lng}`
-        : `google.navigation:q=${encodedAddress}`
-    });
-    
-    const appleMapsUrl = (lat && lng && lat !== 0 && lng !== 0)
-      ? `http://maps.apple.com/?daddr=${lat},${lng}&dirflg=d` 
-      : `http://maps.apple.com/?daddr=${encodedAddress}&dirflg=d`;
-
-    const googleMapsWebUrl = (lat && lng && lat !== 0 && lng !== 0)
-      ? `https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}&travelmode=driving`
-      : `https://www.google.com/maps/dir/?api=1&destination=${encodedAddress}&travelmode=driving`;
-    
-    if (url) {
-      Linking.canOpenURL(url).then(supported => {
-        if (supported) {
-          Linking.openURL(url);
-        } else {
-          // Fallback to Apple Maps on iOS or Web Browser
-          if (Platform.OS === 'ios') {
-            Linking.openURL(appleMapsUrl);
-          } else {
-            Linking.openURL(googleMapsWebUrl);
-          }
-        }
-      });
+    // Official Google Maps Universal Link (More reliable than custom schemes)
+    // This will open the Google Maps app if installed, or the browser if not.
+    let url = "";
+    if (lat && lng && lat !== 0 && lng !== 0) {
+      url = `https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}&travelmode=driving`;
+    } else {
+      const encodedAddress = encodeURIComponent(targetAddress);
+      url = `https://www.google.com/maps/dir/?api=1&destination=${encodedAddress}&travelmode=driving`;
     }
+
+    // Try to open Google Maps app directly if possible (better for directions)
+    const googleMapsAppUrl = Platform.OS === 'android' 
+      ? (lat && lng ? `google.navigation:q=${lat},${lng}` : `google.navigation:q=${encodeURIComponent(targetAddress)}`)
+      : (lat && lng ? `comgooglemaps://?daddr=${lat},${lng}&directionsmode=driving` : `comgooglemaps://?daddr=${encodeURIComponent(targetAddress)}&directionsmode=driving`);
+
+    Linking.canOpenURL(googleMapsAppUrl).then(supported => {
+      if (supported) {
+        Linking.openURL(googleMapsAppUrl);
+      } else {
+        Linking.canOpenURL(url).then(supportedUrl => {
+          if (supportedUrl) {
+            Linking.openURL(url);
+          } else {
+            // Fallback to Apple Maps on iOS
+            const appleUrl = (lat && lng && lat !== 0 && lng !== 0)
+              ? `http://maps.apple.com/?daddr=${lat},${lng}&dirflg=d` 
+              : `http://maps.apple.com/?daddr=${encodeURIComponent(targetAddress)}&dirflg=d`;
+            Linking.openURL(appleUrl);
+          }
+        });
+      }
+    }).catch(() => {
+      Linking.openURL(url);
+    });
   };
 
   if (loading) {
@@ -634,12 +635,6 @@ export default function OrderDetailsScreen({ route, navigation }: any) {
                       style={styles.closeNavBtn}
                       onPress={() => setIsNavigating(false)}
                     >
-                      <View style={{ backgroundColor: 'rgba(255,255,255,0.2)', borderRadius: 20, padding: 4 }}>
-                        <Ionicons name="close" size={24} color="#fff" />
-                      </View>
-                      <Text style={{ color: '#fff', fontSize: 10, textAlign: 'center' }}>Exit</Text>
-                    </TouchableOpacity>
-                  </View>
                       <View style={{ backgroundColor: 'rgba(255,255,255,0.2)', borderRadius: 20, padding: 4 }}>
                         <Ionicons name="close" size={24} color="#fff" />
                       </View>
@@ -1041,7 +1036,33 @@ export default function OrderDetailsScreen({ route, navigation }: any) {
   async function updateStatus(newStatus: string) {
     try {
       setLoading(true);
-      await apiClient.put(`/orders/${orderId}/status`, { status: newStatus });
+      
+      // Retry logic for API call to handle temporary network issues or server timeouts
+      let retries = 3;
+      let success = false;
+      let lastError = null;
+
+      while (retries > 0 && !success) {
+        try {
+          // Add distanceKm: 0 as a default to ensure backend calculations work if needed
+          await apiClient.put(`/orders/${orderId}/status`, { 
+            status: newStatus,
+            distanceKm: 0 
+          });
+          success = true;
+        } catch (err) {
+          lastError = err;
+          retries--;
+          if (retries > 0) {
+            // Wait for 1 second before retrying
+            await new Promise(resolve => setTimeout(resolve, 1000));
+          }
+        }
+      }
+
+      if (!success) {
+        throw lastError;
+      }
       
       if (newStatus === 'Delivered') {
         setShowCompletionModal(true);
@@ -1049,8 +1070,10 @@ export default function OrderDetailsScreen({ route, navigation }: any) {
         fetchOrderDetails();
         Alert.alert('Success', `Order status updated to ${newStatus}`);
       }
-    } catch (err) {
-      Alert.alert('Error', 'Failed to update status');
+    } catch (err: any) {
+      console.error('Update status error:', err);
+      const errorMessage = err.response?.data?.message || 'Failed to update status. Please check your internet and try again.';
+      Alert.alert('Error', errorMessage);
     } finally {
       setLoading(false);
     }

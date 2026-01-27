@@ -15,7 +15,6 @@ import {
   ScrollView,
   Dimensions
 } from 'react-native';
-import * as WebBrowser from 'expo-web-browser';
 import * as Google from 'expo-auth-session/providers/google';
 import apiClient from '../api/apiClient';
 import * as SecureStore from 'expo-secure-store';

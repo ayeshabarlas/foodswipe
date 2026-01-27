@@ -51,7 +51,8 @@ export default function RiderLiveMap() {
                         return {
                             ...rider,
                             location: data.location,
-                            status: 'online' // Assume online if sending updates
+                            // Preserve 'busy' status if already set, otherwise ensure it's at least 'online'
+                            status: rider.status === 'busy' ? 'busy' : 'online'
                         };
                     }
                     return rider;
@@ -60,19 +61,31 @@ export default function RiderLiveMap() {
             };
 
             const handleStatusUpdate = (data: any) => {
+                console.log('Rider status update received:', data);
+                // Data can be the full rider object or an object with riderId and status
+                const riderId = data._id || data.riderId;
+                const status = data.status;
+                
+                if (!riderId) return;
+
                 setRiders(prev => prev.map(rider => {
-                    if (rider._id === data.riderId) {
-                        return { ...rider, status: data.status };
+                    if (rider._id === riderId) {
+                        return { 
+                            ...rider, 
+                            status: status === 'Available' ? 'online' : (status === 'Offline' ? 'offline' : status) 
+                        };
                     }
                     return rider;
                 }));
             };
 
             socket.on('riderLocationUpdate', handleLocationUpdate);
-            socket.on('riderStatusUpdate', handleStatusUpdate);
+            socket.on('rider_status_updated', handleStatusUpdate);
+            socket.on('riderStatusUpdate', handleStatusUpdate); // Keep for backward compatibility
 
             return () => {
                 socket.off('riderLocationUpdate', handleLocationUpdate);
+                socket.off('rider_status_updated', handleStatusUpdate);
                 socket.off('riderStatusUpdate', handleStatusUpdate);
             };
         }

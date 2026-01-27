@@ -249,7 +249,7 @@ const submitForVerification = async (req, res) => {
 // @access  Private (Rider role)
 const updateStatus = async (req, res) => {
     try {
-        const rider = await Rider.findById(req.params.id);
+        const rider = await Rider.findById(req.params.id).populate('user', 'name email phone');
 
         if (!rider) {
             return res.status(404).json({ message: 'Rider not found' });
@@ -259,6 +259,10 @@ const updateStatus = async (req, res) => {
         rider.status = req.body.isOnline ? 'Available' : 'Offline';
 
         await rider.save();
+
+        // Trigger socket event for admin real-time updates
+        triggerEvent('admin', 'rider_status_updated', rider);
+        
         res.json(rider);
     } catch (error) {
         console.error('Update status error:', error);
@@ -442,6 +446,12 @@ const acceptOrder = async (req, res) => {
                 activeOrderId: rider.currentOrder 
             });
         }
+
+        // Populate user for admin real-time updates
+        const populatedRider = await Rider.findById(updatedRider._id).populate('user', 'name email phone');
+
+        // Notify admins about rider status change to 'Busy'
+        triggerEvent('admin', 'rider_status_updated', populatedRider || updatedRider);
 
         // Get fully populated order to emit
         const updatedOrder = await Order.findById(order._id)
@@ -825,6 +835,12 @@ const updateLocation = async (req, res) => {
                 });
             }
         }
+
+        // Notify admins for real-time map updates
+        triggerEvent('admin', 'riderLocationUpdate', {
+            riderId: riderId,
+            location: { lat, lng }
+        });
 
         res.json({ message: 'Location updated' });
     } catch (error) {

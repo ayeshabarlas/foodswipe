@@ -41,6 +41,19 @@ export default function RiderRegistrationScreen({ navigation }: any) {
     setFormData({ ...formData, cnicNumber: formatCNIC(text) });
   };
 
+  const formatDOB = (value: string) => {
+    const digits = value.replace(/\D/g, '');
+    const limitedDigits = digits.slice(0, 8);
+    
+    if (limitedDigits.length <= 4) return limitedDigits;
+    if (limitedDigits.length <= 6) return `${limitedDigits.slice(0, 4)}-${limitedDigits.slice(4, 6)}`;
+    return `${limitedDigits.slice(0, 4)}-${limitedDigits.slice(4, 6)}-${limitedDigits.slice(6, 8)}`;
+  };
+
+  const handleDOBChange = (text: string) => {
+    setFormData({ ...formData, dateOfBirth: formatDOB(text) });
+  };
+
   const handleSubmit = async () => {
     if (!formData.fullName || !formData.cnicNumber || !formData.dateOfBirth) {
       Alert.alert('Error', 'Please fill all fields');
@@ -129,11 +142,16 @@ export default function RiderRegistrationScreen({ navigation }: any) {
                   <Ionicons name="calendar-outline" size={20} color="#9CA3AF" style={styles.inputIcon} />
                   <TextInput
                     style={styles.input}
-                    placeholder="YYYY-MM-DD"
+                    placeholder="YYYY-MM-DD (e.g. 1995-05-25)"
+                    keyboardType="numeric"
                     value={formData.dateOfBirth}
-                    onChangeText={(text) => setFormData({ ...formData, dateOfBirth: text })}
+                    onChangeText={handleDOBChange}
+                    maxLength={10}
                   />
                 </View>
+                <Text style={{ fontSize: 11, color: '#6B7280', marginTop: 4, marginLeft: 2 }}>
+                  Format: Year-Month-Day (e.g. 1998-12-31)
+                </Text>
               </View>
 
               <View style={styles.inputGroup}>

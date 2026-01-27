@@ -413,6 +413,11 @@ export default function RiderDashboard({ navigation }: any) {
 
   const toggleOnline = async (value: boolean) => {
     try {
+      if (value && riderProfile?.verificationStatus !== 'approved') {
+        Alert.alert('Verification Required', 'Please complete your registration and wait for admin approval before going online.');
+        setIsOnline(false);
+        return;
+      }
       setIsOnline(value);
       await apiClient.put(`/riders/${riderProfile._id}/status`, { isOnline: value });
       if (value) {
@@ -504,6 +509,9 @@ export default function RiderDashboard({ navigation }: any) {
             Alert.alert('Status', 'Your profile is under review.');
           } else if (riderProfile?.verificationStatus === 'rejected') {
             navigation.navigate('RiderRegistration');
+          } else if (riderProfile?._id) {
+            // If we have a profile but not approved, go to document upload
+            navigation.navigate('RiderDocumentUpload', { riderId: riderProfile._id });
           } else {
             navigation.navigate('RiderRegistration');
           }
@@ -527,6 +535,46 @@ export default function RiderDashboard({ navigation }: any) {
   const ActiveOrderTracking = () => {
     if (!activeOrder) return null;
 
+    const openMap = (targetAddress: string, lat?: number, lng?: number) => {
+      if (!targetAddress && (!lat || !lng)) return;
+      
+      // Official Google Maps Universal Link (More reliable than custom schemes)
+      // This will open the Google Maps app if installed, or the browser if not.
+      let url = "";
+      if (lat && lng && lat !== 0 && lng !== 0) {
+        url = `https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}&travelmode=driving`;
+      } else {
+        const encodedAddress = encodeURIComponent(targetAddress);
+        url = `https://www.google.com/maps/dir/?api=1&destination=${encodedAddress}&travelmode=driving`;
+      }
+
+      // Try to open Google Maps app directly if possible (better for directions)
+      const googleMapsAppUrl = Platform.OS === 'android' 
+        ? (lat && lng ? `google.navigation:q=${lat},${lng}` : `google.navigation:q=${encodeURIComponent(targetAddress)}`)
+        : (lat && lng ? `comgooglemaps://?daddr=${lat},${lng}&directionsmode=driving` : `comgooglemaps://?daddr=${encodeURIComponent(targetAddress)}&directionsmode=driving`);
+
+      Linking.canOpenURL(googleMapsAppUrl).then(supported => {
+        if (supported) {
+          Linking.openURL(googleMapsAppUrl);
+        } else {
+          Linking.canOpenURL(url).then(supportedUrl => {
+            if (supportedUrl) {
+              Linking.openURL(url);
+            } else {
+              // Fallback to Apple Maps on iOS
+              const appleUrl = (lat && lng && lat !== 0 && lng !== 0)
+                ? `http://maps.apple.com/?daddr=${lat},${lng}&dirflg=d` 
+                : `http://maps.apple.com/?daddr=${encodeURIComponent(targetAddress)}&dirflg=d`;
+              Linking.openURL(appleUrl);
+            }
+          });
+        }
+      }).catch(() => {
+        // Just try opening the URL if check fails
+        Linking.openURL(url);
+      });
+    };
+
     const steps = [
       { id: 1, label: 'Pickup', status: ['Accepted', 'Confirmed', 'Preparing', 'Ready', 'Arrived'].includes(activeOrder.status) },
       { id: 2, label: 'Picked Up', status: activeOrder.status === 'Picked Up' },
@@ -544,10 +592,19 @@ export default function RiderDashboard({ navigation }: any) {
           </View>
           <TouchableOpacity 
             style={styles.directionsButtonHeader}
-            onPress={() => navigation.navigate('OrderDetails', { orderId: activeOrder._id })}
+            onPress={() => {
+              const isHeadingToCustomer = ['Picked Up', 'OnTheWay', 'ArrivedAtCustomer'].includes(activeOrder.status);
+              if (isHeadingToCustomer) {
+                openMap(activeOrder.deliveryAddress, activeOrder.deliveryLocation?.lat, activeOrder.deliveryLocation?.lng);
+              } else {
+                const lat = activeOrder.restaurant?.location?.coordinates?.[1];
+                const lng = activeOrder.restaurant?.location?.coordinates?.[0];
+                openMap(activeOrder.restaurant?.address, lat, lng);
+              }
+            }}
           >
-            <Ionicons name="navigate-circle" size={18} color={Colors.primary} />
-            <Text style={styles.viewMapText}> Directions</Text>
+            <Ionicons name="logo-google" size={18} color={Colors.primary} />
+            <Text style={styles.viewMapText}> G-Maps</Text>
           </TouchableOpacity>
         </View>
 

@@ -132,10 +132,41 @@ export default function RestaurantDashboard({ navigation }: any) {
 
   const updateOrderStatus = async (orderId: string, status: string) => {
     try {
-      await apiClient.put(`/orders/${orderId}/status`, { status });
+      setLoading(true);
+      
+      // Retry logic for API call to handle temporary network issues
+      let retries = 3;
+      let success = false;
+      let lastError = null;
+
+      while (retries > 0 && !success) {
+        try {
+          // Add distanceKm: 0 as a default to ensure backend calculations work if needed
+          await apiClient.put(`/orders/${orderId}/status`, { 
+            status,
+            distanceKm: 0 
+          });
+          success = true;
+        } catch (err) {
+          lastError = err;
+          retries--;
+          if (retries > 0) {
+            // Wait for 1 second before retrying
+            await new Promise(resolve => setTimeout(resolve, 1000));
+          }
+        }
+      }
+
+      if (!success) {
+        throw lastError;
+      }
+      
       fetchOrders();
-    } catch (err) {
-      Alert.alert('Error', 'Failed to update order status');
+    } catch (err: any) {
+      console.error('Update status error:', err);
+      Alert.alert('Error', err.response?.data?.message || 'Failed to update order status');
+    } finally {
+      setLoading(false);
     }
   };
 

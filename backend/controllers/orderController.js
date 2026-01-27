@@ -409,8 +409,23 @@ const updateOrderStatus = async (req, res) => {
         }
 
         order.status = status;
-        if (status === 'Cancelled' && cancellationReason) {
-            order.cancellationReason = cancellationReason;
+        if (status === 'Cancelled') {
+            order.cancelledAt = new Date();
+            if (cancellationReason) {
+                order.cancellationReason = cancellationReason;
+            }
+            // Free up rider if assigned
+            if (order.rider) {
+                const rider = await Rider.findById(order.rider).populate('user', 'name email phone');
+                if (rider) {
+                    rider.currentOrder = null;
+                    if (rider.isOnline) {
+                        rider.status = 'Available';
+                    }
+                    await rider.save();
+                    triggerEvent('admin', 'rider_status_updated', rider);
+                }
+            }
         }
         if (prepTime) order.prepTime = prepTime;
         if (delayedUntil) order.delayedUntil = delayedUntil;
@@ -675,7 +690,15 @@ const processOrderCompletion = async (order, distanceKm, req = null) => {
             // Mark current order as null since it's completed
             rider.currentOrder = null;
             
+            // Reset status to Available if rider is online
+            if (rider.isOnline) {
+                rider.status = 'Available';
+            }
+            
             await rider.save();
+
+            // Notify admins about rider status change back to 'Available'
+            triggerEvent('admin', 'rider_status_updated', rider);
 
             // Update RiderWallet model
             let riderWallet = await RiderWallet.findOne({ rider: rider._id });
@@ -886,6 +909,23 @@ const cancelOrder = async (req, res) => {
         order.cancellationReason = reason;
         order.cancelledAt = new Date();
         await order.save();
+
+        // If a rider was assigned, free them up
+        if (order.rider) {
+            const rider = await Rider.findById(order.rider).populate('user', 'name email phone');
+            if (rider) {
+                rider.currentOrder = null;
+                if (rider.isOnline) {
+                    rider.status = 'Available';
+                }
+                await rider.save();
+                
+                // Notify rider about cancellation
+                triggerEvent(`rider-${rider._id}`, 'orderStatusUpdate', order);
+                // Notify admin about rider status change
+                triggerEvent('admin', 'rider_status_updated', rider);
+            }
+        }
 
         // Restore stock for cancelled items
         for (const item of order.orderItems) {

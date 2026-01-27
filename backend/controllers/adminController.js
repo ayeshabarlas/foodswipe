@@ -1468,7 +1468,7 @@ const assignRiderToOrder = async (req, res) => {
 
         // 1. Handle previous rider if any
         if (order.rider && order.rider.toString() !== riderId) {
-            const prevRider = await Rider.findById(order.rider);
+            const prevRider = await Rider.findById(order.rider).populate('user', 'name email phone');
             if (prevRider) {
                 prevRider.currentOrder = null;
                 prevRider.status = 'Available';
@@ -1477,6 +1477,8 @@ const assignRiderToOrder = async (req, res) => {
                 // Notify previous rider
                 triggerEvent(`rider-${prevRider._id}`, 'orderUnassigned', { orderId });
                 triggerEvent(`rider-${prevRider._id}`, 'orderStatusUpdate', { _id: orderId, status: 'Unassigned' });
+                // Notify admins about status change
+                triggerEvent('admin', 'rider_status_updated', prevRider);
             }
         }
 
@@ -1500,6 +1502,9 @@ const assignRiderToOrder = async (req, res) => {
         rider.currentOrder = orderId;
         rider.status = 'Busy';
         await rider.save();
+        
+        // Notify admins about status change
+        triggerEvent('admin', 'rider_status_updated', rider);
 
         const updatedOrder = await Order.findById(orderId)
             .populate('user', 'name phone')
