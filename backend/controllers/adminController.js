@@ -934,64 +934,6 @@ const getUsers = async (req, res) => {
     }
 };
 
-// @desc    Suspend a user
-const suspendUser = async (req, res) => {
-    try {
-        const user = await User.findById(req.params.id);
-        if (!user) {
-            return res.status(404).json({ message: 'User not found' });
-        }
-        user.status = 'suspended';
-        await user.save();
-
-        // Audit Log
-        await AuditLog.create({
-            event: 'USER_SUSPENDED',
-            userId: user._id,
-            email: user.email,
-            details: { suspendedBy: req.admin?._id }
-        });
-
-        // Notify admins to refresh UI
-        triggerEvent('admin', 'rider_updated');
-        triggerEvent('admin', 'user_updated');
-        triggerEvent('admin', 'stats_updated');
-
-        res.json({ message: 'User suspended successfully', user });
-    } catch (error) {
-        res.status(500).json({ message: 'Server error', error: error.message });
-    }
-};
-
-// @desc    Unsuspend a user
-const unsuspendUser = async (req, res) => {
-    try {
-        const user = await User.findById(req.params.id);
-        if (!user) {
-            return res.status(404).json({ message: 'User not found' });
-        }
-        user.status = 'active';
-        await user.save();
-
-        // Audit Log
-        await AuditLog.create({
-            event: 'USER_UNSUSPENDED',
-            userId: user._id,
-            email: user.email,
-            details: { unsuspendedBy: req.admin?._id }
-        });
-
-        // Notify admins to refresh UI
-        triggerEvent('admin', 'rider_updated');
-        triggerEvent('admin', 'user_updated');
-        triggerEvent('admin', 'stats_updated');
-
-        res.json({ message: 'User unsuspended successfully', user });
-    } catch (error) {
-        res.status(500).json({ message: 'Server error', error: error.message });
-    }
-};
-
 // @desc    Delete a user
 const deleteUser = async (req, res) => {
     try {
