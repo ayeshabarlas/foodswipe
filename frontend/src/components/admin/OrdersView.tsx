@@ -174,7 +174,7 @@ export default function OrdersView() {
                             </div>
 
                             <div className="mb-4">
-                                <h3 className="text-[16px] font-bold text-[#111827] mb-1">Order #{order.orderNumber || order._id.slice(-6).toUpperCase()}</h3>
+                                <h3 className="text-[16px] font-bold text-[#111827] mb-1">Order #{order.orderNumber || String(order._id || '').slice(-6).toUpperCase()}</h3>
                                 <p className="text-[13px] text-[#6B7280] font-normal">{new Date(order.createdAt).toLocaleString([], { dateStyle: 'medium', timeStyle: 'short' })}</p>
                             </div>
 

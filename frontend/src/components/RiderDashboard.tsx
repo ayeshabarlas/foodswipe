@@ -644,7 +644,7 @@ const RiderDashboard = ({
                                     </div>
                                     <div className="flex flex-col items-end gap-2">
                                         <div className="text-right">
-                                            <p className="text-gray-900 font-bold text-[11px] tracking-tight">#{activeOrder._id?.slice(-6).toUpperCase()}</p>
+                                            <p className="text-gray-900 font-bold text-[11px] tracking-tight">#{String(activeOrder._id || '').slice(-6).toUpperCase()}</p>
                                             <p className="text-gray-700 text-[9px] font-bold uppercase tracking-widest">Order ID</p>
                                         </div>
                                         <div className="flex gap-2">
@@ -874,7 +874,7 @@ function ActionItem({ icon, label, sublabel, onClick }: any) {
                                     <div>
                                         <p className="text-gray-900 font-semibold text-lg tracking-tight">{order.restaurant?.name || 'Restaurant'}</p>
                                         <p className="text-gray-400 text-[10px] font-light uppercase tracking-widest mt-1">
-                                            #{order._id.slice(-6)} • {order.createdAt ? new Date(order.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'Just now'}
+                                            #{String(order._id || '').slice(-6)} • {order.createdAt ? new Date(order.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'Just now'}
                                         </p>
                                     </div>
                                 </div>

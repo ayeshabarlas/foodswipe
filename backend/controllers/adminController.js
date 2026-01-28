@@ -1517,6 +1517,11 @@ const suspendUser = async (req, res) => {
             await Restaurant.findOneAndUpdate({ owner: user._id }, { isActive: false });
         }
 
+        // If rider, go offline
+        if (user.role === 'rider') {
+            await Rider.findOneAndUpdate({ user: user._id }, { isOnline: false, status: 'Offline' });
+        }
+
         // Audit Log
         await AuditLog.create({
             event: user.role === 'restaurant' ? 'RESTAURANT_SUSPENDED' : 

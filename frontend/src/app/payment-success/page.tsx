@@ -95,7 +95,7 @@ function PaymentSuccessContent() {
             <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 w-full max-w-xs mb-8">
                 <div className="flex justify-between text-sm mb-2">
                     <span className="text-gray-500">Order ID:</span>
-                    <span className="font-mono font-bold text-gray-900">#{orderId?.slice(-6).toUpperCase()}</span>
+                    <span className="font-mono font-bold text-gray-900">#{String(orderId || '').slice(-6).toUpperCase()}</span>
                 </div>
                 <div className="flex justify-between text-sm">
                     <span className="text-gray-500">Status:</span>

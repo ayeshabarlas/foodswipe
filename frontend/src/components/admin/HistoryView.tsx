@@ -66,13 +66,15 @@ export default function HistoryView() {
     };
 
     const filteredLogs = logs.filter(log => {
-        const matchesSearch = log.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            log.event?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            log.role?.toLowerCase().includes(searchTerm.toLowerCase());
+        if (!log || !log.event) return false;
+
+        const matchesSearch = (log.email?.toLowerCase() || '').includes(searchTerm.toLowerCase()) ||
+            (log.event?.toLowerCase() || '').includes(searchTerm.toLowerCase()) ||
+            (log.role?.toLowerCase() || '').includes(searchTerm.toLowerCase());
         
         const matchesFilter = filter === 'All' || 
-            (filter === 'Suspensions' && log.event.includes('SUSPEND')) ||
-            (filter === 'Deletions' && log.event.includes('DELETE')) ||
+            (filter === 'Suspensions' && log.event?.includes('SUSPEND')) ||
+            (filter === 'Deletions' && log.event?.includes('DELETE')) ||
             (filter === 'Customers' && log.role === 'customer') ||
             (filter === 'Restaurants' && log.role === 'restaurant') ||
             (filter === 'Riders' && log.role === 'rider');
@@ -189,7 +191,7 @@ export default function HistoryView() {
                                                 <div className="flex items-center gap-3">
                                                     <div>
                                                         <p className="text-[14px] font-medium text-[#111827]">{log.email || 'N/A'}</p>
-                                                        <p className="text-[11px] text-[#6B7280] font-mono">ID: {log.userId?.slice(-8)}</p>
+                                                        <p className="text-[11px] text-[#6B7280] font-mono">ID: {typeof log.userId === 'string' ? log.userId.slice(-8) : 'N/A'}</p>
                                                     </div>
                                                 </div>
                                             </td>

@@ -29,6 +29,7 @@ const { width, height } = Dimensions.get('window');
 
 export default function RestaurantDashboard({ navigation }: any) {
   const [userData, setUserData] = useState<any>(null);
+  const [restaurantProfile, setRestaurantProfile] = useState<any>(null);
   const [orders, setOrders] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -102,16 +103,31 @@ export default function RestaurantDashboard({ navigation }: any) {
       if (data) {
         const user = JSON.parse(data);
         setUserData(user);
-        
+      }
+
+      const cachedProfile = await SecureStore.getItemAsync('restaurant_profile');
+      if (cachedProfile) {
+        setRestaurantProfile(JSON.parse(cachedProfile));
+      }
+
+      // Fetch latest user data to check for suspension
+      try {
+        const userRes = await apiClient.get('/auth/me');
+        const latestUser = userRes.data;
+        setUserData(latestUser);
+        await SecureStore.setItemAsync('user_data', JSON.stringify(latestUser));
+
         // Fetch restaurant details
         const res = await apiClient.get('/restaurants/my-restaurant');
         const restaurant = res.data;
+        setRestaurantProfile(restaurant);
+        await SecureStore.setItemAsync('restaurant_profile', JSON.stringify(restaurant));
         
-        const updatedUser = { ...user, restaurantId: restaurant._id };
+        const updatedUser = { ...latestUser, restaurantId: restaurant._id };
         setUserData(updatedUser);
         
         // Initialize Socket & Subscribe
-        initSocket(user.id, 'restaurant');
+        initSocket(latestUser.id, 'restaurant');
         const channel = subscribeToChannel(`restaurant-${restaurant._id}`);
         
         if (channel) {
@@ -166,6 +182,8 @@ export default function RestaurantDashboard({ navigation }: any) {
         fetchOrders();
         fetchStats();
         fetchReviews(restaurant._id);
+      } catch (apiErr) {
+        console.error('API Error in loadInitialData:', apiErr);
       }
     } catch (err) {
       console.error('Error loading restaurant data:', err);
@@ -222,6 +240,20 @@ export default function RestaurantDashboard({ navigation }: any) {
 
   const onRefresh = async () => {
     setRefreshing(true);
+    try {
+      const userRes = await apiClient.get('/auth/me');
+      const latestUser = userRes.data;
+      setUserData(latestUser);
+      await SecureStore.setItemAsync('user_data', JSON.stringify(latestUser));
+
+      const res = await apiClient.get('/restaurants/my-restaurant');
+      const restaurant = res.data;
+      setRestaurantProfile(restaurant);
+      await SecureStore.setItemAsync('restaurant_profile', JSON.stringify(restaurant));
+    } catch (err) {
+      console.error('Refresh user data error:', err);
+    }
+    
     await Promise.all([
       fetchOrders(), 
       fetchStats(), 
@@ -330,7 +362,7 @@ export default function RestaurantDashboard({ navigation }: any) {
       >
         <View style={styles.orderHeader}>
           <View>
-            <Text style={styles.orderIdText}>Order #{order._id.slice(-6)}</Text>
+            <Text style={styles.orderIdText}>Order #{String(order._id || '').slice(-6)}</Text>
             <View style={styles.timeRow}>
               <Ionicons name="time-outline" size={12} color={Colors.gray} />
               <Text style={styles.orderTimeText}>
@@ -435,6 +467,70 @@ export default function RestaurantDashboard({ navigation }: any) {
       </View>
     </View>
   );
+
+  const SuspensionBanner = () => {
+    const status = userData?.status || restaurantProfile?.owner?.status;
+    const suspension = userData?.suspensionDetails || restaurantProfile?.owner?.suspensionDetails;
+
+    if (status !== 'suspended') return null;
+
+    return (
+      <View style={styles.suspensionBanner}>
+        <View style={styles.suspensionHeader}>
+          <Ionicons name="alert-circle" size={24} color="#fff" />
+          <Text style={styles.suspensionTitle}>ACCOUNT SUSPENDED</Text>
+        </View>
+        <Text style={styles.suspensionReason}>
+          Reason: {suspension?.reason || 'Violation of terms'}
+        </Text>
+        {suspension?.unsuspendAt && (
+          <Text style={styles.suspensionDate}>
+            Auto-unsuspend on: {new Date(suspension.unsuspendAt).toLocaleDateString()}
+          </Text>
+        )}
+        <Text style={styles.suspensionContact}>
+          Please contact support if you think this is a mistake.
+        </Text>
+      </View>
+    );
+  };
+
+  const VerificationBanner = () => {
+    const status = restaurantProfile?.verificationStatus;
+    const reason = restaurantProfile?.rejectionReason;
+
+    if (status === 'approved' || !status) return null;
+
+    return (
+      <View style={[
+        styles.verificationBanner, 
+        { backgroundColor: status === 'rejected' ? '#FEE2E2' : '#FEF3C7' }
+      ]}>
+        <View style={styles.suspensionHeader}>
+          <Ionicons 
+            name={status === 'rejected' ? "close-circle" : "time"} 
+            size={20} 
+            color={status === 'rejected' ? "#EF4444" : "#D97706"} 
+          />
+          <Text style={[
+            styles.verificationTitle, 
+            { color: status === 'rejected' ? "#EF4444" : "#D97706" }
+          ]}>
+            {status === 'pending' ? 'VERIFICATION PENDING' : 'VERIFICATION REJECTED'}
+          </Text>
+        </View>
+        <Text style={[
+          styles.verificationText, 
+          { color: status === 'rejected' ? "#991B1B" : "#92400E" }
+        ]}>
+          {status === 'pending' 
+            ? 'Our team is reviewing your documents. You will be able to receive orders once approved.' 
+            : `Reason: ${reason || 'Documents did not meet requirements'}`
+          }
+        </Text>
+      </View>
+    );
+  };
 
   const DashboardHeader = () => (
     <View style={styles.dashboardHeaderContainer}>
@@ -550,6 +646,8 @@ export default function RestaurantDashboard({ navigation }: any) {
   return (
     <SafeAreaView style={styles.container}>
       <StatusBar barStyle="dark-content" />
+      <SuspensionBanner />
+      <VerificationBanner />
       <NewOrderModal />
       
       {/* Top Navigation Bar */}
@@ -1224,5 +1322,67 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     backgroundColor: '#fff',
+  },
+  suspensionBanner: {
+    backgroundColor: '#EF4444',
+    borderRadius: 16,
+    padding: 16,
+    marginBottom: 20,
+    borderWidth: 1,
+    borderColor: '#DC2626',
+    shadowColor: '#EF4444',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.2,
+    shadowRadius: 8,
+    elevation: 4,
+  },
+  suspensionHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    marginBottom: 8,
+  },
+  suspensionTitle: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: '900',
+    letterSpacing: 1,
+  },
+  suspensionReason: {
+    color: '#fff',
+    fontSize: 14,
+    fontWeight: '600',
+    marginBottom: 4,
+    opacity: 0.9,
+  },
+  suspensionDate: {
+    color: '#fff',
+    fontSize: 12,
+    fontWeight: '500',
+    marginBottom: 8,
+    opacity: 0.8,
+  },
+  suspensionContact: {
+    color: '#fff',
+    fontSize: 11,
+    fontStyle: 'italic',
+    opacity: 0.7,
+  },
+  verificationBanner: {
+    padding: 15,
+    margin: 10,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: 'rgba(0,0,0,0.05)',
+  },
+  verificationTitle: {
+    fontSize: 14,
+    fontWeight: 'bold',
+    marginLeft: 10,
+  },
+  verificationText: {
+    fontSize: 12,
+    marginTop: 5,
+    lineHeight: 18,
   },
 });

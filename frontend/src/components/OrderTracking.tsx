@@ -220,7 +220,7 @@ export default function OrderTracking({ order: initialOrder, userRole = 'user', 
                     </div>
                     <h2 className="text-xl font-bold mb-1">Order Tracking</h2>
                     <p className="text-sm font-bold opacity-90">
-                        Order #{order.orderNumber || order._id.slice(-6).toUpperCase()} • {order.restaurant?.name || 'Restaurant'}
+                        Order #{order.orderNumber || String(order._id || '').slice(-6).toUpperCase()} • {order.restaurant?.name || 'Restaurant'}
                     </p>
                 </div>
 

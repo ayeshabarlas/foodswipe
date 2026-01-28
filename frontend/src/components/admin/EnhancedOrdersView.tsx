@@ -290,7 +290,7 @@ export default function EnhancedOrdersView() {
                                                     <FaReceipt className="text-sm" />
                                                 </div>
                                                 <div>
-                                                    <p className="text-[14px] font-bold text-[#111827]">#{order.orderNumber || order._id.slice(-6)}</p>
+                                                    <p className="text-[14px] font-bold text-[#111827]">#{order.orderNumber || String(order._id || '').slice(-6)}</p>
                                                     <p className="text-[12px] text-gray-400 font-medium">{new Date(order.createdAt).toLocaleString([], { dateStyle: 'short', timeStyle: 'short' })}</p>
                                                 </div>
                                             </div>

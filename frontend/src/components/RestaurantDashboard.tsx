@@ -234,7 +234,7 @@ export default function RestaurantDashboard() {
             const newNotification = {
                 _id: `socket-${Date.now()}`,
                 title: 'New Order',
-                message: `Order #${order._id.slice(-6).toUpperCase()} has been placed by ${order.user?.name || 'Customer'}`,
+                message: `Order #${String(order._id || '').slice(-6).toUpperCase()} has been placed by ${order.user?.name || 'Customer'}`,
                 createdAt: new Date().toISOString(),
                 read: false,
                 type: 'order'
@@ -251,7 +251,7 @@ export default function RestaurantDashboard() {
                 const newNotification = {
                     _id: `socket-${Date.now()}`,
                     title: `Order ${updatedOrder.status}`,
-                    message: `Order #${updatedOrder._id.slice(-6).toUpperCase()} is now ${updatedOrder.status}`,
+                    message: `Order #${String(updatedOrder._id || '').slice(-6).toUpperCase()} is now ${updatedOrder.status}`,
                     createdAt: new Date().toISOString(),
                     read: false,
                     type: 'status'
@@ -281,7 +281,7 @@ export default function RestaurantDashboard() {
                     </div>
                     <div className="flex-1">
                         <p className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">
-                            {data.senderRole === 'rider' ? 'Rider Message' : 'Customer Message'} • Order #{data.orderNumber || data.orderId.slice(-5).toUpperCase()}
+                            {data.senderRole === 'rider' ? 'Rider Message' : 'Customer Message'} • Order #{data.orderNumber || String(data.orderId || '').slice(-5).toUpperCase()}
                         </p>
                         <p className="text-xs font-bold text-gray-900">{data.senderName}: <span className="font-medium text-gray-600">{data.text}</span></p>
                     </div>
@@ -847,7 +847,7 @@ export default function RestaurantDashboard() {
                                     </div>
                                     <div>
                                         <h3 className="text-2xl font-black text-gray-900 leading-tight">New Order Arrived!</h3>
-                                        <p className="text-gray-400 font-bold text-[10px] uppercase tracking-[0.2em] mt-1">Order #{newOrderModal._id.slice(-6).toUpperCase()}</p>
+                                        <p className="text-gray-400 font-bold text-[10px] uppercase tracking-[0.2em] mt-1">Order #{String(newOrderModal._id || '').slice(-6).toUpperCase()}</p>
                                     </div>
                                 </div>
                                 <div className="relative w-16 h-16 flex items-center justify-center">

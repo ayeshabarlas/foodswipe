@@ -154,7 +154,7 @@ export default function PaymentHistory({ restaurant: initialRestaurant, onSwitch
 
     const handleDownloadStatement = () => {
         const statementData = weeklyOrders.map(order => ({
-            'Order ID': `#${order._id.slice(-6).toUpperCase()}`,
+            'Order ID': `#${String(order._id || '').slice(-6).toUpperCase()}`,
             'Date': new Date(order.createdAt).toLocaleString(),
             'Items': order.items?.length || 0,
             'Total Amount': `Rs. ${order.totalAmount || 0}`,
@@ -246,7 +246,7 @@ export default function PaymentHistory({ restaurant: initialRestaurant, onSwitch
                                 </div>
                                 <h3 className="text-2xl font-bold text-gray-900">Order Receipt</h3>
                                 <p className="text-gray-400 text-xs font-bold uppercase tracking-widest mt-1">
-                                    #{selectedOrder._id.slice(-6).toUpperCase()}
+                                    #{String(selectedOrder._id || '').slice(-6).toUpperCase()}
                                 </p>
                             </div>
 
@@ -449,7 +449,7 @@ export default function PaymentHistory({ restaurant: initialRestaurant, onSwitch
                                     {history.length > 0 ? (
                                         history.map((payout) => (
                                             <tr key={payout._id} className="hover:bg-gray-50/50 transition-colors">
-                                                <td className="px-6 py-5 text-xs font-bold text-gray-900">PAY-{payout._id.slice(-4).toUpperCase()}</td>
+                                                <td className="px-6 py-5 text-xs font-bold text-gray-900">PAY-{String(payout._id || '').slice(-4).toUpperCase()}</td>
                                                 <td className="px-6 py-5 text-xs text-gray-500 font-medium">
                                                     {new Date(payout.weekStart).toLocaleDateString()}
                                                 </td>
@@ -564,7 +564,7 @@ export default function PaymentHistory({ restaurant: initialRestaurant, onSwitch
                                     {weeklyOrders.length > 0 ? (
                                         weeklyOrders.map((order) => (
                                             <tr key={order._id} className="hover:bg-gray-50/50 transition-colors">
-                                                <td className="px-6 py-5 text-xs font-bold text-gray-900">#{order._id.slice(-6).toUpperCase()}</td>
+                                                <td className="px-6 py-5 text-xs font-bold text-gray-900">#{String(order._id || '').slice(-6).toUpperCase()}</td>
                                                 <td className="px-6 py-5 text-xs text-gray-500 font-medium">
                                                     {new Date(order.createdAt).toLocaleString()}
                                                 </td>

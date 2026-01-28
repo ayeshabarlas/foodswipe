@@ -241,6 +241,16 @@ export default function RiderDashboard({ navigation }: any) {
   const onRefresh = async () => {
     if (riderProfile?._id) {
       setRefreshing(true);
+      // Fetch latest user data
+      try {
+        const userRes = await apiClient.get('/auth/me');
+        const latestUser = userRes.data;
+        setUserData(latestUser);
+        await SecureStore.setItemAsync('user_data', JSON.stringify(latestUser));
+      } catch (userErr) {
+        console.error('Error refreshing user data:', userErr);
+      }
+      
       await fetchData(riderProfile._id);
       setRefreshing(false);
     }
@@ -254,6 +264,16 @@ export default function RiderDashboard({ navigation }: any) {
         console.log('👤 User data loaded:', { id: user.id, _id: user._id, role: user.role });
         const userId = user._id || user.id || user.userId;
         setUserData(user);
+
+        // Fetch latest user data to check for suspension
+        try {
+          const userRes = await apiClient.get('/auth/me');
+          const latestUser = userRes.data;
+          setUserData(latestUser);
+          await SecureStore.setItemAsync('user_data', JSON.stringify(latestUser));
+        } catch (userErr) {
+          console.error('Error fetching latest user data:', userErr);
+        }
         
         // Fetch Rider Profile
         const res = await apiClient.get('/riders/my-profile');
@@ -544,6 +564,33 @@ export default function RiderDashboard({ navigation }: any) {
       </View>
     </LinearGradient>
   );
+
+  const SuspensionBanner = () => {
+    const status = userData?.status || riderProfile?.user?.status;
+    const suspension = userData?.suspensionDetails || riderProfile?.user?.suspensionDetails;
+
+    if (status !== 'suspended') return null;
+
+    return (
+      <View style={styles.suspensionBanner}>
+        <View style={styles.suspensionHeader}>
+          <Ionicons name="alert-circle" size={24} color="#fff" />
+          <Text style={styles.suspensionTitle}>ACCOUNT SUSPENDED</Text>
+        </View>
+        <Text style={styles.suspensionReason}>
+          Reason: {suspension?.reason || 'Violation of terms'}
+        </Text>
+        {suspension?.unsuspendAt && (
+          <Text style={styles.suspensionDate}>
+            Auto-unsuspend on: {new Date(suspension.unsuspendAt).toLocaleDateString()}
+          </Text>
+        )}
+        <Text style={styles.suspensionContact}>
+          Please contact support if you think this is a mistake.
+        </Text>
+      </View>
+    );
+  };
 
   const VerificationBanner = () => {
     // If approved, don't show the banner
@@ -898,7 +945,6 @@ export default function RiderDashboard({ navigation }: any) {
       refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={[Colors.primary]} />}
     >
       <DashboardHeader />
-      <VerificationBanner />
       
       <View style={styles.statsRow}>
         <View style={styles.statCard}>
@@ -1226,6 +1272,9 @@ export default function RiderDashboard({ navigation }: any) {
     <SafeAreaView style={styles.container}>
       <StatusBar barStyle="light-content" />
       
+      <SuspensionBanner />
+      <VerificationBanner />
+
       <View style={styles.mainContent}>
         {activeTab === 'home' && renderHomeTab()}
         {activeTab === 'orders' && renderOrdersTab()}
@@ -1766,6 +1815,48 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     borderWidth: 1,
     borderColor: '#FFEDD5',
+  },
+  suspensionBanner: {
+    backgroundColor: '#EF4444',
+    marginHorizontal: 20,
+    marginTop: 20,
+    padding: 16,
+    borderRadius: 16,
+    shadowColor: '#EF4444',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.2,
+    shadowRadius: 8,
+    elevation: 4,
+  },
+  suspensionHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  suspensionTitle: {
+    color: '#fff',
+    fontSize: 16,
+    fontBold: 'bold',
+    fontWeight: 'bold',
+    marginLeft: 8,
+  },
+  suspensionReason: {
+    color: 'rgba(255,255,255,0.9)',
+    fontSize: 13,
+    marginBottom: 4,
+    lineHeight: 18,
+  },
+  suspensionDate: {
+    color: '#fff',
+    fontSize: 13,
+    fontWeight: '600',
+    marginBottom: 4,
+  },
+  suspensionContact: {
+    color: 'rgba(255,255,255,0.8)',
+    fontSize: 11,
+    fontStyle: 'italic',
+    marginTop: 4,
   },
   verifyText: {
     fontSize: 12,

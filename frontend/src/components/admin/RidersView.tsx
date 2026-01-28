@@ -400,7 +400,7 @@ export default function RidersView() {
                                                         <div className="flex items-center gap-2 mt-0.5">
                                                             <span className="text-[12px] text-[#6B7280] font-medium">{rider.user?.phone || rider.user?.phoneNumber || 'No phone'}</span>
                                                             <span className="text-[12px] text-[#9CA3AF]">•</span>
-                                                            <span className="text-[12px] text-[#9CA3AF] font-medium">#{rider._id.slice(-6).toUpperCase()}</span>
+                                                            <span className="text-[12px] text-[#9CA3AF] font-medium">#{String(rider._id || '').slice(-6).toUpperCase()}</span>
                                                         </div>
                                                     </div>
                                                 </div>
@@ -418,7 +418,11 @@ export default function RidersView() {
                                             </td>
                                             <td className="px-6 py-4">
                                                 <div className="flex flex-col gap-1">
-                                                    {rider.verificationStatus === 'pending' || rider.verificationStatus === 'new' ? (
+                                                    {rider.user?.status === 'suspended' ? (
+                                                        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-semibold uppercase tracking-wider bg-red-100 text-red-700 border border-red-200 shadow-sm">
+                                                            <FaBan className="animate-pulse" /> Suspended
+                                                        </span>
+                                                    ) : rider.verificationStatus === 'pending' || rider.verificationStatus === 'new' ? (
                                                         <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-semibold uppercase tracking-wider bg-yellow-50 text-yellow-600 border border-yellow-100">
                                                             <FaClock className="animate-pulse" /> Pending
                                                         </span>
@@ -535,18 +539,25 @@ export default function RidersView() {
                                             selectedRider.isOnline ? 'bg-green-500' : 'bg-gray-300'
                                         }`}></div>
                                     </div>
-                                    <div className="mb-4">
-                                        <h3 className="text-[28px] font-bold text-white tracking-tight drop-shadow-sm">{selectedRider.fullName || selectedRider.user?.name}</h3>
-                                        <div className="flex items-center gap-3 mt-1">
-                                            <span className="bg-white/20 backdrop-blur-md text-white px-3 py-1 rounded-full text-[11px] font-bold uppercase tracking-wider border border-white/20">
-                                                {selectedRider.vehicleType} Partner
-                                            </span>
-                                            <div className="flex items-center gap-1.5 text-white bg-white/10 backdrop-blur-md px-3 py-1 rounded-full text-[13px] font-bold border border-white/10">
-                                                <FaStar className="text-yellow-400" />
-                                                {selectedRider.stats?.rating?.toFixed(1) || '0.0'}
+                                            <div className="mb-4">
+                                                <div className="flex items-center gap-3">
+                                                    <h3 className="text-[28px] font-bold text-white tracking-tight drop-shadow-sm">{selectedRider.fullName || selectedRider.user?.name}</h3>
+                                                    {selectedRider.user?.status === 'suspended' && (
+                                                        <span className="bg-red-500 text-white px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider border border-white/20 shadow-lg animate-pulse">
+                                                            Suspended
+                                                        </span>
+                                                    )}
+                                                </div>
+                                                <div className="flex items-center gap-3 mt-1">
+                                                    <span className="bg-white/20 backdrop-blur-md text-white px-3 py-1 rounded-full text-[11px] font-bold uppercase tracking-wider border border-white/20">
+                                                        {selectedRider.vehicleType} Partner
+                                                    </span>
+                                                    <div className="flex items-center gap-1.5 text-white bg-white/10 backdrop-blur-md px-3 py-1 rounded-full text-[13px] font-bold border border-white/10">
+                                                        <FaStar className="text-yellow-400" />
+                                                        {selectedRider.stats?.rating?.toFixed(1) || '0.0'}
+                                                    </div>
+                                                </div>
                                             </div>
-                                        </div>
-                                    </div>
                                 </div>
                             </div>
 

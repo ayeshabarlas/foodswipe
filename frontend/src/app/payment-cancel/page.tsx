@@ -23,7 +23,7 @@ function PaymentCancelContent() {
             {orderId && (
                 <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 w-full max-w-xs mb-8 text-left">
                     <p className="text-xs text-gray-400 mb-1">REFERENCE ORDER</p>
-                    <p className="font-mono font-bold text-gray-900 text-sm">#{orderId.slice(-8).toUpperCase()}</p>
+                    <p className="font-mono font-bold text-gray-900 text-sm">#{String(orderId || '').slice(-8).toUpperCase()}</p>
                 </div>
             )}
 

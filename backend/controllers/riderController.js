@@ -260,6 +260,14 @@ const updateStatus = async (req, res) => {
             return res.status(404).json({ message: 'Rider not found' });
         }
 
+        // Prevent suspended users from going online
+        if (req.body.isOnline && rider.user?.status === 'suspended') {
+            return res.status(403).json({ 
+                message: 'Your account is suspended. You cannot go online.',
+                suspensionDetails: rider.user.suspensionDetails
+            });
+        }
+
         rider.isOnline = req.body.isOnline;
         rider.status = req.body.isOnline ? 'Available' : 'Offline';
 

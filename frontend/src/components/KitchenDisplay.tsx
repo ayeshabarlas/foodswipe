@@ -78,7 +78,7 @@ export default function KitchenDisplay() {
         >
             <div className="flex items-center justify-between mb-3">
                 <div>
-                    <h4 className="text-white font-bold">Order #{order.orderNumber || order._id.slice(-4)}</h4>
+                    <h4 className="text-white font-bold">Order #{order.orderNumber || String(order._id || '').slice(-4)}</h4>
                     <p className="text-gray-400 text-sm">{order.user?.name || 'Guest'}</p>
                 </div>
                 <div className="flex items-center gap-2 text-xs text-gray-400">

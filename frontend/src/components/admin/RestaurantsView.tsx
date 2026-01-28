@@ -376,7 +376,7 @@ export default function RestaurantsView() {
                                                             }`}>
                                                                 {restaurant.businessType === 'home-chef' ? 'Home Chef' : 'Restaurant'}
                                                             </span>
-                                                            <span className="text-[12px] text-[#9CA3AF] font-normal">#{restaurant._id.slice(-6).toUpperCase()}</span>
+                                                            <span className="text-[12px] text-[#9CA3AF] font-normal">#{String(restaurant._id || '').slice(-6).toUpperCase()}</span>
                                                         </div>
                                                     </div>
                                                 </div>
@@ -395,7 +395,11 @@ export default function RestaurantsView() {
                                             </td>
                                             <td className="px-6 py-4">
                                                 <div className="flex flex-col gap-1">
-                                                    {restaurant.verificationStatus === 'pending' ? (
+                                                    {restaurant.owner?.status === 'suspended' ? (
+                                                        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-semibold uppercase tracking-wider bg-red-100 text-red-700 border border-red-200 shadow-sm">
+                                                            <FaBan className="animate-pulse" /> Suspended
+                                                        </span>
+                                                    ) : restaurant.verificationStatus === 'pending' ? (
                                                         <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-semibold uppercase tracking-wider bg-yellow-50 text-yellow-600 border border-yellow-100">
                                                             <FaClock className="animate-pulse" /> Pending
                                                         </span>

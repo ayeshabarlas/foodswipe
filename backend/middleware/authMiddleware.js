@@ -15,10 +15,20 @@ const protect = async (req, res, next) => {
             req.user = await User.findById(decoded.id).select('-password');
 
             if (req.user && req.user.status === 'suspended') {
-                return res.status(403).json({ 
-                    message: 'Your account has been suspended. Please contact support.',
-                    status: 'suspended'
-                });
+                // Allow suspended users to fetch their own profile so they can see why they are suspended
+                // We check if the request is a GET request to a profile-related endpoint
+                const isProfileRoute = req.originalUrl.includes('/profile') || 
+                                     req.originalUrl.includes('/my-profile') ||
+                                     req.originalUrl.includes('/me');
+                const isGetRequest = req.method === 'GET';
+
+                if (!(isProfileRoute && isGetRequest)) {
+                    return res.status(403).json({ 
+                        message: 'Your account has been suspended. Please contact support.',
+                        status: 'suspended',
+                        suspensionDetails: req.user.suspensionDetails
+                    });
+                }
             }
 
             // If not in User, check Admin collection (for common routes like upload)

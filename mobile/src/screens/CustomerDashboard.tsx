@@ -568,7 +568,7 @@ export default function CustomerDashboard({ navigation }: any) {
                 <View style={styles.progressBarContainer}>
                   <View style={[styles.progressBar, { width: getProgressWidth(order.status) }]} />
                 </View>
-                <Text style={styles.orderIdText}>Order #{order._id.slice(-6)}</Text>
+                <Text style={styles.orderIdText}>Order #{String(order._id || '').slice(-6)}</Text>
               </TouchableOpacity>
             ))}
           </ScrollView>

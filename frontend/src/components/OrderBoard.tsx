@@ -140,7 +140,7 @@ export default function OrderBoard({ restaurant, initialOrderId, onUpdate }: Ord
 
             channel.bind('riderAccepted', (data: any) => {
                 console.log('OrderBoard: Rider accepted order via socket:', data);
-                toast.success(`Rider ${data.riderName} accepted order #${data.orderId.slice(-4)}`);
+                toast.success(`Rider ${data.riderName} accepted order #${String(data.orderId || '').slice(-4)}`);
                 fetchOrders();
             });
 
@@ -234,7 +234,7 @@ export default function OrderBoard({ restaurant, initialOrderId, onUpdate }: Ord
 
     // Debug logging to track order status changes
     console.log('Total orders:', ordersArray.length);
-    console.log('Orders statuses:', ordersArray.map(o => ({ id: o._id.slice(-4), status: o.status })));
+    console.log('Orders statuses:', ordersArray.map(o => ({ id: String(o._id || '').slice(-4), status: o.status })));
 
     const pendingOrders = ordersArray.filter(o => o.status === 'Pending');
     const preparingOrders = ordersArray.filter(o => ['Accepted', 'Preparing'].includes(o.status));
@@ -284,7 +284,7 @@ export default function OrderBoard({ restaurant, initialOrderId, onUpdate }: Ord
                         </div>
                         <div>
                             <h4 className="font-bold text-gray-900 text-[14px] font-plus-jakarta tracking-tight">{order.user?.name || 'Guest'}</h4>
-                            <p className="text-[10px] text-gray-400 font-medium mt-0.5 tracking-tight uppercase">Order #{order._id.slice(-4)}</p>
+                            <p className="text-[10px] text-gray-400 font-medium mt-0.5 tracking-tight uppercase">Order #{String(order._id || '').slice(-4)}</p>
                         </div>
                     </div>
                     <div className={`px-3 py-1.5 rounded-full text-[9px] font-bold uppercase tracking-widest font-plus-jakarta ${getStatusBadgeColor(order.status)}`}>
@@ -690,7 +690,7 @@ export default function OrderBoard({ restaurant, initialOrderId, onUpdate }: Ord
                                     </div>
                                     <div>
                                         <h2 className="text-xl font-bold bg-gradient-to-r from-orange-500 to-pink-500 bg-clip-text text-transparent">New Order Arrived!</h2>
-                                        <p className="text-sm text-gray-400 font-bold tracking-tight">Order #{newOrderPopup._id.slice(-4)}</p>
+                                        <p className="text-sm text-gray-400 font-bold tracking-tight">Order #{String(newOrderPopup._id || '').slice(-4)}</p>
                                     </div>
                                 </div>
                                 <div className="w-16 h-16 relative flex items-center justify-center">

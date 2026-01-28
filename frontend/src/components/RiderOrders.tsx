@@ -435,7 +435,7 @@ export default function RiderOrders({ riderId, setShowNotifications, unreadCount
                                          activeDelivery.status === 'ArrivedAtCustomer' ? 'At Customer Location' : 'Order Tracking'}
                                     </span>
                                 </div>
-                                <span className="text-[10px] font-semibold">#{activeDelivery.orderNumber || activeDelivery._id.slice(-7).toUpperCase()}</span>
+                                <span className="text-[10px] font-semibold">#{activeDelivery.orderNumber || String(activeDelivery._id || '').slice(-7).toUpperCase()}</span>
                             </div>
 
                             <div className="p-0">
@@ -468,7 +468,7 @@ export default function RiderOrders({ riderId, setShowNotifications, unreadCount
                                                 <div className="space-y-6">
                                                     <div className="flex items-center justify-between pb-4 border-b border-gray-50">
                                                         <span className="text-gray-700 font-bold text-xs uppercase tracking-wider">Order Summary</span>
-                                                        <span className="text-gray-900 font-semibold text-sm">Order ID <span className="text-gray-700 ml-1">#{activeDelivery.orderNumber || activeDelivery._id.slice(-6).toUpperCase()}</span></span>
+                                                        <span className="text-gray-900 font-semibold text-sm">Order ID <span className="text-gray-700 ml-1">#{activeDelivery.orderNumber || String(activeDelivery._id || '').slice(-6).toUpperCase()}</span></span>
                                                     </div>
 
                                                     <div className="space-y-4">
