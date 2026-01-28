@@ -39,6 +39,8 @@ const VideoFeedScreen = () => {
   const [commentText, setCommentText] = useState('');
   const [loadingComments, setLoadingComments] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
+  const [videoSuggestions, setVideoSuggestions] = useState<any[]>([]);
+  const [showVideoSuggestions, setShowVideoSuggestions] = useState(false);
   const [currentTab, setCurrentTab] = useState('foryou');
   const [isCategoryDropdownOpen, setIsCategoryDropdownOpen] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState('All');
@@ -68,7 +70,7 @@ const VideoFeedScreen = () => {
     return () => clearInterval(interval);
   }, []);
 
-  const fetchVideos = async (tab = currentTab, category = selectedCategory) => {
+  const fetchVideos = async (tab = currentTab, category = selectedCategory, search = searchTerm) => {
     try {
       setLoading(true);
       
@@ -83,8 +85,16 @@ const VideoFeedScreen = () => {
       }
 
       let endpoint = tab === 'following' ? '/videos/following' : '/videos/feed';
+      const params = [];
       if (category !== 'All') {
-        endpoint += `?category=${category}`;
+        params.push(`category=${encodeURIComponent(category)}`);
+      }
+      if (search.trim()) {
+        params.push(`search=${encodeURIComponent(search.trim())}`);
+      }
+      
+      if (params.length > 0) {
+        endpoint += `?${params.join('&')}`;
       }
       
       const response = await apiClient.get(endpoint);
@@ -105,20 +115,37 @@ const VideoFeedScreen = () => {
   };
 
   useEffect(() => {
-    fetchVideos(currentTab, selectedCategory);
+    fetchVideos(currentTab, selectedCategory, searchTerm);
   }, [currentTab, selectedCategory]);
 
+  // Debounced search for video feed
   useEffect(() => {
-    if (searchTerm.trim() === '') {
-      setFilteredVideos(videos);
-    } else {
-      const filtered = videos.filter((v: any) => 
-        v.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
-        v.restaurant?.name.toLowerCase().includes(searchTerm.toLowerCase())
-      );
-      setFilteredVideos(filtered);
-    }
-  }, [searchTerm, videos]);
+    const timer = setTimeout(() => {
+      if (searchTerm !== undefined) {
+        fetchVideos(currentTab, selectedCategory, searchTerm);
+        
+        // Fetch suggestions for the dropdown
+        if (searchTerm.trim()) {
+          setShowVideoSuggestions(true);
+          apiClient.get(`/videos/feed?search=${encodeURIComponent(searchTerm)}&limit=5`)
+            .then(res => setVideoSuggestions(res.data.videos || []))
+            .catch(err => console.error('Error fetching video suggestions:', err));
+        } else {
+          setShowVideoSuggestions(false);
+          setVideoSuggestions([]);
+        }
+      }
+    }, 500);
+
+    return () => clearTimeout(timer);
+  }, [searchTerm]);
+
+  const handleSuggestionPress = (item: any) => {
+    setSearchTerm(item.name);
+    setShowVideoSuggestions(false);
+    // Since it's a video feed, we just filter the feed by this item's name
+    fetchVideos(currentTab, 'All', item.name);
+  };
 
   const fetchComments = async (dishId: string) => {
     setLoadingComments(true);
@@ -232,9 +259,46 @@ const VideoFeedScreen = () => {
               placeholder="Search dishes or restaurants..."
               placeholderTextColor="rgba(255,255,255,0.4)"
               value={searchTerm}
-              onChangeText={setSearchTerm}
+              onChangeText={(text) => {
+                setSearchTerm(text);
+                if (text.trim() && selectedCategory !== 'All') {
+                  setSelectedCategory('All');
+                }
+              }}
+              onFocus={() => searchTerm.trim() && setShowVideoSuggestions(true)}
             />
+            {searchTerm.length > 0 && (
+              <TouchableOpacity onPress={() => {
+                setSearchTerm('');
+                setShowVideoSuggestions(false);
+                fetchVideos(currentTab, selectedCategory, '');
+              }}>
+                <Ionicons name="close-circle" size={16} color="rgba(255,255,255,0.5)" />
+              </TouchableOpacity>
+            )}
           </View>
+
+          {/* Search Suggestions Dropdown */}
+          {showVideoSuggestions && videoSuggestions.length > 0 && (
+            <View style={styles.videoSuggestions}>
+              {videoSuggestions.map((item) => (
+                <TouchableOpacity 
+                  key={item._id} 
+                  style={styles.videoSuggestionItem}
+                  onPress={() => handleSuggestionPress(item)}
+                >
+                  <Ionicons name="fast-food-outline" size={18} color="#FF6A00" />
+                  <View style={styles.suggestionTextContainer}>
+                    <Text style={styles.suggestionMainText}>{item.name}</Text>
+                    <Text style={styles.suggestionSubText} numberOfLines={1}>
+                      {item.category} • {item.restaurant?.name}
+                    </Text>
+                  </View>
+                  <Ionicons name="chevron-forward" size={16} color="rgba(255,255,255,0.3)" />
+                </TouchableOpacity>
+              ))}
+            </View>
+          )}
 
           <TouchableOpacity style={styles.cartBtn} onPress={() => setIsCartOpen(true)}>
             <Ionicons name="cart-outline" color="#fff" size={24} />
@@ -281,6 +345,7 @@ const VideoFeedScreen = () => {
                 ]}
                 onPress={() => {
                   setSelectedCategory(cat);
+                  setSearchTerm(''); // Clear search when selecting category
                   setIsCategoryDropdownOpen(false);
                 }}
               >
@@ -563,6 +628,44 @@ const styles = StyleSheet.create({
   activeCategoryText: {
     color: '#fff',
     fontWeight: '700',
+  },
+  videoSuggestions: {
+    position: 'absolute',
+    top: 50,
+    left: 61,
+    right: 61,
+    backgroundColor: 'rgba(30,30,30,0.95)',
+    borderRadius: 12,
+    zIndex: 3000,
+    elevation: 5,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 10,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.1)',
+    overflow: 'hidden',
+  },
+  videoSuggestionItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(255,255,255,0.05)',
+  },
+  suggestionTextContainer: {
+    marginLeft: 12,
+    flex: 1,
+  },
+  suggestionMainText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#fff',
+  },
+  suggestionSubText: {
+    fontSize: 12,
+    color: 'rgba(255,255,255,0.5)',
+    marginTop: 2,
   },
   modalOverlay: {
     flex: 1,

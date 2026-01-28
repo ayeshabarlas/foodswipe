@@ -8,14 +8,43 @@ import {
   Image,
   Dimensions,
   StatusBar,
-  ActivityIndicator
+  ActivityIndicator,
+  Platform
 } from 'react-native';
 import { Colors } from '../theme/colors';
 import SplashScreen from '../components/SplashScreen';
 import * as SecureStore from 'expo-secure-store';
 import { initSocket } from '../utils/socket';
+import { LinearGradient } from 'expo-linear-gradient';
+import { Svg, Text as SvgText, Defs, LinearGradient as SvgGradient, Stop } from 'react-native-svg';
 
 const { width } = Dimensions.get('window');
+
+const GradientText = ({ text, style }: { text: string, style: any }) => {
+  return (
+    <View style={style}>
+      <Svg height="50" width="300">
+        <Defs>
+          <SvgGradient id="grad" x1="0" y1="0" x2="1" y2="0">
+            <Stop offset="0" stopColor="#FF416C" stopOpacity="1" />
+            <Stop offset="1" stopColor="#FF4B2B" stopOpacity="1" />
+          </SvgGradient>
+        </Defs>
+        <SvgText
+          fill="url(#grad)"
+          fontSize="40"
+          fontWeight="500"
+          x="150"
+          y="35"
+          textAnchor="middle"
+          fontFamily={Platform.OS === 'ios' ? 'Avenir' : 'sans-serif'}
+        >
+          {text}
+        </SvgText>
+      </Svg>
+    </View>
+  );
+};
 
 export default function HomeScreen({ navigation }: any) {
   const [showSplash, setShowSplash] = useState(true);
@@ -77,7 +106,7 @@ export default function HomeScreen({ navigation }: any) {
         />
         
         <View style={styles.textContainer}>
-          <Text style={styles.title}>FoodSwipe</Text>
+          <Text style={styles.titleText}>FoodSwipe</Text>
           <Text style={styles.subtitle}>
             Order from your favorite local restaurants and home chefs with just a swipe.
           </Text>
@@ -89,13 +118,6 @@ export default function HomeScreen({ navigation }: any) {
             onPress={() => navigation.navigate('Login')}
           >
             <Text style={styles.primaryButtonText}>Login to Start</Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity 
-            style={styles.secondaryButton}
-            onPress={() => {/* Navigate to Register */}}
-          >
-            <Text style={styles.secondaryButtonText}>Create an Account</Text>
           </TouchableOpacity>
         </View>
       </View>
@@ -120,7 +142,20 @@ const styles = StyleSheet.create({
     marginTop: 20,
   },
   textContainer: {
-    marginTop: 20,
+    marginTop: 10,
+  },
+  titleGradient: {
+    marginBottom: 5,
+    alignItems: 'center',
+    width: '100%',
+  },
+  titleText: {
+    fontSize: 40,
+    fontWeight: '500',
+    color: Colors.primary,
+    textAlign: 'center',
+    marginBottom: 5,
+    fontFamily: Platform.OS === 'ios' ? 'Avenir' : 'sans-serif',
   },
   title: {
     fontSize: 40,
@@ -132,10 +167,12 @@ const styles = StyleSheet.create({
     fontSize: 18,
     color: Colors.gray,
     lineHeight: 26,
+    textAlign: 'center',
+    fontFamily: Platform.OS === 'ios' ? 'Avenir' : 'sans-serif-light',
   },
   buttonContainer: {
     gap: 12,
-    marginBottom: 20,
+    marginBottom: 40,
   },
   primaryButton: {
     backgroundColor: Colors.primary,
@@ -152,18 +189,6 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: 'bold',
     textAlign: 'center',
-  },
-  secondaryButton: {
-    backgroundColor: '#fff',
-    paddingVertical: 18,
-    borderRadius: 16,
-    borderWidth: 1,
-    borderColor: '#E5E7EB',
-  },
-  secondaryButtonText: {
-    color: Colors.foreground,
-    fontSize: 18,
-    fontWeight: '600',
-    textAlign: 'center',
+    fontFamily: Platform.OS === 'ios' ? 'Avenir-Heavy' : 'sans-serif-medium',
   },
 });

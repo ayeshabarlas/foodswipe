@@ -17,6 +17,7 @@ import { Ionicons, FontAwesome5 } from '@expo/vector-icons';
 import { Colors } from '../theme/colors';
 import apiClient from '../api/apiClient';
 import { LinearGradient } from 'expo-linear-gradient';
+import DateTimePicker from '@react-native-community/datetimepicker';
 
 const { width } = Dimensions.get('window');
 
@@ -28,6 +29,8 @@ export default function RiderRegistrationScreen({ navigation }: any) {
     vehicleType: 'Bike' as 'Bike' | 'Car',
   });
   const [loading, setLoading] = useState(false);
+  const [showDatePicker, setShowDatePicker] = useState(false);
+  const [date, setDate] = useState(new Date(2000, 0, 1));
 
   const formatCNIC = (value: string) => {
     const digits = value.replace(/\D/g, '');
@@ -41,17 +44,24 @@ export default function RiderRegistrationScreen({ navigation }: any) {
     setFormData({ ...formData, cnicNumber: formatCNIC(text) });
   };
 
-  const formatDOB = (value: string) => {
-    const digits = value.replace(/\D/g, '');
-    const limitedDigits = digits.slice(0, 8);
-    
-    if (limitedDigits.length <= 4) return limitedDigits;
-    if (limitedDigits.length <= 6) return `${limitedDigits.slice(0, 4)}-${limitedDigits.slice(4, 6)}`;
-    return `${limitedDigits.slice(0, 4)}-${limitedDigits.slice(4, 6)}-${limitedDigits.slice(6, 8)}`;
-  };
+  const onDateChange = (event: any, selectedDate?: Date) => {
+    // For Android, we need to hide the picker immediately after selection or dismissal
+    if (Platform.OS === 'android') {
+      setShowDatePicker(false);
+    }
 
-  const handleDOBChange = (text: string) => {
-    setFormData({ ...formData, dateOfBirth: formatDOB(text) });
+    if (event.type === 'set' && selectedDate) {
+      const currentDate = selectedDate;
+      setDate(currentDate);
+      
+      // Format to YYYY-MM-DD
+      const year = currentDate.getFullYear();
+      const month = String(currentDate.getMonth() + 1).padStart(2, '0');
+      const day = String(currentDate.getDate()).padStart(2, '0');
+      setFormData({ ...formData, dateOfBirth: `${year}-${month}-${day}` });
+    } else if (event.type === 'dismissed') {
+      setShowDatePicker(false);
+    }
   };
 
   const handleSubmit = async () => {
@@ -72,7 +82,17 @@ export default function RiderRegistrationScreen({ navigation }: any) {
       Alert.alert('Success', 'Profile details saved. Now please upload your documents.');
       navigation.navigate('RiderDocumentUpload', { riderId: res.data._id });
     } catch (err: any) {
-      Alert.alert('Error', err.response?.data?.message || 'Failed to register');
+      if (err.response?.data?.message === 'Rider profile already exists') {
+        // If already exists, fetch the profile and navigate
+        try {
+          const profileRes = await apiClient.get('/riders/my-profile');
+          navigation.navigate('RiderDocumentUpload', { riderId: profileRes.data._id });
+        } catch (profileErr) {
+          Alert.alert('Error', 'Profile exists but could not be retrieved.');
+        }
+      } else {
+        Alert.alert('Error', err.response?.data?.message || 'Failed to register');
+      }
     } finally {
       setLoading(false);
     }
@@ -138,20 +158,38 @@ export default function RiderRegistrationScreen({ navigation }: any) {
 
               <View style={styles.inputGroup}>
                 <Text style={styles.label}>Date of Birth</Text>
-                <View style={styles.inputWrapper}>
+                <TouchableOpacity 
+                  style={styles.inputWrapper}
+                  onPress={() => setShowDatePicker(true)}
+                >
                   <Ionicons name="calendar-outline" size={20} color="#9CA3AF" style={styles.inputIcon} />
                   <TextInput
                     style={styles.input}
-                    placeholder="YYYY-MM-DD (e.g. 1995-05-25)"
-                    keyboardType="numeric"
+                    placeholder="YYYY-MM-DD"
                     value={formData.dateOfBirth}
-                    onChangeText={handleDOBChange}
-                    maxLength={10}
+                    editable={false}
+                    pointerEvents="none"
                   />
-                </View>
-                <Text style={{ fontSize: 11, color: '#6B7280', marginTop: 4, marginLeft: 2 }}>
-                  Format: Year-Month-Day (e.g. 1998-12-31)
-                </Text>
+                </TouchableOpacity>
+                {showDatePicker && (
+                  <View>
+                    {Platform.OS === 'ios' && (
+                      <TouchableOpacity 
+                        onPress={() => setShowDatePicker(false)}
+                        style={{ alignSelf: 'flex-end', padding: 10 }}
+                      >
+                        <Text style={{ color: Colors.primary, fontWeight: 'bold' }}>Done</Text>
+                      </TouchableOpacity>
+                    )}
+                    <DateTimePicker
+                      value={date}
+                      mode="date"
+                      display={Platform.OS === 'ios' ? 'spinner' : 'default'}
+                      onChange={onDateChange}
+                      maximumDate={new Date(2008, 0, 1)} // Min 18 years old
+                    />
+                  </View>
+                )}
               </View>
 
               <View style={styles.inputGroup}>

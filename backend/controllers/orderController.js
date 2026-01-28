@@ -359,7 +359,14 @@ const getOrderById = async (req, res) => {
         const orderUserId = order.user._id ? order.user._id.toString() : order.user.toString();
         const isOwner = orderUserId === req.user._id.toString();
         const isAdmin = req.user.role === 'admin';
-        const isRestaurant = req.user.role === 'restaurant' && order.restaurant?._id?.toString() === req.user.restaurantId?.toString();
+        
+        let isRestaurant = false;
+        if (req.user.role === 'restaurant') {
+            const restaurant = await Restaurant.findOne({ owner: req.user._id });
+            if (restaurant && order.restaurant?._id?.toString() === restaurant._id.toString()) {
+                isRestaurant = true;
+            }
+        }
         
         let isAuthorizedRider = false;
         if (req.user.role === 'rider') {
@@ -678,14 +685,6 @@ const processOrderCompletion = async (order, distanceKm, req = null) => {
 
             rider.stats.completedDeliveries = (rider.stats.completedDeliveries || 0) + 1;
             rider.stats.totalDeliveries = (rider.stats.totalDeliveries || 0) + 1;
-            
-            // Update rider earnings and wallet balance
-            rider.earnings.today = (rider.earnings.today || 0) + riderEarning;
-            rider.earnings.thisWeek = (rider.earnings.thisWeek || 0) + riderEarning;
-            rider.earnings.thisMonth = (rider.earnings.thisMonth || 0) + riderEarning;
-            rider.earnings.total = (rider.earnings.total || 0) + riderEarning;
-            rider.walletBalance = (rider.walletBalance || 0) + riderEarning;
-            rider.earnings_balance = (rider.earnings_balance || 0) + riderEarning;
             
             // Mark current order as null since it's completed
             rider.currentOrder = null;

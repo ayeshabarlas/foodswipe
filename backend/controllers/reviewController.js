@@ -65,6 +65,18 @@ const createReview = async (req, res) => {
         restaurant.reviewCount = reviews.length;
         await restaurant.save();
 
+        // Trigger Pusher event for real-time review notification
+        const { triggerEvent } = require('../socket');
+        const populatedReview = await Review.findById(review._id)
+            .populate('user', 'name avatar')
+            .populate('dish', 'name imageUrl');
+
+        triggerEvent(`restaurant-${restaurantId}`, 'newReview', populatedReview);
+        triggerEvent(`restaurant-${restaurantId}`, 'statsUpdate', {
+            rating: avgRating,
+            reviewCount: reviews.length
+        });
+
         res.status(201).json(review);
     } catch (error) {
         console.error('Create review error:', error);

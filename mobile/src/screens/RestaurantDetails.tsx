@@ -10,7 +10,10 @@ import {
   SafeAreaView,
   StatusBar,
   Dimensions,
-  Alert
+  Alert,
+  Modal,
+  TextInput,
+  Platform
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { Colors } from '../theme/colors';
@@ -33,6 +36,9 @@ export default function RestaurantDetails({ route, navigation }: any) {
   const [isFollowing, setIsFollowing] = useState(false);
   const [activeTab, setActiveTab] = useState('menu'); // 'menu', 'reviews', 'info'
   const [reviews, setReviews] = useState<any[]>([]);
+  const [isReviewModalVisible, setIsReviewModalVisible] = useState(false);
+  const [userReview, setUserReview] = useState({ rating: 5, comment: '' });
+  const [isSubmittingReview, setIsSubmittingReview] = useState(false);
   const scrollViewRef = React.useRef<ScrollView>(null);
 
   useEffect(() => {
@@ -190,6 +196,49 @@ export default function RestaurantDetails({ route, navigation }: any) {
     }
   };
 
+  const handleAddReview = async () => {
+    try {
+      const token = await SecureStore.getItemAsync('auth_token');
+      if (!token) {
+        Alert.alert('Login Required', 'Please login to write a review', [
+          { text: 'Cancel' },
+          { text: 'Login', onPress: () => navigation.navigate('Login') }
+        ]);
+        return;
+      }
+
+      if (!userReview.comment.trim()) {
+        Alert.alert('Required', 'Please write a comment');
+        return;
+      }
+
+      setIsSubmittingReview(true);
+      
+      let cleanId = restaurantId;
+      if (typeof restaurantId === 'object' && restaurantId?._id) {
+        cleanId = restaurantId._id;
+      }
+
+      const res = await apiClient.post(`/restaurants/${cleanId}/reviews`, {
+        rating: userReview.rating,
+        comment: userReview.comment
+      });
+
+      setReviews(prev => [res.data, ...prev]);
+      setIsReviewModalVisible(false);
+      setUserReview({ rating: 5, comment: '' });
+      Alert.alert('Success', 'Thank you for your review!');
+      
+      // Refresh restaurant details for updated rating
+      fetchRestaurantDetails();
+    } catch (err: any) {
+      console.error('Error adding review:', err);
+      Alert.alert('Error', err.response?.data?.message || 'Could not post review');
+    } finally {
+      setIsSubmittingReview(false);
+    }
+  };
+
   if (loading) {
     return (
       <View style={styles.loadingContainer}>
@@ -219,43 +268,58 @@ export default function RestaurantDetails({ route, navigation }: any) {
         {/* Banner & Header */}
         <View style={styles.header}>
           <Image 
-            source={{ uri: getMediaUrl(restaurant.coverImage || restaurant.logo) || 'https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=800' }} 
+            source={{ uri: getMediaUrl(restaurant.coverImage) || getMediaUrl(restaurant.logo) || 'https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=800' }} 
             style={styles.banner} 
           />
+          <View style={styles.headerOverlay} />
+          
           <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
             <Ionicons name="arrow-back" size={24} color="#fff" />
           </TouchableOpacity>
+
+          <View style={styles.profilePicContainer}>
+            <View style={styles.logoWrapper}>
+              <Image 
+                source={{ uri: getMediaUrl(restaurant.logo) || 'https://via.placeholder.com/100' }} 
+                style={styles.profilePic} 
+              />
+              <View style={[styles.statusIndicator, { backgroundColor: restaurant.storeStatus === 'open' ? '#10B981' : (restaurant.storeStatus === 'busy' ? '#F59E0B' : '#EF4444') }]} />
+            </View>
+          </View>
         </View>
 
         <View style={styles.infoSection}>
-          <View style={styles.nameRow}>
+          <View style={styles.nameContainer}>
             <View style={{ flex: 1 }}>
-              <Text style={styles.name}>{restaurant.name}</Text>
-              <View style={styles.ratingRow}>
-                <View style={styles.starsRow}>
-                  {[1, 2, 3, 4, 5].map(s => (
-                    <Ionicons 
-                      key={s} 
-                      name={s <= (restaurant.rating || 5) ? "star" : "star-outline"} 
-                      size={14} 
-                      color="#FFD700" 
-                    />
-                  ))}
+              <View style={styles.titleRow}>
+                <Text style={styles.name}>{restaurant.name}</Text>
+                {restaurant.businessType === 'home-chef' && (
+                  <View style={styles.homeChefLabel}>
+                    <Text style={styles.homeChefLabelText}>Homechef</Text>
+                  </View>
+                )}
+              </View>
+              
+              <View style={styles.metaRow}>
+                <View style={styles.ratingBadge}>
+                  <Ionicons name="star" size={14} color="#FFD700" />
+                  <Text style={styles.ratingBadgeText}>
+                    {restaurant.rating > 0 ? restaurant.rating.toFixed(1) : 'New'}
+                  </Text>
                 </View>
-                <Text style={styles.ratingText}>
-                  {restaurant.rating > 0 ? restaurant.rating.toFixed(1) : 'New'} • 
-                </Text>
-                <Text style={styles.categoryText}>
+                <Text style={styles.metaDivider}>•</Text>
+                <Text style={styles.cuisineText}>
                   {restaurant.cuisineTypes && restaurant.cuisineTypes.length > 0 
                     ? restaurant.cuisineTypes[0] 
                     : (restaurant.businessType === 'home-chef' ? 'Home Chef' : 'Restaurant')}
                 </Text>
-                <View style={[styles.statusDot, { backgroundColor: restaurant.storeStatus === 'open' ? '#10B981' : (restaurant.storeStatus === 'busy' ? '#F59E0B' : '#EF4444'), marginLeft: 10 }]} />
-                <Text style={[styles.statusText, { color: restaurant.storeStatus === 'open' ? '#10B981' : (restaurant.storeStatus === 'busy' ? '#F59E0B' : '#EF4444') }]}>
+                <Text style={styles.metaDivider}>•</Text>
+                <Text style={[styles.openStatus, { color: restaurant.storeStatus === 'open' ? '#10B981' : (restaurant.storeStatus === 'busy' ? '#F59E0B' : '#EF4444') }]}>
                   {restaurant.storeStatus === 'open' ? 'Open' : (restaurant.storeStatus === 'busy' ? 'Busy' : 'Closed')}
                 </Text>
               </View>
             </View>
+            
             <TouchableOpacity 
               style={[styles.followBtn, isFollowing && styles.followingBtn]} 
               onPress={toggleFollow}
@@ -265,7 +329,11 @@ export default function RestaurantDetails({ route, navigation }: any) {
               </Text>
             </TouchableOpacity>
           </View>
-          <Text style={styles.address}>{restaurant.address}</Text>
+
+          <View style={styles.addressRow}>
+            <Ionicons name="location-sharp" size={14} color="#9CA3AF" />
+            <Text style={styles.addressText} numberOfLines={1}>{restaurant.address}</Text>
+          </View>
           
           {/* Real-time Analytics Bar */}
           <View style={styles.analyticsBar}>
@@ -371,9 +439,18 @@ export default function RestaurantDetails({ route, navigation }: any) {
         {activeTab === 'reviews' && (
           <View style={styles.reviewsSection}>
             <View style={styles.reviewsHeader}>
-              <Text style={styles.sectionTitle}>Customer Reviews</Text>
+              <View style={{ flex: 1 }}>
+                <Text style={styles.sectionTitle}>Customer Reviews</Text>
+                <TouchableOpacity 
+                  style={styles.writeReviewBtn}
+                  onPress={() => setIsReviewModalVisible(true)}
+                >
+                  <Ionicons name="create-outline" size={16} color={Colors.primary} />
+                  <Text style={styles.writeReviewBtnText}>Write a review</Text>
+                </TouchableOpacity>
+              </View>
               <View style={styles.overallRating}>
-                <Text style={styles.ratingBig}>{restaurant.rating || '5.0'}</Text>
+                <Text style={styles.ratingBig}>{restaurant.rating > 0 ? restaurant.rating.toFixed(1) : '5.0'}</Text>
                 <View>
                   <View style={styles.starsRow}>
                     {[1, 2, 3, 4, 5].map(s => (
@@ -391,7 +468,10 @@ export default function RestaurantDetails({ route, navigation }: any) {
             </View>
             
             {reviews.length === 0 ? (
-              <Text style={styles.emptyText}>No reviews yet. Be the first!</Text>
+              <View style={styles.emptyReviews}>
+                <Ionicons name="chatbubbles-outline" size={48} color="#E5E7EB" />
+                <Text style={styles.emptyText}>No reviews yet. Be the first!</Text>
+              </View>
             ) : (
               reviews.map((review, idx) => (
                 <View key={review._id || idx} style={styles.reviewCard}>
@@ -456,6 +536,61 @@ export default function RestaurantDetails({ route, navigation }: any) {
         )}
       </ScrollView>
 
+      {/* Review Modal */}
+      <Modal
+        visible={isReviewModalVisible}
+        animationType="slide"
+        transparent={true}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.reviewModalContent}>
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>Rate your experience</Text>
+              <TouchableOpacity onPress={() => setIsReviewModalVisible(false)}>
+                <Ionicons name="close" size={24} color="#6B7280" />
+              </TouchableOpacity>
+            </View>
+
+            <View style={styles.starsSelection}>
+              {[1, 2, 3, 4, 5].map((star) => (
+                <TouchableOpacity 
+                  key={star} 
+                  onPress={() => setUserReview({ ...userReview, rating: star })}
+                >
+                  <Ionicons 
+                    name={star <= userReview.rating ? "star" : "star-outline"} 
+                    size={40} 
+                    color="#FFD700" 
+                  />
+                </TouchableOpacity>
+              ))}
+            </View>
+
+            <TextInput
+              style={styles.reviewInput}
+              placeholder="Tell us about your food and experience..."
+              placeholderTextColor="#9CA3AF"
+              multiline
+              numberOfLines={4}
+              value={userReview.comment}
+              onChangeText={(text) => setUserReview({ ...userReview, comment: text })}
+            />
+
+            <TouchableOpacity 
+              style={[styles.submitReviewBtn, isSubmittingReview && styles.disabledBtn]}
+              onPress={handleAddReview}
+              disabled={isSubmittingReview}
+            >
+              {isSubmittingReview ? (
+                <ActivityIndicator color="#fff" />
+              ) : (
+                <Text style={styles.submitReviewBtnText}>Submit Review</Text>
+              )}
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
+
       {activeDish && (
         <DishDetailsModal 
           isVisible={isDetailsVisible}
@@ -483,45 +618,157 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   header: {
-    height: 250,
+    height: 220,
     position: 'relative',
+    backgroundColor: '#000',
   },
   banner: {
     width: '100%',
     height: '100%',
+    opacity: 0.85,
+  },
+  headerOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(0,0,0,0.1)',
   },
   backButton: {
     position: 'absolute',
-    top: 20,
+    top: 40,
     left: 20,
-    backgroundColor: 'rgba(0,0,0,0.5)',
-    padding: 8,
-    borderRadius: 20,
+    backgroundColor: 'rgba(0,0,0,0.4)',
+    padding: 10,
+    borderRadius: 25,
+    zIndex: 10,
+  },
+  profilePicContainer: {
+    position: 'absolute',
+    bottom: -40,
+    left: 20,
+    zIndex: 5,
+  },
+  logoWrapper: {
+    position: 'relative',
+    padding: 4,
+    backgroundColor: '#fff',
+    borderRadius: 60,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.2,
+    shadowRadius: 8,
+    elevation: 8,
+  },
+  profilePic: {
+    width: 100,
+    height: 100,
+    borderRadius: 50,
+  },
+  statusIndicator: {
+    position: 'absolute',
+    bottom: 5,
+    right: 5,
+    width: 18,
+    height: 18,
+    borderRadius: 9,
+    borderWidth: 3,
+    borderColor: '#fff',
   },
   infoSection: {
-    padding: 20,
-    borderBottomWidth: 1,
-    borderBottomColor: '#eee',
+    paddingTop: 50,
+    paddingHorizontal: 20,
+    paddingBottom: 20,
+    backgroundColor: '#fff',
   },
-  name: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: '#333',
-  },
-  nameRow: {
+  nameContainer: {
     flexDirection: 'row',
     justifyContent: 'space-between',
+    alignItems: 'flex-start',
+  },
+  titleRow: {
+    flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 5,
+    flexWrap: 'wrap',
+  },
+  name: {
+    fontSize: 26,
+    fontWeight: '800',
+    color: '#111827',
+    marginRight: 10,
+    letterSpacing: -0.5,
+  },
+  homeChefLabel: {
+    backgroundColor: '#FFF7ED',
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#FFEDD5',
+  },
+  homeChefLabelText: {
+    color: '#EA580C',
+    fontSize: 12,
+    fontWeight: 'bold',
+    textTransform: 'uppercase',
+  },
+  metaRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 8,
+    flexWrap: 'wrap',
+  },
+  ratingBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#FEF9C3',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 8,
+  },
+  ratingBadgeText: {
+    fontSize: 14,
+    fontWeight: 'bold',
+    color: '#854D0E',
+    marginLeft: 4,
+  },
+  metaDivider: {
+    marginHorizontal: 8,
+    color: '#9CA3AF',
+    fontSize: 14,
+  },
+  cuisineText: {
+    fontSize: 14,
+    color: '#4B5563',
+    fontWeight: '500',
+  },
+  openStatus: {
+    fontSize: 14,
+    fontWeight: 'bold',
+  },
+  addressRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 12,
+  },
+  addressText: {
+    fontSize: 13,
+    color: '#6B7280',
+    marginLeft: 4,
+    flex: 1,
   },
   followBtn: {
     backgroundColor: Colors.primary,
-    paddingHorizontal: 15,
-    paddingVertical: 8,
-    borderRadius: 20,
+    paddingHorizontal: 20,
+    paddingVertical: 10,
+    borderRadius: 25,
+    shadowColor: Colors.primary,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 4,
   },
   followingBtn: {
-    backgroundColor: '#eee',
+    backgroundColor: '#F3F4F6',
+    shadowOpacity: 0,
+    elevation: 0,
   },
   followBtnText: {
     color: '#fff',
@@ -529,36 +776,7 @@ const styles = StyleSheet.create({
     fontSize: 14,
   },
   followingBtnText: {
-    color: '#666',
-  },
-  ratingRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginTop: 5,
-  },
-  ratingText: {
-    fontSize: 16,
-    fontWeight: '600',
-    marginLeft: 5,
-  },
-  categoryText: {
-    fontSize: 16,
-    color: '#666',
-  },
-  address: {
-    fontSize: 14,
-    color: '#999',
-    marginTop: 5,
-  },
-  statusDot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-  },
-  statusText: {
-    fontSize: 14,
-    fontWeight: '600',
-    marginLeft: 4,
+    color: '#4B5563',
   },
   analyticsBar: {
     flexDirection: 'row',
@@ -849,6 +1067,79 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: 'bold',
     color: Colors.primary,
+  },
+  writeReviewBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: -8,
+    marginBottom: 8,
+  },
+  writeReviewBtnText: {
+    fontSize: 14,
+    color: Colors.primary,
+    fontWeight: '600',
+    marginLeft: 4,
+    textDecorationLine: 'underline',
+  },
+  emptyReviews: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 40,
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    justifyContent: 'flex-end',
+  },
+  reviewModalContent: {
+    backgroundColor: '#fff',
+    borderTopLeftRadius: 30,
+    borderTopRightRadius: 30,
+    padding: 24,
+    paddingBottom: Platform.OS === 'ios' ? 40 : 24,
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 20,
+  },
+  modalTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: '#111827',
+  },
+  starsSelection: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    gap: 10,
+    marginBottom: 24,
+  },
+  reviewInput: {
+    backgroundColor: '#F9FAFB',
+    borderRadius: 16,
+    padding: 16,
+    height: 120,
+    textAlignVertical: 'top',
+    fontSize: 15,
+    color: '#111827',
+    marginBottom: 24,
+    borderWidth: 1,
+    borderColor: '#F3F4F6',
+  },
+  submitReviewBtn: {
+    backgroundColor: Colors.primary,
+    paddingVertical: 16,
+    borderRadius: 16,
+    alignItems: 'center',
+  },
+  submitReviewBtnText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
+  disabledBtn: {
+    opacity: 0.6,
   },
   variantBadge: {
     backgroundColor: '#F3F4F6',

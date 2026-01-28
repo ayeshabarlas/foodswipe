@@ -361,9 +361,24 @@ const getAllRestaurants = async (req, res) => {
         
         // Add filters
         if (search) {
+            const Dish = require('../models/Dish');
+            // 1. Find dishes matching search
+            const matchingDishes = await Dish.find({
+                $or: [
+                    { name: { $regex: search, $options: 'i' } },
+                    { description: { $regex: search, $options: 'i' } },
+                    { category: { $regex: search, $options: 'i' } }
+                ]
+            }).select('restaurant');
+            
+            const restaurantIdsFromDishes = matchingDishes.map(d => d.restaurant);
+
             query.$or = [
                 { name: { $regex: search, $options: 'i' } },
                 { description: { $regex: search, $options: 'i' } },
+                { cuisineTypes: { $regex: search, $options: 'i' } },
+                { menuCategories: { $regex: search, $options: 'i' } },
+                { _id: { $in: restaurantIdsFromDishes } }
             ];
         }
 

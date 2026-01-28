@@ -548,9 +548,16 @@ const getAllRiders = async (req, res) => {
             },
             {
                 $addFields: {
-                    totalEarnings: { $ifNull: ['$wallet.totalEarnings', { $ifNull: ['$earnings.total', 0] }] },
-                    cashCollected: { $ifNull: ['$wallet.cashCollected', 0] },
-                    availableWithdraw: { $ifNull: ['$wallet.availableWithdraw', 0] }
+                    totalEarnings: { $ifNull: ['$earnings.total', { $ifNull: ['$wallet.totalEarnings', 0] }] },
+                    cashCollected: { $ifNull: ['$cod_balance', { $ifNull: ['$wallet.cashCollected', 0] }] },
+                    availableWithdraw: { $ifNull: ['$earnings_balance', { $ifNull: ['$wallet.availableWithdraw', 0] }] }
+                }
+            },
+            {
+                $addFields: {
+                    totalEarnings: { $ifNull: ['$totalEarnings', 0] },
+                    cashCollected: { $ifNull: ['$cashCollected', 0] },
+                    availableWithdraw: { $ifNull: ['$availableWithdraw', 0] }
                 }
             },
             { $sort: { createdAt: -1 } }
@@ -1528,6 +1535,141 @@ const assignRiderToOrder = async (req, res) => {
     }
 };
 
+// @desc    Suspend a user (Customer, Restaurant, or Rider)
+// @route   POST /api/admin/users/:id/suspend
+// @access  Private/Admin
+const suspendUser = async (req, res) => {
+    try {
+        const { reason, durationWeeks = 1 } = req.body;
+        const user = await User.findById(req.params.id);
+
+        if (!user) {
+            return res.status(404).json({ message: 'User not found' });
+        }
+
+        const suspendedAt = new Date();
+        const unsuspendAt = new Date();
+        unsuspendAt.setDate(suspendedAt.getDate() + (durationWeeks * 7));
+
+        user.status = 'suspended';
+        user.suspensionDetails = {
+            isSuspended: true,
+            suspendedAt,
+            unsuspendAt,
+            reason: reason || 'Violation of terms',
+            history: [
+                ...(user.suspensionDetails?.history || []),
+                {
+                    action: 'suspended',
+                    date: suspendedAt,
+                    reason: reason || 'Violation of terms',
+                    adminId: req.user._id
+                }
+            ]
+        };
+
+        await user.save();
+
+        // If restaurant, deactivate it
+        if (user.role === 'restaurant') {
+            await Restaurant.findOneAndUpdate({ owner: user._id }, { isActive: false });
+        }
+
+        // Audit Log
+        await AuditLog.create({
+            event: user.role === 'restaurant' ? 'RESTAURANT_SUSPENDED' : 
+                   user.role === 'rider' ? 'RIDER_SUSPENDED' : 'USER_SUSPENDED',
+            userId: user._id,
+            email: user.email,
+            role: user.role,
+            details: { reason, durationWeeks, suspendedBy: req.user._id, unsuspendAt }
+        });
+
+        triggerEvent('admin', 'user_updated', user);
+        triggerEvent('admin', 'notification', {
+            type: 'warning',
+            message: `${user.role.toUpperCase()} ${user.name} has been suspended for ${durationWeeks} week(s)`
+        });
+
+        res.json({ message: 'User suspended successfully', user });
+    } catch (error) {
+        res.status(500).json({ message: 'Server error', error: error.message });
+    }
+};
+
+// @desc    Unsuspend a user
+// @route   POST /api/admin/users/:id/unsuspend
+// @access  Private/Admin
+const unsuspendUser = async (req, res) => {
+    try {
+        const user = await User.findById(req.params.id);
+
+        if (!user) {
+            return res.status(404).json({ message: 'User not found' });
+        }
+
+        user.status = 'active';
+        user.suspensionDetails.isSuspended = false;
+        user.suspensionDetails.history.push({
+            action: 'unsuspended',
+            date: new Date(),
+            reason: 'Manual unsuspend by admin',
+            adminId: req.user._id
+        });
+
+        await user.save();
+
+        // If restaurant, reactivate it if approved
+        if (user.role === 'restaurant') {
+            const restaurant = await Restaurant.findOne({ owner: user._id });
+            if (restaurant && restaurant.verificationStatus === 'approved') {
+                restaurant.isActive = true;
+                await restaurant.save();
+            }
+        }
+
+        // Audit Log
+        await AuditLog.create({
+            event: user.role === 'restaurant' ? 'RESTAURANT_UNSUSPENDED' : 
+                   user.role === 'rider' ? 'RIDER_UNSUSPENDED' : 'USER_UNSUSPENDED',
+            userId: user._id,
+            email: user.email,
+            role: user.role,
+            details: { unsuspendedBy: req.user._id }
+        });
+
+        triggerEvent('admin', 'user_updated', user);
+
+        res.json({ message: 'User unsuspended successfully', user });
+    } catch (error) {
+        res.status(500).json({ message: 'Server error', error: error.message });
+    }
+};
+
+// @desc    Get suspension and deletion history
+// @route   GET /api/admin/history
+// @access  Private/Admin
+const getActionHistory = async (req, res) => {
+    try {
+        const history = await AuditLog.find({
+            event: { 
+                $in: [
+                    'USER_SUSPENDED', 'USER_UNSUSPENDED', 'USER_DELETED',
+                    'RESTAURANT_SUSPENDED', 'RESTAURANT_UNSUSPENDED', 'RESTAURANT_DELETED',
+                    'RIDER_SUSPENDED', 'RIDER_UNSUSPENDED', 'RIDER_DELETED'
+                ] 
+            }
+        })
+        .populate('userId', 'name email role avatar')
+        .sort({ createdAt: -1 })
+        .limit(100);
+
+        res.json(history);
+    } catch (error) {
+        res.status(500).json({ message: 'Server error', error: error.message });
+    }
+};
+
 module.exports = {
     getPendingRestaurants,
     approveRestaurant,
@@ -1559,5 +1701,6 @@ module.exports = {
     markNotificationRead,
     nuclearWipe,
     fixInflatedOrders,
-    assignRiderToOrder
+    assignRiderToOrder,
+    getActionHistory
 };

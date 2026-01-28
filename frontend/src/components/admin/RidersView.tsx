@@ -97,12 +97,14 @@ export default function RidersView() {
 
             socket.on('rider_registered', handleUpdate);
             socket.on('rider_updated', handleUpdate);
+            socket.on('rider_status_updated', handleUpdate);
             socket.on('user_updated', handleUpdate);
             socket.on('order_updated', handleUpdate);
 
             return () => {
                 socket.off('rider_registered', handleUpdate);
                 socket.off('rider_updated', handleUpdate);
+                socket.off('rider_status_updated', handleUpdate);
                 socket.off('user_updated', handleUpdate);
                 socket.off('order_updated', handleUpdate);
             };
@@ -445,10 +447,14 @@ export default function RidersView() {
                                             </td>
                                             <td className="px-6 py-4">
                                                 <div className="flex flex-col">
-                                                    <p className="text-[14px] font-semibold text-[#111827]">Rs. {(rider.earnings?.total || 0).toLocaleString()}</p>
-                                                    <p className="text-[11px] font-medium text-[#FF6A00] mt-0.5">
-                                                        COD: Rs. {(rider.cashCollected || 0).toLocaleString()}
-                                                    </p>
+                                                    <div className="flex items-center gap-1.5">
+                                                        <span className="text-[14px] font-bold text-gray-900">Rs. {(rider.availableWithdraw || 0).toLocaleString()}</span>
+                                                        <span className="text-[10px] font-bold text-green-600 bg-green-50 px-1.5 py-0.5 rounded uppercase tracking-tighter">Available</span>
+                                                    </div>
+                                                    <div className="flex items-center gap-1.5 mt-1">
+                                                        <span className="text-[12px] font-bold text-orange-600">Rs. {(rider.cashCollected || 0).toLocaleString()}</span>
+                                                        <span className="text-[10px] font-bold text-orange-600 bg-orange-50 px-1.5 py-0.5 rounded uppercase tracking-tighter">COD</span>
+                                                    </div>
                                                 </div>
                                             </td>
                                             <td className="px-6 py-4 text-right">

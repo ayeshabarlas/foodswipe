@@ -15,7 +15,8 @@ import {
     FaHeadset,
     FaChevronDown,
     FaChevronRight,
-    FaMapMarkedAlt
+    FaMapMarkedAlt,
+    FaHistory
 } from 'react-icons/fa';
 
 interface SidebarProps {
@@ -81,6 +82,7 @@ export default function Sidebar({ activeTab, setActiveTab, onLogout, notificatio
         { id: 'finance', label: 'Finance', icon: FaMoneyBillWave, roles: ['super-admin', 'admin', 'finance-admin'] },
         { id: 'vouchers', label: 'Vouchers', icon: FaTicketAlt, roles: ['super-admin', 'admin', 'finance-admin'] },
         { id: 'admin-management', label: 'Admins', icon: FaUser, roles: ['super-admin', 'admin'] },
+        { id: 'history', label: 'Action History', icon: FaHistory, roles: ['super-admin', 'admin'] },
         { id: 'support', label: 'Support', icon: FaHeadset },
         { id: 'settings', label: 'Settings', icon: FaCog, roles: ['super-admin', 'admin'] },
     ];

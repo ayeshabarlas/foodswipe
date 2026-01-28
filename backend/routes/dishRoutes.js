@@ -127,6 +127,15 @@ router.post('/', protect, requireRestaurant, checkRestaurantApproval, async (req
             views: 0
         });
 
+        // Update restaurant's menuCategories and cuisineTypes
+        const Restaurant = require('../models/Restaurant');
+        await Restaurant.findByIdAndUpdate(restaurant, {
+            $addToSet: { 
+                menuCategories: category,
+                cuisineTypes: category 
+            }
+        });
+
         // Trigger Pusher event for real-time menu update
         triggerEvent(`restaurant-${restaurant}`, 'menu_updated', {
             restaurantId: restaurant,
@@ -171,6 +180,17 @@ router.put('/:id', protect, requireRestaurant, checkRestaurantApproval, async (r
         if (ingredients !== undefined) dish.ingredients = ingredients;
 
         await dish.save();
+
+        // Update restaurant's menuCategories and cuisineTypes
+        if (category) {
+            const Restaurant = require('../models/Restaurant');
+            await Restaurant.findByIdAndUpdate(dish.restaurant, {
+                $addToSet: { 
+                    menuCategories: category,
+                    cuisineTypes: category 
+                }
+            });
+        }
 
         // Trigger Pusher event for real-time menu update
         triggerEvent(`restaurant-${dish.restaurant}`, 'menu_updated', {

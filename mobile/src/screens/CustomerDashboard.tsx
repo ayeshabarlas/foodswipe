@@ -65,8 +65,11 @@ export default function CustomerDashboard({ navigation }: any) {
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [sessionToken, setSessionToken] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
+  const [restaurantSearch, setRestaurantSearch] = useState('');
+  const [restaurantSuggestions, setRestaurantSuggestions] = useState<any[]>([]);
+  const [showRestaurantSuggestions, setShowRestaurantSuggestions] = useState(false);
 
-  const categories = ['All', 'Pizza', 'Burger', 'Asian', 'Dessert', 'Healthy'];
+  const categories = ['All', 'Pizza', 'Burger', 'Asian', 'Desi', 'Italian', 'Fast Food', 'Dessert', 'Healthy'];
 
   useEffect(() => {
     loadUserData();
@@ -291,27 +294,66 @@ export default function CustomerDashboard({ navigation }: any) {
     }
   };
 
-  const fetchRestaurants = async () => {
+  const fetchRestaurants = async (search = '', category = 'All') => {
     try {
       setLoading(true);
-      // Try cache first
-      const cached = await getCache('restaurants');
-      if (cached) setRestaurants(cached);
+      
+      // If we're filtering by category, search takes priority if present
+      const queryParam = search || (category !== 'All' ? category : '');
+      
+      // Only use cache if no search/category query
+      if (!queryParam) {
+        const cached = await getCache('restaurants');
+        if (cached) setRestaurants(cached);
+      }
 
-      const res = await apiClient.get('/restaurants');
+      const res = await apiClient.get(`/restaurants?search=${encodeURIComponent(queryParam)}`);
       const restaurantsData = res.data.restaurants || [];
       const activeRestaurants = restaurantsData.filter((r: any) => 
         r.verificationStatus === 'approved' && r.isActive !== false
       );
       
       setRestaurants(activeRestaurants);
-      await setCache('restaurants', activeRestaurants);
+      if (!queryParam) {
+        await setCache('restaurants', activeRestaurants);
+      }
     } catch (err) {
       console.error('Error fetching restaurants:', err);
     } finally {
       setLoading(false);
       setRefreshing(false);
     }
+  };
+
+  // Debounced search effect
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (restaurantSearch !== undefined) {
+        // When searching, we reset the active category to 'All' unless search is empty
+        if (restaurantSearch.trim()) {
+          setActiveCategory('All');
+          setShowRestaurantSuggestions(true);
+          // Fetch suggestions (limited to 5 for the dropdown)
+          apiClient.get(`/restaurants?search=${encodeURIComponent(restaurantSearch)}&limit=5`)
+            .then(res => {
+              setRestaurantSuggestions(res.data.restaurants || []);
+            })
+            .catch(err => console.error('Error fetching suggestions:', err));
+        } else {
+          setShowRestaurantSuggestions(false);
+          setRestaurantSuggestions([]);
+        }
+        fetchRestaurants(restaurantSearch, restaurantSearch.trim() ? 'All' : activeCategory);
+      }
+    }, 500);
+
+    return () => clearTimeout(timer);
+  }, [restaurantSearch]);
+
+  const handleSuggestionPress = (item: any) => {
+    setRestaurantSearch(item.name);
+    setShowRestaurantSuggestions(false);
+    navigation.navigate('RestaurantDetails', { restaurantId: item._id });
   };
 
   const fetchFeaturedVideo = async () => {
@@ -331,6 +373,8 @@ export default function CustomerDashboard({ navigation }: any) {
 
   const onRefresh = () => {
     setRefreshing(true);
+    setRestaurantSearch('');
+    setActiveCategory('All');
     fetchRestaurants();
     fetchFeaturedVideo();
   };
@@ -340,10 +384,6 @@ export default function CustomerDashboard({ navigation }: any) {
     await SecureStore.deleteItemAsync('user_data');
     navigation.replace('Home');
   };
-
-  const filteredRestaurants = activeCategory === 'All' 
-    ? restaurants 
-    : restaurants.filter(r => r.businessType === activeCategory || r.category === activeCategory);
 
   const getProgressWidth = (status: string) => {
     switch (status) {
@@ -361,36 +401,97 @@ export default function CustomerDashboard({ navigation }: any) {
       style={styles.restaurantCard}
       onPress={() => navigation.navigate('RestaurantDetails', { restaurantId: item._id })}
     >
-      <Image 
-        source={{ uri: getMediaUrl(item.logo) || 'https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=800' }}
-        style={styles.restaurantImage}
-      />
+      <View style={styles.imageContainer}>
+        <Image 
+          source={{ uri: getMediaUrl(item.logo) || 'https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=800' }}
+          style={styles.restaurantImage}
+        />
+        {item.businessType === 'home-chef' && (
+          <View style={styles.homeChefBadge}>
+            <Ionicons name="home" size={10} color="#fff" />
+            <Text style={styles.homeChefBadgeText}>Homechef</Text>
+          </View>
+        )}
+      </View>
       <View style={styles.restaurantInfo}>
         <View style={styles.nameRow}>
-          <Text style={styles.restaurantName}>{item.name}</Text>
+          <Text style={styles.restaurantName} numberOfLines={1}>{item.name}</Text>
           <View style={styles.ratingBadge}>
             <Ionicons name="star" size={12} color="#FFD700" />
-            <Text style={styles.ratingText}>{item.rating || '4.5'}</Text>
+            <Text style={styles.ratingText}>
+              {item.rating && item.rating > 0 ? item.rating.toFixed(1) : 'New'}
+            </Text>
           </View>
         </View>
-        <Text style={styles.restaurantDetails}>
-          {item.businessType || 'Restaurant'} • {item.address || 'Local'}
+        <Text style={styles.restaurantDetails} numberOfLines={1}>
+          {item.cuisineTypes && item.cuisineTypes.length > 0 ? item.cuisineTypes[0] : (item.businessType === 'home-chef' ? 'Home Chef' : 'Restaurant')} • {item.address || 'Local'}
         </Text>
       </View>
     </TouchableOpacity>
   );
 
-  const DashboardHeader = () => (
+  const renderDashboardHeader = () => (
     <>
+      {/* Suspension Banner */}
+      {userData?.status === 'suspended' && (
+        <View style={styles.suspensionBanner}>
+          <View style={styles.suspensionHeader}>
+            <Ionicons name="alert-circle" size={20} color="#fff" />
+            <Text style={styles.suspensionTitle}>ACCOUNT SUSPENDED</Text>
+          </View>
+          {userData.suspensionDetails?.unsuspendAt && (
+            <Text style={styles.suspensionDate}>
+              Auto-unsuspend on: {new Date(userData.suspensionDetails.unsuspendAt).toLocaleDateString()}
+            </Text>
+          )}
+          <Text style={styles.suspensionReason}>
+            Reason: {userData.suspensionDetails?.reason || 'Violation of terms'}
+          </Text>
+        </View>
+      )}
+
       {/* Search Bar */}
-      <View style={styles.searchContainer}>
+      <View style={[styles.searchContainer, { zIndex: 2000 }]}>
         <View style={styles.searchBar}>
           <Ionicons name="search" size={20} color={Colors.gray} />
           <TextInput 
             placeholder="Search for restaurants, dishes..." 
             style={styles.searchInput}
+            value={restaurantSearch}
+            onChangeText={setRestaurantSearch}
+            onFocus={() => restaurantSearch.trim() && setShowRestaurantSuggestions(true)}
           />
+          {restaurantSearch.length > 0 && (
+            <TouchableOpacity onPress={() => {
+              setRestaurantSearch('');
+              setShowRestaurantSuggestions(false);
+            }}>
+              <Ionicons name="close-circle" size={18} color={Colors.gray} />
+            </TouchableOpacity>
+          )}
         </View>
+
+        {/* Search Suggestions Dropdown */}
+        {showRestaurantSuggestions && restaurantSuggestions.length > 0 && (
+          <View style={styles.dashboardSuggestions}>
+            {restaurantSuggestions.map((item) => (
+              <TouchableOpacity 
+                key={item._id} 
+                style={styles.dashboardSuggestionItem}
+                onPress={() => handleSuggestionPress(item)}
+              >
+                <Ionicons name="restaurant-outline" size={18} color={Colors.primary} />
+                <View style={styles.suggestionTextContainer}>
+                  <Text style={styles.suggestionMainText}>{item.name}</Text>
+                  <Text style={styles.suggestionSubText} numberOfLines={1}>
+                    {item.cuisineTypes?.join(', ') || item.businessType} • {item.address}
+                  </Text>
+                </View>
+                <Ionicons name="chevron-forward" size={16} color={Colors.gray} />
+              </TouchableOpacity>
+            ))}
+          </View>
+        )}
       </View>
 
       {/* Categories */}
@@ -399,7 +500,11 @@ export default function CustomerDashboard({ navigation }: any) {
           <TouchableOpacity 
             key={i} 
             style={[styles.categoryItem, activeCategory === cat && styles.activeCategory]}
-            onPress={() => setActiveCategory(cat)}
+            onPress={() => {
+              setActiveCategory(cat);
+              setRestaurantSearch(''); // Clear search when selecting a category
+              fetchRestaurants('', cat);
+            }}
           >
             <Text style={[styles.categoryText, activeCategory === cat && styles.activeCategoryText]}>{cat}</Text>
           </TouchableOpacity>
@@ -607,10 +712,10 @@ export default function CustomerDashboard({ navigation }: any) {
       </View>
 
       <FlatList
-        data={filteredRestaurants}
+        data={restaurants}
         keyExtractor={(item) => item._id}
         renderItem={renderRestaurantItem}
-        ListHeaderComponent={DashboardHeader}
+        ListHeaderComponent={renderDashboardHeader()}
         refreshControl={
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={[Colors.primary]} />
         }
@@ -658,6 +763,41 @@ const styles = StyleSheet.create({
   },
   profileButton: {
     padding: 4,
+  },
+  suspensionBanner: {
+    backgroundColor: '#DC2626',
+    marginHorizontal: 20,
+    marginTop: 10,
+    borderRadius: 12,
+    padding: 12,
+    elevation: 3,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+  },
+  suspensionHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 4,
+  },
+  suspensionTitle: {
+    color: '#fff',
+    fontWeight: 'bold',
+    fontSize: 14,
+    marginLeft: 8,
+  },
+  suspensionDate: {
+    color: '#fff',
+    fontSize: 12,
+    opacity: 0.9,
+    fontWeight: '500',
+  },
+  suspensionReason: {
+    color: '#fff',
+    fontSize: 11,
+    opacity: 0.8,
+    marginTop: 2,
   },
   searchContainer: {
     paddingHorizontal: 20,
@@ -863,6 +1003,30 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.1,
     shadowRadius: 4,
   },
+  dashboardSuggestions: {
+    position: 'absolute',
+    top: 55, // Height of search bar + margin
+    left: 0,
+    right: 0,
+    backgroundColor: '#fff',
+    borderRadius: 15,
+    zIndex: 3000,
+    elevation: 5,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.15,
+    shadowRadius: 10,
+    borderWidth: 1,
+    borderColor: '#F3F4F6',
+    overflow: 'hidden',
+  },
+  dashboardSuggestionItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: '#F3F4F6',
+  },
   suggestionItem: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -965,7 +1129,7 @@ const styles = StyleSheet.create({
     marginHorizontal: 20,
     marginBottom: 20,
     backgroundColor: '#fff',
-    borderRadius: 16,
+    borderRadius: 20,
     overflow: 'hidden',
     borderWidth: 1,
     borderColor: '#F3F4F6',
@@ -975,9 +1139,32 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.1,
     shadowRadius: 4,
   },
+  imageContainer: {
+    position: 'relative',
+    height: 180,
+    width: '100%',
+  },
   restaurantImage: {
     width: '100%',
-    height: 150,
+    height: '100%',
+  },
+  homeChefBadge: {
+    position: 'absolute',
+    top: 12,
+    left: 12,
+    backgroundColor: 'rgba(0,0,0,0.6)',
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderRadius: 12,
+  },
+  homeChefBadgeText: {
+    color: '#fff',
+    fontSize: 10,
+    fontWeight: 'bold',
+    marginLeft: 4,
+    textTransform: 'uppercase',
   },
   restaurantInfo: {
     padding: 15,

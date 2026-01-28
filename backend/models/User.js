@@ -79,6 +79,18 @@ const userSchema = mongoose.Schema(
             enum: ['active', 'suspended', 'flagged'],
             default: 'active',
         },
+        suspensionDetails: {
+            isSuspended: { type: Boolean, default: false },
+            suspendedAt: { type: Date },
+            unsuspendAt: { type: Date },
+            reason: { type: String },
+            history: [{
+                action: { type: String, enum: ['suspended', 'unsuspended'] },
+                date: { type: Date, default: Date.now },
+                reason: { type: String },
+                adminId: { type: mongoose.Schema.Types.ObjectId, ref: 'User' }
+            }]
+        },
         firebaseUid: {
             type: String,
             default: null,

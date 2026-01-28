@@ -13,19 +13,48 @@ import {
   Alert,
   StatusBar,
   ScrollView,
-  Dimensions
+  Dimensions,
+  Modal
 } from 'react-native';
 import * as Google from 'expo-auth-session/providers/google';
 import apiClient from '../api/apiClient';
 import * as SecureStore from 'expo-secure-store';
 import { Colors } from '../theme/colors';
 import { LinearGradient } from 'expo-linear-gradient';
+import { Ionicons } from '@expo/vector-icons';
 import { initSocket } from '../utils/socket';
 import PhoneVerificationModal from '../components/PhoneVerificationModal';
+import { Svg, Text as SvgText, Defs, LinearGradient as SvgGradient, Stop } from 'react-native-svg';
 
 WebBrowser.maybeCompleteAuthSession();
 
 const { width } = Dimensions.get('window');
+
+const GradientText = ({ text, style }: { text: string, style: any }) => {
+  return (
+    <View style={style}>
+      <Svg height="50" width="300">
+        <Defs>
+          <SvgGradient id="grad" x1="0" y1="0" x2="1" y2="0">
+            <Stop offset="0" stopColor="#FF416C" stopOpacity="1" />
+            <Stop offset="1" stopColor="#FF4B2B" stopOpacity="1" />
+          </SvgGradient>
+        </Defs>
+        <SvgText
+          fill="url(#grad)"
+          fontSize="40"
+          fontWeight="500"
+          x="150" // Centered for 300 width
+          y="35"
+          textAnchor="middle"
+          fontFamily={Platform.OS === 'ios' ? 'Avenir' : 'sans-serif'}
+        >
+          {text}
+        </SvgText>
+      </Svg>
+    </View>
+  );
+};
 
 export default function LoginScreen({ navigation }: any) {
   const [request, response, promptAsync] = Google.useAuthRequest({
@@ -185,27 +214,6 @@ export default function LoginScreen({ navigation }: any) {
     }
   };
 
-  const checkConnectivity = async () => {
-    setLoading(true);
-    try {
-      const response = await apiClient.get('/health');
-      const data = response.data;
-      Alert.alert(
-        'Server Status',
-        `Backend: ${data.status || 'OK'}\nDB: ${data.db || 'Offline'}\nFirebase: ${data.firebase || 'OK'}\nURL: ${apiClient.defaults.baseURL}`,
-        [{ text: 'OK' }]
-      );
-    } catch (error: any) {
-      Alert.alert(
-        'Server Unreachable',
-        `Error: ${error.message}\nURL: ${apiClient.defaults.baseURL}\n\nCheck if your computer and phone are on the same Wi-Fi.`,
-        [{ text: 'OK' }]
-      );
-    } finally {
-      setLoading(false);
-    }
-  };
-
   return (
     <View style={styles.container}>
       <StatusBar barStyle="light-content" />
@@ -244,7 +252,13 @@ export default function LoginScreen({ navigation }: any) {
                   style={[styles.roleTab, selectedRole === 'customer' && styles.activeRoleTab]} 
                   onPress={() => setSelectedRole('customer')}
                 >
-                  <Text style={[styles.roleEmoji, selectedRole === 'customer' && styles.activeRoleText]}>👤</Text>
+                  <View style={[styles.roleIconContainer, selectedRole === 'customer' && styles.activeRoleIconContainer]}>
+                    <Ionicons 
+                      name={selectedRole === 'customer' ? "person" : "person-outline"} 
+                      size={24} 
+                      color={selectedRole === 'customer' ? Colors.primary : '#9CA3AF'} 
+                    />
+                  </View>
                   <Text style={[styles.roleLabel, selectedRole === 'customer' && styles.activeRoleText]}>Customer</Text>
                 </TouchableOpacity>
 
@@ -252,7 +266,13 @@ export default function LoginScreen({ navigation }: any) {
                   style={[styles.roleTab, selectedRole === 'restaurant' && styles.activeRoleTab]} 
                   onPress={() => setSelectedRole('restaurant')}
                 >
-                  <Text style={[styles.roleEmoji, selectedRole === 'restaurant' && styles.activeRoleText]}>🏪</Text>
+                  <View style={[styles.roleIconContainer, selectedRole === 'restaurant' && styles.activeRoleIconContainer]}>
+                    <Ionicons 
+                      name={selectedRole === 'restaurant' ? "restaurant" : "restaurant-outline"} 
+                      size={24} 
+                      color={selectedRole === 'restaurant' ? Colors.primary : '#9CA3AF'} 
+                    />
+                  </View>
                   <Text style={[styles.roleLabel, selectedRole === 'restaurant' && styles.activeRoleText]}>Restaurant</Text>
                 </TouchableOpacity>
 
@@ -260,7 +280,13 @@ export default function LoginScreen({ navigation }: any) {
                   style={[styles.roleTab, selectedRole === 'rider' && styles.activeRoleTab]} 
                   onPress={() => setSelectedRole('rider')}
                 >
-                  <Text style={[styles.roleEmoji, selectedRole === 'rider' && styles.activeRoleText]}>🏍️</Text>
+                  <View style={[styles.roleIconContainer, selectedRole === 'rider' && styles.activeRoleIconContainer]}>
+                    <Ionicons 
+                      name={selectedRole === 'rider' ? "bicycle" : "bicycle-outline"} 
+                      size={24} 
+                      color={selectedRole === 'rider' ? Colors.primary : '#9CA3AF'} 
+                    />
+                  </View>
                   <Text style={[styles.roleLabel, selectedRole === 'rider' && styles.activeRoleText]}>Rider</Text>
                 </TouchableOpacity>
               </View>
@@ -271,7 +297,7 @@ export default function LoginScreen({ navigation }: any) {
                     style={styles.googleButton}
                     onPress={handleGoogleLogin}
                   >
-                    <Text style={styles.googleButtonText}>G</Text>
+                    <Ionicons name="logo-google" size={20} color="#EA4335" style={{ marginRight: 10 }} />
                     <Text style={styles.googleButtonLabel}>Continue with Google</Text>
                   </TouchableOpacity>
 
@@ -279,7 +305,8 @@ export default function LoginScreen({ navigation }: any) {
                     style={styles.emailButton}
                     onPress={() => setMode('login')}
                   >
-                    <Text style={styles.emailButtonText}>✉  Continue with Email</Text>
+                    <Ionicons name="mail" size={20} color="#fff" style={{ marginRight: 10 }} />
+                    <Text style={styles.emailButtonLabel}>Continue with Email</Text>
                   </TouchableOpacity>
 
                   <TouchableOpacity onPress={() => setShowTermsModal(true)}>
@@ -333,13 +360,6 @@ export default function LoginScreen({ navigation }: any) {
                       </ScrollView>
                     </SafeAreaView>
                   </Modal>
-
-                  <TouchableOpacity 
-                    style={styles.checkConnButton}
-                    onPress={checkConnectivity}
-                  >
-                    <Text style={styles.checkConnText}>Check Server Connectivity</Text>
-                  </TouchableOpacity>
                 </View>
               ) : (
                 <View style={styles.form}>
@@ -432,15 +452,6 @@ export default function LoginScreen({ navigation }: any) {
                       >
                         <Text style={styles.backToSelectText}>Back to options</Text>
                       </TouchableOpacity>
-
-                      <TouchableOpacity 
-                        style={{ marginTop: 20 }}
-                        onPress={checkConnectivity}
-                      >
-                        <Text style={{ color: '#9CA3AF', fontSize: 12, textDecorationLine: 'underline' }}>
-                          Check Connection Status
-                        </Text>
-                      </TouchableOpacity>
                     </View>
                   )}
                 </View>
@@ -474,6 +485,11 @@ const styles = StyleSheet.create({
     position: 'relative',
     overflow: 'hidden',
   },
+  brandGradient: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    width: 300,
+  },
   logoBlur1: {
     position: 'absolute',
     top: -40,
@@ -493,115 +509,114 @@ const styles = StyleSheet.create({
     borderRadius: 60,
   },
   brandText: {
-    fontSize: 42,
-    fontWeight: 'bold',
+    fontSize: 40,
+    fontWeight: '500',
     color: '#fff',
     letterSpacing: -1,
+    fontFamily: Platform.OS === 'ios' ? 'Avenir' : 'sans-serif',
   },
   card: {
-    flex: 1,
-    backgroundColor: 'rgba(255, 255, 255, 0.95)',
-    marginHorizontal: 16,
-    borderRadius: 32,
-    padding: 24,
+    backgroundColor: '#fff',
+    borderRadius: 30,
+    padding: 30,
+    width: '100%',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 10 },
     shadowOpacity: 0.1,
     shadowRadius: 20,
     elevation: 10,
+    marginTop: -20, // Pull up the card slightly
   },
   title: {
-    fontSize: 24,
-    fontWeight: 'bold',
+    fontSize: 28,
+    fontWeight: '800',
     color: '#111827',
     textAlign: 'center',
     marginBottom: 8,
+    fontFamily: Platform.OS === 'ios' ? 'Avenir-Heavy' : 'sans-serif-medium',
   },
   subtitle: {
-    fontSize: 14,
+    fontSize: 16,
     color: '#6B7280',
     textAlign: 'center',
-    marginBottom: 20,
+    marginTop: 8,
+    fontFamily: Platform.OS === 'ios' ? 'Avenir' : 'sans-serif-light',
   },
   roleContainer: {
     flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: 32,
     gap: 8,
-    marginBottom: 24,
-    justifyContent: 'center',
   },
   roleTab: {
     flex: 1,
     alignItems: 'center',
     paddingVertical: 12,
-    borderRadius: 16,
+    borderRadius: 20,
     borderWidth: 1,
-    borderColor: '#E5E7EB',
-    backgroundColor: '#fff',
+    borderColor: '#F3F4F6',
   },
   activeRoleTab: {
-    borderColor: Colors.orangeStart,
-    backgroundColor: '#FFF7ED',
-    borderWidth: 2,
+    borderColor: Colors.primary,
+    backgroundColor: Colors.primary + '08',
   },
-  roleEmoji: {
-    fontSize: 20,
-    marginBottom: 4,
+  roleIconContainer: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    backgroundColor: '#F9FAFB',
+    justifyContent: 'center',
+    alignItems: 'center',    marginBottom: 8,
+  },
+  activeRoleIconContainer: {
+    backgroundColor: Colors.primary + '15',
   },
   roleLabel: {
-    fontSize: 11,
-    fontWeight: '700',
-    color: '#6B7280',
+    fontSize: 12,
+    fontWeight: '600',    color: '#9CA3AF',
   },
   activeRoleText: {
-    color: Colors.orangeStart,
+    color: Colors.primary,
   },
   selectContainer: {
-    spaceY: 16,
+    gap: 16,
   },
   googleButton: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: '#fff',
-    borderWidth: 1,
-    borderColor: '#D1D5DB',
-    paddingVertical: 14,
+    paddingVertical: 16,
     borderRadius: 16,
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
     marginBottom: 16,
-  },
-  googleButtonText: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    color: '#EA4335',
-    marginRight: 10,
   },
   googleButtonLabel: {
     fontSize: 16,
-    fontWeight: '600',
+    fontWeight: '700',
     color: '#374151',
   },
   emailButton: {
-    backgroundColor: Colors.orangeStart,
-    paddingVertical: 14,
-    borderRadius: 16,
+    flexDirection: 'row',
     alignItems: 'center',
-    shadowColor: Colors.orangeStart,
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 5,
+    justifyContent: 'center',
+    backgroundColor: Colors.primary,
+    paddingVertical: 16,
+    borderRadius: 16,
+    marginBottom: 16,
   },
-  emailButtonText: {
-    color: '#fff',
+  emailButtonLabel: {
     fontSize: 16,
-    fontWeight: 'bold',
+    fontWeight: '700',
+    color: '#fff',
   },
   termsText: {
-    fontSize: 11,
+    fontSize: 12,
     color: '#9CA3AF',
-    textAlign: 'center',
-    marginTop: 20,
-    lineHeight: 16,
+    textAlign: 'center',    marginTop: 8,
+    lineHeight: 18,
+    paddingHorizontal: 20,
   },
   form: {
     gap: 16,

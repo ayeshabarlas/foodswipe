@@ -26,7 +26,21 @@ const getVideoFeed = async (req, res) => {
         // MVP: Show all dishes for now
         const query = {};
         if (category && category !== 'All') {
-            query.category = { $regex: `^${category}$`, $options: 'i' };
+            const escapedCategory = category.trim().replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+            // Use a more flexible regex for category
+            // This will match "Burger" if "Burgers" is selected and vice versa
+            let categoryRegex = escapedCategory;
+            if (escapedCategory.toLowerCase().endsWith('s')) {
+                categoryRegex = `${escapedCategory}|${escapedCategory.slice(0, -1)}`;
+            } else {
+                categoryRegex = `${escapedCategory}|${escapedCategory}s`;
+            }
+
+            query.$or = [
+                { category: { $regex: categoryRegex, $options: 'i' } },
+                { name: { $regex: escapedCategory, $options: 'i' } },
+                { description: { $regex: escapedCategory, $options: 'i' } }
+            ];
         }
         
         if (search) {

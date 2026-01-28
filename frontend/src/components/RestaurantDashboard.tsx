@@ -492,9 +492,18 @@ export default function RestaurantDashboard() {
         <div className="flex min-h-screen bg-gray-50 font-inter text-[13px] overflow-x-hidden">
             {/* Account Status Banner */}
             {restaurant?.owner?.status === 'suspended' && (
-                <div className="fixed top-0 left-0 right-0 bg-red-600 text-white px-4 py-2 text-center text-xs font-bold z-[9999] shadow-lg flex items-center justify-center gap-2">
-                    <FaBan />
-                    <span>YOUR ACCOUNT HAS BEEN SUSPENDED. Please contact support at app.foodswipehelp@gmail.com</span>
+                <div className="fixed top-0 left-0 right-0 bg-red-600 text-white px-4 py-3 text-center z-[9999] shadow-lg flex flex-col items-center justify-center gap-1">
+                    <div className="flex items-center gap-2 text-sm font-bold">
+                        <FaBan />
+                        <span>YOUR ACCOUNT HAS BEEN SUSPENDED</span>
+                    </div>
+                    {restaurant.owner.suspensionDetails?.unsuspendAt && (
+                        <p className="text-[11px] font-medium opacity-90">
+                            Suspended on: {new Date(restaurant.owner.suspensionDetails.suspendedAt).toLocaleDateString()} | 
+                            Auto-unsuspend on: {new Date(restaurant.owner.suspensionDetails.unsuspendAt).toLocaleDateString()}
+                        </p>
+                    )}
+                    <p className="text-[10px] opacity-80">Reason: {restaurant.owner.suspensionDetails?.reason || 'Violation of terms'}</p>
                 </div>
             )}
 

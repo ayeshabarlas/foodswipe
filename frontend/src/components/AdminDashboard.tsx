@@ -23,6 +23,7 @@ import AdminManagementView from './admin/AdminManagementView';
 import SupportView from './admin/SupportView';
 import CODSettlementView from './admin/CODSettlementView';
 import NotificationList from './admin/NotificationList';
+import HistoryView from './admin/HistoryView';
 
 import axios from 'axios';
 import { initSocket, getSocket, disconnectSocket } from '../utils/socket';
@@ -238,6 +239,8 @@ export default function AdminDashboard() {
                 updateStats();
             });
 
+            socket.on('rider_status_updated', updateStats);
+            socket.on('rider_updated', updateStats);
             socket.on('restaurant_updated', updateStats);
             socket.on('user_logged_in', updateStats);
             socket.on('admin-channel', (data: any) => {
@@ -372,6 +375,8 @@ export default function AdminDashboard() {
                 return <AdminManagementView />;
             case 'reports':
                 return <ReportsView />;
+            case 'history':
+                return <HistoryView />;
             case 'settings':
                 return <SettingsView />;
             case 'verifications': // Legacy fallback

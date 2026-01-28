@@ -94,6 +94,11 @@ const getMyProfile = async (req, res) => {
         
         let rider = await Rider.findOne({ user: req.user._id }).populate('user', 'name email phone');
 
+        // FORCE SYNC: If user has 'rider' role but no profile linked, or profile is out of sync
+        if (req.user.role === 'rider' && !rider) {
+            console.log(`[RiderSync] User ${req.user._id} is a rider but no direct link. Searching...`);
+        }
+
         if (!rider) {
             console.log(`[Rider] No profile linked to ID ${req.user._id}. Searching by contact info...`);
             
@@ -545,8 +550,9 @@ const getEarnings = async (req, res) => {
         const riderWallet = await RiderWallet.findOne({ rider: req.params.id });
 
         // Calculate totals from rider model or wallet
-        const totalEarnings = riderWallet ? riderWallet.totalEarnings : (rider.earnings?.total || 0);
-        const pendingPayout = riderWallet ? riderWallet.availableWithdraw : (rider.walletBalance || 0);
+        // CONSISTENCY: Prioritize Rider model fields (earnings_balance, cod_balance) as they are the primary source now
+        const totalEarnings = (rider.earnings?.total ?? (riderWallet ? riderWallet.totalEarnings : 0)) || 0;
+        const pendingPayout = (rider.earnings_balance ?? (riderWallet ? riderWallet.availableWithdraw : (rider.walletBalance || 0))) || 0;
         const completedDeliveries = rider.stats?.completedDeliveries || 0;
         
         // MVP Logic: Use dynamic settings if available, otherwise base 40
@@ -563,8 +569,11 @@ const getEarnings = async (req, res) => {
         // SELF-HEALING: Sync COD balance from ledger
         const pendingTx = await CODLedger.find({ rider: rider._id, status: 'pending' });
         const totalCod = pendingTx.reduce((sum, tx) => sum + (tx.cod_collected || 0), 0);
-        if (rider.cod_balance !== totalCod) {
-            console.log(`[Rider] Syncing COD balance in getEarnings for ${rider.fullName}: ${rider.cod_balance} -> ${totalCod}`);
+        
+        // Use a more robust check for cod_balance
+        const currentCodBalance = rider.cod_balance || 0;
+        if (currentCodBalance !== totalCod) {
+            console.log(`[Rider] Syncing COD balance in getEarnings for ${rider.fullName}: ${currentCodBalance} -> ${totalCod}`);
             rider.cod_balance = totalCod;
             await rider.save();
         }
@@ -577,7 +586,7 @@ const getEarnings = async (req, res) => {
             tips: totalTips,
             deliveries: completedDeliveries,
             pendingPayout: pendingPayout,
-            cod_balance: rider.cod_balance || 0,
+            cod_balance: totalCod, // Use synced value
             nextPayoutDate: getNextPayoutDate(),
             today: todayEarnings,
             thisWeek: weekEarnings

@@ -112,7 +112,7 @@ export function initSocket(userId: string, role: string, restaurantId?: string, 
     }
 
     // Subscribe to channels based on role (replacing rooms)
-    if (role === 'admin') {
+    if (role === 'admin' || role === 'super-admin' || role === 'finance-admin' || role === 'support-admin' || role === 'restaurant-manager') {
         subscribeToChannel('admin');
     } else if (role === 'restaurant' && restaurantId) {
         subscribeToChannel(`restaurant-${restaurantId}`);

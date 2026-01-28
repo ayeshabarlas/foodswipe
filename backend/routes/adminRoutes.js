@@ -32,7 +32,8 @@ const {
     markNotificationRead,
     nuclearWipe,
     fixInflatedOrders,
-    assignRiderToOrder
+    assignRiderToOrder,
+    getActionHistory
 } = require('../controllers/adminController');
 const { loginAdmin, getAdminMe, registerAdmin, inviteAdmin, acceptInvite, getAllAdmins, deleteAdmin, debugAdminStatus } = require('../controllers/adminAuthController');
 
@@ -80,6 +81,7 @@ router.get('/users/verify', verifyUsers);
 router.put('/users/:id/suspend', suspendUser);
 router.put('/users/:id/unsuspend', unsuspendUser);
 router.delete('/users/:id', deleteUser);
+router.get('/history', getActionHistory);
 
 // Payments & Commission
 router.get('/payments', getRestaurantSales);

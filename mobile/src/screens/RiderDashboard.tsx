@@ -43,9 +43,10 @@ export default function RiderDashboard({ navigation }: any) {
   const [refreshing, setRefreshing] = useState(false);
   const [isAccepting, setIsAccepting] = useState(false);
   const [isCashoutLoading, setIsCashoutLoading] = useState(false);
-  const [stats, setStats] = useState({ earnings: 0, orders: 0, rating: 5.0, wallet: 0, cod_balance: 0 });
+  const [stats, setStats] = useState({ earnings: 0, orders: 0, rating: 5.0, wallet: 0, cod_balance: 0, totalEarnings: 0 });
   const [locationSubscription, setLocationSubscription] = useState<any>(null);
   const [activeOrder, setActiveOrder] = useState<any>(null);
+  const [isUpdatingStatus, setIsUpdatingStatus] = useState(false);
   const [historyOrders, setHistoryOrders] = useState<any[]>([]);
   const [transactions, setTransactions] = useState<any[]>([]);
   const [bankDetails, setBankDetails] = useState({ bankName: '', accountTitle: '', accountNumber: '' });
@@ -128,7 +129,9 @@ export default function RiderDashboard({ navigation }: any) {
         ...prev,
         earnings: earningsRes.data.today || 0,
         wallet: earningsRes.data.pendingPayout || 0,
-        cod_balance: earningsRes.data.cod_balance ?? prev.cod_balance
+        cod_balance: earningsRes.data.cod_balance ?? prev.cod_balance,
+        orders: earningsRes.data.deliveries ?? prev.orders,
+        totalEarnings: earningsRes.data.total || 0
       }));
       setTransactions(transRes.data || []);
       if (profile.bankDetails) {
@@ -205,6 +208,14 @@ export default function RiderDashboard({ navigation }: any) {
           const { latitude, longitude } = location.coords;
           console.log('📍 Sending rider location update:', latitude, longitude);
           try {
+            // Check if token exists before making request
+            const token = await SecureStore.getItemAsync('auth_token');
+            if (!token) {
+              console.log('📍 Token missing, stopping location updates');
+              stopLocationUpdates();
+              return;
+            }
+
             await apiClient.put(`/riders/${riderId}/location`, {
               lat: latitude,
               lng: longitude,
@@ -318,6 +329,16 @@ export default function RiderDashboard({ navigation }: any) {
             }
           });
 
+          riderChannel.bind('verificationStatusUpdated', (data: any) => {
+            console.log('✅ Verification status updated via socket:', data.verificationStatus);
+            setRiderProfile(data);
+            if (data.verificationStatus === 'approved') {
+              Alert.alert('Congratulations!', 'Your account has been verified. You can now go online.');
+            } else if (data.verificationStatus === 'rejected') {
+              Alert.alert('Verification Update', 'Your registration was not approved. Please check your documents.');
+            }
+          });
+
           riderChannel.bind('wallet_updated', async (data: any) => {
             console.log('💰 Wallet updated via socket:', data);
             
@@ -369,12 +390,16 @@ export default function RiderDashboard({ navigation }: any) {
         setActiveOrder(active || null);
       }
 
-      const [ordersRes, availableRes, earningsRes, historyRes] = await Promise.all([
+      const [profileRes, ordersRes, availableRes, earningsRes, historyRes] = await Promise.all([
+        apiClient.get('/riders/my-profile'),
         apiClient.get(`/riders/${riderId}/orders`),
         apiClient.get(`/riders/${riderId}/available-orders`),
         apiClient.get(`/riders/${riderId}/earnings`),
         apiClient.get(`/riders/${riderId}/deliveries`)
       ]);
+      
+      const updatedProfile = profileRes.data;
+      setRiderProfile(updatedProfile);
       
       const allMyOrders = ordersRes.data;
       const activeMyOrders = allMyOrders.filter((o: any) => o.status !== 'Delivered' && o.status !== 'Cancelled');
@@ -412,25 +437,46 @@ export default function RiderDashboard({ navigation }: any) {
   };
 
   const toggleOnline = async (value: boolean) => {
-    try {
-      if (value && riderProfile?.verificationStatus !== 'approved') {
-        Alert.alert('Verification Required', 'Please complete your registration and wait for admin approval before going online.');
-        setIsOnline(false);
-        return;
+    const maxRetries = 3;
+    let attempt = 0;
+    
+    const tryUpdate = async (): Promise<boolean> => {
+      try {
+        if (value && riderProfile?.verificationStatus !== 'approved') {
+          Alert.alert('Verification Required', 'Please complete your registration and wait for admin approval before going online.');
+          setIsOnline(false);
+          return true;
+        }
+        
+        await apiClient.put(`/riders/${riderProfile._id}/status`, { isOnline: value });
+        setIsOnline(value);
+        
+        if (value) {
+          fetchData(riderProfile._id);
+          startLocationUpdates(riderProfile._id);
+        } else {
+          setAvailableOrders([]);
+          stopLocationUpdates();
+        }
+        return true;
+      } catch (err) {
+        console.error(`Toggle online attempt ${attempt + 1} failed:`, err);
+        return false;
       }
-      setIsOnline(value);
-      await apiClient.put(`/riders/${riderProfile._id}/status`, { isOnline: value });
-      if (value) {
-        fetchData(riderProfile._id);
-        startLocationUpdates(riderProfile._id);
-      } else {
-        setAvailableOrders([]);
-        stopLocationUpdates();
+    };
+
+    while (attempt < maxRetries) {
+      const success = await tryUpdate();
+      if (success) return;
+      attempt++;
+      if (attempt < maxRetries) {
+        await new Promise(resolve => setTimeout(resolve, 1000));
       }
-    } catch (err) {
-      setIsOnline(!value);
-      Alert.alert('Error', 'Failed to update status');
     }
+
+    // If all retries fail
+    setIsOnline(!value);
+    Alert.alert('Connection Error', 'Failed to update online status. Please check your internet connection and try again.');
   };
 
   const acceptOrder = async (orderId: string) => {
@@ -451,6 +497,7 @@ export default function RiderDashboard({ navigation }: any) {
   };
 
   const handleLogout = async () => {
+    stopLocationUpdates();
     await SecureStore.deleteItemAsync('auth_token');
     await SecureStore.deleteItemAsync('user_data');
     navigation.replace('Home');
@@ -499,33 +546,42 @@ export default function RiderDashboard({ navigation }: any) {
   );
 
   const VerificationBanner = () => {
+    // If approved, don't show the banner
     if (riderProfile?.verificationStatus === 'approved') return null;
     
+    // Determine the message and navigation
+    let message = 'Complete your registration to start accepting orders.';
+    let showChevron = true;
+
+    if (riderProfile?.verificationStatus === 'pending') {
+      message = 'Your profile is under review.';
+      showChevron = false;
+    } else if (riderProfile?.verificationStatus === 'rejected') {
+      message = 'Your registration was rejected. Tap to fix.';
+    }
+
     return (
       <TouchableOpacity 
         style={styles.verifyBanner}
         onPress={() => {
           if (riderProfile?.verificationStatus === 'pending') {
-            Alert.alert('Status', 'Your profile is under review.');
+            Alert.alert('Status', 'Your profile is under review. Please wait for admin approval.');
           } else if (riderProfile?.verificationStatus === 'rejected') {
             navigation.navigate('RiderRegistration');
           } else if (riderProfile?._id) {
-            // If we have a profile but not approved, go to document upload
+            // If profile exists but not approved/pending, go to documents
             navigation.navigate('RiderDocumentUpload', { riderId: riderProfile._id });
           } else {
+            // No profile at all
             navigation.navigate('RiderRegistration');
           }
         }}
       >
         <Ionicons name="alert-circle" size={20} color="#9A3412" />
         <View style={{ flex: 1, marginLeft: 10 }}>
-          <Text style={styles.verifyText}>
-            {riderProfile?.verificationStatus === 'pending' 
-              ? 'Your profile is under review.'
-              : 'Complete your registration to start accepting orders.'}
-          </Text>
+          <Text style={styles.verifyText}>{message}</Text>
         </View>
-        {riderProfile?.verificationStatus !== 'pending' && (
+        {showChevron && (
           <Ionicons name="chevron-forward" size={16} color="#9A3412" />
         )}
       </TouchableOpacity>
@@ -548,7 +604,7 @@ export default function RiderDashboard({ navigation }: any) {
 
       console.log('📍 Opening Map:', { targetAddress, latitude, longitude, hasCoords });
 
-      // Official Google Maps Universal Link
+      // Official Google Maps Universal Link (Very reliable)
       let url = "";
       if (hasCoords) {
         url = `https://www.google.com/maps/dir/?api=1&destination=${latitude},${longitude}&travelmode=driving`;
@@ -560,14 +616,13 @@ export default function RiderDashboard({ navigation }: any) {
       // Platform specific deep links
       let googleMapsAppUrl = "";
       if (Platform.OS === 'android') {
-        // google.navigation:q=lat,lng is the most direct way to start navigation on Android
-        // We use geo: as a fallback if needed, but navigation is better for riders
+        // geo:lat,lng?q=lat,lng(Label) is very precise and shows a labeled pin
+        // This is often better than google.navigation because it shows the exact destination
         googleMapsAppUrl = hasCoords 
-          ? `google.navigation:q=${latitude},${longitude}` 
-          : `google.navigation:q=${encodeURIComponent(targetAddress)}`;
+          ? `geo:${latitude},${longitude}?q=${latitude},${longitude}(${encodeURIComponent(targetAddress)})` 
+          : `geo:0,0?q=${encodeURIComponent(targetAddress)}`;
       } else {
         // iOS: comgooglemaps://?daddr=lat,lng is standard for directions
-        // We use both daddr (for the route) and q (for the labeled pin)
         googleMapsAppUrl = hasCoords 
           ? `comgooglemaps://?daddr=${latitude},${longitude}&q=${latitude},${longitude}&directionsmode=driving` 
           : `comgooglemaps://?daddr=${encodeURIComponent(targetAddress)}&directionsmode=driving`;
@@ -599,12 +654,75 @@ export default function RiderDashboard({ navigation }: any) {
     };
 
     const steps = [
-      { id: 1, label: 'Pickup', status: ['Accepted', 'Confirmed', 'Preparing', 'Ready', 'Arrived'].includes(activeOrder.status) },
-      { id: 2, label: 'Picked Up', status: activeOrder.status === 'Picked Up' },
-      { id: 3, label: 'Delivery', status: ['OnTheWay', 'ArrivedAtCustomer'].includes(activeOrder.status) }
+      { id: 1, label: 'Pickup', status: ['Accepted', 'Confirmed', 'Preparing', 'Ready', 'Arrived'].includes(activeOrder.status), backendStatus: 'Arrived' },
+      { id: 2, label: 'Picked Up', status: activeOrder.status === 'Picked Up', backendStatus: 'Picked Up' },
+      { id: 3, label: 'Delivery', status: ['OnTheWay', 'ArrivedAtCustomer'].includes(activeOrder.status), backendStatus: 'ArrivedAtCustomer' }
     ];
 
-    const currentStep = steps.findLastIndex(s => s.status) + 1;
+    const currentStepIndex = steps.findLastIndex(s => s.status);
+    const currentStep = currentStepIndex + 1;
+
+    const handleQuickStatusUpdate = async () => {
+      if (!activeOrder || isUpdatingStatus) return;
+
+      let nextStatus = '';
+      let statusLabel = '';
+
+      if (['Accepted', 'Confirmed', 'Preparing', 'Ready'].includes(activeOrder.status)) {
+        nextStatus = 'Arrived';
+        statusLabel = 'Arrived at Restaurant';
+      } else if (activeOrder.status === 'Arrived') {
+        nextStatus = 'Picked Up';
+        statusLabel = 'Picked Up';
+      } else if (activeOrder.status === 'Picked Up' || activeOrder.status === 'OnTheWay') {
+        nextStatus = 'ArrivedAtCustomer';
+        statusLabel = 'Arrived at Customer';
+      } else if (activeOrder.status === 'ArrivedAtCustomer') {
+        nextStatus = 'Delivered';
+        statusLabel = 'Delivered';
+      }
+
+      if (!nextStatus) {
+        navigation.navigate('OrderDetails', { orderId: activeOrder._id });
+        return;
+      }
+
+      Alert.alert(
+        'Update Status',
+        `Mark order as ${statusLabel}?`,
+        [
+          { text: 'Cancel', style: 'cancel' },
+          { 
+            text: 'Yes', 
+            onPress: async () => {
+              setIsUpdatingStatus(true);
+              const maxRetries = 3;
+              let attempt = 0;
+
+              while (attempt < maxRetries) {
+                try {
+                  await apiClient.put(`/orders/${activeOrder._id}/status`, { 
+                    status: nextStatus,
+                    distanceKm: 0 // Fallback distance
+                  });
+                  // Socket will handle the UI update
+                  break;
+                } catch (err) {
+                  console.error(`Status update attempt ${attempt + 1} failed:`, err);
+                  attempt++;
+                  if (attempt === maxRetries) {
+                    Alert.alert('Error', 'Failed to update status. Please try from Order Details page.');
+                  } else {
+                    await new Promise(resolve => setTimeout(resolve, 1000));
+                  }
+                }
+              }
+              setIsUpdatingStatus(false);
+            }
+          }
+        ]
+      );
+    };
 
     return (
       <View style={styles.activeOrderCard}>
@@ -632,8 +750,16 @@ export default function RiderDashboard({ navigation }: any) {
         </View>
 
         <View style={styles.activeOrderMain}>
-          <Text style={styles.activeRestName}>{activeOrder.restaurant?.name}</Text>
-          <Text style={styles.activeOrderAddress} numberOfLines={1}>{activeOrder.deliveryAddress}</Text>
+          <View style={{ flex: 1 }}>
+            <Text style={styles.activeRestName}>{activeOrder.restaurant?.name}</Text>
+            <Text style={styles.activeOrderAddress} numberOfLines={1}>{activeOrder.deliveryAddress}</Text>
+          </View>
+          <TouchableOpacity 
+            style={styles.detailsBtnSmall}
+            onPress={() => navigation.navigate('OrderDetails', { orderId: activeOrder._id })}
+          >
+            <Text style={styles.detailsBtnSmallText}>Details</Text>
+          </TouchableOpacity>
         </View>
 
         <View style={styles.progressContainer}>
@@ -660,16 +786,28 @@ export default function RiderDashboard({ navigation }: any) {
         </View>
 
         <TouchableOpacity 
-          style={styles.manageBtnLarge}
-          onPress={() => navigation.navigate('OrderDetails', { orderId: activeOrder._id })}
+          style={[styles.manageBtnLarge, isUpdatingStatus && { opacity: 0.7 }]}
+          onPress={handleQuickStatusUpdate}
+          disabled={isUpdatingStatus}
         >
           <View style={styles.manageBtnContent}>
             <View>
-              <Text style={styles.manageBtnTitle}>Manage Delivery</Text>
-              <Text style={styles.manageBtnSubtitle}>Current Status: {activeOrder.status}</Text>
+              {isUpdatingStatus ? (
+                <ActivityIndicator color="#fff" size="small" />
+              ) : (
+                <>
+                  <Text style={styles.manageBtnTitle}>
+                    {['Accepted', 'Confirmed', 'Preparing', 'Ready'].includes(activeOrder.status) ? 'Mark Arrived' :
+                     activeOrder.status === 'Arrived' ? 'Mark Picked Up' :
+                     (activeOrder.status === 'Picked Up' || activeOrder.status === 'OnTheWay') ? 'Mark Arrived at Customer' :
+                     activeOrder.status === 'ArrivedAtCustomer' ? 'Mark Delivered' : 'View Details'}
+                  </Text>
+                  <Text style={styles.manageBtnSubtitle}>Status: {activeOrder.status}</Text>
+                </>
+              )}
             </View>
             <View style={styles.manageBtnIconContainer}>
-              <Ionicons name="arrow-forward" size={24} color="#fff" />
+              <Ionicons name={isUpdatingStatus ? "sync" : "arrow-forward"} size={24} color="#fff" />
             </View>
           </View>
         </TouchableOpacity>
@@ -889,30 +1027,40 @@ export default function RiderDashboard({ navigation }: any) {
       <LinearGradient colors={[Colors.primary, '#f43f5e']} style={styles.tabHeader}>
         <Text style={styles.tabHeaderTitle}>Earnings & Wallet</Text>
         <View style={styles.earningsMain}>
-          <Text style={styles.earningsLabel}>Current Balance</Text>
-          <Text style={styles.earningsValue}>Rs. {stats.wallet}</Text>
+          <Text style={styles.earningsLabel}>Total Earnings</Text>
+          <Text style={styles.earningsValue}>Rs. {stats.totalEarnings}</Text>
+        </View>
+        <View style={styles.earningsSubRow}>
+          <View style={styles.earningSubBox}>
+            <Text style={styles.earningSubLabel}>Current Wallet</Text>
+            <Text style={styles.earningSubValue}>Rs. {stats.wallet}</Text>
+          </View>
+          <View style={styles.dividerVertical} />
+          <View style={styles.earningSubBox}>
+            <Text style={styles.earningSubLabel}>Today</Text>
+            <Text style={styles.earningSubValue}>Rs. {stats.earnings}</Text>
+          </View>
+          <View style={styles.dividerVertical} />
+          <View style={styles.earningSubBox}>
+            <Text style={styles.earningSubLabel}>Deliveries</Text>
+            <Text style={styles.earningSubValue}>{stats.orders}</Text>
+          </View>
         </View>
       </LinearGradient>
 
       <View style={styles.payoutCard}>
         <View style={styles.payoutHeader}>
-          <View>
-            <Text style={styles.payoutTitle}>Pending Payout</Text>
-            <Text style={styles.payoutSubtitle}>Minimum Rs. 500 required</Text>
+          <View style={{ flex: 1 }}>
+            <Text style={styles.payoutTitle}>Current Balance</Text>
+            <Text style={styles.payoutSubtitle}>Payouts are processed automatically every week to your bank account.</Text>
           </View>
-          <Ionicons name="wallet-outline" size={32} color={Colors.primary} />
+          <View style={styles.walletIconContainer}>
+            <Ionicons name="wallet-outline" size={32} color={Colors.primary} />
+            <View style={styles.balanceBadge}>
+              <Text style={styles.balanceBadgeText}>Rs. {stats.wallet}</Text>
+            </View>
+          </View>
         </View>
-        <TouchableOpacity 
-          style={[styles.cashoutBtn, (stats.wallet < 500 || isCashoutLoading) && styles.cashoutBtnDisabled]}
-          onPress={handleCashout}
-          disabled={stats.wallet < 500 || isCashoutLoading}
-        >
-          {isCashoutLoading ? (
-            <ActivityIndicator color="#fff" size="small" />
-          ) : (
-            <Text style={styles.cashoutBtnText}>Cash Out Now</Text>
-          )}
-        </TouchableOpacity>
       </View>
 
       <View style={styles.sectionHeader}>
@@ -1793,6 +1941,25 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
   },
+  activeOrderMain: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginTop: 15,
+  },
+  detailsBtnSmall: {
+    backgroundColor: '#fff',
+    borderWidth: 1,
+    borderColor: Colors.primary,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 8,
+  },
+  detailsBtnSmallText: {
+    color: Colors.primary,
+    fontSize: 12,
+    fontWeight: 'bold',
+  },
   manageBtnTitle: {
     color: '#fff',
     fontSize: 18,
@@ -1956,6 +2123,32 @@ const styles = StyleSheet.create({
     color: '#fff',
     marginTop: 5,
   },
+  earningsSubRow: {
+    flexDirection: 'row',
+    marginTop: 25,
+    backgroundColor: 'rgba(255,255,255,0.15)',
+    borderRadius: 20,
+    paddingVertical: 15,
+  },
+  earningSubBox: {
+    flex: 1,
+    alignItems: 'center',
+  },
+  earningSubLabel: {
+    fontSize: 12,
+    color: 'rgba(255,255,255,0.8)',
+    marginBottom: 4,
+  },
+  earningSubValue: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#fff',
+  },
+  dividerVertical: {
+    width: 1,
+    height: '100%',
+    backgroundColor: 'rgba(255,255,255,0.3)',
+  },
   payoutCard: {
     backgroundColor: '#fff',
     marginHorizontal: 20,
@@ -1981,19 +2174,21 @@ const styles = StyleSheet.create({
     color: Colors.gray,
     marginTop: 2,
   },
-  cashoutBtn: {
-    backgroundColor: Colors.primary,
-    paddingVertical: 14,
-    borderRadius: 16,
+  walletIconContainer: {
     alignItems: 'center',
+    justifyContent: 'center',
   },
-  cashoutBtnDisabled: {
-    backgroundColor: '#E5E7EB',
+  balanceBadge: {
+    backgroundColor: Colors.primary + '15',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 12,
+    marginTop: 8,
   },
-  cashoutBtnText: {
-    color: '#fff',
+  balanceBadgeText: {
+    color: Colors.primary,
     fontWeight: 'bold',
-    fontSize: 15,
+    fontSize: 16,
   },
   codCard: {
     backgroundColor: '#fff',

@@ -5,7 +5,13 @@ const auditLogSchema = mongoose.Schema(
         event: {
             type: String,
             required: true,
-            enum: ['LOGIN', 'SIGNUP', 'LOGOUT', 'SYNC_FIREBASE', 'USER_SUSPENDED', 'USER_UNSUSPENDED', 'USER_DELETED', 'ERROR'],
+            enum: [
+                'LOGIN', 'SIGNUP', 'LOGOUT', 'SYNC_FIREBASE', 
+                'USER_SUSPENDED', 'USER_UNSUSPENDED', 'USER_DELETED', 
+                'RESTAURANT_SUSPENDED', 'RESTAURANT_UNSUSPENDED', 'RESTAURANT_DELETED',
+                'RIDER_SUSPENDED', 'RIDER_UNSUSPENDED', 'RIDER_DELETED',
+                'ERROR'
+            ],
         },
         userId: {
             type: mongoose.Schema.Types.ObjectId,

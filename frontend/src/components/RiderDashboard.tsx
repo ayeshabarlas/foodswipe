@@ -413,6 +413,27 @@ const RiderDashboard = ({
 
     const renderHome = () => (
         <div className="flex flex-col gap-6 animate-in fade-in slide-in-from-bottom-4 duration-500 font-light">
+            {/* Suspension Banner */}
+            {riderData?.user?.status === 'suspended' && (
+                <div className="bg-red-600 text-white px-6 py-4 flex flex-col gap-2 shadow-lg">
+                    <div className="flex items-center gap-3">
+                        <FaExclamationCircle className="text-white shrink-0 text-xl" />
+                        <div className="flex-1">
+                            <h3 className="text-sm font-bold uppercase tracking-wider">Your Account is Suspended</h3>
+                        </div>
+                    </div>
+                    {riderData.user.suspensionDetails?.unsuspendAt && (
+                        <p className="text-[11px] font-medium opacity-90">
+                            Suspended on: {new Date(riderData.user.suspensionDetails.suspendedAt).toLocaleDateString()} | 
+                            Auto-unsuspend on: {new Date(riderData.user.suspensionDetails.unsuspendAt).toLocaleDateString()}
+                        </p>
+                    )}
+                    <p className="text-[10px] opacity-80 leading-relaxed">
+                        Reason: {riderData.user.suspensionDetails?.reason || 'Violation of terms'}
+                    </p>
+                </div>
+            )}
+
             {/* Verification Status Banner */}
             {displayRider.verificationStatus !== 'approved' && !loading && (
                 <div 

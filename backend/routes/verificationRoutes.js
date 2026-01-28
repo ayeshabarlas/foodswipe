@@ -3,6 +3,7 @@ const router = express.Router();
 const { protect, requireAdmin } = require('../middleware/authMiddleware');
 const Restaurant = require('../models/Restaurant');
 const Rider = require('../models/Rider');
+const { triggerEvent } = require('../socket');
 
 // @desc    Get pending restaurant verifications
 // @route   GET /api/verifications/restaurants
@@ -89,6 +90,9 @@ router.put('/riders/:id', protect, requireAdmin, async (req, res) => {
         }
 
         await rider.save();
+        
+        // Trigger real-time update for the rider
+        triggerEvent(`rider-${rider._id}`, 'verificationStatusUpdated', rider);
 
         // TODO: Send notification to rider
 
