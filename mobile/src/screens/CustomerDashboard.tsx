@@ -14,7 +14,8 @@ import {
   RefreshControl,
   Alert,
   FlatList,
-  Modal
+  Modal,
+  Linking
 } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
 import { Colors } from '../theme/colors';
@@ -29,6 +30,8 @@ import { getCache, setCache } from '../utils/cache';
 import MapView, { Marker } from 'react-native-maps';
 import Constants from 'expo-constants';
 import * as Location from 'expo-location';
+import LocationAccessModal from '../components/LocationAccessModal';
+import { calculateDistance, formatDistance } from '../utils/location';
 
 const { width, height } = Dimensions.get('window');
 
@@ -68,6 +71,9 @@ export default function CustomerDashboard({ navigation }: any) {
   const [restaurantSearch, setRestaurantSearch] = useState('');
   const [restaurantSuggestions, setRestaurantSuggestions] = useState<any[]>([]);
   const [showRestaurantSuggestions, setShowRestaurantSuggestions] = useState(false);
+  const [showLocationModal, setShowLocationModal] = useState(false);
+  const [userCoords, setUserCoords] = useState<{ lat: number, lng: number } | null>(null);
+  const [vouchers, setVouchers] = useState<any[]>([]);
 
   const categories = ['All', 'Pizza', 'Burger', 'Asian', 'Desi', 'Italian', 'Fast Food', 'Dessert', 'Healthy'];
 
@@ -78,6 +84,8 @@ export default function CustomerDashboard({ navigation }: any) {
     fetchActiveOrders();
     loadSavedAddress();
     fetchSettings();
+    fetchVouchers();
+    checkLocationPermission();
     setSessionToken(Math.random().toString(36).substring(2, 15));
 
     // Subscribe to restaurant updates
@@ -91,8 +99,18 @@ export default function CustomerDashboard({ navigation }: any) {
       });
     }
 
+    // Subscribe to public channel for vouchers
+    const publicChannel = subscribeToChannel('public');
+    if (publicChannel) {
+      publicChannel.bind('new_voucher', (data: any) => {
+        console.log('🎁 New voucher received via socket:', data);
+        fetchVouchers();
+      });
+    }
+
     return () => {
       unsubscribeFromChannel('restaurants');
+      unsubscribeFromChannel('public');
     };
   }, []);
 
@@ -128,6 +146,43 @@ export default function CustomerDashboard({ navigation }: any) {
     } catch (err) {
       console.error('Error fetching settings:', err);
     }
+  };
+
+  const fetchVouchers = async () => {
+    try {
+      const res = await apiClient.get('/vouchers');
+      setVouchers(res.data || []);
+    } catch (err) {
+      console.error('Error fetching vouchers:', err);
+    }
+  };
+
+  const checkLocationPermission = async () => {
+    try {
+      const { status } = await Location.getForegroundPermissionsAsync();
+      if (status !== 'granted') {
+        const hasSeenModal = await SecureStore.getItemAsync('has_seen_location_modal');
+        if (!hasSeenModal) {
+          setShowLocationModal(true);
+        }
+      } else {
+        // Already granted, get current location
+        getCurrentLocation();
+      }
+    } catch (err) {
+      console.error('Error checking location permission:', err);
+    }
+  };
+
+  const handleAllowLocation = async () => {
+    setShowLocationModal(false);
+    await SecureStore.setItemAsync('has_seen_location_modal', 'true');
+    getCurrentLocation();
+  };
+
+  const handleSkipLocation = async () => {
+    setShowLocationModal(false);
+    await SecureStore.setItemAsync('has_seen_location_modal', 'true');
   };
 
   const handleAddressSearch = async (val: string) => {
@@ -236,6 +291,7 @@ export default function CustomerDashboard({ navigation }: any) {
       let location = await Location.getCurrentPositionAsync({});
       const loc = { lat: location.coords.latitude, lng: location.coords.longitude };
       setDeliveryLocation(loc);
+      setUserCoords(loc);
       setMapRegion({
         ...mapRegion,
         latitude: loc.lat,
@@ -396,39 +452,61 @@ export default function CustomerDashboard({ navigation }: any) {
     }
   };
 
-  const renderRestaurantItem = ({ item }: { item: any }) => (
-    <TouchableOpacity 
-      style={styles.restaurantCard}
-      onPress={() => navigation.navigate('RestaurantDetails', { restaurantId: item._id })}
-    >
-      <View style={styles.imageContainer}>
-        <Image 
-          source={{ uri: getMediaUrl(item.logo) || 'https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=800' }}
-          style={styles.restaurantImage}
-        />
-        {item.businessType === 'home-chef' && (
-          <View style={styles.homeChefBadge}>
-            <Ionicons name="home" size={10} color="#fff" />
-            <Text style={styles.homeChefBadgeText}>Homechef</Text>
+  const renderRestaurantItem = ({ item }: { item: any }) => {
+    const distance = deliveryLocation && item.location?.coordinates ? 
+      calculateDistance(deliveryLocation.lat, deliveryLocation.lng, item.location.coordinates[1], item.location.coordinates[0]) : null;
+
+    return (
+      <TouchableOpacity 
+        style={styles.restaurantCard}
+        onPress={() => navigation.navigate('RestaurantDetails', { restaurantId: item._id })}
+      >
+        <View style={styles.imageContainer}>
+          <Image 
+            source={{ uri: getMediaUrl(item.logo) || 'https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=800' }}
+            style={styles.restaurantImage}
+          />
+          {item.businessType === 'home-chef' && (
+            <View style={styles.homeChefBadge}>
+              <Ionicons name="home" size={10} color="#fff" />
+              <Text style={styles.homeChefBadgeText}>Homechef</Text>
+            </View>
+          )}
+          {distance !== null && (
+            <View style={styles.distanceBadge}>
+              <Ionicons name="location" size={10} color="#fff" />
+              <Text style={styles.distanceBadgeText}>{formatDistance(distance)}</Text>
+            </View>
+          )}
+        </View>
+        <View style={styles.restaurantInfo}>
+          <View style={styles.nameRow}>
+            <Text style={styles.restaurantName} numberOfLines={1}>{item.name}</Text>
+            <View style={styles.ratingBadge}>
+              <Ionicons name="star" size={12} color="#FFD700" />
+              <Text style={styles.ratingText}>
+                {item.rating && item.rating > 0 ? item.rating.toFixed(1) : 'New'}
+              </Text>
+            </View>
           </View>
-        )}
-      </View>
-      <View style={styles.restaurantInfo}>
-        <View style={styles.nameRow}>
-          <Text style={styles.restaurantName} numberOfLines={1}>{item.name}</Text>
-          <View style={styles.ratingBadge}>
-            <Ionicons name="star" size={12} color="#FFD700" />
-            <Text style={styles.ratingText}>
-              {item.rating && item.rating > 0 ? item.rating.toFixed(1) : 'New'}
+          <View style={styles.detailsRow}>
+            <Text style={styles.restaurantDetails} numberOfLines={1}>
+              {item.cuisineTypes && item.cuisineTypes.length > 0 ? item.cuisineTypes[0] : (item.businessType === 'home-chef' ? 'Home Chef' : 'Restaurant')} • {item.address || 'Local'}
             </Text>
           </View>
+          {/* Display promo if available */}
+          {vouchers.some(v => v.restaurant === item._id || v.createdBy === 'platform') && (
+            <View style={styles.promoContainer}>
+              <Ionicons name="pricetag" size={12} color={Colors.primary} />
+              <Text style={styles.promoText} numberOfLines={1}>
+                {vouchers.find(v => v.restaurant === item._id)?.description || vouchers.find(v => v.createdBy === 'platform')?.description}
+              </Text>
+            </View>
+          )}
         </View>
-        <Text style={styles.restaurantDetails} numberOfLines={1}>
-          {item.cuisineTypes && item.cuisineTypes.length > 0 ? item.cuisineTypes[0] : (item.businessType === 'home-chef' ? 'Home Chef' : 'Restaurant')} • {item.address || 'Local'}
-        </Text>
-      </View>
-    </TouchableOpacity>
-  );
+      </TouchableOpacity>
+    );
+  };
 
   const renderDashboardHeader = () => (
     <>
@@ -542,6 +620,39 @@ export default function CustomerDashboard({ navigation }: any) {
         </TouchableOpacity>
       </View>
 
+      {/* Vouchers & Promotions */}
+      {vouchers.length > 0 && (
+        <View style={styles.vouchersSection}>
+          <View style={styles.sectionHeader}>
+            <Text style={styles.sectionTitle}>Discounts & Offers</Text>
+          </View>
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.vouchersList}>
+            {vouchers.map((voucher) => (
+              <TouchableOpacity 
+                key={voucher._id} 
+                style={styles.voucherCard}
+                onPress={() => Alert.alert('Voucher Code', `Use code ${voucher.code} to get ${voucher.discount}% off!\n\n${voucher.description}`)}
+              >
+                <LinearGradient
+                  colors={['#FF6A00', '#FF416C']}
+                  style={styles.voucherGradient}
+                >
+                  <View style={styles.voucherLeft}>
+                    <Text style={styles.voucherDiscount}>{voucher.discount}%</Text>
+                    <Text style={styles.voucherOff}>OFF</Text>
+                  </View>
+                  <View style={styles.voucherDivider} />
+                  <View style={styles.voucherRight}>
+                    <Text style={styles.voucherCode}>{voucher.code}</Text>
+                    <Text style={styles.voucherDesc} numberOfLines={1}>{voucher.description}</Text>
+                  </View>
+                </LinearGradient>
+              </TouchableOpacity>
+            ))}
+          </ScrollView>
+        </View>
+      )}
+
       {/* Active Orders - Real-time Status */}
       {activeOrders.length > 0 && (
         <View style={styles.activeOrdersSection}>
@@ -585,10 +696,30 @@ export default function CustomerDashboard({ navigation }: any) {
     </>
   );
 
+  const openWhatsApp = () => {
+    const phone = settings?.supportPhone || '+923295599855';
+    const message = 'Hello FoodSwipe Support, I need help with...';
+    const url = `whatsapp://send?phone=${phone.replace(/\+/g, '')}&text=${encodeURIComponent(message)}`;
+    
+    Linking.canOpenURL(url).then(supported => {
+      if (supported) {
+        Linking.openURL(url);
+      } else {
+        Linking.openURL(`https://wa.me/${phone.replace(/\+/g, '')}`);
+      }
+    });
+  };
+
   return (
     <SafeAreaView style={styles.container}>
       <StatusBar barStyle="dark-content" />
       
+      <LocationAccessModal 
+        isOpen={showLocationModal}
+        onAllow={handleAllowLocation}
+        onSkip={handleSkipLocation}
+      />
+
       {/* Map Picker Modal */}
       <Modal
         visible={isMapVisible}
@@ -706,9 +837,14 @@ export default function CustomerDashboard({ navigation }: any) {
             <Ionicons name="chevron-down" size={16} color={Colors.primary} />
           </TouchableOpacity>
         </View>
-        <TouchableOpacity style={styles.profileButton} onPress={handleLogout}>
-          <Ionicons name="person-circle-outline" size={32} color={Colors.gray} />
-        </TouchableOpacity>
+        <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+          <TouchableOpacity style={[styles.profileButton, { marginRight: 10 }]} onPress={() => navigation.navigate('Helpline')}>
+            <Ionicons name="help-circle-outline" size={28} color={Colors.gray} />
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.profileButton} onPress={handleLogout}>
+            <Ionicons name="person-circle-outline" size={32} color={Colors.gray} />
+          </TouchableOpacity>
+        </View>
       </View>
 
       <FlatList
@@ -888,6 +1024,83 @@ const styles = StyleSheet.create({
   videoSubtitle: {
     color: 'rgba(255,255,255,0.8)',
     fontSize: 12,
+    marginTop: 2,
+  },
+  detailsRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 2,
+  },
+  promoContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: Colors.primary + '10',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 6,
+    marginTop: 6,
+    gap: 6,
+  },
+  promoText: {
+    fontSize: 11,
+    color: Colors.primary,
+    fontWeight: 'bold',
+  },
+  vouchersSection: {
+    marginTop: 15,
+    marginBottom: 10,
+  },
+  vouchersList: {
+    paddingLeft: 20,
+    marginTop: 10,
+  },
+  voucherCard: {
+    width: 240,
+    height: 80,
+    marginRight: 15,
+    borderRadius: 12,
+    overflow: 'hidden',
+  },
+  voucherGradient: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 12,
+  },
+  voucherLeft: {
+    alignItems: 'center',
+    width: 60,
+  },
+  voucherDiscount: {
+    color: '#fff',
+    fontSize: 20,
+    fontWeight: '900',
+  },
+  voucherOff: {
+    color: '#fff',
+    fontSize: 10,
+    fontWeight: 'bold',
+    marginTop: -4,
+  },
+  voucherDivider: {
+    width: 1,
+    height: '100%',
+    backgroundColor: 'rgba(255,255,255,0.3)',
+    marginHorizontal: 12,
+  },
+  voucherRight: {
+    flex: 1,
+  },
+  voucherCode: {
+    color: '#fff',
+    fontSize: 14,
+    fontWeight: 'bold',
+    letterSpacing: 1,
+  },
+  voucherDesc: {
+    color: '#fff',
+    fontSize: 10,
+    opacity: 0.9,
     marginTop: 2,
   },
   activeOrdersSection: {
@@ -1147,6 +1360,23 @@ const styles = StyleSheet.create({
   restaurantImage: {
     width: '100%',
     height: '100%',
+  },
+  distanceBadge: {
+    position: 'absolute',
+    bottom: 8,
+    right: 8,
+    backgroundColor: 'rgba(0,0,0,0.6)',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 8,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+  },
+  distanceBadgeText: {
+    color: '#fff',
+    fontSize: 10,
+    fontWeight: 'bold',
   },
   homeChefBadge: {
     position: 'absolute',

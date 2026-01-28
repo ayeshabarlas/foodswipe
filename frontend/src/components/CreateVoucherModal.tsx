@@ -156,7 +156,7 @@ export default function CreateVoucherModal({ isOpen, onClose, onSuccess }: Creat
                                     value={formData.expiryDate}
                                     onChange={handleChange}
                                     min={new Date().toISOString().split('T')[0]}
-                                    className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-orange-500 focus:ring-2 focus:ring-orange-200 outline-none transition"
+                                    className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-orange-500 focus:ring-2 focus:ring-orange-200 outline-none transition focus:shadow-lg focus:shadow-orange-100"
                                 />
                             </div>
 

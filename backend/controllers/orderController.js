@@ -434,7 +434,13 @@ const updateOrderStatus = async (req, res) => {
                 }
             }
         }
-        if (prepTime) order.prepTime = prepTime;
+        if (prepTime) {
+            order.prepTime = prepTime;
+            // Set estimated delivery time: now + prepTime + 15 mins (avg delivery time)
+            const estDate = new Date();
+            estDate.setMinutes(estDate.getMinutes() + Number(prepTime) + 15);
+            order.estimatedDeliveryTime = estDate;
+        }
         if (delayedUntil) order.delayedUntil = delayedUntil;
         if (delayReason) order.delayReason = delayReason;
 

@@ -17,8 +17,8 @@ export default function DashboardSupport() {
     const [copiedPhone, setCopiedPhone] = useState(false);
     const [copiedEmail, setCopiedEmail] = useState(false);
 
-    const supportPhone = settings?.supportPhone || '+923295599855';
-    const supportEmail = settings?.supportEmail || 'app.foodswipehelp@gmail.com';
+    const supportPhone = '+923295599855';
+    const supportEmail = 'app.foodswipehelp@gmail.com';
 
     const handleCopyPhone = () => {
         navigator.clipboard.writeText(supportPhone);
@@ -34,22 +34,22 @@ export default function DashboardSupport() {
 
     const contactOptions = [
         {
+            icon: FaWhatsapp,
+            title: 'WhatsApp Support',
+            description: 'Quick assistance via WhatsApp chat',
+            value: supportPhone,
+            action: () => window.open(`https://wa.me/${supportPhone.replace(/\D/g, '')}`, '_blank'),
+            color: 'from-green-500 to-green-600'
+        },
+        {
             icon: FaPhone,
-            title: 'Call Us',
-            description: 'Speak directly with our support team',
+            title: 'Call Support',
+            description: 'Speak directly with our team',
             value: supportPhone,
             action: () => window.open(`tel:${supportPhone}`),
             secondaryAction: handleCopyPhone,
             secondaryLabel: copiedPhone ? 'Copied!' : 'Copy',
             color: 'from-blue-500 to-blue-600'
-        },
-        {
-            icon: FaWhatsapp,
-            title: 'WhatsApp',
-            description: 'Chat with us on WhatsApp',
-            value: supportPhone,
-            action: () => window.open(`https://wa.me/${supportPhone.replace(/\s+/g, '')}`, '_blank'),
-            color: 'from-green-500 to-green-600'
         },
         {
             icon: FaEnvelope,

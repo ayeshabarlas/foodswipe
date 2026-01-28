@@ -523,6 +523,20 @@ export default function RiderDashboard({ navigation }: any) {
     navigation.replace('Home');
   };
 
+  const openWhatsApp = () => {
+    const phone = '+923295599855';
+    const message = 'Hello FoodSwipe Support, I am a rider and I need help with...';
+    const url = `whatsapp://send?phone=${phone.replace(/\+/g, '')}&text=${encodeURIComponent(message)}`;
+    
+    Linking.canOpenURL(url).then(supported => {
+      if (supported) {
+        Linking.openURL(url);
+      } else {
+        Linking.openURL(`https://wa.me/${phone.replace(/\+/g, '')}`);
+      }
+    });
+  };
+
   const DashboardHeader = () => (
     <LinearGradient
       colors={[Colors.primary, '#f43f5e']}
@@ -543,9 +557,14 @@ export default function RiderDashboard({ navigation }: any) {
             </View>
           </View>
         </View>
-        <TouchableOpacity onPress={handleLogout} style={styles.logoutBtn}>
-          <Ionicons name="log-out-outline" size={24} color="#fff" />
-        </TouchableOpacity>
+        <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+          <TouchableOpacity onPress={() => navigation.navigate('Helpline')} style={{ marginRight: 15 }}>
+            <Ionicons name="help-circle-outline" size={26} color="#fff" />
+          </TouchableOpacity>
+          <TouchableOpacity onPress={handleLogout} style={styles.logoutBtn}>
+            <Ionicons name="log-out-outline" size={24} color="#fff" />
+          </TouchableOpacity>
+        </View>
       </View>
       
       <View style={styles.statusCard}>
@@ -585,8 +604,8 @@ export default function RiderDashboard({ navigation }: any) {
             Auto-unsuspend on: {new Date(suspension.unsuspendAt).toLocaleDateString()}
           </Text>
         )}
-        <Text style={styles.suspensionContact}>
-          Please contact support if you think this is a mistake.
+        <Text style={styles.suspensionContact} onPress={() => navigation.navigate('Helpline')}>
+          Please contact <Text style={{ color: '#fff', fontWeight: 'bold', textDecorationLine: 'underline' }}>Support</Text> if you think this is a mistake.
         </Text>
       </View>
     );
@@ -991,11 +1010,11 @@ export default function RiderDashboard({ navigation }: any) {
           </View>
           <Text style={styles.quickActionLabel}>History</Text>
         </TouchableOpacity>
-        <TouchableOpacity style={styles.quickAction} onPress={() => Linking.openURL('https://wa.me/923001234567')}>
+        <TouchableOpacity style={styles.quickAction} onPress={() => Linking.openURL('https://wa.me/923295599855')}>
           <View style={[styles.quickActionIcon, { backgroundColor: '#F0FDF4' }]}>
-            <Ionicons name="help-buoy" size={24} color="#10B981" />
+            <Ionicons name="logo-whatsapp" size={24} color="#10B981" />
           </View>
-          <Text style={styles.quickActionLabel}>Support</Text>
+          <Text style={styles.quickActionLabel}>WhatsApp</Text>
         </TouchableOpacity>
       </View>
     </ScrollView>

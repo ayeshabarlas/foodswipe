@@ -16,7 +16,9 @@ const getVouchers = async (req, res) => {
 
         // Add a 'used' flag if the user has already used it
         const vouchersWithStatus = vouchers.map(voucher => {
-            const isUsed = voucher.usedBy.includes(req.user._id);
+            const isUsed = voucher.usedBy.some(usage => 
+                usage.user && usage.user.toString() === req.user._id.toString()
+            );
             return {
                 ...voucher.toObject(),
                 used: isUsed
@@ -50,7 +52,11 @@ const verifyVoucher = async (req, res) => {
             return res.status(400).json({ message: `Minimum order amount is Rs. ${voucher.minimumAmount}` });
         }
 
-        if (voucher.usedBy.includes(req.user._id)) {
+        const isUsed = voucher.usedBy.some(usage => 
+            usage.user && usage.user.toString() === req.user._id.toString()
+        );
+
+        if (isUsed) {
             return res.status(400).json({ message: 'You have already used this voucher' });
         }
 
@@ -95,20 +101,35 @@ const createRestaurantVoucher = async (req, res) => {
         }
 
         if (!restaurant) {
-            return res.status(404).json({ message: 'Restaurant not found' });
+            return res.status(404).json({ message: 'Restaurant not found for this user' });
         }
 
-        const { code, discount, description, expiryDate, minimumAmount, name } = req.body;
+        const { code, discount, description, expiryDate, minimumAmount, name, discountType } = req.body;
+
+        if (!code || discount === undefined || discount === null || !description || !expiryDate) {
+            console.warn('[Voucher] Create attempt failed: Missing fields', { code, discount, description, expiryDate });
+            return res.status(400).json({ 
+                message: 'Required fields missing', 
+                details: 'Please provide code, discount, description, and expiryDate' 
+            });
+        }
+
+        // Validate discount is a number
+        const discountNum = parseFloat(discount);
+        if (isNaN(discountNum)) {
+            return res.status(400).json({ message: 'Discount must be a valid number' });
+        }
 
         const voucher = await Voucher.create({
-            name: name || code.toUpperCase(), // Use code as name if not provided
-            code: code.toUpperCase(),
-            discount,
+            name: name || code.toUpperCase(), 
+            code: code.toUpperCase().trim(),
+            discount: discountNum,
+            discountType: discountType || 'fixed',
             description,
             expiryDate,
-            minimumAmount: minimumAmount || 0,
+            minimumAmount: parseFloat(minimumAmount) || 0,
             createdBy: 'restaurant',
-            fundedBy: 'restaurant', // Set fundedBy to restaurant
+            fundedBy: 'restaurant',
             restaurant: restaurant._id,
             isActive: true,
         });
@@ -129,6 +150,19 @@ const createRestaurantVoucher = async (req, res) => {
         res.status(201).json(voucher);
     } catch (error) {
         console.error('Create restaurant voucher error:', error);
+        
+        // Handle Mongoose validation errors
+        if (error.name === 'ValidationError') {
+            const messages = Object.values(error.errors).map(err => err.message);
+            return res.status(400).json({ 
+                message: 'Validation failed', 
+                details: messages.join(', ') 
+            });
+        }
+
+        if (error.code === 11000) {
+            return res.status(400).json({ message: 'A voucher with this code already exists' });
+        }
         res.status(500).json({ message: 'Server error', error: error.message });
     }
 };
@@ -247,25 +281,66 @@ const toggleVoucherStatus = async (req, res) => {
  */
 const createAdminVoucher = async (req, res) => {
     try {
-        const { code, discount, description, expiryDate, minimumAmount, usageLimit, name, fundedBy, restaurantId } = req.body;
+        const { code, discount, description, expiryDate, minimumAmount, usageLimit, name, fundedBy, restaurantId, discountType } = req.body;
+
+        if (!code || discount === undefined || discount === null || !description || !expiryDate) {
+            console.warn('[AdminVoucher] Create attempt failed: Missing fields', { code, discount, description, expiryDate });
+            return res.status(400).json({ 
+                message: 'Required fields missing', 
+                details: 'Please provide code, discount, description, and expiryDate' 
+            });
+        }
+
+        // Validate discount is a number
+        const discountNum = parseFloat(discount);
+        if (isNaN(discountNum)) {
+            return res.status(400).json({ message: 'Discount must be a valid number' });
+        }
+
+        if (fundedBy === 'restaurant' && !restaurantId) {
+            return res.status(400).json({ 
+                message: 'Restaurant selection is required for restaurant-funded vouchers' 
+            });
+        }
 
         const voucher = await Voucher.create({
-            name: name || code, // Ensure name is provided
-            code: code.toUpperCase(),
-            discount,
+            name: name || code.toUpperCase(),
+            code: code.toUpperCase().trim(),
             description,
+            discount: discountNum,
+            discountType: discountType || 'fixed',
             expiryDate,
-            minimumAmount: minimumAmount || 0,
-            maxUsage: usageLimit || 1000,
-            createdBy: 'platform',
-            fundedBy: fundedBy || 'platform',
-            restaurant: fundedBy === 'restaurant' ? restaurantId : undefined,
+            minimumAmount: parseFloat(minimumAmount) || 0,
+            maxUsage: parseInt(usageLimit) || 1000,
             isActive: true,
+            createdBy: 'platform',
+            fundedBy: fundedBy || 'platform', 
+            restaurant: fundedBy === 'restaurant' ? restaurantId : null,
+        });
+
+        // Emit socket event for real-time notification
+        triggerEvent('public', 'new_voucher', {
+            restaurant: fundedBy === 'restaurant' ? restaurantId : null,
+            restaurantName: fundedBy === 'restaurant' ? 'Special Offer' : 'FoodSwipe',
+            voucher: voucher,
         });
 
         res.status(201).json(voucher);
     } catch (error) {
         console.error('Create admin voucher error:', error);
+
+        // Handle Mongoose validation errors
+        if (error.name === 'ValidationError') {
+            const messages = Object.values(error.errors).map(err => err.message);
+            return res.status(400).json({ 
+                message: 'Validation failed', 
+                details: messages.join(', ') 
+            });
+        }
+
+        if (error.code === 11000) {
+            return res.status(400).json({ message: 'A voucher with this code already exists' });
+        }
         res.status(500).json({ message: 'Server error', error: error.message });
     }
 };

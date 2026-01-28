@@ -488,8 +488,8 @@ export default function RestaurantDashboard({ navigation }: any) {
             Auto-unsuspend on: {new Date(suspension.unsuspendAt).toLocaleDateString()}
           </Text>
         )}
-        <Text style={styles.suspensionContact}>
-          Please contact support if you think this is a mistake.
+        <Text style={styles.suspensionContact} onPress={() => navigation.navigate('Helpline')}>
+          Please contact <Text style={{ color: '#fff', fontWeight: 'bold', textDecorationLine: 'underline' }}>Support</Text> if you think this is a mistake.
         </Text>
       </View>
     );
@@ -662,6 +662,9 @@ export default function RestaurantDashboard({ navigation }: any) {
           </View>
         </View>
         <View style={styles.navActions}>
+          <TouchableOpacity style={styles.iconBtn} onPress={() => navigation.navigate('Helpline')}>
+            <Ionicons name="help-circle-outline" size={24} color={Colors.primary} />
+          </TouchableOpacity>
           <TouchableOpacity style={styles.iconBtn} onPress={onRefresh}>
             <Ionicons name="refresh" size={22} color={Colors.gray} />
           </TouchableOpacity>

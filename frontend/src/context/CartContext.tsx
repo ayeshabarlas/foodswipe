@@ -72,7 +72,11 @@ export const CartProvider = ({ children }: { children: React.ReactNode }) => {
         setCart((prevCart) => {
             // Check if adding from a different restaurant
             if (prevCart.length > 0 && prevCart[0].restaurantId !== item.restaurantId) {
-                // For webapp, we'll just clear and add new for now
+                // For webapp, show confirmation dialog
+                const confirmClear = window.confirm('Your cart contains items from another restaurant. Adding items from this restaurant will clear your current cart. Do you want to continue?');
+                
+                if (!confirmClear) return prevCart;
+                
                 return [{ ...item, quantity: item.quantity || 1 }];
             }
 

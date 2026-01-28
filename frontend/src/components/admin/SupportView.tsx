@@ -3,7 +3,7 @@ import { useState, useEffect } from 'react';
 import axios from 'axios';
 import { getSocket } from '../../utils/socket';
 import { getApiUrl } from '../../utils/config';
-import { FaHeadset, FaSearch, FaFilter, FaClock, FaCheck, FaExclamationCircle } from 'react-icons/fa';
+import { FaHeadset, FaSearch, FaFilter, FaClock, FaCheck, FaExclamationCircle, FaWhatsapp } from 'react-icons/fa';
 
 export default function SupportView() {
     const [tickets, setTickets] = useState<any[]>([]);
@@ -61,9 +61,18 @@ export default function SupportView() {
 
     return (
         <div className="p-8">
-            <div className="mb-10">
-                <h2 className="text-[32px] font-bold text-[#111827] tracking-tight">Support & Tickets</h2>
-                <p className="text-[16px] font-medium text-[#6B7280] mt-2">Manage customer support, refunds, and disputes</p>
+            <div className="flex justify-between items-start mb-10">
+                <div>
+                    <h2 className="text-[32px] font-bold text-[#111827] tracking-tight">Support & Tickets</h2>
+                    <p className="text-[16px] font-medium text-[#6B7280] mt-2">Manage customer support, refunds, and disputes</p>
+                </div>
+                <button
+                    onClick={() => window.open(`https://wa.me/923295599855`, '_blank')}
+                    className="flex items-center gap-2 bg-[#25D366] text-white px-6 py-3 rounded-2xl font-bold shadow-lg shadow-green-500/20 hover:scale-105 transition-all"
+                >
+                    <FaWhatsapp className="text-xl" />
+                    <span>WhatsApp Support</span>
+                </button>
             </div>
 
             {/* Stats */}

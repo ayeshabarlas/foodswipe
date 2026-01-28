@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { Alert } from 'react-native';
 
 interface CartItem {
   _id: string;
@@ -62,17 +63,31 @@ export const CartProvider = ({ children }: { children: React.ReactNode }) => {
   };
 
   const addToCart = (item: CartItem) => {
-    setCart((prevCart) => {
-      // Check if adding from a different restaurant
-      if (prevCart.length > 0 && prevCart[0].restaurantId !== item.restaurantId) {
-        // In a real app, you'd show an alert. Here we'll just clear the cart and add the new item
-        // or we could throw an error that the UI handles.
-        // For now, let's keep it simple: clear and add new.
-        const newCart = [{ ...item, quantity: item.quantity || 1 }];
-        saveCart(newCart);
-        return newCart;
-      }
+    // Check if adding from a different restaurant
+    if (cart.length > 0 && cart[0].restaurantId !== item.restaurantId) {
+      Alert.alert(
+        'Replace cart items?',
+        'Your cart contains items from another restaurant. Adding items from this restaurant will clear your current cart.',
+        [
+          {
+            text: 'Cancel',
+            style: 'cancel',
+          },
+          {
+            text: 'Clear & Add',
+            onPress: () => {
+              const newCart = [{ ...item, quantity: item.quantity || 1 }];
+              setCart(newCart);
+              saveCart(newCart);
+            },
+            style: 'destructive',
+          },
+        ]
+      );
+      return;
+    }
 
+    setCart((prevCart) => {
       // Find if item with same ID, variant, and drinks already exists
       const existingItemIndex = prevCart.findIndex((i) => 
         i._id === item._id && 

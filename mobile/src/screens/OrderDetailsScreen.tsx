@@ -311,9 +311,14 @@ export default function OrderDetailsScreen({ route, navigation }: any) {
     );
   };
 
-  const formatPrice = (price: any) => {
-    const numericPrice = Number(price);
-    return isNaN(numericPrice) ? '0' : numericPrice.toString();
+  const formatTime = (dateString: string) => {
+    if (!dateString) return '';
+    const date = new Date(dateString);
+    return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  };
+
+  const isOrderActive = (status: string) => {
+    return !['Delivered', 'Cancelled'].includes(status);
   };
 
   const openMap = (targetAddress: string, lat?: number, lng?: number) => {
@@ -426,6 +431,28 @@ export default function OrderDetailsScreen({ route, navigation }: any) {
       </View>
 
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.content}>
+        {/* Estimated Delivery Time Card */}
+        {order.estimatedDeliveryTime && isOrderActive(order.status) && (
+          <View style={styles.estimatedTimeCard}>
+            <LinearGradient
+              colors={['#FF6A00', '#FF416C']}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 0 }}
+              style={styles.estimatedTimeGradient}
+            >
+              <View style={styles.estimatedTimeContent}>
+                <View>
+                  <Text style={styles.estimatedTimeLabel}>ESTIMATED DELIVERY</Text>
+                  <Text style={styles.estimatedTimeValue}>
+                    {formatTime(order.estimatedDeliveryTime)}
+                  </Text>
+                </View>
+                <Ionicons name="time" size={32} color="rgba(255,255,255,0.3)" />
+              </View>
+            </LinearGradient>
+          </View>
+        )}
+
         {/* Tracking Map */}
         {(userRole === 'customer' || userRole === 'rider') && order.status !== 'Delivered' && order.status !== 'Cancelled' && (
           <View style={[
@@ -1123,6 +1150,36 @@ export default function OrderDetailsScreen({ route, navigation }: any) {
 }
 
 const styles = StyleSheet.create({
+  estimatedTimeCard: {
+    margin: 15,
+    borderRadius: 15,
+    overflow: 'hidden',
+    elevation: 3,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+  },
+  estimatedTimeGradient: {
+    padding: 15,
+  },
+  estimatedTimeContent: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  estimatedTimeLabel: {
+    color: 'rgba(255,255,255,0.8)',
+    fontSize: 10,
+    fontWeight: 'bold',
+    letterSpacing: 1,
+    marginBottom: 4,
+  },
+  estimatedTimeValue: {
+    color: '#fff',
+    fontSize: 24,
+    fontWeight: 'bold',
+  },
   container: {
     flex: 1,
     backgroundColor: '#F9FAFB',

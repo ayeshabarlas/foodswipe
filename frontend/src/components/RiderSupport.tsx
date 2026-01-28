@@ -7,9 +7,14 @@ import { useSettings } from '@/hooks/useSettings';
 export default function RiderSupport() {
     const { settings } = useSettings();
 
+    const supportPhone = '+923295599855';
+
+    const handleWhatsAppSupport = () => {
+        window.open(`https://wa.me/${supportPhone.replace(/\D/g, '')}`, '_blank');
+    };
+
     const handleEmergencyCall = () => {
-        const phone = settings?.supportPhone || '+923295599855';
-        window.location.href = `tel:${phone}`;
+        window.location.href = `tel:${supportPhone}`;
     };
 
     const handleEmailSupport = () => {
@@ -41,15 +46,18 @@ export default function RiderSupport() {
                 </button>
             </div>
 
-            {/* Chat Support */}
+            {/* WhatsApp Support */}
             <div className="px-6 mb-6">
-                <button className="w-full bg-gradient-to-r from-orange-500 to-pink-600 rounded-2xl p-6 flex items-center gap-4 text-white shadow-md hover:from-orange-600 hover:to-pink-700 transition">
+                <button 
+                    onClick={handleWhatsAppSupport}
+                    className="w-full bg-gradient-to-r from-green-500 to-green-600 rounded-2xl p-6 flex items-center gap-4 text-white shadow-md hover:from-green-600 hover:to-green-700 transition"
+                >
                     <div className="w-14 h-14 bg-white/20 rounded-full flex items-center justify-center">
                         <FaComments className="text-3xl" />
                     </div>
                     <div className="flex-1 text-left">
-                        <h3 className="font-bold text-lg mb-1">Chat with Support</h3>
-                        <p className="text-sm opacity-90">Average response time 2 minutes</p>
+                        <h3 className="font-bold text-lg mb-1">WhatsApp Support</h3>
+                        <p className="text-sm opacity-90">Instant chat assistance</p>
                     </div>
                     <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
@@ -68,7 +76,7 @@ export default function RiderSupport() {
                     </div>
                     <div className="flex-1 text-left">
                         <h3 className="font-semibold text-gray-900">Call Support</h3>
-                        <p className="text-sm text-gray-600">{settings?.supportPhone || '+923295599855'}</p>
+                        <p className="text-sm text-gray-600">{supportPhone}</p>
                     </div>
                     <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
