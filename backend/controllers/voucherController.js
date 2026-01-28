@@ -281,7 +281,13 @@ const toggleVoucherStatus = async (req, res) => {
  */
 const createAdminVoucher = async (req, res) => {
     try {
+        console.log('🎫 [createAdminVoucher] Attempting to create platform voucher');
+        console.log('- User Role:', req.user?.role);
+        console.log('- User ID:', req.user?._id);
+        
         const { code, discount, description, expiryDate, minimumAmount, usageLimit, name, fundedBy, restaurantId, discountType } = req.body;
+        
+        console.log('- Voucher Payload:', { code, discount, fundedBy, restaurantId });
 
         if (!code || discount === undefined || discount === null || !description || !expiryDate) {
             console.warn('[AdminVoucher] Create attempt failed: Missing fields', { code, discount, description, expiryDate });

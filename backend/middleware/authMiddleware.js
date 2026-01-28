@@ -62,14 +62,20 @@ const protect = async (req, res, next) => {
 // Admin only middleware - checks both Admin and User collections
 const requireAdmin = async (req, res, next) => {
     try {
+        console.log(`🛡️ [requireAdmin] Checking access for URL: ${req.originalUrl}`);
+        console.log(`- req.admin: ${req.admin ? 'YES (' + req.admin.role + ')' : 'NO'}`);
+        console.log(`- req.user: ${req.user ? 'YES (' + req.user.role + ')' : 'NO'}`);
+
         // If protect already found an admin, we can use it directly
         if (req.admin) {
+            console.log(`- ✅ Access granted via req.admin (role: ${req.admin.role})`);
             return next();
         }
 
         // Check if req.user has an admin role
         const adminRoles = ['admin', 'super-admin', 'finance-admin', 'support-admin', 'restaurant-manager'];
         if (req.user && adminRoles.includes(req.user.role)) {
+            console.log(`- ✅ Access granted via req.user (role: ${req.user.role})`);
             // Populate req.admin for consistency if not already present
             if (!req.admin) {
                 req.admin = req.user;
@@ -80,21 +86,32 @@ const requireAdmin = async (req, res, next) => {
         // Final fallback: re-verify with database just in case
         const userId = req.user?._id || req.admin?._id;
         if (userId) {
+            console.log(`- 🔍 Re-verifying user in DB: ${userId}`);
             let adminUser = await Admin.findById(userId);
             if (!adminUser) {
                 adminUser = await User.findOne({ _id: userId, role: { $in: adminRoles } });
             }
 
             if (adminUser) {
+                console.log(`- ✅ Access granted after DB re-verification (role: ${adminUser.role})`);
                 req.admin = adminUser;
                 return next();
             }
         }
 
-        console.warn(`[requireAdmin] Access denied for user: ${req.user?._id || 'unknown'}`);
-        return res.status(403).json({ message: 'Access denied. Admin only.' });
+        console.warn(`[requireAdmin] ❌ Access denied for user: ${req.user?._id || 'unknown'}`);
+        return res.status(403).json({ 
+            message: 'Access denied. Admin only.',
+            debug: {
+                hasUser: !!req.user,
+                userRole: req.user?.role,
+                hasAdmin: !!req.admin,
+                adminRole: req.admin?.role,
+                userId: userId
+            }
+        });
     } catch (error) {
-        console.error('[requireAdmin] Error:', error);
+        console.error('[requireAdmin] 🔥 Error:', error);
         return res.status(403).json({ message: 'Access denied. Admin only.' });
     }
 };
