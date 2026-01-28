@@ -380,7 +380,10 @@ const updateVoucher = async (req, res) => {
         }
 
         // Check ownership
-        if (req.user.role !== 'admin') {
+        const adminRoles = ['admin', 'super-admin', 'finance-admin', 'support-admin', 'restaurant-manager'];
+        const isAdmin = adminRoles.includes(req.user.role);
+
+        if (!isAdmin) {
             if (voucher.createdBy === 'restaurant') {
                 const Restaurant = require('../models/Restaurant');
                 const restaurant = await Restaurant.findOne({ owner: req.user._id });
@@ -403,7 +406,7 @@ const updateVoucher = async (req, res) => {
         voucher.name = name || voucher.name;
         if (isActive !== undefined) voucher.isActive = isActive;
 
-        if (req.user.role === 'admin') {
+        if (isAdmin) {
             if (fundedBy) voucher.fundedBy = fundedBy;
             if (restaurantId) voucher.restaurant = restaurantId;
             else if (fundedBy === 'platform') voucher.restaurant = undefined;
@@ -429,7 +432,10 @@ const deleteVoucher = async (req, res) => {
         }
 
         // Check ownership
-        if (req.user.role !== 'admin') {
+        const adminRoles = ['admin', 'super-admin', 'finance-admin', 'support-admin', 'restaurant-manager'];
+        const isAdmin = adminRoles.includes(req.user.role);
+
+        if (!isAdmin) {
             if (voucher.createdBy === 'restaurant') {
                 const Restaurant = require('../models/Restaurant');
                 const restaurant = await Restaurant.findOne({ owner: req.user._id });

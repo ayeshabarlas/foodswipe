@@ -72,6 +72,7 @@ export default function CustomerDashboard({ navigation }: any) {
   const [restaurantSuggestions, setRestaurantSuggestions] = useState<any[]>([]);
   const [showRestaurantSuggestions, setShowRestaurantSuggestions] = useState(false);
   const [showLocationModal, setShowLocationModal] = useState(false);
+  const [isProfileModalVisible, setIsProfileModalVisible] = useState(false);
   const [userCoords, setUserCoords] = useState<{ lat: number, lng: number } | null>(null);
   const [vouchers, setVouchers] = useState<any[]>([]);
 
@@ -710,6 +711,104 @@ export default function CustomerDashboard({ navigation }: any) {
     });
   };
 
+  const renderProfileModal = () => (
+    <Modal
+      visible={isProfileModalVisible}
+      animationType="slide"
+      transparent={true}
+      onRequestClose={() => setIsProfileModalVisible(false)}
+    >
+      <View style={styles.modalOverlay}>
+        <TouchableOpacity 
+          style={styles.modalBackground} 
+          activeOpacity={1} 
+          onPress={() => setIsProfileModalVisible(false)} 
+        />
+        <View 
+          style={styles.profileModalContainer}
+        >
+          <View style={styles.profileHeader}>
+            <View style={styles.profileInfo}>
+              <View style={styles.profileAvatarLarge}>
+                <Ionicons name="person" size={40} color={Colors.white} />
+              </View>
+              <View>
+                <Text style={styles.profileName}>{userData?.name || 'User'}</Text>
+                <Text style={styles.profileEmail}>{userData?.email || ''}</Text>
+              </View>
+            </View>
+            <TouchableOpacity onPress={() => setIsProfileModalVisible(false)}>
+              <Ionicons name="close" size={24} color={Colors.gray} />
+            </TouchableOpacity>
+          </View>
+
+          <View style={styles.profileMenuItems}>
+            <TouchableOpacity style={styles.profileMenuItem} onPress={() => {
+              setIsProfileModalVisible(false);
+              // Navigation to profile edit if exists
+            }}>
+              <View style={[styles.menuIconContainer, { backgroundColor: '#E3F2FD' }]}>
+                <Ionicons name="person-outline" size={22} color="#1976D2" />
+              </View>
+              <Text style={styles.menuItemText}>My Profile</Text>
+              <Ionicons name="chevron-forward" size={18} color={Colors.gray} />
+            </TouchableOpacity>
+
+            <TouchableOpacity style={styles.profileMenuItem} onPress={() => {
+              setIsProfileModalVisible(false);
+              // Navigate to orders
+              Alert.alert('Coming Soon', 'Order History will be available in the next update.');
+            }}>
+              <View style={[styles.menuIconContainer, { backgroundColor: '#F3E5F5' }]}>
+                <Ionicons name="receipt-outline" size={22} color="#7B1FA2" />
+              </View>
+              <Text style={styles.menuItemText}>My Orders</Text>
+              <Ionicons name="chevron-forward" size={18} color={Colors.gray} />
+            </TouchableOpacity>
+
+            <TouchableOpacity style={styles.profileMenuItem} onPress={() => {
+              setIsProfileModalVisible(false);
+              if (activeOrders.length > 0) {
+                navigation.navigate('OrderDetails', { orderId: activeOrders[0]._id });
+              } else {
+                Alert.alert('No Active Orders', 'You don\'t have any active orders to track.');
+              }
+            }}>
+              <View style={[styles.menuIconContainer, { backgroundColor: '#E8F5E9' }]}>
+                <Ionicons name="map-outline" size={22} color="#388E3C" />
+              </View>
+              <Text style={styles.menuItemText}>Order Tracking</Text>
+              <Ionicons name="chevron-forward" size={18} color={Colors.gray} />
+            </TouchableOpacity>
+
+            <TouchableOpacity style={styles.profileMenuItem} onPress={() => {
+              setIsProfileModalVisible(false);
+              navigation.navigate('Helpline');
+            }}>
+              <View style={[styles.menuIconContainer, { backgroundColor: '#FFF3E0' }]}>
+                <Ionicons name="help-circle-outline" size={22} color="#F57C00" />
+              </View>
+              <Text style={styles.menuItemText}>Help & Support</Text>
+              <Ionicons name="chevron-forward" size={18} color={Colors.gray} />
+            </TouchableOpacity>
+
+            <View style={styles.menuDivider} />
+
+            <TouchableOpacity style={styles.profileMenuItem} onPress={() => {
+              setIsProfileModalVisible(false);
+              handleLogout();
+            }}>
+              <View style={[styles.menuIconContainer, { backgroundColor: '#FFEBEE' }]}>
+                <Ionicons name="log-out-outline" size={22} color="#D32F2F" />
+              </View>
+              <Text style={[styles.menuItemText, { color: '#D32F2F' }]}>Logout</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </View>
+    </Modal>
+  );
+
   return (
     <SafeAreaView style={styles.container}>
       <StatusBar barStyle="dark-content" />
@@ -838,10 +937,7 @@ export default function CustomerDashboard({ navigation }: any) {
           </TouchableOpacity>
         </View>
         <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-          <TouchableOpacity style={[styles.profileButton, { marginRight: 10 }]} onPress={() => navigation.navigate('Helpline')}>
-            <Ionicons name="help-circle-outline" size={28} color={Colors.gray} />
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.profileButton} onPress={handleLogout}>
+          <TouchableOpacity style={styles.profileButton} onPress={() => setIsProfileModalVisible(true)}>
             <Ionicons name="person-circle-outline" size={32} color={Colors.gray} />
           </TouchableOpacity>
         </View>
@@ -867,6 +963,7 @@ export default function CustomerDashboard({ navigation }: any) {
         }
         contentContainerStyle={{ paddingBottom: 20 }}
       />
+      {renderProfileModal()}
     </SafeAreaView>
   );
 }
@@ -1045,6 +1142,82 @@ const styles = StyleSheet.create({
     fontSize: 11,
     color: Colors.primary,
     fontWeight: 'bold',
+  },
+  profileModalContainer: {
+    backgroundColor: '#fff',
+    borderTopLeftRadius: 25,
+    borderTopRightRadius: 25,
+    padding: 20,
+    paddingBottom: 40,
+    width: '100%',
+    maxHeight: '80%',
+  },
+  profileHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+    marginBottom: 25,
+  },
+  profileInfo: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  profileAvatarLarge: {
+    width: 70,
+    height: 70,
+    borderRadius: 35,
+    backgroundColor: Colors.primary,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 15,
+  },
+  profileName: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: '#111827',
+  },
+  profileEmail: {
+    fontSize: 14,
+    color: '#6B7280',
+    marginTop: 2,
+  },
+  profileMenuItems: {
+    gap: 8,
+  },
+  profileMenuItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 12,
+    paddingHorizontal: 15,
+    borderRadius: 12,
+    backgroundColor: '#F9FAFB',
+  },
+  menuIconContainer: {
+    width: 40,
+    height: 40,
+    borderRadius: 10,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 15,
+  },
+  menuItemText: {
+    flex: 1,
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#374151',
+  },
+  menuDivider: {
+    height: 1,
+    backgroundColor: '#F3F4F6',
+    marginVertical: 10,
+  },
+  modalOverlay: {
+    flex: 1,
+    justifyContent: 'flex-end',
+  },
+  modalBackground: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(0,0,0,0.5)',
   },
   vouchersSection: {
     marginTop: 15,
