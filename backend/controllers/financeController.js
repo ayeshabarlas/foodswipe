@@ -477,6 +477,62 @@ const updatePayoutStatus = async (req, res) => {
     }
 };
 
+/**
+ * @desc    Settle rider COD cash
+ * @route   POST /api/finance/settle-cod
+ * @access  Private/Admin
+ */
+const settleRiderCOD = async (req, res) => {
+    try {
+        const { riderId, amount, reference, notes } = req.body;
+
+        if (!riderId || !amount) {
+            return res.status(400).json({ message: 'Rider ID and amount are required' });
+        }
+
+        const wallet = await RiderWallet.findOne({ rider: riderId });
+
+        if (!wallet) {
+            return res.status(404).json({ message: 'Rider wallet not found' });
+        }
+
+        if (wallet.cashToDeposit < amount) {
+            return res.status(400).json({ message: 'Settlement amount exceeds cash to deposit' });
+        }
+
+        // Update wallet
+        wallet.cashToDeposit -= amount;
+        wallet.cashCollected -= amount;
+        await wallet.save();
+
+        // Create transaction record
+        await Transaction.create({
+            entityType: 'rider',
+            entityId: riderId,
+            entityModel: 'User',
+            type: 'cash_deposit',
+            amount: -amount, // Negative because it's reducing a "debt" or balance
+            balanceAfter: wallet.cashToDeposit,
+            description: notes || 'COD Cash Settlement',
+            reference: reference || 'Manual Admin Settlement',
+        });
+
+        // Emit socket event for rider real-time update
+        triggerEvent(`rider_${riderId}`, 'wallet_updated', {
+            type: 'cash_settled',
+            amount,
+            newBalance: wallet.cashToDeposit
+        });
+
+        res.json({
+            message: 'COD settled successfully',
+            cashToDeposit: wallet.cashToDeposit
+        });
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};
+
 module.exports = {
     calculateCommission,
     splitPayment,
@@ -489,4 +545,5 @@ module.exports = {
     getPayoutHistory,
     updatePayoutStatus,
     processRefund,
+    settleRiderCOD,
 };

@@ -344,6 +344,7 @@ export default function RidersView() {
                     <table className="w-full">
                         <thead className="bg-gray-50/50 border-b border-gray-100">
                             <tr>
+                                <th className="px-6 py-4 text-left text-[13px] font-medium text-[#6B7280] uppercase tracking-wider">Rider ID</th>
                                 <th className="px-6 py-4 text-left text-[13px] font-medium text-[#6B7280] uppercase tracking-wider">Rider</th>
                                 <th className="px-6 py-4 text-left text-[13px] font-medium text-[#6B7280] uppercase tracking-wider">Vehicle</th>
                                 <th className="px-6 py-4 text-left text-[13px] font-medium text-[#6B7280] uppercase tracking-wider">Status</th>
@@ -356,7 +357,7 @@ export default function RidersView() {
                             <AnimatePresence>
                                 {loading ? (
                                     <tr>
-                                        <td colSpan={6} className="px-6 py-12 text-center">
+                                        <td colSpan={7} className="px-6 py-12 text-center">
                                             <div className="flex flex-col items-center gap-3">
                                                 <div className="w-10 h-10 border-4 border-[#FF6A00] border-t-transparent rounded-full animate-spin"></div>
                                                 <p className="text-[14px] font-medium text-[#6B7280]">Loading Riders...</p>
@@ -365,7 +366,7 @@ export default function RidersView() {
                                     </tr>
                                 ) : filteredRiders.length === 0 ? (
                                     <tr>
-                                        <td colSpan={6} className="px-6 py-12 text-center">
+                                        <td colSpan={7} className="px-6 py-12 text-center">
                                             <div className="flex flex-col items-center gap-3">
                                                 <div className="w-16 h-16 bg-gray-50 rounded-full flex items-center justify-center text-[#9CA3AF]">
                                                     <FaUser className="text-3xl" />
@@ -386,6 +387,11 @@ export default function RidersView() {
                                             onClick={() => setSelectedRider(rider)}
                                         >
                                             <td className="px-6 py-4">
+                                                <span className="text-[11px] font-mono bg-gray-100 text-gray-500 px-2 py-1 rounded-md group-hover:bg-orange-100 group-hover:text-orange-600 transition-colors">
+                                                    #{String(rider._id || '').slice(-6).toUpperCase()}
+                                                </span>
+                                            </td>
+                                            <td className="px-6 py-4">
                                                 <div className="flex items-center gap-4">
                                                     <div className="relative">
                                                         <div className="w-12 h-12 rounded-2xl bg-orange-50 flex items-center justify-center text-[#FF6A00] font-bold border-2 border-white shadow-sm text-[16px]">
@@ -399,8 +405,6 @@ export default function RidersView() {
                                                         <p className="font-semibold text-[#111827] text-[14px] group-hover:text-[#FF6A00] transition-colors">{rider.fullName || rider.user?.name}</p>
                                                         <div className="flex items-center gap-2 mt-0.5">
                                                             <span className="text-[12px] text-[#6B7280] font-medium">{rider.user?.phone || rider.user?.phoneNumber || 'No phone'}</span>
-                                                            <span className="text-[12px] text-[#9CA3AF]">•</span>
-                                                            <span className="text-[12px] text-[#9CA3AF] font-medium">#{String(rider._id || '').slice(-6).toUpperCase()}</span>
                                                         </div>
                                                     </div>
                                                 </div>

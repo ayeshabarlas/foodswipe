@@ -1,5 +1,7 @@
 {
   "version": 2,
+  "cleanUrls": true,
+  "trailingSlash": false,
   "builds": [
     {
       "src": "backend/server.js",
@@ -16,7 +18,8 @@
       "dest": "backend/server.js"
     },
     {
-      "handle": "filesystem"
+      "src": "/_next/(.*)",
+      "dest": "frontend/_next/$1"
     },
     {
       "src": "/(.*)",

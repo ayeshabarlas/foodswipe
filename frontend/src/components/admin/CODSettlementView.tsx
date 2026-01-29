@@ -202,6 +202,7 @@ export default function CODSettlementView() {
                     <table className="w-full">
                         <thead>
                             <tr className="bg-gray-50/50">
+                                <th className="px-8 py-4 text-left text-[10px] font-bold text-gray-400 uppercase tracking-widest">Rider ID</th>
                                 <th className="px-8 py-4 text-left text-[10px] font-bold text-gray-400 uppercase tracking-widest">Rider</th>
                                 <th className="px-8 py-4 text-left text-[10px] font-bold text-gray-400 uppercase tracking-widest">COD Collected</th>
                                 <th className="px-8 py-4 text-left text-[10px] font-bold text-gray-400 uppercase tracking-widest">Rider Fee</th>
@@ -215,12 +216,12 @@ export default function CODSettlementView() {
                             {loading ? (
                                 [1, 2, 3].map(i => (
                                     <tr key={i} className="animate-pulse">
-                                        <td colSpan={7} className="px-8 py-6"><div className="h-4 bg-gray-100 rounded w-full" /></td>
+                                        <td colSpan={8} className="px-8 py-6"><div className="h-4 bg-gray-100 rounded w-full" /></td>
                                     </tr>
                                 ))
                             ) : filteredRiders.length === 0 ? (
                                 <tr>
-                                    <td colSpan={7} className="px-8 py-12 text-center text-gray-400">No riders found</td>
+                                    <td colSpan={8} className="px-8 py-12 text-center text-gray-400">No riders found</td>
                                 </tr>
                             ) : (
                                 filteredRiders.map((rider) => {
@@ -235,6 +236,11 @@ export default function CODSettlementView() {
 
                                     return (
                                         <tr key={rider._id} className="hover:bg-gray-50/50 transition-colors">
+                                            <td className="px-8 py-6">
+                                                <span className="text-[11px] font-mono bg-gray-100 text-gray-500 px-2 py-1 rounded-md">
+                                                    {rider._id.slice(-6).toUpperCase()}
+                                                </span>
+                                            </td>
                                             <td className="px-8 py-6">
                                                 <div className="flex items-center gap-4">
                                                     <div className="w-10 h-10 bg-orange-100 rounded-xl flex items-center justify-center text-orange-600 font-bold">

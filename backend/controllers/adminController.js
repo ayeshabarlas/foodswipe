@@ -496,6 +496,8 @@ const getAllRestaurants = async (req, res) => {
 const getAllRiders = async (req, res) => {
     try {
         console.log('Fetching all riders for admin...');
+        const todayStr = new Date().toISOString().split('T')[0];
+
         const riders = await Rider.aggregate([
             {
                 $lookup: {
@@ -523,6 +525,25 @@ const getAllRiders = async (req, res) => {
             },
             {
                 $lookup: {
+                    from: 'riderbonuses',
+                    let: { riderId: '$_id' },
+                    pipeline: [
+                        {
+                            $match: {
+                                $expr: {
+                                    $and: [
+                                        { $eq: ['$rider', '$$riderId'] },
+                                        { $eq: ['$date', todayStr] }
+                                    ]
+                                }
+                            }
+                        }
+                    ],
+                    as: 'bonusDetails'
+                }
+            },
+            {
+                $lookup: {
                     from: 'orders',
                     let: { riderId: '$_id' },
                     pipeline: [
@@ -543,6 +564,7 @@ const getAllRiders = async (req, res) => {
             {
                 $addFields: {
                     wallet: { $ifNull: [{ $arrayElemAt: ['$walletDetails', 0] }, {}] },
+                    bonus: { $ifNull: [{ $arrayElemAt: ['$bonusDetails', 0] }, null] },
                     totalOrders: { $size: '$allOrders' },
                     documents: { $ifNull: ['$documents', {}] }
                 }

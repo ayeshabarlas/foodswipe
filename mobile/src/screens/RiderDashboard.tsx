@@ -591,6 +591,12 @@ export default function RiderDashboard({ navigation }: any) {
             <View style={styles.ratingRow}>
               <Ionicons name="star" size={14} color="#FBBF24" />
               <Text style={styles.ratingText}>{stats.rating.toFixed(1)} Rating</Text>
+              {riderProfile?._id && (
+                <>
+                  <Text style={[styles.ratingText, { marginHorizontal: 5 }]}>•</Text>
+                  <Text style={[styles.ratingText, { fontWeight: 'bold' }]}>ID: #{riderProfile._id.slice(-6).toUpperCase()}</Text>
+                </>
+              )}
             </View>
           </View>
         </View>
@@ -1306,6 +1312,11 @@ export default function RiderDashboard({ navigation }: any) {
           </View>
           <Text style={styles.profileNameLarge}>{userData?.name}</Text>
           <Text style={styles.profileEmailLarge}>{userData?.email}</Text>
+          {riderProfile?._id && (
+            <Text style={[styles.profileEmailLarge, { marginTop: 5, fontWeight: 'bold', color: 'rgba(255,255,255,0.9)' }]}>
+              Rider ID: #{riderProfile._id.slice(-6).toUpperCase()}
+            </Text>
+          )}
         </View>
       </LinearGradient>
 
@@ -1755,14 +1766,15 @@ export default function RiderDashboard({ navigation }: any) {
               
               <View style={styles.accountCard}>
                 <Text style={styles.accountName}>JazzCash</Text>
-                <Text style={styles.accountNumber}>0300 1234567</Text>
-                <Text style={styles.accountHolder}>FoodSwipe Pvt Ltd</Text>
+                <Text style={styles.accountNumber}>0329 5599855</Text>
+                <Text style={styles.accountHolder}>AYESHA BARLAS</Text>
               </View>
 
               <View style={styles.accountCard}>
-                <Text style={styles.accountName}>EasyPaisa</Text>
-                <Text style={styles.accountNumber}>0311 7654321</Text>
-                <Text style={styles.accountHolder}>FoodSwipe Pvt Ltd</Text>
+                <Text style={styles.accountName}>Meezan Bank</Text>
+                <Text style={styles.accountNumber}>0284 0112694034</Text>
+                <Text style={{ fontSize: 12, marginTop: 4, color: '#4B5563' }}>IBAN: PK52 MEZN 0002 8401 1269 4034</Text>
+                <Text style={styles.accountHolder}>AYESHA BARLAS</Text>
               </View>
 
               <Text style={[styles.depositInfoText, { marginTop: 15, fontWeight: 'bold' }]}>
