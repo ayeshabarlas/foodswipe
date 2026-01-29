@@ -179,42 +179,48 @@ app.use((err, req, res, next) => {
 // 🚀 7. INITIALIZE
 const startServer = async () => {
     try {
-        console.log('🔌 Initializing Pusher...');
-        initSocket();
-        
-        console.log('⏰ Initializing Cron Jobs...');
-        initCronJobs();
-        
+        // Connect to DB for all environments
         console.log('🔌 Connecting to MongoDB...');
         const success = await connectDB();
         
-        if (success) {
-            console.log('✅ DB Connected Successfully');
+        // Only start crons and sockets in non-Vercel environments
+        // or during actual server runtime (not during build)
+        if (!process.env.VERCEL) {
+            console.log('🔌 Initializing Pusher...');
+            initSocket();
             
-            // Start server for non-Vercel environments (Local, Render, etc.)
-            if (!process.env.VERCEL) {
-                const PORT = process.env.PORT || 10000; // Use 10000 as default for Render/Production
+            console.log('⏰ Initializing Cron Jobs...');
+            initCronJobs();
+            
+            if (success) {
+                console.log('✅ DB Connected Successfully');
+                const PORT = process.env.PORT || 10000;
                 app.listen(PORT, '0.0.0.0', () => {
                     console.log(`🚀 SERVER RUNNING ON PORT ${PORT}`);
                     console.log(`📡 Health Check: http://localhost:${PORT}/health`);
                 });
-            }
-        } else {
-            console.error('❌ CRITICAL: DB Connection Failed.');
-            
-            // Still start for health reporting
-            if (!process.env.VERCEL) {
-                const PORT = process.env.PORT || 10000; // Keep port consistent
+            } else {
+                console.error('❌ CRITICAL: DB Connection Failed.');
+                const PORT = process.env.PORT || 10000;
                 app.listen(PORT, '0.0.0.0', () => {
                     console.log(`🚀 SERVER RUNNING ON PORT ${PORT} (LIMITED MODE - NO DB)`);
                 });
             }
+        } else {
+            // Vercel environment: just ensure DB is connected for the serverless function
+            if (success) {
+                console.log('✅ Vercel DB Connection Ready');
+            } else {
+                console.warn('⚠️ Vercel DB Connection Pending/Failed');
+            }
+            // Initialize Pusher lazily if needed, but don't start cron jobs
+            initSocket();
         }
     } catch (err) {
         console.error('🔥 STARTUP ERROR:', err);
     }
 };
- 
- startServer();
+
+startServer();
 
 module.exports = app;
