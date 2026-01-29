@@ -1,6 +1,6 @@
 "use client";
 
-// Vercel Build Fix - Force Rebuild
+// Vercel Security Patch Fix - Force 15.1.7
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import dynamic from "next/dynamic";
