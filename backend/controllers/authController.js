@@ -116,14 +116,20 @@ const registerUser = async (req, res) => {
             });
             console.log(`Created Rider profile for ${user.email}`);
         } else if (normalizedRole === 'restaurant') {
+            console.log(`[DEBUG] Creating Restaurant profile for ${user.email}`);
             const Restaurant = require('../models/Restaurant');
-            await Restaurant.create({
-                owner: user._id,
-                name: `${name}'s Restaurant`,
-                contact: phone || '',
-                status: 'active'
-            });
-            console.log(`Created Restaurant profile for ${user.email}`);
+            try {
+                await Restaurant.create({
+                    owner: user._id,
+                    name: `${name}'s Restaurant`,
+                    contact: phone || '',
+                    status: 'active'
+                });
+                console.log(`✅ Created Restaurant profile for ${user.email}`);
+            } catch (createErr) {
+                console.error(`❌ Restaurant Profile Creation Error:`, createErr);
+                throw createErr;
+            }
         }
 
         // Trigger real-time event for admin dashboard
