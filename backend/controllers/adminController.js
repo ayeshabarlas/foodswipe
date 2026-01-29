@@ -43,7 +43,7 @@ const notifyAdmin = async (subject, message) => {
 const getPendingRestaurants = async (req, res) => {
     try {
         const restaurants = await Restaurant.find({ verificationStatus: 'pending' })
-            .populate('owner', 'name email status')
+            .populate('owner')
             .sort({ createdAt: -1 });
 
         res.json(restaurants);
@@ -433,7 +433,7 @@ const getAllRestaurants = async (req, res) => {
     try {
         console.log('Fetching all restaurants for admin...');
         const restaurants = await Restaurant.find()
-            .populate('owner', 'name email status phone')
+            .populate('owner')
             .lean();
 
         console.log(`Found ${restaurants.length} restaurants. Enriching with stats...`);
@@ -461,6 +461,7 @@ const getAllRestaurants = async (req, res) => {
 
                 return {
                     ...restaurant,
+                    owner: restaurant.owner, // Explicitly preserve owner
                     totalOrders: stat.totalOrders,
                     revenue: stat.revenue,
                     commission: stat.commission,
