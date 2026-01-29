@@ -31,6 +31,7 @@ const nextConfig = {
         ],
     },
     async redirects() {
+        /*
         if (process.env.ADMIN_ONLY === 'true') {
             return [
                 {
@@ -40,6 +41,7 @@ const nextConfig = {
                 },
             ];
         }
+        */
         return [];
     },
     async headers() {

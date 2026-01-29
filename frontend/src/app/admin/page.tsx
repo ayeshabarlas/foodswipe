@@ -1,4 +1,5 @@
-'use client';
+// Admin Page - Force Build v2.0.8 - 2026-01-30 03:45
+"use client";
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';

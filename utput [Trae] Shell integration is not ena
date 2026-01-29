@@ -1,0 +1,5 @@
+[33m1c1cf55[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mmain[m[33m)[m Fix 404 to Vercel routing
+[33m9b1db16[m[33m ([m[1;31morigin/main[m[33m, [m[1;31morigin/HEAD[m[33m)[m Fix 404: Revert to minimal Vercel routing
+[33ma9a9067[m Fix: Revert complex routing and fix Next.js versioning
+[33mcb46339[m Final Fix: Correct Vercel routing for 404 and Next.js 15.1.7
+[33m3a5831a[m Critical: Upgrade Next.js to 15.1.7 and fix build scripts

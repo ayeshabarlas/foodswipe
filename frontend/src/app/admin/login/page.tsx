@@ -11,6 +11,8 @@ const AdminLoginForm = dynamic(() => import('@/components/AdminLoginForm'), {
     )
 });
 
+// Version: 2.0.5 - Verified Build Trigger
 export default function AdminLoginPage() {
-    return <AdminLoginForm />;
+  // Version 2.0.1 - Deployment Fix
+  return <AdminLoginForm />;
 }

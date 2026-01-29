@@ -138,7 +138,8 @@ const registerUser = async (req, res) => {
                     owner: user._id,
                     name: `${name}'s Restaurant`,
                     contact: phone || '',
-                    status: 'active'
+                    verificationStatus: 'approved',
+                    isActive: true
                 });
                 console.log(`✅ Created Restaurant profile for ${user.email}`);
             } catch (createErr) {

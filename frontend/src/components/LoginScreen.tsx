@@ -108,18 +108,23 @@ export default function LoginScreen({ onLogin }: LoginScreenProps) {
         setError("");
         setLoading(true);
         try {
-            if (!formData.firstName || !formData.lastName) {
-                setError("First and Last name are required.");
+            const firstName = formData.firstName.trim();
+            const lastName = formData.lastName.trim();
+            const email = formData.email.trim().toLowerCase();
+            const password = formData.password;
+
+            if (!firstName || !lastName) {
+                setError("Please enter both first and last name.");
                 setLoading(false);
                 return;
             }
-            if (!formData.email || !formData.email.includes('@')) {
+            if (!email || !email.includes('@') || email.length < 5) {
                 setError("Please enter a valid email address.");
                 setLoading(false);
                 return;
             }
-            if (!formData.password || formData.password.length < 6) {
-                setError("Password must be at least 6 characters.");
+            if (!password || password.length < 6) {
+                setError("Password must be at least 6 characters long.");
                 setLoading(false);
                 return;
             }
@@ -127,9 +132,9 @@ export default function LoginScreen({ onLogin }: LoginScreenProps) {
             console.log(`[DEBUG] Attempting signup for role: ${selectedRole}`);
             // Direct register without OTP or Phone
             const res = await axios.post(`${getApiUrl()}/api/auth/register`, {
-                name: `${formData.firstName.trim()} ${formData.lastName.trim()}`,
-                email: formData.email.trim().toLowerCase(),
-                password: formData.password,
+                name: `${firstName} ${lastName}`,
+                email: email,
+                password: password,
                 role: selectedRole,
             });
 
