@@ -36,7 +36,8 @@ export function getApiUrl() {
     const isVercel = window.location.hostname.includes('vercel.app') || window.location.hostname.includes('foodswipe.pk');
                    
     if (isVercel) {
-      cachedApiUrl = RENDER_URL;
+      // In monorepo deployment, the API is served from the same domain under /api
+      cachedApiUrl = window.location.origin;
       return cachedApiUrl;
     }
   }
@@ -77,8 +78,17 @@ export function getSocketUrl() {
     return cachedSocketUrl;
   }
 
-  if (url && url.includes('vercel.app')) url = 'https://foodswipe-6178.onrender.com';
-  if (!url && process.env.NODE_ENV === 'production') url = 'https://foodswipe-6178.onrender.com';
+  if (url && url.includes('vercel.app')) {
+    cachedSocketUrl = window.location.origin;
+    return cachedSocketUrl;
+  }
+  if (!url && process.env.NODE_ENV === 'production') {
+    if (typeof window !== 'undefined') {
+      cachedSocketUrl = window.location.origin;
+      return cachedSocketUrl;
+    }
+    url = 'https://foodswipe-6178.onrender.com';
+  }
   if (!url) url = 'http://localhost:5000';
 
   if (!url.startsWith('http')) url = `https://${url}`;
