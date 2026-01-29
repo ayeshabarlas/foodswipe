@@ -14,38 +14,51 @@ const protect = async (req, res, next) => {
             // First check User collection
             req.user = await User.findById(decoded.id).select('-password');
 
-            if (req.user && req.user.status === 'suspended') {
-                // Allow suspended users to fetch their own profile so they can see why they are suspended
-                // We check if the request is a GET request to a profile-related endpoint
-                const isProfileRoute = req.originalUrl.includes('/profile') || 
-                                     req.originalUrl.includes('/my-profile') ||
-                                     req.originalUrl.includes('/me');
-                const isGetRequest = req.method === 'GET';
-
-                if (!(isProfileRoute && isGetRequest)) {
-                    return res.status(403).json({ 
-                        message: 'Your account has been suspended. Please contact support.',
-                        status: 'suspended',
-                        suspensionDetails: req.user.suspensionDetails
-                    });
-                }
-            }
-
-            // If not in User, check Admin collection (for common routes like upload)
+            // If not in User, check Admin collection
             if (!req.user) {
                 req.admin = await Admin.findById(decoded.id).select('-password');
                 if (req.admin) {
-                    // Populate req.user as well for compatibility
+                    // Populate req.user as well for compatibility across the app
                     req.user = { 
                         _id: req.admin._id, 
                         role: req.admin.role, 
-                        name: req.admin.name,
-                        email: req.admin.email
+                        name: req.admin.role === 'restaurant-manager' ? req.admin.name : 'Admin',
+                        email: req.admin.email,
+                        isAdmin: true
                     };
+                }
+            } else {
+                // If user is suspended, block most actions
+                if (req.user.status === 'suspended') {
+                    const isProfileRoute = req.originalUrl.includes('/profile') || 
+                                         req.originalUrl.includes('/my-profile') ||
+                                         req.originalUrl.includes('/me');
+                    const isGetRequest = req.method === 'GET';
+
+                    if (!(isProfileRoute && isGetRequest)) {
+                        return res.status(403).json({ 
+                            message: 'Your account has been suspended. Please contact support.',
+                            status: 'suspended',
+                            suspensionDetails: req.user.suspensionDetails
+                        });
+                    }
+                }
+
+                // Check if they also exist in Admin collection for special admin roles
+                const adminRecord = await Admin.findById(decoded.id).select('-password');
+                if (adminRecord) {
+                    req.admin = adminRecord;
+                } else {
+                    // Check if their User role is an admin role
+                    const adminRoles = ['admin', 'super-admin', 'finance-admin', 'support-admin', 'restaurant-manager'];
+                    if (adminRoles.includes(req.user.role)) {
+                        req.admin = req.user;
+                    }
                 }
             }
 
             if (!req.user && !req.admin) {
+                console.warn(`[protect] ❌ User/Admin not found for ID: ${decoded.id}`);
                 return res.status(401).json({ message: 'Not authorized, user not found' });
             }
             return next();
@@ -62,24 +75,21 @@ const protect = async (req, res, next) => {
 // Admin only middleware - checks both Admin and User collections
 const requireAdmin = async (req, res, next) => {
     try {
-        console.log(`🛡️ [requireAdmin] Checking access for URL: ${req.originalUrl}`);
-        console.log(`- req.admin: ${req.admin ? 'YES (' + req.admin.role + ')' : 'NO'}`);
-        console.log(`- req.user: ${req.user ? 'YES (' + req.user.role + ')' : 'NO'}`);
-
-        // If protect already found an admin, we can use it directly
-        if (req.admin) {
-            console.log(`- ✅ Access granted via req.admin (role: ${req.admin.role})`);
-            return next();
-        }
-
-        // Check if req.user has an admin role
+        const url = req.originalUrl;
+        const method = req.method;
+        
+        console.log(`🛡️ [requireAdmin] Checking access for ${method} ${url}`);
+        
+        // Check if req.admin or req.user has an admin role
         const adminRoles = ['admin', 'super-admin', 'finance-admin', 'support-admin', 'restaurant-manager'];
-        if (req.user && adminRoles.includes(req.user.role)) {
-            console.log(`- ✅ Access granted via req.user (role: ${req.user.role})`);
-            // Populate req.admin for consistency if not already present
-            if (!req.admin) {
-                req.admin = req.user;
-            }
+        
+        const currentRole = req.admin?.role || req.user?.role;
+        const isAuthorized = adminRoles.includes(currentRole);
+
+        if (isAuthorized) {
+            console.log(`- ✅ Access granted (Role: ${currentRole})`);
+            // Ensure req.admin is set if req.user has the role
+            if (!req.admin && req.user) req.admin = req.user;
             return next();
         }
 
@@ -89,17 +99,20 @@ const requireAdmin = async (req, res, next) => {
             console.log(`- 🔍 Re-verifying user in DB: ${userId}`);
             let adminUser = await Admin.findById(userId);
             if (!adminUser) {
-                adminUser = await User.findOne({ _id: userId, role: { $in: adminRoles } });
+                adminUser = await User.findOne({ 
+                    _id: userId, 
+                    role: { $in: adminRoles } 
+                });
             }
 
             if (adminUser) {
-                console.log(`- ✅ Access granted after DB re-verification (role: ${adminUser.role})`);
+                console.log(`- ✅ Access granted after DB re-verification (Role: ${adminUser.role})`);
                 req.admin = adminUser;
                 return next();
             }
         }
 
-        console.warn(`[requireAdmin] ❌ Access denied for user: ${req.user?._id || 'unknown'}`);
+        console.warn(`[requireAdmin] ❌ Access denied for user: ${userId || 'unknown'}`);
         return res.status(403).json({ 
             message: 'Access denied. Admin only.',
             debug: {
@@ -107,7 +120,8 @@ const requireAdmin = async (req, res, next) => {
                 userRole: req.user?.role,
                 hasAdmin: !!req.admin,
                 adminRole: req.admin?.role,
-                userId: userId
+                userId: userId,
+                path: url
             }
         });
     } catch (error) {

@@ -26,8 +26,9 @@ export default function LocationAccessModal({ isOpen, onAllow, onSkip }: Locatio
       visible={isOpen}
       transparent={true}
       animationType="fade"
+      pointerEvents="box-none"
     >
-      <View style={styles.overlay}>
+      <View style={styles.overlay} pointerEvents="box-none">
         <View style={styles.container}>
           <LinearGradient
             colors={['#FF6A00', '#FF416C']}

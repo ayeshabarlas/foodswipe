@@ -14,6 +14,7 @@ const { calculateDistance } = require('../utils/locationUtils');
 const { triggerEvent } = require('../socket');
 const { notifyAdmins } = require('../utils/adminNotifier');
 const { createNotification } = require('./notificationController');
+const { trackRiderDeliveryForBonus } = require('./bonusController');
 
 // @desc    Create new order
 // @route   POST /api/orders
@@ -723,6 +724,9 @@ const processOrderCompletion = async (order, distanceKm, req = null) => {
                 riderWallet.cashCollected = (riderWallet.cashCollected || 0) + codAmount;
             }
             await riderWallet.save();
+
+            // Track for daily bonus
+            await trackRiderDeliveryForBonus(rider._id);
 
             // Real-time update for Rider Wallet
             triggerEvent(`rider-${rider._id}`, 'wallet_updated', {

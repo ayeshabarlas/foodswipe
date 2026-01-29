@@ -33,6 +33,9 @@ import * as Location from 'expo-location';
 import LocationAccessModal from '../components/LocationAccessModal';
 import { calculateDistance, formatDistance } from '../utils/location';
 
+import PromotionPopup from '../components/PromotionPopup';
+import VoucherCard from '../components/VoucherCard';
+
 const { width, height } = Dimensions.get('window');
 
 // Google Maps API Key
@@ -75,8 +78,19 @@ export default function CustomerDashboard({ navigation }: any) {
   const [isProfileModalVisible, setIsProfileModalVisible] = useState(false);
   const [userCoords, setUserCoords] = useState<{ lat: number, lng: number } | null>(null);
   const [vouchers, setVouchers] = useState<any[]>([]);
+  const [popupVoucher, setPopupVoucher] = useState<any>(null);
 
-  const categories = ['All', 'Pizza', 'Burger', 'Asian', 'Desi', 'Italian', 'Fast Food', 'Dessert', 'Healthy'];
+  const categories = [
+    { name: 'All', icon: 'grid-outline' },
+    { name: 'Pizza', icon: 'pizza-outline' },
+    { name: 'Burger', icon: 'fast-food-outline' },
+    { name: 'Asian', icon: 'restaurant-outline' },
+    { name: 'Desi', icon: 'cafe-outline' },
+    { name: 'Italian', icon: 'leaf-outline' },
+    { name: 'Fast Food', icon: 'ice-cream-outline' },
+    { name: 'Dessert', icon: 'nutrition-outline' },
+    { name: 'Healthy', icon: 'heart-outline' }
+  ];
 
   useEffect(() => {
     loadUserData();
@@ -151,10 +165,32 @@ export default function CustomerDashboard({ navigation }: any) {
 
   const fetchVouchers = async () => {
     try {
+      console.log('🔍 Fetching vouchers from /vouchers...');
       const res = await apiClient.get('/vouchers');
-      setVouchers(res.data || []);
-    } catch (err) {
-      console.error('Error fetching vouchers:', err);
+      const allVouchers = res.data || [];
+      console.log(`✅ Received ${allVouchers.length} vouchers from /vouchers`);
+      
+      if (allVouchers.length > 0) {
+        console.log('Sample voucher:', JSON.stringify(allVouchers[0], null, 2));
+      }
+      
+      setVouchers(allVouchers);
+
+      // Fetch platform vouchers for the popup
+      console.log('🔍 Fetching platform vouchers from /vouchers/platform...');
+      const platformRes = await apiClient.get('/vouchers/platform');
+      const platformVouchers = platformRes.data || [];
+      console.log(`✅ Received ${platformVouchers.length} platform vouchers`);
+      
+      if (platformVouchers.length > 0) {
+        setPopupVoucher(platformVouchers[0]);
+      }
+    } catch (err: any) {
+      console.error('❌ Error fetching vouchers:', err.message);
+      if (err.response) {
+        console.error('Response data:', err.response.data);
+        console.error('Response status:', err.response.status);
+      }
     }
   };
 
@@ -332,8 +368,10 @@ export default function CustomerDashboard({ navigation }: any) {
 
   const loadUserData = async () => {
     try {
-      const data = await SecureStore.getItemAsync('user_data');
-      if (data) setUserData(JSON.parse(data));
+      const userInfo = await SecureStore.getItemAsync('user_info');
+      if (userInfo) {
+        setUserData(JSON.parse(userInfo));
+      }
     } catch (err) {
       console.error('Error loading user data:', err);
     }
@@ -418,10 +456,14 @@ export default function CustomerDashboard({ navigation }: any) {
       const cached = await getCache('featured_video');
       if (cached) setFeaturedVideo(cached);
 
-      const res = await apiClient.get('/videos/feed?limit=1');
+      const res = await apiClient.get('/videos/feed?limit=10');
       if (res.data && res.data.videos && res.data.videos.length > 0) {
-        setFeaturedVideo(res.data.videos[0]);
-        await setCache('featured_video', res.data.videos[0]);
+        // Find the first video that actually has a videoUrl
+        const realVideo = res.data.videos.find((v: any) => v.videoUrl && v.videoUrl.trim() !== '');
+        if (realVideo) {
+          setFeaturedVideo(realVideo);
+          await setCache('featured_video', realVideo);
+        }
       }
     } catch (err) {
       console.error('Error fetching featured video:', err);
@@ -437,9 +479,13 @@ export default function CustomerDashboard({ navigation }: any) {
   };
 
   const handleLogout = async () => {
-    await SecureStore.deleteItemAsync('auth_token');
-    await SecureStore.deleteItemAsync('user_data');
-    navigation.replace('Home');
+    try {
+      await SecureStore.deleteItemAsync('user_token');
+      await SecureStore.deleteItemAsync('user_info');
+      navigation.replace('Login');
+    } catch (err) {
+      console.error('Error during logout:', err);
+    }
   };
 
   const getProgressWidth = (status: string) => {
@@ -578,14 +624,20 @@ export default function CustomerDashboard({ navigation }: any) {
         {categories.map((cat, i) => (
           <TouchableOpacity 
             key={i} 
-            style={[styles.categoryItem, activeCategory === cat && styles.activeCategory]}
+            style={[styles.categoryItem, activeCategory === cat.name && styles.activeCategory]}
             onPress={() => {
-              setActiveCategory(cat);
+              setActiveCategory(cat.name);
               setRestaurantSearch(''); // Clear search when selecting a category
-              fetchRestaurants('', cat);
+              fetchRestaurants('', cat.name);
             }}
           >
-            <Text style={[styles.categoryText, activeCategory === cat && styles.activeCategoryText]}>{cat}</Text>
+            <Ionicons 
+              name={cat.icon as any} 
+              size={18} 
+              color={activeCategory === cat.name ? '#fff' : Colors.gray} 
+              style={{ marginRight: 6 }}
+            />
+            <Text style={[styles.categoryText, activeCategory === cat.name && styles.activeCategoryText]}>{cat.name}</Text>
           </TouchableOpacity>
         ))}
       </ScrollView>
@@ -622,37 +674,39 @@ export default function CustomerDashboard({ navigation }: any) {
       </View>
 
       {/* Vouchers & Promotions */}
+      {/* Platform Promotions & Vouchers */}
       {vouchers.length > 0 && (
         <View style={styles.vouchersSection}>
           <View style={styles.sectionHeader}>
-            <Text style={styles.sectionTitle}>Discounts & Offers</Text>
+            <Text style={styles.sectionTitle}>Exclusive Deals</Text>
+            <TouchableOpacity>
+              <Text style={styles.seeAllText}>See All</Text>
+            </TouchableOpacity>
           </View>
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.vouchersList}>
+          <ScrollView 
+            horizontal 
+            showsHorizontalScrollIndicator={false} 
+            contentContainerStyle={styles.vouchersList}
+          >
             {vouchers.map((voucher) => (
-              <TouchableOpacity 
+              <VoucherCard 
                 key={voucher._id} 
-                style={styles.voucherCard}
-                onPress={() => Alert.alert('Voucher Code', `Use code ${voucher.code} to get ${voucher.discount}% off!\n\n${voucher.description}`)}
-              >
-                <LinearGradient
-                  colors={['#FF6A00', '#FF416C']}
-                  style={styles.voucherGradient}
-                >
-                  <View style={styles.voucherLeft}>
-                    <Text style={styles.voucherDiscount}>{voucher.discount}%</Text>
-                    <Text style={styles.voucherOff}>OFF</Text>
-                  </View>
-                  <View style={styles.voucherDivider} />
-                  <View style={styles.voucherRight}>
-                    <Text style={styles.voucherCode}>{voucher.code}</Text>
-                    <Text style={styles.voucherDesc} numberOfLines={1}>{voucher.description}</Text>
-                  </View>
-                </LinearGradient>
-              </TouchableOpacity>
+                voucher={voucher}
+                onPress={() => Alert.alert(
+                  'Voucher Code', 
+                  `Use code ${voucher.code} to get ${voucher.discountType === 'percentage' ? voucher.discount + '%' : 'Rs.' + voucher.discount} off!\n\n${voucher.description}`
+                )}
+              />
             ))}
           </ScrollView>
         </View>
       )}
+
+      {/* Promotion Popup */}
+      <PromotionPopup 
+        voucher={popupVoucher} 
+        onClose={() => setPopupVoucher(null)} 
+      />
 
       {/* Active Orders - Real-time Status */}
       {activeOrders.length > 0 && (
@@ -717,8 +771,9 @@ export default function CustomerDashboard({ navigation }: any) {
       animationType="slide"
       transparent={true}
       onRequestClose={() => setIsProfileModalVisible(false)}
+      pointerEvents="box-none"
     >
-      <View style={styles.modalOverlay}>
+      <View style={styles.modalOverlay} pointerEvents="box-none">
         <TouchableOpacity 
           style={styles.modalBackground} 
           activeOpacity={1} 
@@ -745,7 +800,7 @@ export default function CustomerDashboard({ navigation }: any) {
           <View style={styles.profileMenuItems}>
             <TouchableOpacity style={styles.profileMenuItem} onPress={() => {
               setIsProfileModalVisible(false);
-              // Navigation to profile edit if exists
+              navigation.navigate('Profile');
             }}>
               <View style={[styles.menuIconContainer, { backgroundColor: '#E3F2FD' }]}>
                 <Ionicons name="person-outline" size={22} color="#1976D2" />
@@ -754,13 +809,15 @@ export default function CustomerDashboard({ navigation }: any) {
               <Ionicons name="chevron-forward" size={18} color={Colors.gray} />
             </TouchableOpacity>
 
-            <TouchableOpacity style={styles.profileMenuItem} onPress={() => {
-              setIsProfileModalVisible(false);
-              // Navigate to orders
-              Alert.alert('Coming Soon', 'Order History will be available in the next update.');
-            }}>
-              <View style={[styles.menuIconContainer, { backgroundColor: '#F3E5F5' }]}>
-                <Ionicons name="receipt-outline" size={22} color="#7B1FA2" />
+            <TouchableOpacity 
+              style={styles.profileMenuItem}
+              onPress={() => {
+                setIsProfileModalVisible(false);
+                navigation.navigate('OrderHistory');
+              }}
+            >
+              <View style={[styles.menuIconContainer, { backgroundColor: '#EEF2FF' }]}>
+                <Ionicons name="receipt-outline" size={22} color="#4F46E5" />
               </View>
               <Text style={styles.menuItemText}>My Orders</Text>
               <Ionicons name="chevron-forward" size={18} color={Colors.gray} />
@@ -778,6 +835,28 @@ export default function CustomerDashboard({ navigation }: any) {
                 <Ionicons name="map-outline" size={22} color="#388E3C" />
               </View>
               <Text style={styles.menuItemText}>Order Tracking</Text>
+              <Ionicons name="chevron-forward" size={18} color={Colors.gray} />
+            </TouchableOpacity>
+
+            <TouchableOpacity style={styles.profileMenuItem} onPress={() => {
+              setIsProfileModalVisible(false);
+              navigation.navigate('Offers');
+            }}>
+              <View style={[styles.menuIconContainer, { backgroundColor: '#F3E5F5' }]}>
+                <Ionicons name="pricetags-outline" size={22} color="#8E24AA" />
+              </View>
+              <Text style={styles.menuItemText}>Deals & Offers</Text>
+              <Ionicons name="chevron-forward" size={18} color={Colors.gray} />
+            </TouchableOpacity>
+
+            <TouchableOpacity style={styles.profileMenuItem} onPress={() => {
+              setIsProfileModalVisible(false);
+              navigation.navigate('About');
+            }}>
+              <View style={[styles.menuIconContainer, { backgroundColor: '#E0F2F1' }]}>
+                <Ionicons name="information-circle-outline" size={22} color="#00796B" />
+              </View>
+              <Text style={styles.menuItemText}>About FoodSwipe</Text>
               <Ionicons name="chevron-forward" size={18} color={Colors.gray} />
             </TouchableOpacity>
 
@@ -1055,12 +1134,16 @@ const styles = StyleSheet.create({
     marginBottom: 10,
   },
   categoryItem: {
-    paddingHorizontal: 20,
-    paddingVertical: 10,
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 16,
+    paddingVertical: 8,
     borderRadius: 20,
     backgroundColor: '#F3F4F6',
     marginRight: 10,
-    height: 40,
+    height: 44,
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
   },
   activeCategory: {
     backgroundColor: Colors.primary,
@@ -1220,61 +1303,17 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(0,0,0,0.5)',
   },
   vouchersSection: {
-    marginTop: 15,
-    marginBottom: 10,
+    paddingVertical: 15,
+    backgroundColor: '#fff',
+  },
+  seeAllText: {
+    color: Colors.primary,
+    fontSize: 14,
+    fontWeight: '600',
   },
   vouchersList: {
     paddingLeft: 20,
-    marginTop: 10,
-  },
-  voucherCard: {
-    width: 240,
-    height: 80,
-    marginRight: 15,
-    borderRadius: 12,
-    overflow: 'hidden',
-  },
-  voucherGradient: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    padding: 12,
-  },
-  voucherLeft: {
-    alignItems: 'center',
-    width: 60,
-  },
-  voucherDiscount: {
-    color: '#fff',
-    fontSize: 20,
-    fontWeight: '900',
-  },
-  voucherOff: {
-    color: '#fff',
-    fontSize: 10,
-    fontWeight: 'bold',
-    marginTop: -4,
-  },
-  voucherDivider: {
-    width: 1,
-    height: '100%',
-    backgroundColor: 'rgba(255,255,255,0.3)',
-    marginHorizontal: 12,
-  },
-  voucherRight: {
-    flex: 1,
-  },
-  voucherCode: {
-    color: '#fff',
-    fontSize: 14,
-    fontWeight: 'bold',
-    letterSpacing: 1,
-  },
-  voucherDesc: {
-    color: '#fff',
-    fontSize: 10,
-    opacity: 0.9,
-    marginTop: 2,
+    paddingRight: 5,
   },
   activeOrdersSection: {
     marginBottom: 20,
@@ -1500,7 +1539,8 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 10,
+    paddingHorizontal: 20,
+    marginBottom: 12,
   },
   sectionTitle: {
     fontSize: 20,

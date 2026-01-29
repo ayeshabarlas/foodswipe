@@ -40,9 +40,10 @@ interface DishDetailsModalProps {
   isVisible: boolean;
   onClose: () => void;
   dish: any;
+  isRestaurantOpen?: boolean;
 }
 
-const DishDetailsModal = ({ isVisible, onClose, dish }: DishDetailsModalProps) => {
+const DishDetailsModal = ({ isVisible, onClose, dish, isRestaurantOpen = true }: DishDetailsModalProps) => {
   const { addToCart } = useCart();
   const [quantity, setQuantity] = useState(1);
   const [activeTab, setActiveTab] = useState<'ingredients' | 'reviews' | 'nutrition'>('ingredients');
@@ -480,18 +481,27 @@ const DishDetailsModal = ({ isVisible, onClose, dish }: DishDetailsModalProps) =
             </View>
 
             <TouchableOpacity 
-              style={styles.addToCartBtn} 
-              onPress={handleAddToCart}
-              activeOpacity={0.9}
+              style={[styles.addToCartBtn, !isRestaurantOpen && styles.disabledBtn]} 
+              onPress={isRestaurantOpen ? handleAddToCart : undefined}
+              activeOpacity={isRestaurantOpen ? 0.9 : 1}
             >
               <LinearGradient
-                colors={['#FF8C00', '#FF4500']}
+                colors={isRestaurantOpen ? ['#FF8C00', '#FF4500'] : ['#9CA3AF', '#6B7280']}
                 start={{ x: 0, y: 0 }}
                 end={{ x: 1, y: 0 }}
                 style={styles.gradientBtn}
               >
-                <Ionicons name="cart-outline" size={20} color="#fff" style={{ marginRight: 8 }} />
-                <Text style={styles.addToCartText}>Add to Cart • Rs. {totalPrice.toLocaleString()}</Text>
+                <Ionicons 
+                  name={isRestaurantOpen ? "cart-outline" : "lock-closed-outline"} 
+                  size={20} 
+                  color="#fff" 
+                  style={{ marginRight: 8 }} 
+                />
+                <Text style={styles.addToCartText}>
+                  {isRestaurantOpen 
+                    ? `Add to Cart • Rs. ${totalPrice.toLocaleString()}` 
+                    : 'Restaurant Closed'}
+                </Text>
               </LinearGradient>
             </TouchableOpacity>
           </View>
@@ -906,9 +916,12 @@ const styles = StyleSheet.create({
   },
   addToCartBtn: {
     flex: 1,
-    height: 54,
-    borderRadius: 16,
+    height: 55,
+    borderRadius: 15,
     overflow: 'hidden',
+  },
+  disabledBtn: {
+    opacity: 0.8,
   },
   gradientBtn: {
     flex: 1,

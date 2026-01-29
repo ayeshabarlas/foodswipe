@@ -12,7 +12,11 @@ import VideoFeedScreen from '../screens/VideoFeedScreen';
 import RestaurantDetails from '../screens/RestaurantDetails';
 import CheckoutScreen from '../screens/CheckoutScreen';
 import OrderDetailsScreen from '../screens/OrderDetailsScreen';
+import OrderHistoryScreen from '../screens/OrderHistoryScreen';
 import HelplineScreen from '../screens/HelplineScreen';
+import ProfileScreen from '../screens/ProfileScreen';
+import AboutScreen from '../screens/AboutScreen';
+import OffersScreen from '../screens/OffersScreen';
 
 const Stack = createStackNavigator();
 
@@ -37,7 +41,11 @@ export default function AppNavigator() {
         <Stack.Screen name="RestaurantDetails" component={RestaurantDetails} />
         <Stack.Screen name="Checkout" component={CheckoutScreen} />
         <Stack.Screen name="OrderDetails" component={OrderDetailsScreen} />
+        <Stack.Screen name="OrderHistory" component={OrderHistoryScreen} />
         <Stack.Screen name="Helpline" component={HelplineScreen} />
+        <Stack.Screen name="Profile" component={ProfileScreen} />
+        <Stack.Screen name="About" component={AboutScreen} />
+        <Stack.Screen name="Offers" component={OffersScreen} />
       </Stack.Navigator>
     </NavigationContainer>
   );

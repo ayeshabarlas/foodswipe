@@ -549,7 +549,33 @@ const updateStoreSettings = async (req, res) => {
 
         if (storeStatus) restaurant.storeStatus = storeStatus;
         if (prepTime) restaurant.prepTime = prepTime;
-        if (storeHours) restaurant.storeHours = storeHours;
+        if (storeHours) {
+            restaurant.storeHours = storeHours;
+            
+            // Sync with openingHours (object format used by mobile)
+            const openingHours = {};
+            const daysMap = {
+                'Monday': 'monday',
+                'Tuesday': 'tuesday',
+                'Wednesday': 'wednesday',
+                'Thursday': 'thursday',
+                'Friday': 'friday',
+                'Saturday': 'saturday',
+                'Sunday': 'sunday'
+            };
+
+            storeHours.forEach(hour => {
+                const dayKey = daysMap[hour.day];
+                if (dayKey) {
+                    openingHours[dayKey] = {
+                        open: hour.openTime,
+                        close: hour.closeTime,
+                        isClosed: !hour.isOpen
+                    };
+                }
+            });
+            restaurant.openingHours = openingHours;
+        }
         if (autoAccept !== undefined) restaurant.autoAccept = autoAccept;
         if (orderLimit !== undefined) restaurant.orderLimit = orderLimit;
         if (notificationPreferences) restaurant.notificationPreferences = notificationPreferences;
@@ -561,6 +587,9 @@ const updateStoreSettings = async (req, res) => {
 
         const updatedRestaurant = await restaurant.save();
         console.log(`Restaurant ${restaurant._id} settings saved successfully`);
+
+        // Trigger real-time update
+        triggerEvent(`restaurant-${restaurant._id}`, 'restaurantUpdate', updatedRestaurant);
 
         res.json(updatedRestaurant);
     } catch (error) {

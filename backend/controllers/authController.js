@@ -91,8 +91,7 @@ const registerUser = async (req, res) => {
             name,
             email: normalizedEmail,
             password: password || '',
-            phone: phone ? phone.trim() : null,
-            phoneNumber: phone ? phone.trim() : null,
+            ...(phone && { phone: phone.trim(), phoneNumber: phone.trim() }),
             role: normalizedRole
         });
 

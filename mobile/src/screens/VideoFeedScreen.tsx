@@ -100,8 +100,10 @@ const VideoFeedScreen = () => {
       const response = await apiClient.get(endpoint);
 
       if (response.data && response.data.videos) {
-        setVideos(response.data.videos);
-        setFilteredVideos(response.data.videos);
+        // Filter to only include items that actually have a video
+        const videosWithActualVideo = response.data.videos.filter((v: any) => v.videoUrl && v.videoUrl.trim() !== '');
+        setVideos(videosWithActualVideo);
+        setFilteredVideos(videosWithActualVideo);
       }
     } catch (error) {
       console.error('Error fetching videos:', error);
@@ -194,15 +196,27 @@ const VideoFeedScreen = () => {
     const channel = subscribeToChannel('public-feed');
     if (channel) {
       channel.bind('new_dish', (newDish: any) => {
-        console.log('✨ New dish received via socket:', newDish.name);
-        setVideos((prev: any) => [newDish, ...prev]);
+        if (newDish.videoUrl && newDish.videoUrl.trim() !== '') {
+          console.log('✨ New video dish received via socket:', newDish.name);
+          setVideos((prev: any) => [newDish, ...prev]);
+          setFilteredVideos((prev: any) => [newDish, ...prev]);
+        }
       });
 
       channel.bind('dish_updated', (updatedDish: any) => {
-        console.log('🔄 Dish updated via socket:', updatedDish.name);
-        setVideos((prev: any) => prev.map((v: any) => 
-          v._id === updatedDish._id ? { ...v, ...updatedDish } : v
-        ));
+        if (updatedDish.videoUrl && updatedDish.videoUrl.trim() !== '') {
+          console.log('🔄 Video dish updated via socket:', updatedDish.name);
+          setVideos((prev: any) => prev.map((v: any) => 
+            v._id === updatedDish._id ? { ...v, ...updatedDish } : v
+          ));
+          setFilteredVideos((prev: any) => prev.map((v: any) => 
+            v._id === updatedDish._id ? { ...v, ...updatedDish } : v
+          ));
+        } else {
+          // If a dish was updated and no longer has a video, remove it from feed
+          setVideos((prev: any) => prev.filter((v: any) => v._id !== updatedDish._id));
+          setFilteredVideos((prev: any) => prev.filter((v: any) => v._id !== updatedDish._id));
+        }
       });
     }
 

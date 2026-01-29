@@ -36,7 +36,7 @@ export default function RiderDashboard({ navigation }: any) {
   const [isOnline, setIsOnline] = useState(false);
   const [availableOrders, setAvailableOrders] = useState<any[]>([]);
   const [myOrders, setMyOrders] = useState<any[]>([]);
-  const [activeTab, setActiveTab] = useState<'home' | 'orders' | 'earnings' | 'profile'>('home');
+  const [activeTab, setActiveTab] = useState<'home' | 'orders' | 'earnings' | 'bonus' | 'profile'>('home');
   const [showHistory, setShowHistory] = useState(false);
   const [orderFilter, setOrderFilter] = useState<'all' | 'nearby' | 'high_pay'>('all');
   const [loading, setLoading] = useState(true);
@@ -49,9 +49,10 @@ export default function RiderDashboard({ navigation }: any) {
   const [isUpdatingStatus, setIsUpdatingStatus] = useState(false);
   const [historyOrders, setHistoryOrders] = useState<any[]>([]);
   const [transactions, setTransactions] = useState<any[]>([]);
-  const [bankDetails, setBankDetails] = useState({ bankName: '', accountTitle: '', accountNumber: '' });
+  const [bankDetails, setBankDetails] = useState({ bankName: '', accountNumber: '', accountTitle: '' });
   const [isEditingBank, setIsEditingBank] = useState(false);
   const [savingBank, setSavingBank] = useState(false);
+  const [bonusData, setBonusData] = useState<any>(null);
 
   const isOnlineRef = React.useRef(isOnline);
   const riderProfileRef = React.useRef(riderProfile);
@@ -256,6 +257,15 @@ export default function RiderDashboard({ navigation }: any) {
     }
   };
 
+  const fetchBonusData = async () => {
+    try {
+      const { data } = await apiClient.get('/bonus/status');
+      setBonusData(data);
+    } catch (err) {
+      console.error('Error fetching bonus data:', err);
+    }
+  };
+
   const loadInitialData = async () => {
     try {
       const data = await SecureStore.getItemAsync('user_data');
@@ -376,6 +386,32 @@ export default function RiderDashboard({ navigation }: any) {
             // Optionally refetch earnings data to be sure
             fetchEarningsData();
           });
+
+          riderChannel.bind('bonus_achieved', (data: any) => {
+            console.log('🎉 Bonus achieved via socket:', data);
+            fetchBonusData();
+            fetchEarningsData(); // Refresh earnings to show bonus amount
+            Alert.alert(
+              'Bonus Unlocked! 🎉',
+              `Congratulations! You've completed your daily target and earned Rs. ${data.bonusAmount} bonus!`
+            );
+          });
+
+          riderChannel.bind('bonus_progress_updated', (data: any) => {
+            console.log('📈 Bonus progress updated via socket:', data);
+            setBonusData((prev: any) => {
+              if (!prev) return null;
+              return {
+                ...prev,
+                current: {
+                  ...prev.current,
+                  dailyDeliveryCount: data.dailyDeliveryCount,
+                  targetDeliveries: data.targetDeliveries,
+                  isBonusAchieved: data.isBonusAchieved
+                }
+              };
+            });
+          });
         }
 
         if (personalChannel) {
@@ -444,6 +480,7 @@ export default function RiderDashboard({ navigation }: any) {
       setAvailableOrders(newAvailableOrders);
       setHistoryOrders(historyData);
       setStats(newStats);
+      fetchBonusData();
 
       await setCache(`rider_data_${riderId}`, {
         myOrders: allMyOrders,
@@ -1010,12 +1047,6 @@ export default function RiderDashboard({ navigation }: any) {
           </View>
           <Text style={styles.quickActionLabel}>History</Text>
         </TouchableOpacity>
-        <TouchableOpacity style={styles.quickAction} onPress={() => Linking.openURL('https://wa.me/923295599855')}>
-          <View style={[styles.quickActionIcon, { backgroundColor: '#F0FDF4' }]}>
-            <Ionicons name="logo-whatsapp" size={24} color="#10B981" />
-          </View>
-          <Text style={styles.quickActionLabel}>WhatsApp</Text>
-        </TouchableOpacity>
       </View>
     </ScrollView>
   );
@@ -1183,6 +1214,89 @@ export default function RiderDashboard({ navigation }: any) {
     </ScrollView>
   );
 
+  const renderBonusTab = () => {
+    if (!bonusData) return (
+      <View style={styles.loadingContainer}>
+        <ActivityIndicator size="large" color={Colors.primary} />
+      </View>
+    );
+
+    const { current, history } = bonusData;
+    const progress = Math.min(current.dailyDeliveryCount / current.targetDeliveries, 1);
+    
+    return (
+      <ScrollView 
+        style={styles.tabContent}
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={[Colors.primary]} />}
+      >
+        <LinearGradient colors={[Colors.primary, '#f43f5e']} style={styles.tabHeader}>
+          <Text style={styles.tabHeaderTitle}>Daily Bonus Progress</Text>
+          <View style={styles.bonusCardLarge}>
+            <View style={styles.bonusInfoLarge}>
+              <Text style={styles.bonusGoalText}>Goal: {current.targetDeliveries} Deliveries</Text>
+              <Text style={styles.bonusAmountText}>Reward: Rs. {current.bonusAmount}</Text>
+            </View>
+            <View style={styles.progressContainerLarge}>
+              <View style={styles.progressBarBgLarge}>
+                <View style={[styles.progressBarFillLarge, { width: `${progress * 100}%` }]} />
+              </View>
+              <Text style={styles.progressTextLarge}>{current.dailyDeliveryCount}/{current.targetDeliveries}</Text>
+            </View>
+            {current.isBonusAchieved ? (
+              <View style={styles.achievedBadge}>
+                <Ionicons name="checkmark-circle" size={20} color="#fff" />
+                <Text style={styles.achievedText}>Bonus Achieved!</Text>
+              </View>
+            ) : (
+              <Text style={styles.remainingText}>
+                {current.targetDeliveries - current.dailyDeliveryCount} more to unlock bonus
+              </Text>
+            )}
+          </View>
+        </LinearGradient>
+
+        <View style={styles.sectionHeader}>
+          <Text style={styles.sectionTitle}>Bonus History</Text>
+        </View>
+        <View style={styles.historyList}>
+          {history && history.length > 0 ? history.map((item: any, idx: number) => (
+            <View key={idx} style={styles.historyItem}>
+              <View style={styles.historyIcon}>
+                <Ionicons name="gift" size={24} color={Colors.primary} />
+              </View>
+              <View style={styles.historyInfo}>
+                <Text style={styles.historyTitle}>Daily Target Achieved</Text>
+                <Text style={styles.historyDate}>{new Date(item.date).toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</Text>
+              </View>
+              <Text style={styles.historyAmount}>+Rs. {item.bonusAmount}</Text>
+            </View>
+          )) : (
+            <View style={styles.emptyStateSmall}>
+              <Ionicons name="gift-outline" size={48} color={Colors.gray} />
+              <Text style={styles.emptyTextSmall}>No bonus history yet</Text>
+            </View>
+          )}
+        </View>
+
+        <View style={styles.bonusTermsCard}>
+          <Text style={styles.termsTitle}>How it works</Text>
+          <View style={styles.termRow}>
+            <Ionicons name="bicycle" size={16} color={Colors.primary} />
+            <Text style={styles.termText}>Complete {current.targetDeliveries} deliveries in a single day.</Text>
+          </View>
+          <View style={styles.termRow}>
+            <Ionicons name="wallet" size={16} color={Colors.primary} />
+            <Text style={styles.termText}>Rs. {current.bonusAmount} will be added instantly to your wallet.</Text>
+          </View>
+          <View style={styles.termRow}>
+            <Ionicons name="time" size={16} color={Colors.primary} />
+            <Text style={styles.termText}>Progress resets every day at midnight.</Text>
+          </View>
+        </View>
+      </ScrollView>
+    );
+  };
+
   const renderProfileTab = () => (
     <ScrollView style={styles.tabContent}>
       <LinearGradient colors={[Colors.primary, '#f43f5e']} style={styles.tabHeader}>
@@ -1267,6 +1381,17 @@ export default function RiderDashboard({ navigation }: any) {
       </TouchableOpacity>
       <TouchableOpacity 
         style={styles.navItem} 
+        onPress={() => setActiveTab('bonus')}
+      >
+        <Ionicons 
+          name={activeTab === 'bonus' ? "gift" : "gift-outline"} 
+          size={24} 
+          color={activeTab === 'bonus' ? Colors.primary : Colors.gray} 
+        />
+        <Text style={[styles.navText, activeTab === 'bonus' && styles.navTextActive]}>Bonus</Text>
+      </TouchableOpacity>
+      <TouchableOpacity 
+        style={styles.navItem} 
         onPress={() => setActiveTab('profile')}
       >
         <Ionicons 
@@ -1298,6 +1423,7 @@ export default function RiderDashboard({ navigation }: any) {
         {activeTab === 'home' && renderHomeTab()}
         {activeTab === 'orders' && renderOrdersTab()}
         {activeTab === 'earnings' && renderEarningsTab()}
+        {activeTab === 'bonus' && renderBonusTab()}
         {activeTab === 'profile' && renderProfileTab()}
       </View>
 
@@ -2149,6 +2275,158 @@ const styles = StyleSheet.create({
     color: Colors.gray,
     marginTop: 4,
     fontWeight: '500',
+  },
+  emptyTextSmall: {
+    fontSize: 14,
+    color: Colors.gray,
+    marginTop: 10,
+  },
+  // Bonus Tab Styles
+  bonusCardLarge: {
+    backgroundColor: 'rgba(255,255,255,0.2)',
+    borderRadius: 24,
+    padding: 20,
+    marginTop: 10,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.3)',
+  },
+  bonusInfoLarge: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 15,
+  },
+  bonusGoalText: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#fff',
+  },
+  bonusAmountText: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#fff',
+  },
+  progressContainerLarge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  progressBarBgLarge: {
+    flex: 1,
+    height: 12,
+    backgroundColor: 'rgba(255,255,255,0.3)',
+    borderRadius: 6,
+    overflow: 'hidden',
+  },
+  progressBarFillLarge: {
+    height: '100%',
+    backgroundColor: '#fff',
+    borderRadius: 6,
+  },
+  progressTextLarge: {
+    fontSize: 14,
+    fontWeight: 'bold',
+    color: '#fff',
+    minWidth: 40,
+  },
+  achievedBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#22c55e',
+    alignSelf: 'flex-start',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 12,
+    marginTop: 15,
+    gap: 6,
+  },
+  achievedText: {
+    color: '#fff',
+    fontSize: 12,
+    fontWeight: 'bold',
+  },
+  remainingText: {
+    color: 'rgba(255,255,255,0.8)',
+    fontSize: 12,
+    marginTop: 12,
+    fontStyle: 'italic',
+  },
+  historyList: {
+    paddingHorizontal: 20,
+    paddingBottom: 20,
+  },
+  historyItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#fff',
+    padding: 15,
+    borderRadius: 18,
+    marginBottom: 12,
+    borderWidth: 1,
+    borderColor: '#F3F4F6',
+  },
+  historyIcon: {
+    width: 44,
+    height: 44,
+    borderRadius: 14,
+    backgroundColor: '#FFF1F2',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 15,
+  },
+  historyInfo: {
+    flex: 1,
+  },
+  historyTitle: {
+    fontSize: 15,
+    fontWeight: 'bold',
+    color: '#111827',
+  },
+  historyDate: {
+    fontSize: 11,
+    color: Colors.gray,
+    marginTop: 2,
+  },
+  historyAmount: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#059669',
+  },
+  emptyStateSmall: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 30,
+    backgroundColor: '#fff',
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: '#F3F4F6',
+  },
+  bonusTermsCard: {
+    backgroundColor: '#fff',
+    marginHorizontal: 20,
+    marginBottom: 40,
+    padding: 20,
+    borderRadius: 24,
+    borderWidth: 1,
+    borderColor: '#F3F4F6',
+  },
+  termsTitle: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#111827',
+    marginBottom: 15,
+  },
+  termRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 12,
+    gap: 12,
+  },
+  termText: {
+    fontSize: 13,
+    color: '#4B5563',
+    flex: 1,
+    lineHeight: 18,
   },
   navTextActive: {
     color: Colors.primary,

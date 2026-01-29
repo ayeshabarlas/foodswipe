@@ -551,7 +551,16 @@ export default function RestaurantProfile({ restaurant: initialRestaurant, onBac
                                         <div className="absolute bottom-0 left-0 right-0 p-3">
                                             <p className="text-white font-bold text-xs line-clamp-1 mb-1">{dish.name}</p>
                                             <div className="flex items-center justify-between">
-                                                <span className="text-primary font-bold text-xs">Rs. {dish.price}</span>
+                                                <div className="flex items-center gap-1">
+                                                    <span className="text-primary font-bold text-xs">
+                                                        Rs. {Math.round(dish.price * (1 - (dish.discount || 0) / 100))}
+                                                    </span>
+                                                    {(dish.discount || 0) > 0 && (
+                                                        <span className="text-white/50 text-[10px] line-through">
+                                                            Rs. {dish.price}
+                                                        </span>
+                                                    )}
+                                                </div>
                                                 <div className="flex items-center gap-1">
                                                     <FaStar className="text-yellow-400" size={10} />
                                                     <span className="text-white text-[10px] font-bold">
@@ -792,9 +801,9 @@ export default function RestaurantProfile({ restaurant: initialRestaurant, onBac
                                                         </div>
                                                         <div className="flex items-center justify-between">
                                                             <div className="flex items-center gap-2">
-                                                                <span className="text-primary font-bold">Rs. {dish.price.toLocaleString()}</span>
+                                                                <span className="text-primary font-bold">Rs. {Math.round(dish.price * (1 - (dish.discount || 0) / 100)).toLocaleString()}</span>
                                                                 {(dish.discount || 0) > 0 && (
-                                                                    <span className="text-gray-400 text-xs line-through">Rs. {Math.round(dish.price / (1 - (dish.discount || 0) / 100)).toLocaleString()}</span>
+                                                                    <span className="text-gray-400 text-xs line-through">Rs. {dish.price.toLocaleString()}</span>
                                                                 )}
                                                             </div>
                                                             <button
@@ -802,6 +811,7 @@ export default function RestaurantProfile({ restaurant: initialRestaurant, onBac
                                                                     e.stopPropagation();
                                                                     addToCart({ 
                                                                         ...dish, 
+                                                                        price: Math.round(dish.price * (1 - (dish.discount || 0) / 100)),
                                                                         quantity: 1, 
                                                                         restaurantId: restaurantData._id, 
                                                                         restaurantName: restaurantData.name,

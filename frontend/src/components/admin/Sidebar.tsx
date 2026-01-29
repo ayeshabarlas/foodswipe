@@ -75,6 +75,7 @@ export default function Sidebar({ activeTab, setActiveTab, onLogout, notificatio
                 { id: 'riders-all', label: 'All Riders' },
                 { id: 'riders-pending', label: 'Rider Approvals' },
                 { id: 'riders-map', label: 'Live Map' },
+                { id: 'bonus-management', label: 'Bonus Management' },
                 { id: 'cod-settlement', label: 'COD Settlement' }
             ]
         },

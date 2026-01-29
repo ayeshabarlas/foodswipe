@@ -23,6 +23,7 @@ import * as SecureStore from 'expo-secure-store';
 import { subscribeToChannel, unsubscribeFromChannel } from '../utils/socket';
 
 import DishDetailsModal from '../components/DishDetailsModal';
+import VoucherCard from '../components/VoucherCard';
 
 const { width } = Dimensions.get('window');
 
@@ -30,11 +31,15 @@ export default function RestaurantDetails({ route, navigation }: any) {
   const { restaurantId, selectedDishId } = route.params;
   const [restaurant, setRestaurant] = useState<any>(null);
   const [dishes, setDishes] = useState<any[]>([]);
+  const [vouchers, setVouchers] = useState<any[]>([]);
+  const [deals, setDeals] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [isDetailsVisible, setIsDetailsVisible] = useState(false);
   const [activeDish, setActiveDish] = useState<any>(null);
   const [isFollowing, setIsFollowing] = useState(false);
   const [activeTab, setActiveTab] = useState('menu'); // 'menu', 'reviews', 'info'
+  const [activeCategory, setActiveCategory] = useState('All');
+  const [categories, setCategories] = useState<string[]>(['All']);
   const [reviews, setReviews] = useState<any[]>([]);
   const [isReviewModalVisible, setIsReviewModalVisible] = useState(false);
   const [userReview, setUserReview] = useState({ rating: 5, comment: '' });
@@ -145,10 +150,33 @@ export default function RestaurantDetails({ route, navigation }: any) {
 
       try {
         const dishesRes = await apiClient.get(`/dishes/restaurant/${cleanId}`);
-        setDishes(dishesRes.data || []);
+        const dishesData = dishesRes.data || [];
+        setDishes(dishesData);
+        
+        // Extract categories
+        if (dishesData.length > 0) {
+          const uniqueCategories = ['All', ...new Set(dishesData.map((d: any) => d.category || 'Other'))];
+          setCategories(uniqueCategories);
+        }
       } catch (e: any) {
         console.error(`❌ [RestaurantDetails] Error fetching dishes for ${cleanId}:`, e.message);
         setDishes([]);
+      }
+
+      // Fetch vouchers for this restaurant
+      try {
+        const vouchersRes = await apiClient.get(`/vouchers/restaurant/${cleanId}`);
+        setVouchers(vouchersRes.data || []);
+      } catch (e: any) {
+        console.error(`❌ [RestaurantDetails] Error fetching vouchers for ${cleanId}:`, e.message);
+      }
+
+      // Fetch deals for this restaurant
+      try {
+        const dealsRes = await apiClient.get(`/deals/restaurant/${cleanId}`);
+        setDeals(dealsRes.data || []);
+      } catch (e: any) {
+        console.error(`❌ [RestaurantDetails] Error fetching deals for ${cleanId}:`, e.message);
       }
 
       // Check if following (if logged in)
@@ -171,6 +199,53 @@ export default function RestaurantDetails({ route, navigation }: any) {
       setLoading(false);
     }
   };
+
+  const isRestaurantOpen = () => {
+    if (!restaurant) return false;
+    if (restaurant.storeStatus === 'closed') return false;
+    
+    // Check operating hours
+    const days = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
+    const now = new Date();
+    const today = days[now.getDay()];
+    
+    // Check openingHours object (standard format)
+    const hours = restaurant.openingHours?.[today];
+    
+    if (hours) {
+      if (hours.isClosed) return false;
+      
+      const currentTime = now.getHours() * 60 + now.getMinutes();
+      
+      const [openH, openM] = (hours.open || '09:00').split(':').map(Number);
+      const [closeH, closeM] = (hours.close || '23:00').split(':').map(Number);
+      
+      const openTime = openH * 60 + openM;
+      const closeTime = closeH * 60 + closeM;
+      
+      // Handle cases where close time is after midnight (e.g., 2:00 AM)
+      if (closeTime < openTime) {
+        return currentTime >= openTime || currentTime <= closeTime;
+      }
+      
+      return currentTime >= openTime && currentTime <= closeTime;
+    }
+    
+    return restaurant.storeStatus === 'open' || restaurant.storeStatus === 'busy';
+  };
+
+  const [isOpen, setIsOpen] = useState(false);
+
+  useEffect(() => {
+    setIsOpen(isRestaurantOpen());
+    
+    // Refresh open status every minute
+    const interval = setInterval(() => {
+      setIsOpen(isRestaurantOpen());
+    }, 60000);
+    
+    return () => clearInterval(interval);
+  }, [restaurant]);
 
   const toggleFollow = async () => {
     try {
@@ -283,7 +358,7 @@ export default function RestaurantDetails({ route, navigation }: any) {
                 source={{ uri: getMediaUrl(restaurant.logo) || 'https://via.placeholder.com/100' }} 
                 style={styles.profilePic} 
               />
-              <View style={[styles.statusIndicator, { backgroundColor: restaurant.storeStatus === 'open' ? '#10B981' : (restaurant.storeStatus === 'busy' ? '#F59E0B' : '#EF4444') }]} />
+              <View style={[styles.statusIndicator, { backgroundColor: isOpen ? (restaurant.storeStatus === 'busy' ? '#F59E0B' : '#10B981') : '#EF4444' }]} />
             </View>
           </View>
         </View>
@@ -314,8 +389,8 @@ export default function RestaurantDetails({ route, navigation }: any) {
                     : (restaurant.businessType === 'home-chef' ? 'Home Chef' : 'Restaurant')}
                 </Text>
                 <Text style={styles.metaDivider}>•</Text>
-                <Text style={[styles.openStatus, { color: restaurant.storeStatus === 'open' ? '#10B981' : (restaurant.storeStatus === 'busy' ? '#F59E0B' : '#EF4444') }]}>
-                  {restaurant.storeStatus === 'open' ? 'Open' : (restaurant.storeStatus === 'busy' ? 'Busy' : 'Closed')}
+                <Text style={[styles.openStatus, { color: isOpen ? (restaurant.storeStatus === 'busy' ? '#F59E0B' : '#10B981') : '#EF4444' }]}>
+                  {isOpen ? (restaurant.storeStatus === 'busy' ? 'Busy' : 'Open') : 'Closed'}
                 </Text>
               </View>
             </View>
@@ -367,6 +442,64 @@ export default function RestaurantDetails({ route, navigation }: any) {
           </View>
         </View>
 
+        {/* Deals Section */}
+        {deals.length > 0 && (
+          <View style={styles.vouchersSection}>
+            <Text style={styles.sectionTitleSmall}>Today's Deals</Text>
+            <ScrollView 
+              horizontal 
+              showsHorizontalScrollIndicator={false} 
+              contentContainerStyle={styles.vouchersList}
+            >
+              {deals.map((deal) => (
+                <TouchableOpacity 
+                  key={deal._id} 
+                  style={styles.dealCard}
+                  activeOpacity={0.9}
+                  onPress={() => Alert.alert(
+                    deal.title,
+                    `${deal.description}\n\nDiscount: ${deal.discountType === 'percentage' ? deal.discount + '%' : 'Rs.' + deal.discount} OFF`
+                  )}
+                >
+                  <View style={styles.dealContent}>
+                    <View style={styles.dealBadge}>
+                      <Text style={styles.dealBadgeText}>DEAL</Text>
+                    </View>
+                    <Text style={styles.dealTitle} numberOfLines={1}>{deal.title}</Text>
+                    <Text style={styles.dealDiscount}>
+                      {deal.discountType === 'percentage' ? `${deal.discount}%` : `Rs.${deal.discount}`} OFF
+                    </Text>
+                  </View>
+                </TouchableOpacity>
+              ))}
+            </ScrollView>
+          </View>
+        )}
+
+        {/* Vouchers Section */}
+        {vouchers.length > 0 && (
+          <View style={styles.vouchersSection}>
+            <Text style={styles.sectionTitleSmall}>Available Offers</Text>
+            <ScrollView 
+              horizontal 
+              showsHorizontalScrollIndicator={false} 
+              contentContainerStyle={styles.vouchersList}
+            >
+              {vouchers.map((voucher) => (
+                <VoucherCard 
+                  key={voucher._id} 
+                  voucher={voucher}
+                  style={styles.restaurantVoucherCard}
+                  onPress={() => Alert.alert(
+                    'Apply Voucher', 
+                    `Use code ${voucher.code} at checkout to get ${voucher.discountType === 'percentage' ? voucher.discount + '%' : 'Rs.' + voucher.discount} off!`
+                  )}
+                />
+              ))}
+            </ScrollView>
+          </View>
+        )}
+
         {/* Tabs */}
         <View style={styles.tabContainer}>
           {['menu', 'reviews', 'info'].map((tab) => (
@@ -388,13 +521,38 @@ export default function RestaurantDetails({ route, navigation }: any) {
               <Text style={styles.sectionTitle}>Full Menu</Text>
               <Text style={styles.menuCount}>{dishes.length} Items</Text>
             </View>
+
+            {/* Categories Selector */}
+            {categories.length > 1 && (
+              <ScrollView 
+                horizontal 
+                showsHorizontalScrollIndicator={false} 
+                style={styles.categoriesContainer}
+                contentContainerStyle={styles.categoriesContent}
+              >
+                {categories.map((cat) => (
+                  <TouchableOpacity 
+                    key={cat} 
+                    style={[styles.categoryTab, activeCategory === cat && styles.activeCategoryTab]}
+                    onPress={() => setActiveCategory(cat)}
+                  >
+                    <Text style={[styles.categoryTabText, activeCategory === cat && styles.activeCategoryTabText]}>
+                      {cat}
+                    </Text>
+                  </TouchableOpacity>
+                ))}
+              </ScrollView>
+            )}
+
             {dishes.length === 0 ? (
               <View style={styles.emptyContainer}>
                 <Ionicons name="restaurant-outline" size={48} color="#E5E7EB" />
                 <Text style={styles.emptyText}>No dishes available yet</Text>
               </View>
             ) : (
-              dishes.map((dish) => (
+              dishes
+                .filter(dish => activeCategory === 'All' || dish.category === activeCategory)
+                .map((dish) => (
                 <TouchableOpacity 
                   key={dish._id} 
                   style={styles.dishCard}
@@ -404,13 +562,25 @@ export default function RestaurantDetails({ route, navigation }: any) {
                   }}
                 >
                   <View style={styles.dishInfo}>
-                    <Text style={styles.dishName}>{dish.name}</Text>
+                    <View style={styles.dishTitleRow}>
+                      <Text style={styles.dishName}>{dish.name}</Text>
+                      {dish.discount > 0 && (
+                        <View style={styles.discountBadgeSmall}>
+                          <Text style={styles.discountBadgeTextSmall}>-{dish.discount}%</Text>
+                        </View>
+                      )}
+                    </View>
                     <Text style={styles.dishDescription} numberOfLines={2}>{dish.description}</Text>
                     <View style={styles.dishFooter}>
-                      <Text style={styles.dishPrice}>Rs. {dish.price}</Text>
+                      <View style={styles.priceContainer}>
+                        <Text style={styles.dishPrice}>Rs. {dish.discount > 0 ? (dish.price * (1 - dish.discount / 100)).toFixed(0) : dish.price}</Text>
+                        {dish.discount > 0 && (
+                          <Text style={styles.originalPrice}>Rs. {dish.price}</Text>
+                        )}
+                      </View>
                       {dish.variants && dish.variants.length > 0 && (
                         <View style={styles.variantBadge}>
-                          <Text style={styles.variantBadgeText}>Options Available</Text>
+                          <Text style={styles.variantBadgeText}>Options</Text>
                         </View>
                       )}
                     </View>
@@ -596,6 +766,7 @@ export default function RestaurantDetails({ route, navigation }: any) {
           isVisible={isDetailsVisible}
           onClose={() => setIsDetailsVisible(false)}
           dish={activeDish}
+          isRestaurantOpen={isOpen}
         />
       )}
     </SafeAreaView>
@@ -804,6 +975,76 @@ const styles = StyleSheet.create({
     width: 1,
     height: 30,
     backgroundColor: '#E5E7EB',
+  },
+  vouchersSection: {
+    backgroundColor: '#F9FAFB',
+    paddingVertical: 16,
+    borderTopWidth: 1,
+    borderBottomWidth: 1,
+    borderColor: '#F3F4F6',
+  },
+  sectionTitleSmall: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: '#374151',
+    paddingHorizontal: 20,
+    marginBottom: 12,
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+  },
+  vouchersList: {
+    paddingLeft: 20,
+    paddingRight: 5,
+  },
+  restaurantVoucherCard: {
+    width: width * 0.7,
+    height: 80,
+    marginRight: 12,
+  },
+  dealCard: {
+    width: width * 0.55,
+    height: 85,
+    backgroundColor: '#fff',
+    borderRadius: 15,
+    marginRight: 15,
+    borderWidth: 1.5,
+    borderColor: '#FF416C',
+    overflow: 'hidden',
+    shadowColor: '#FF416C',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  dealContent: {
+    flex: 1,
+    padding: 12,
+    justifyContent: 'center',
+  },
+  dealBadge: {
+    position: 'absolute',
+    top: 0,
+    right: 0,
+    backgroundColor: '#FF416C',
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    borderBottomLeftRadius: 10,
+  },
+  dealBadgeText: {
+    color: '#fff',
+    fontSize: 9,
+    fontWeight: 'bold',
+  },
+  dealTitle: {
+    fontSize: 15,
+    fontWeight: 'bold',
+    color: '#111827',
+    marginBottom: 4,
+  },
+  dealDiscount: {
+    fontSize: 16,
+    fontWeight: '800',
+    color: '#FF416C',
   },
   tabContainer: {
     flexDirection: 'row',
@@ -1046,6 +1287,33 @@ const styles = StyleSheet.create({
     flex: 1,
     paddingRight: 12,
   },
+  dishTitleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 4,
+  },
+  discountBadgeSmall: {
+    backgroundColor: '#EF4444',
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 4,
+  },
+  discountBadgeTextSmall: {
+    color: '#fff',
+    fontSize: 10,
+    fontWeight: 'bold',
+  },
+  priceContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  originalPrice: {
+    fontSize: 12,
+    color: '#9CA3AF',
+    textDecorationLine: 'line-through',
+    marginLeft: 8,
+  },
   dishName: {
     fontSize: 16,
     fontWeight: 'bold',
@@ -1167,17 +1435,45 @@ const styles = StyleSheet.create({
     bottom: -8,
     right: -8,
     backgroundColor: Colors.primary,
-    width: 28,
-    height: 28,
-    borderRadius: 14,
+    width: 32,
+    height: 32,
+    borderRadius: 16,
     justifyContent: 'center',
     alignItems: 'center',
-    borderWidth: 2,
+    borderWidth: 3,
     borderColor: '#fff',
-    elevation: 4,
+    elevation: 3,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.2,
     shadowRadius: 2,
-  }
+  },
+  categoriesContainer: {
+    marginBottom: 20,
+    marginTop: -5,
+  },
+  categoriesContent: {
+    paddingRight: 20,
+  },
+  categoryTab: {
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 20,
+    marginRight: 10,
+    backgroundColor: '#F3F4F6',
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
+  },
+  activeCategoryTab: {
+    backgroundColor: Colors.primary,
+    borderColor: Colors.primary,
+  },
+  categoryTabText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#6B7280',
+  },
+  activeCategoryTabText: {
+    color: '#fff',
+  },
 });

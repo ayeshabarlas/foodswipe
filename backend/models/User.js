@@ -112,7 +112,13 @@ const userSchema = mongoose.Schema(
 // Compound unique index: same email can exist for different roles
 userSchema.index({ email: 1, role: 1 }, { unique: true });
 // Compound unique index: same phone can exist for different roles
-userSchema.index({ phone: 1, role: 1 }, { unique: true, partialFilterExpression: { phone: { $exists: true } } });
+// partialFilterExpression ensures we only index valid strings, ignoring null/undefined/empty
+userSchema.index({ phone: 1, role: 1 }, { 
+    unique: true, 
+    partialFilterExpression: { 
+        phone: { $gt: "" } 
+    } 
+});
 // Index for phoneNumber uniqueness across ALL accounts if verified
 userSchema.index({ phoneNumber: 1 }, { unique: true, partialFilterExpression: { phoneVerified: true } });
 
@@ -123,6 +129,14 @@ userSchema.methods.matchPassword = async function (enteredPassword) {
 
 // Encrypt password using bcrypt
 userSchema.pre('save', async function (next) {
+    // Clean up phone fields: convert empty strings or nulls to undefined so they are not saved
+    if (this.phone === '' || this.phone === null) {
+        this.phone = undefined;
+    }
+    if (this.phoneNumber === '' || this.phoneNumber === null) {
+        this.phoneNumber = undefined;
+    }
+
     // Skip hashing if password wasn't modified or is empty
     if (!this.isModified('password') || !this.password || this.password === '') {
         return next();

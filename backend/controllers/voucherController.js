@@ -203,7 +203,6 @@ const getRestaurantVouchers = async (req, res) => {
 
         const vouchers = await Voucher.find({
             restaurant: restaurant._id,
-            createdBy: 'restaurant',
         }).sort({ createdAt: -1 });
 
         res.json(vouchers);
@@ -221,10 +220,7 @@ const getVouchersByRestaurant = async (req, res) => {
     try {
         const now = new Date();
         const vouchers = await Voucher.find({
-            $or: [
-                { restaurant: req.params.restaurantId, createdBy: 'restaurant' },
-                { createdBy: 'platform' }
-            ],
+            restaurant: req.params.restaurantId,
             isActive: true,
             $or: [
                 { expiryDate: { $gte: now } },
@@ -232,7 +228,13 @@ const getVouchersByRestaurant = async (req, res) => {
             ]
         }).sort({ createdAt: -1 });
 
-        res.json(vouchers);
+        // Add a flag for consistency (though in this query they are all restaurant-linked)
+        const processedVouchers = vouchers.map(v => ({
+            ...v._doc,
+            isPlatformVoucher: false
+        }));
+
+        res.json(processedVouchers);
     } catch (error) {
         res.status(500).json({ message: 'Server error', error: error.message });
     }
@@ -309,6 +311,12 @@ const createAdminVoucher = async (req, res) => {
             });
         }
 
+        // Check if voucher code already exists (case-insensitive)
+        const existingVoucher = await Voucher.findOne({ code: code.toUpperCase().trim() });
+        if (existingVoucher) {
+            return res.status(400).json({ message: `Voucher code '${code.toUpperCase()}' already exists` });
+        }
+
         const voucher = await Voucher.create({
             name: name || code.toUpperCase(),
             code: code.toUpperCase().trim(),
@@ -351,25 +359,40 @@ const createAdminVoucher = async (req, res) => {
     }
 };
 
-// @desc    Get all vouchers for Admin (with calculated stats)
-// @route   GET /api/vouchers/admin/all
-// @access  Private/Admin
+/**
+ * @desc    Get platform-wide vouchers
+ * @route   GET /api/vouchers/platform
+ * @access  Public
+ */
+const getPlatformVouchers = async (req, res) => {
+    try {
+        const now = new Date();
+        const vouchers = await Voucher.find({
+            createdBy: 'platform',
+            isActive: true,
+            $or: [
+                { expiryDate: { $gte: now } },
+                { expiryDate: { $exists: false } }
+            ]
+        }).sort({ createdAt: -1 });
+
+        res.json(vouchers);
+    } catch (error) {
+        res.status(500).json({ message: 'Server error', error: error.message });
+    }
+};
+
+/**
+ * @desc    Get all vouchers admin
+ * @route   GET /api/vouchers/admin/all
+ * @access  Private (Admin)
+ */
 const getAllVouchersAdmin = async (req, res) => {
     try {
-        const vouchers = await Voucher.find()
-            .populate('restaurant', 'name')
+        const vouchers = await Voucher.find({})
+            .populate('restaurant', 'name logo')
             .sort({ createdAt: -1 });
-
-        // Calculate total cost manually since we switched from aggregation
-        const vouchersWithStats = vouchers.map(v => {
-            const voucherObj = v.toObject();
-            voucherObj.totalCost = Array.isArray(v.usedBy) 
-                ? v.usedBy.reduce((acc, usage) => acc + (usage.discountApplied || 0), 0)
-                : 0;
-            return voucherObj;
-        });
-
-        res.json(vouchersWithStats);
+        res.json(vouchers);
     } catch (error) {
         res.status(500).json({ message: 'Server error', error: error.message });
     }
@@ -479,6 +502,7 @@ module.exports = {
     getRestaurantVouchers,
     getVouchersByRestaurant,
     toggleVoucherStatus,
+    getPlatformVouchers,
     getAllVouchersAdmin,
     createAdminVoucher,
     updateVoucher,

@@ -11,6 +11,7 @@ if (process.env.NODE_ENV !== 'production') {
 
 const cors = require('cors');
 const { initSocket } = require('./socket');
+const { initCronJobs } = require('./cronTasks');
 const { connectDB, getDbStatus } = require('./config/db');
 
 const app = express();
@@ -148,6 +149,7 @@ try {
     app.use('/api/deals', require('./routes/dealRoutes'));
     app.use('/api/reviews', require('./routes/reviewRoutes'));
     app.use('/api/riders', require('./routes/riderRoutes'));
+    app.use('/api/bonus', require('./routes/bonusRoutes'));
     app.use('/api/notifications', require('./routes/notificationRoutes'));
     app.use('/api/admin', require('./routes/adminRoutes'));
     app.use('/api/finance', require('./routes/financeRoutes'));
@@ -178,6 +180,9 @@ const startServer = async () => {
     try {
         console.log('🔌 Initializing Pusher...');
         initSocket();
+        
+        console.log('⏰ Initializing Cron Jobs...');
+        initCronJobs();
         
         console.log('🔌 Connecting to MongoDB...');
         const success = await connectDB();

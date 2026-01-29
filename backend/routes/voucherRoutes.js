@@ -1,9 +1,10 @@
 const express = require('express');
 const router = express.Router();
-const { getVouchers, verifyVoucher, createRestaurantVoucher, getRestaurantVouchers, getVouchersByRestaurant, toggleVoucherStatus, getAllVouchersAdmin, createAdminVoucher, updateVoucher, deleteVoucher } = require('../controllers/voucherController');
+const { getVouchers, verifyVoucher, createRestaurantVoucher, getRestaurantVouchers, getVouchersByRestaurant, toggleVoucherStatus, getAllVouchersAdmin, createAdminVoucher, updateVoucher, deleteVoucher, getPlatformVouchers } = require('../controllers/voucherController');
 const { protect, requireAdmin } = require('../middleware/authMiddleware');
 
 router.get('/', protect, getVouchers);
+router.get('/platform', getPlatformVouchers);
 router.get('/admin/all', protect, requireAdmin, getAllVouchersAdmin);
 router.post('/admin', protect, requireAdmin, createAdminVoucher);
 router.post('/verify', protect, verifyVoucher);

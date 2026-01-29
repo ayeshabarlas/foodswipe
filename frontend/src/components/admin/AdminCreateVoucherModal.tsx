@@ -89,16 +89,19 @@ export default function AdminCreateVoucherModal({ isOpen, onClose, onSuccess, in
             const config = { headers: { Authorization: `Bearer ${token}` } };
             const payload = {
                 ...formData,
-                name: formData.description.split(' ').slice(0, 3).join(' ') || 'Platform Voucher',
+                name: formData.description.split(' ').slice(0, 3).join(' ') || formData.code || 'Platform Voucher',
                 discount: parseFloat(formData.discount),
                 minimumAmount: parseFloat(formData.minimumAmount) || 0,
-                usageLimit: parseInt(formData.usageLimit) || 1000,
+                usageLimit: formData.usageLimit ? parseInt(formData.usageLimit) : 1000,
             };
+
+            console.log('Sending voucher payload:', payload);
 
             if (initialData) {
                 await axios.put(`${getApiUrl()}/api/vouchers/${initialData._id}`, payload, config);
             } else {
-                await axios.post(`${getApiUrl()}/api/vouchers/admin`, payload, config);
+                const response = await axios.post(`${getApiUrl()}/api/vouchers/admin`, payload, config);
+                console.log('Voucher creation response:', response.data);
             }
 
             setFormData({

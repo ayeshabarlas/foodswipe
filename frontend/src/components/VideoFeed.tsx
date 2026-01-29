@@ -4,7 +4,7 @@
 
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import dynamic from 'next/dynamic';
-import { FaHeart, FaComment, FaShare, FaShoppingCart, FaFilter, FaStar, FaTimes, FaPaperPlane, FaBars, FaChevronRight, FaSearch, FaMapMarkerAlt, FaPlay, FaVolumeUp, FaVolumeMute } from 'react-icons/fa';
+import { FaHeart, FaComment, FaShare, FaShoppingCart, FaFilter, FaStar, FaTimes, FaPaperPlane, FaBars, FaChevronRight, FaSearch, FaMapMarkerAlt, FaPlay, FaVolumeUp, FaVolumeMute, FaTicketAlt } from 'react-icons/fa';
 import axios from 'axios';
 import { motion, AnimatePresence, PanInfo } from 'framer-motion';
 import { useSearchParams } from 'next/navigation';
@@ -17,6 +17,9 @@ const RiderRatingModal = dynamic(() => import('./RiderRatingModal'), { ssr: fals
 const OrderTracking = dynamic(() => import('./OrderTracking'), { ssr: false });
 const LocationPermission = dynamic(() => import('./LocationPermission'), { ssr: false });
 const ProfileModal = dynamic(() => import('./ProfileModal'), { ssr: false });
+const MyOrders = dynamic(() => import('./MyOrders'), { ssr: false });
+const DiscountsVouchers = dynamic(() => import('./DiscountsVouchers'), { ssr: false });
+const PromotionPopup = dynamic(() => import('./PromotionPopup'), { ssr: false });
 import VideoCard, { Dish } from './VideoCard';
 
 import { getImageUrl, getImageFallback } from '../utils/imageUtils';
@@ -40,6 +43,9 @@ export default function VideoFeed() {
     const [isCartOpen, setIsCartOpen] = useState(false);
     const [isNavOpen, setIsNavOpen] = useState(false);
     const [isUserProfileOpen, setIsUserProfileOpen] = useState(false);
+    const [isMyOrdersOpen, setIsMyOrdersOpen] = useState(false);
+    const [isVouchersOpen, setIsVouchersOpen] = useState(false);
+    const [popupVoucher, setPopupVoucher] = useState<any>(null);
     const [isCategoryDropdownOpen, setIsCategoryDropdownOpen] = useState(false);
     const [user, setUser] = useState<any>(null);
     const [userLocation, setUserLocation] = useState<{ latitude: number, longitude: number } | null>(null);
@@ -52,6 +58,7 @@ export default function VideoFeed() {
     const [activeOrder, setActiveOrder] = useState<any>(null);
     const [searchTerm, setSearchTerm] = useState('');
     const [selectedCategory, setSelectedCategory] = useState('All');
+    const [vouchers, setVouchers] = useState<any[]>([]);
 
     const CATEGORIES = ['All', 'Breakfast', 'Lunch', 'Dinner', 'Coffee', 'Desserts', 'Fast Food'];
 
@@ -88,8 +95,33 @@ export default function VideoFeed() {
         }
     };
 
+    const fetchVouchers = async () => {
+        try {
+            const res = await axios.get(`${getApiUrl()}/api/vouchers/active`);
+            if (res.data) {
+                // Filter for platform-wide vouchers
+                const platformVouchers = res.data.filter((v: any) => v.fundedBy === 'platform');
+                setVouchers(platformVouchers);
+
+                // Show popup for the most recent platform voucher if not shown before
+                if (platformVouchers.length > 0) {
+                    const latestVoucher = platformVouchers[0];
+                    const shownPopups = JSON.parse(localStorage.getItem('shownPopups') || '[]');
+                    if (!shownPopups.includes(latestVoucher._id)) {
+                        setPopupVoucher(latestVoucher);
+                        shownPopups.push(latestVoucher._id);
+                        localStorage.setItem('shownPopups', JSON.stringify(shownPopups));
+                    }
+                }
+            }
+        } catch (error) {
+            console.error('Error fetching platform vouchers:', error);
+        }
+    };
+
     useEffect(() => {
         fetchActiveOrder();
+        fetchVouchers();
         // Poll for active orders every 30 seconds
         const interval = setInterval(fetchActiveOrder, 30000);
 
@@ -463,6 +495,43 @@ export default function VideoFeed() {
                 </div>
             </div>
 
+            {/* Platform Vouchers Banner */}
+            {vouchers.length > 0 && (
+                <div className="fixed top-[calc(env(safe-area-inset-top,1rem)+3.5rem)] left-0 right-0 z-[45] px-4">
+                    <div className="max-w-2xl mx-auto overflow-x-auto no-scrollbar flex gap-3 pb-2">
+                        {vouchers.map((voucher) => (
+                            <motion.div
+                                key={voucher._id}
+                                initial={{ opacity: 0, x: 20 }}
+                                animate={{ opacity: 1, x: 0 }}
+                                className="flex-shrink-0 bg-gradient-to-r from-[#FF6A00] to-[#EE0979] p-[1px] rounded-xl overflow-hidden shadow-lg shadow-black/40"
+                                onClick={() => {
+                                    navigator.clipboard.writeText(voucher.code);
+                                    toast.success(`Code ${voucher.code} copied!`);
+                                }}
+                            >
+                                <div className="bg-black/80 backdrop-blur-md px-4 py-2 rounded-[11px] flex items-center gap-3 cursor-pointer hover:bg-black/60 transition-colors">
+                                    <div className="w-8 h-8 rounded-lg bg-white/10 flex items-center justify-center text-[#FF6A00]">
+                                        <FaShoppingCart size={16} />
+                                    </div>
+                                    <div>
+                                        <div className="flex items-center gap-2">
+                                            <span className="text-white font-bold text-xs uppercase tracking-wider">{voucher.code}</span>
+                                            <span className="bg-[#FF6A00]/20 text-[#FF6A00] text-[10px] px-1.5 py-0.5 rounded font-bold">
+                                                {voucher.discountType === 'percentage' ? `${voucher.discount}% OFF` : `Rs.${voucher.discount} OFF`}
+                                            </span>
+                                        </div>
+                                        <p className="text-white/60 text-[10px] font-medium truncate max-w-[120px]">
+                                            {voucher.description || `Min. order Rs.${voucher.minimumAmount}`}
+                                        </p>
+                                    </div>
+                                </div>
+                            </motion.div>
+                        ))}
+                    </div>
+                </div>
+            )}
+
             <div
                 ref={scrollContainerRef}
                 className="h-full w-full overflow-y-scroll snap-y snap-mandatory no-scrollbar overscroll-behavior-y-contain touch-pan-y"
@@ -544,8 +613,41 @@ export default function VideoFeed() {
                 onOpenProfile={() => setIsUserProfileOpen(true)}
                 activeOrderId={activeOrder?._id}
             />
-            <ProfileModal isOpen={isUserProfileOpen} onClose={() => setIsUserProfileOpen(false)} user={user} />
-            <OrderTracking isOpen={showTrackingModal} onClose={() => setShowTrackingModal(false)} orderId={selectedOrderId || ''} />
+            <ProfileModal 
+                isOpen={isUserProfileOpen} 
+                onClose={() => setIsUserProfileOpen(false)} 
+                user={user} 
+                onOpenOrders={() => setIsMyOrdersOpen(true)}
+                onOpenVouchers={() => setIsVouchersOpen(true)}
+                onOpenHelp={() => setIsNavOpen(true)}
+                onLogout={() => {
+                    localStorage.removeItem('userInfo');
+                    localStorage.removeItem('token');
+                    window.location.reload();
+                }}
+            />
+
+            <MyOrders 
+                isOpen={isMyOrdersOpen} 
+                onClose={() => setIsMyOrdersOpen(false)} 
+                onTrackOrder={(orderId) => {
+                    setSelectedOrderId(orderId);
+                    setShowTrackingModal(true);
+                }}
+            />
+
+            <DiscountsVouchers 
+                 isOpen={isVouchersOpen} 
+                 onClose={() => setIsVouchersOpen(false)} 
+             />
+
+             {popupVoucher && (
+                 <PromotionPopup 
+                     voucher={popupVoucher} 
+                     onClose={() => setPopupVoucher(null)} 
+                 />
+             )}
+             <OrderTracking isOpen={showTrackingModal} onClose={() => setShowTrackingModal(false)} orderId={selectedOrderId || ''} />
             {showRatingModal && ratingOrderId && (
                 <RiderRatingModal
                     isOpen={showRatingModal}

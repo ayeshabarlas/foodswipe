@@ -19,6 +19,7 @@ import ReportsView from './admin/ReportsView';
 import SettingsView from './admin/SettingsView';
 import VerificationsView from './admin/VerificationsView';
 import CustomersView from './admin/CustomersView';
+import BonusManagementView from './admin/BonusManagementView';
 import AdminManagementView from './admin/AdminManagementView';
 import SupportView from './admin/SupportView';
 import CODSettlementView from './admin/CODSettlementView';
@@ -350,6 +351,8 @@ export default function AdminDashboard() {
                 return <RidersView />;
             case 'riders-map':
                 return <RiderLiveMap />;
+            case 'bonus-management':
+                return <BonusManagementView />;
 
             // Order Sub-menus
             case 'orders': // Default fallback

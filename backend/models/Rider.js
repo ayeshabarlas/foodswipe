@@ -13,11 +13,11 @@ const riderSchema = mongoose.Schema(
         },
         cnicNumber: {
             type: String,
-            required: true,
+            required: false,
         },
         dateOfBirth: {
             type: Date,
-            required: true,
+            required: false,
         },
         city: {
             type: String,

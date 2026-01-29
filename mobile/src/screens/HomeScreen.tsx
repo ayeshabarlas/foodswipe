@@ -16,32 +16,20 @@ import SplashScreen from '../components/SplashScreen';
 import * as SecureStore from 'expo-secure-store';
 import { initSocket } from '../utils/socket';
 import { LinearGradient } from 'expo-linear-gradient';
-import { Svg, Text as SvgText, Defs, LinearGradient as SvgGradient, Stop } from 'react-native-svg';
 
 const { width } = Dimensions.get('window');
 
 const GradientText = ({ text, style }: { text: string, style: any }) => {
   return (
     <View style={style}>
-      <Svg height="50" width="300">
-        <Defs>
-          <SvgGradient id="grad" x1="0" y1="0" x2="1" y2="0">
-            <Stop offset="0" stopColor="#FF416C" stopOpacity="1" />
-            <Stop offset="1" stopColor="#FF4B2B" stopOpacity="1" />
-          </SvgGradient>
-        </Defs>
-        <SvgText
-          fill="url(#grad)"
-          fontSize="40"
-          fontWeight="500"
-          x="150"
-          y="35"
-          textAnchor="middle"
-          fontFamily={Platform.OS === 'ios' ? 'Avenir' : 'sans-serif'}
-        >
-          {text}
-        </SvgText>
-      </Svg>
+      <Text style={{
+        fontSize: 40,
+        fontWeight: 'bold',
+        color: Colors.primary,
+        textAlign: 'center',
+      }}>
+        {text}
+      </Text>
     </View>
   );
 };
