@@ -385,11 +385,11 @@ export default function RestaurantsView() {
                                                 <div className="text-[14px]">
                                                     <p className="font-medium text-[#374151] flex items-center gap-1.5">
                                                         <FaUser className="text-[12px] text-gray-300" />
-                                                        {restaurant.owner?.name}
+                                                        {restaurant.owner?.name || 'No Owner'}
                                                     </p>
                                                     <p className="text-[13px] text-[#6B7280] flex items-center gap-1.5 mt-0.5">
                                                         <FaEnvelope className="text-[12px] text-gray-300" />
-                                                        {restaurant.owner?.email}
+                                                        {restaurant.owner?.email || 'No Email'}
                                                     </p>
                                                 </div>
                                             </td>
