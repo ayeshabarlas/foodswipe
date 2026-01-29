@@ -75,14 +75,21 @@ const registerUser = async (req, res) => {
 
         if (emailExists) {
             console.log(`Registration failed: User exists for role ${normalizedRole}`, { email: normalizedEmail });
-            return res.status(400).json({ message: 'User with given email already exists for this role' });
+            return res.status(400).json({ 
+                message: `User with given email already exists as a ${normalizedRole}. Please login instead.` 
+            });
         }
 
         // 2. Check if phone exists for this role
-        if (phone) {
-            const phoneExists = await User.findOne({ phone: phone.trim(), role: normalizedRole });
+        if (phone && phone.trim()) {
+            const phoneExists = await User.findOne({ 
+                phone: phone.trim(), 
+                role: normalizedRole 
+            });
             if (phoneExists) {
-                return res.status(400).json({ message: 'User with given phone already exists for this role' });
+                return res.status(400).json({ 
+                    message: `User with given phone already exists as a ${normalizedRole}.` 
+                });
             }
         }
 
