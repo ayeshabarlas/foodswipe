@@ -4,7 +4,7 @@ import { motion } from 'framer-motion';
 import axios from 'axios';
 import { getApiUrl } from '../../utils/config';
 import toast from 'react-hot-toast';
-import { FaSave, FaCog, FaEnvelope, FaBullhorn, FaPercentage, FaShieldAlt, FaMobileAlt, FaTools, FaMoneyBillWave, FaTruck, FaShoppingCart, FaBan, FaKey, FaPhone, FaGlobe } from 'react-icons/fa';
+import { FaSave, FaCog, FaEnvelope, FaBullhorn, FaPercentage, FaShieldAlt, FaMobileAlt, FaTools, FaMoneyBillWave, FaTruck, FaShoppingCart, FaBan, FaKey, FaPhone, FaGlobe, FaTrophy, FaBicycle } from 'react-icons/fa';
 
 export default function SettingsView() {
     const [settings, setSettings] = useState<any>({
@@ -20,6 +20,8 @@ export default function SettingsView() {
         deliveryFeeMax: 100,
         minimumOrderAmount: 0,
         serviceFee: 0,
+        riderBonusTarget: 10,
+        riderBonusAmount: 200,
         googleMapsApiKey: '',
         isMaintenanceMode: false,
         featureToggles: {
@@ -290,6 +292,41 @@ export default function SettingsView() {
                 </motion.div>
 
                 {/* 3. Support & Announcements */}
+                <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }} className="bg-white p-6 rounded-[2rem] shadow-xl border border-gray-50">
+                    <h3 className="text-lg font-bold mb-4 flex items-center gap-2 text-gray-800">
+                        <FaTrophy className="text-orange-500 text-sm" /> Rider Bonus Settings
+                    </h3>
+                    <div className="space-y-4">
+                        <div className="space-y-1">
+                            <label className="text-[10px] font-bold text-gray-400 uppercase ml-1">Daily Delivery Target</label>
+                            <div className="relative">
+                                <FaBicycle className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-xs" />
+                                <input
+                                    type="number"
+                                    value={settings.riderBonusTarget}
+                                    onChange={(e) => setSettings({ ...settings, riderBonusTarget: Number(e.target.value) })}
+                                    className="w-full pl-8 pr-3 py-2.5 bg-gray-50 border border-gray-100 rounded-xl outline-none focus:border-orange-500 transition-all font-medium text-sm text-gray-700"
+                                    placeholder="Enter number of deliveries (e.g. 10)"
+                                />
+                            </div>
+                        </div>
+                        <div className="space-y-1">
+                            <label className="text-[10px] font-bold text-gray-400 uppercase ml-1">Bonus Reward Amount (Rs.)</label>
+                            <div className="relative">
+                                <FaMoneyBillWave className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-xs" />
+                                <input
+                                    type="number"
+                                    value={settings.riderBonusAmount}
+                                    onChange={(e) => setSettings({ ...settings, riderBonusAmount: Number(e.target.value) })}
+                                    className="w-full pl-8 pr-3 py-2.5 bg-gray-50 border border-gray-100 rounded-xl outline-none focus:border-orange-500 transition-all font-medium text-sm text-gray-700"
+                                    placeholder="Enter bonus amount (e.g. 200)"
+                                />
+                            </div>
+                        </div>
+                    </div>
+                </motion.div>
+
+                {/* 4. Support & Announcements */}
                 <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }} className="bg-white p-6 rounded-[2rem] shadow-xl border border-gray-50">
                     <h3 className="text-lg font-bold mb-4 flex items-center gap-2 text-gray-800">
                         <FaBullhorn className="text-orange-500 text-sm" /> Support & Announcements

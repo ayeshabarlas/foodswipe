@@ -4,6 +4,7 @@ const { updateRiderWallet } = require('./walletController');
 const { createNotification } = require('./notificationController');
 const { triggerEvent } = require('../socket');
 const Rider = require('../models/Rider');
+const Settings = require('../models/Settings');
 
 /**
  * Update daily delivery count for a rider
@@ -13,6 +14,9 @@ const trackRiderDeliveryForBonus = async (riderId) => {
     try {
         const today = new Date().toISOString().split('T')[0];
         
+        // Fetch current bonus settings
+        const settings = await Settings.findOne() || { riderBonusTarget: 10, riderBonusAmount: 200 };
+        
         let bonusRecord = await RiderBonus.findOne({ rider: riderId, date: today });
         
         if (!bonusRecord) {
@@ -20,8 +24,8 @@ const trackRiderDeliveryForBonus = async (riderId) => {
                 rider: riderId,
                 date: today,
                 dailyDeliveryCount: 0,
-                targetDeliveries: 10,
-                bonusAmount: 200
+                targetDeliveries: settings.riderBonusTarget || 10,
+                bonusAmount: settings.riderBonusAmount || 200
             });
         }
         
@@ -91,10 +95,13 @@ const getRiderBonusStatus = async (req, res) => {
         let bonusRecord = await RiderBonus.findOne({ rider: rider._id, date: today });
         
         if (!bonusRecord) {
+            // Fetch current bonus settings for the response even if no record exists yet
+            const settings = await Settings.findOne() || { riderBonusTarget: 10, riderBonusAmount: 200 };
+            
             bonusRecord = {
                 dailyDeliveryCount: 0,
-                targetDeliveries: 10,
-                bonusAmount: 200,
+                targetDeliveries: settings.riderBonusTarget || 10,
+                bonusAmount: settings.riderBonusAmount || 200,
                 isBonusAchieved: false
             };
         }

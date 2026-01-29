@@ -17,6 +17,10 @@ const settingsSchema = new mongoose.Schema({
     taxRate: { type: Number, default: 8 }, // Percentage
     isTaxEnabled: { type: Boolean, default: true },
 
+    // Rider Bonus Settings
+    riderBonusTarget: { type: Number, default: 10 },
+    riderBonusAmount: { type: Number, default: 200 },
+
     // General
     supportEmail: { type: String, default: 'app.foodswiphelp@gmail.com' },
     supportPhone: { type: String, default: '+923295599855' },

@@ -32,12 +32,14 @@ interface BonusStat {
 
 export default function BonusManagementView() {
     const [bonusStats, setBonusStats] = useState<BonusStat[]>([]);
+    const [settings, setSettings] = useState({ riderBonusTarget: 10, riderBonusAmount: 200 });
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
     const [filter, setFilter] = useState<'All' | 'Achieved' | 'In Progress'>('All');
 
     useEffect(() => {
         fetchBonusStats();
+        fetchSettings();
 
         const socket = getSocket();
         if (socket) {
@@ -70,6 +72,20 @@ export default function BonusManagementView() {
         }
     };
 
+    const fetchSettings = async () => {
+        try {
+            const { data } = await axios.get(`${getApiUrl()}/api/admin/settings`);
+            if (data) {
+                setSettings({
+                    riderBonusTarget: data.riderBonusTarget || 10,
+                    riderBonusAmount: data.riderBonusAmount || 200
+                });
+            }
+        } catch (error) {
+            console.error('Error fetching settings:', error);
+        }
+    };
+
     const stats = {
         totalRiders: bonusStats.length,
         achieved: bonusStats.filter(s => s.isBonusAchieved).length,
@@ -96,7 +112,10 @@ export default function BonusManagementView() {
             <div className="flex justify-between items-center mb-8">
                 <div>
                     <h2 className="text-[24px] font-semibold text-[#111827] tracking-tight">Rider Bonuses</h2>
-                    <p className="text-[14px] font-normal text-[#6B7280] mt-1">Daily Delivery Incentives & Progress</p>
+                    <p className="text-[14px] font-normal text-[#6B7280] mt-1">
+                        Daily Target: <span className="font-bold text-orange-500">{settings.riderBonusTarget}</span> | 
+                        Reward: <span className="font-bold text-orange-500">Rs. {settings.riderBonusAmount}</span>
+                    </p>
                 </div>
                 <div className="flex gap-3">
                     <button 
