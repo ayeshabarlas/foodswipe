@@ -121,7 +121,7 @@ app.get('/health', async (req, res) => {
         firebase: firebaseConfigured ? 'configured' : 'missing_env_var',
         firebaseProject: firebaseProjectId,
         timestamp: new Date().toISOString(),
-        version: '1.0.9',
+        version: '1.1.2', // Forced update for deployment validation
         env: process.env.NODE_ENV,
         vercel: !!process.env.VERCEL || !!process.env.NOW_REGION || !!process.env.VERCEL_URL
     });
