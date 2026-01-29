@@ -94,6 +94,7 @@ const registerUser = async (req, res) => {
         }
 
         // 3. Create the User
+        console.log(`[DEBUG] Creating User with:`, { name, email: normalizedEmail, role: normalizedRole });
         const user = await User.create({
             name,
             email: normalizedEmail,
@@ -102,7 +103,7 @@ const registerUser = async (req, res) => {
             role: normalizedRole
         });
 
-        console.log(`User registered: id=${user._id}, email=${user.email}, role=${user.role}`);
+        console.log(`✅ User registered: id=${user._id}, email=${user.email}, role=${user.role}`);
 
         // Notify Admins (non-blocking)
         notifyAdmins(
@@ -114,14 +115,21 @@ const registerUser = async (req, res) => {
 
         // 4. Create Role-Specific Profile
         if (normalizedRole === 'rider') {
+            console.log(`[DEBUG] Creating Rider profile for ${user._id}`);
             const Rider = require('../models/Rider');
-            await Rider.create({
-                user: user._id,
-                fullName: name,
-                phone: phone || '',
-                verificationStatus: 'approved' // Auto-approve for now as requested before
-            });
-            console.log(`Created Rider profile for ${user.email}`);
+            try {
+                await Rider.create({
+                    user: user._id,
+                    fullName: name,
+                    verificationStatus: 'approved' 
+                });
+                console.log(`✅ Created Rider profile for ${user.email}`);
+            } catch (riderErr) {
+                console.error(`❌ Rider Profile Creation Error:`, riderErr);
+                // Optional: Delete user if profile creation fails? 
+                // await User.findByIdAndDelete(user._id);
+                throw new Error(`Failed to create rider profile: ${riderErr.message}`);
+            }
         } else if (normalizedRole === 'restaurant') {
             console.log(`[DEBUG] Creating Restaurant profile for ${user.email}`);
             const Restaurant = require('../models/Restaurant');
