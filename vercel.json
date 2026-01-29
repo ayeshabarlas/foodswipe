@@ -16,13 +16,6 @@
       "dest": "backend/server.js"
     },
     {
-      "src": "/_next/static/(.*)",
-      "dest": "frontend/.next/static/$1"
-    },
-    {
-      "handle": "filesystem"
-    },
-    {
       "src": "/(.*)",
       "dest": "frontend/$1"
     }

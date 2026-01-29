@@ -1,6 +1,6 @@
 "use client";
 
-// Vercel Security Patch Fix - Force 15.1.7
+// Vercel Routing Reset - Fix 404
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import dynamic from "next/dynamic";
