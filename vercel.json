@@ -16,6 +16,14 @@
       "dest": "backend/server.js"
     },
     {
+      "src": "/_next/static/(.*)",
+      "dest": "frontend/.next/static/$1"
+    },
+    {
+      "src": "/(admin|rider|restaurant)(.*)",
+      "dest": "frontend/index.html"
+    },
+    {
       "handle": "filesystem"
     },
     {
