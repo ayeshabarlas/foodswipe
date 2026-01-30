@@ -1,28 +1,32 @@
-# Use Node 18 LTS
-FROM node:18-alpine
+# Use Node 20 LTS for better Next.js 15 support
+FROM node:20-alpine
 
 # Set working directory
 WORKDIR /app
 
 # Set environment variables
 ENV NODE_ENV=production
+ENV NEXT_TELEMETRY_DISABLED=1
 
-# Copy package files
+# Copy root package files
 COPY package*.json ./
 
-# Install dependencies (only production)
-RUN npm install --production --frozen-lockfile
+# Copy backend and frontend package files to install all dependencies
+COPY backend/package*.json ./backend/
+COPY frontend/package*.json ./frontend/
+
+# Install all dependencies
+RUN npm install
+RUN cd frontend && npm install --legacy-peer-deps
 
 # Copy the rest of the application code
 COPY . .
 
-# Expose the port (Koyeb uses PORT env var, but we'll expose 8080 as default)
-EXPOSE 8080
+# Build the frontend
+RUN cd frontend && npm run build
 
-# Health check (useful for Koyeb/Docker)
-HEALTHCHECK --interval=30s --timeout=3s \
-  CMD wget --no-verbose --tries=1 --spider http://localhost:8080/health || exit 1
+# Expose the port
+EXPOSE 10000
 
-# Start the backend server
-# v1.0.7 - Trigger
+# Start the backend server which now serves the frontend too
 CMD ["node", "backend/server.js"]
