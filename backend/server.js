@@ -122,7 +122,7 @@ app.get('/health', async (req, res) => {
         firebase: firebaseConfigured ? 'configured' : 'missing_env_var',
         firebaseProject: firebaseProjectId,
         timestamp: new Date().toISOString(),
-        version: '2.2.39-RENDER-FIX', // Updated version
+        version: '2.2.43-DOMAIN-FIX', // Updated version
         env: process.env.NODE_ENV,
         render: !!process.env.RENDER,
         vercel: !!process.env.VERCEL || !!process.env.NOW_REGION || !!process.env.VERCEL_URL
@@ -131,7 +131,7 @@ app.get('/health', async (req, res) => {
 
 // API Root Info
 app.get('/api', (req, res) => {
-    res.status(200).json({ message: 'Foodswipe API is Live', version: '2.2.39' });
+    res.status(200).json({ message: 'Foodswipe API is Live', version: '2.2.43' });
 });
 
 // 🚀 4. API ROUTES
