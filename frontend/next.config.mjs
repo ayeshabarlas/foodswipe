@@ -70,6 +70,7 @@ const nextConfig = {
     },
     output: 'export',
     distDir: 'out',
+    trailingSlash: true,
     transpilePackages: ['framer-motion'],
 };
 
