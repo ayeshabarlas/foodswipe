@@ -1,7 +1,7 @@
 Write-Host "Starting Git Operations..."
 git add .
 Write-Host "Staging done."
-git commit -m "v2.2.31: Brutal Fix - Replaced all critical aliases with relative paths to bypass Docker resolution issues"
+git commit -m "v2.2.32: Ultimate Fix - Resolved aliasing in Sidebar and updated tsconfig/jsconfig for Docker stability"
 Write-Host "Commit done."
 git push origin main --force
 Write-Host "Push done."

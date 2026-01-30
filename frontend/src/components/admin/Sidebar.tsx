@@ -1,6 +1,6 @@
 'use client';
 import { useState } from 'react';
-import { useSettings } from '@/hooks/useSettings';
+import { useSettings } from '../../hooks/useSettings';
 import {
     FaChartLine,
     FaStore,

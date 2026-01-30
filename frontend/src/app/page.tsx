@@ -1,5 +1,5 @@
-// VERCEL BUILD TRIGGER - v2.2.31 - 2026-01-30 08:05
-// Force Redeploy v2.2.31 - 2026-01-30 08:05 - Brutal Relative Paths Fix
+// VERCEL BUILD TRIGGER - v2.2.32 - 2026-01-30 08:15
+// Force Redeploy v2.2.32 - 2026-01-30 08:15 - Ultimate Alias & Config Fix
 "use client";
 
 // Vercel Build Trigger: 2026-01-30 03:25 - Force Update
