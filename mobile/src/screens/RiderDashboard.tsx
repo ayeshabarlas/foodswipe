@@ -287,8 +287,30 @@ export default function RiderDashboard({ navigation }: any) {
         
         // Fetch Rider Profile
         const res = await apiClient.get('/riders/my-profile');
-        setRiderProfile(res.data);
-        setIsOnline(res.data.isOnline || false);
+        const rider = res.data;
+        setRiderProfile(rider);
+
+        // CHECK VERIFICATION STATUS AND REDIRECT IF NECESSARY
+        if (rider.verificationStatus === 'new') {
+          // If profile is new, check if they have filled details (fullName, cnicNumber)
+          if (!rider.cnicNumber || !rider.dateOfBirth) {
+            console.log('🔄 Redirecting to RiderRegistration because profile is new/incomplete');
+            navigation.replace('RiderRegistration');
+            return;
+          } else {
+            console.log('🔄 Redirecting to RiderDocumentUpload because profile is new but details exist');
+            navigation.replace('RiderDocumentUpload', { riderId: rider._id });
+            return;
+          }
+        } else if (rider.verificationStatus === 'rejected') {
+          Alert.alert(
+            'Account Rejected',
+            'Your application was rejected. Please update your documents and resubmit.',
+            [{ text: 'Update Documents', onPress: () => navigation.navigate('RiderDocumentUpload', { riderId: rider._id }) }]
+          );
+        }
+
+        setIsOnline(rider.isOnline || false);
 
         if (res.data.isOnline) {
           startLocationUpdates(res.data._id);

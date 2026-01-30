@@ -198,15 +198,31 @@ export default function LoginScreen({ navigation }: any) {
     
     // Redirect based on role
     const role = user?.role || selectedRole;
-    switch (role) {
-      case 'rider':
+    if (role === 'rider') {
+      setLoading(true);
+      try {
+        const profileRes = await apiClient.get('/riders/my-profile');
+        const rider = profileRes.data;
+        
+        if (rider.verificationStatus === 'new') {
+          if (!rider.cnicNumber || !rider.dateOfBirth) {
+            navigation.replace('RiderRegistration');
+          } else {
+            navigation.replace('RiderDocumentUpload', { riderId: rider._id });
+          }
+        } else {
+          navigation.replace('RiderDashboard');
+        }
+      } catch (err) {
+        console.error('Error fetching rider profile on login:', err);
         navigation.replace('RiderDashboard');
-        break;
-      case 'restaurant':
-        navigation.replace('RestaurantDashboard');
-        break;
-      default:
-        navigation.replace('CustomerDashboard');
+      } finally {
+        setLoading(false);
+      }
+    } else if (role === 'restaurant') {
+      navigation.replace('RestaurantDashboard');
+    } else {
+      navigation.replace('CustomerDashboard');
     }
   } catch (err: any) {
       console.error('Save Auth Data Error:', err);

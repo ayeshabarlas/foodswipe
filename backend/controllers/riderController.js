@@ -39,6 +39,26 @@ const registerRider = async (req, res) => {
         // Check if rider already exists for this user
         const existingRider = await Rider.findOne({ user: req.user._id });
         if (existingRider) {
+            // If the profile exists but is still in 'new' status, allow updating details
+            if (existingRider.verificationStatus === 'new') {
+                existingRider.fullName = fullName || existingRider.fullName;
+                existingRider.cnicNumber = cnicNumber || existingRider.cnicNumber;
+                existingRider.dateOfBirth = dateOfBirth || existingRider.dateOfBirth;
+                existingRider.vehicleType = vehicleType || existingRider.vehicleType;
+                
+                if (documents) {
+                    existingRider.documents = {
+                        cnicFront: normalizePath(documents.cnicFront),
+                        cnicBack: normalizePath(documents.cnicBack),
+                        drivingLicense: normalizePath(documents.drivingLicense),
+                        vehicleRegistration: normalizePath(documents.vehicleRegistration),
+                        profileSelfie: normalizePath(documents.profileSelfie),
+                    };
+                }
+                
+                await existingRider.save();
+                return res.json(existingRider);
+            }
             return res.status(400).json({ message: 'Rider profile already exists' });
         }
 
