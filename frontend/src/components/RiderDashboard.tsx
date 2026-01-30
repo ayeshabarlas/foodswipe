@@ -6,7 +6,7 @@ import {
     FaHome, FaShoppingBag, FaBox, FaWallet, FaUser,
     FaStar, FaClock, FaMapMarkerAlt, FaChevronRight,
     FaBell, FaCheckCircle, FaExclamationCircle, FaTimes,
-    FaMotorcycle, FaArrowRight, FaLocationArrow, FaStore, FaMoneyBillWave
+    FaMotorcycle, FaArrowRight, FaLocationArrow, FaStore, FaMoneyBillWave, FaGift
 } from 'react-icons/fa';
 import axios from 'axios';
 import toast from 'react-hot-toast';
@@ -45,6 +45,7 @@ const RiderDashboard = ({
     const [showNotifications, setShowNotifications] = useState(false);
     const [unreadCount, setUnreadCount] = useState(0);
     const [userInfo, setUserInfo] = useState<any>(null);
+    const [bonusData, setBonusData] = useState<any>(null);
 
     useEffect(() => {
         if (typeof window !== 'undefined') {
@@ -76,6 +77,17 @@ const RiderDashboard = ({
         }
     };
 
+    const fetchBonusData = async () => {
+        if (!userInfo?.token) return;
+        try {
+            const config = { headers: { Authorization: `Bearer ${userInfo.token}` } };
+            const { data } = await axios.get(`${getApiUrl()}/api/bonus/status`, config);
+            setBonusData(data);
+        } catch (err) {
+            console.error('Error fetching bonus data:', err);
+        }
+    };
+
     const fetchRiderData = async () => {
         if (!userInfo) return;
 
@@ -103,6 +115,7 @@ const RiderDashboard = ({
 
             // Fetch notifications count
             fetchNotificationsCount();
+            fetchBonusData();
 
             // Only fetch orders if we have a rider ID
             if (rider?._id) {
@@ -224,6 +237,29 @@ const RiderDashboard = ({
                     toast.success('Your COD balance has been updated!');
                 }
             }
+        });
+
+        socket.on('bonus_achieved', (data: any) => {
+            console.log('🎉 Bonus achieved via socket:', data);
+            fetchBonusData();
+            fetchRiderData(); // Refresh earnings to show bonus amount
+            toast.success(`Congratulations! You've earned Rs. ${data.bonusAmount} bonus! 🎉`);
+        });
+
+        socket.on('bonus_progress_updated', (data: any) => {
+            console.log('📈 Bonus progress updated via socket:', data);
+            setBonusData((prev: any) => {
+                if (!prev) return null;
+                return {
+                    ...prev,
+                    current: { 
+                        ...prev.current, 
+                        dailyDeliveryCount: data.dailyDeliveryCount,
+                        targetDeliveries: data.targetDeliveries,
+                        isBonusAchieved: data.isBonusAchieved
+                    }
+                };
+            });
         });
 
         return () => {
@@ -800,6 +836,12 @@ const RiderDashboard = ({
                         sublabel="See your ratings & stats" 
                         onClick={() => setActiveTab('profile')} 
                     />
+                    <ActionItem 
+                        icon={<FaGift size={16} />} 
+                        label="Daily Bonus" 
+                        sublabel="Track your daily target" 
+                        onClick={() => setActiveTab('bonus')} 
+                    />
                 </div>
             </div>
         </div>
@@ -835,6 +877,122 @@ function ActionItem({ icon, label, sublabel, onClick }: any) {
         </button>
     );
 }
+
+    const renderBonusTab = () => {
+        if (!bonusData) return (
+            <div className="flex flex-col items-center justify-center p-12 text-center animate-in fade-in duration-500">
+                <div className="w-16 h-16 bg-orange-50 rounded-2xl flex items-center justify-center text-orange-500 mb-4">
+                    <div className="w-8 h-8 border-2 border-orange-500/30 border-t-orange-500 rounded-full animate-spin" />
+                </div>
+                <p className="text-gray-400 text-sm">Loading bonus details...</p>
+            </div>
+        );
+
+        const current = bonusData.current || { dailyDeliveryCount: 0, targetDeliveries: 5, isBonusAchieved: false };
+        const history = bonusData.history || [];
+        const progress = Math.min((current.dailyDeliveryCount / current.targetDeliveries) * 100, 100);
+
+        return (
+            <div className="flex flex-col gap-6 animate-in fade-in slide-in-from-bottom-4 duration-500 font-light pb-24">
+                <div className="mb-4 px-2">
+                    <h2 className="text-3xl font-semibold text-gray-900 tracking-tight">Bonus</h2>
+                    <p className="text-gray-400 text-xs font-light uppercase tracking-widest mt-1">Earn extra on deliveries</p>
+                </div>
+
+                {/* Daily Target Card */}
+                <div className="bg-gradient-to-br from-orange-500 to-red-600 rounded-[40px] p-8 text-white shadow-2xl shadow-orange-200 relative overflow-hidden">
+                    <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full -mr-16 -mt-16 blur-2xl" />
+                    <div className="absolute bottom-0 left-0 w-24 h-24 bg-black/10 rounded-full -ml-12 -mb-12 blur-xl" />
+                    
+                    <div className="relative z-10">
+                        <div className="flex justify-between items-start mb-8">
+                            <div>
+                                <h3 className="text-lg font-bold opacity-90 uppercase tracking-wider">Daily Target</h3>
+                                <p className="text-3xl font-bold mt-1">Rs. {bonusData.settings?.dailyBonusAmount || 500} Bonus</p>
+                            </div>
+                            <div className="w-12 h-12 bg-white/20 backdrop-blur-md rounded-2xl flex items-center justify-center">
+                                <FaGift size={24} />
+                            </div>
+                        </div>
+
+                        <div className="space-y-4">
+                            <div className="flex justify-between items-end">
+                                <p className="text-sm font-medium opacity-90">Progress</p>
+                                <p className="text-2xl font-bold">{current.dailyDeliveryCount} / {current.targetDeliveries}</p>
+                            </div>
+                            
+                            <div className="h-3 bg-white/20 rounded-full overflow-hidden">
+                                <motion.div 
+                                    initial={{ width: 0 }}
+                                    animate={{ width: `${progress}%` }}
+                                    transition={{ duration: 1, ease: "easeOut" }}
+                                    className="h-full bg-white shadow-[0_0_15px_rgba(255,255,255,0.5)]"
+                                />
+                            </div>
+
+                            <p className="text-[11px] font-medium opacity-80 leading-relaxed italic">
+                                {current.isBonusAchieved 
+                                    ? "🎉 Congratulations! You've achieved today's bonus!" 
+                                    : `Complete ${current.targetDeliveries - current.dailyDeliveryCount} more orders today to unlock your bonus.`}
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                {/* Info Section */}
+                <div className="grid grid-cols-2 gap-4">
+                    <div className="bg-white p-5 rounded-[30px] shadow-sm border border-gray-50">
+                        <div className="w-10 h-10 bg-green-50 text-green-500 rounded-xl flex items-center justify-center mb-3">
+                            <FaCheckCircle size={18} />
+                        </div>
+                        <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Status</p>
+                        <p className={`text-sm font-bold ${current.isBonusAchieved ? 'text-green-500' : 'text-orange-500'}`}>
+                            {current.isBonusAchieved ? 'Achieved' : 'In Progress'}
+                        </p>
+                    </div>
+                    <div className="bg-white p-5 rounded-[30px] shadow-sm border border-gray-50">
+                        <div className="w-10 h-10 bg-blue-50 text-blue-500 rounded-xl flex items-center justify-center mb-3">
+                            <FaClock size={18} />
+                        </div>
+                        <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Reset In</p>
+                        <p className="text-sm font-bold text-gray-900">12:00 AM</p>
+                    </div>
+                </div>
+
+                {/* History Section */}
+                <div>
+                    <h3 className="text-gray-700 font-bold text-[11px] uppercase tracking-widest mb-4 px-4">Recent Bonuses</h3>
+                    {history.length > 0 ? (
+                        <div className="bg-white rounded-[35px] shadow-sm border border-gray-50 overflow-hidden">
+                            {history.map((item: any, index: number) => (
+                                <div key={index} className="flex items-center justify-between p-5 border-b border-gray-50 last:border-b-0">
+                                    <div className="flex items-center gap-4">
+                                        <div className="w-10 h-10 bg-orange-50 text-orange-500 rounded-xl flex items-center justify-center">
+                                            <FaGift size={16} />
+                                        </div>
+                                        <div>
+                                            <p className="text-sm font-bold text-gray-900">Daily Target Met</p>
+                                            <p className="text-[10px] text-gray-400 font-medium">
+                                                {new Date(item.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                                            </p>
+                                        </div>
+                                    </div>
+                                    <p className="text-green-500 font-bold text-sm">+Rs. {item.amount}</p>
+                                </div>
+                            ))}
+                        </div>
+                    ) : (
+                        <div className="bg-white p-8 rounded-[35px] border border-gray-50 flex flex-col items-center text-center">
+                            <div className="w-12 h-12 bg-gray-50 rounded-2xl flex items-center justify-center text-gray-200 mb-3">
+                                <FaGift size={20} />
+                            </div>
+                            <p className="text-gray-400 text-[11px] font-medium">No bonus history yet</p>
+                        </div>
+                    )}
+                </div>
+            </div>
+        );
+    };
 
     const renderOrders = () => {
         const availableOrders = orders.filter(o => !o.rider && ['Accepted', 'Preparing', 'Ready', 'OnTheWay'].includes(o.status));
@@ -984,6 +1142,7 @@ function ActionItem({ icon, label, sublabel, onClick }: any) {
                 />
             )}
             {activeTab === 'earnings' && <RiderEarnings riderId={riderData?._id} />}
+            {activeTab === 'bonus' && renderBonusTab()}
             {activeTab === 'wallet' && <RiderCODWallet rider={riderData} token={userInfo?.token} onRefresh={fetchRiderData} />}
             {activeTab === 'profile' && <RiderProfile riderId={riderData?._id} />}
             </div>
@@ -1123,36 +1282,42 @@ function ActionItem({ icon, label, sublabel, onClick }: any) {
             </AnimatePresence>
 
             {/* SS-style Bottom Navigation */}
-            <div className="fixed bottom-6 left-1/2 -translate-x-1/2 w-[90%] max-w-sm bg-white/80 backdrop-blur-xl rounded-[35px] shadow-[0_20px_50px_rgba(0,0,0,0.1)] border border-white/20 p-2 z-50">
+            <div className="fixed bottom-6 left-1/2 -translate-x-1/2 w-[95%] max-w-lg bg-white/80 backdrop-blur-xl rounded-[35px] shadow-[0_20px_50px_rgba(0,0,0,0.1)] border border-white/20 p-2 z-50">
                 <div className="flex justify-around items-center">
                     <NavButton 
                         active={activeTab === 'home'} 
                         onClick={() => setActiveTab('home')} 
-                        icon={<FaHome size={20} />} 
+                        icon={<FaHome size={18} />} 
                         label="Home" 
                     />
                     <NavButton 
                         active={activeTab === 'earnings'} 
                         onClick={() => setActiveTab('earnings')} 
-                        icon={<FaWallet size={20} />} 
+                        icon={<FaWallet size={18} />} 
                         label="Earnings" 
+                    />
+                    <NavButton 
+                        active={activeTab === 'bonus'} 
+                        onClick={() => setActiveTab('bonus')} 
+                        icon={<FaGift size={18} />} 
+                        label="Bonus" 
                     />
                     <NavButton 
                         active={activeTab === 'wallet'} 
                         onClick={() => setActiveTab('wallet')} 
-                        icon={<FaMoneyBillWave size={20} />} 
+                        icon={<FaMoneyBillWave size={18} />} 
                         label="Wallet" 
                     />
                     <NavButton 
                         active={activeTab === 'orders'} 
                         onClick={() => setActiveTab('orders')} 
-                        icon={<FaBox size={20} />} 
+                        icon={<FaBox size={18} />} 
                         label="Order" 
                     />
                     <NavButton 
                         active={activeTab === 'profile'} 
                         onClick={() => setActiveTab('profile')} 
-                        icon={<FaUser size={20} />} 
+                        icon={<FaUser size={18} />} 
                         label="Profile" 
                     />
                 </div>
@@ -1189,8 +1354,8 @@ function NavButton({ active, onClick, icon, label }: any) {
             onClick={onClick}
             className={`flex flex-col items-center justify-center gap-1 transition-all duration-500 rounded-[28px] ${
                 active 
-                ? 'bg-gradient-to-r from-orange-500 to-red-500 text-white px-6 py-3 shadow-lg shadow-orange-200' 
-                : 'text-gray-400 px-4 py-3'
+                ? 'bg-gradient-to-r from-orange-500 to-red-500 text-white px-4 py-2.5 shadow-lg shadow-orange-200' 
+                : 'text-gray-400 px-3 py-2.5'
             }`}
         >
             <div className={`${active ? 'scale-110' : 'scale-100'} transition-transform`}>
