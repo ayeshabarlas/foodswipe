@@ -1,3 +1,4 @@
+/*
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/request';
 
@@ -10,3 +11,5 @@ export function middleware(request: NextRequest) {
 export const config = {
   matcher: '/:path*',
 };
+*/
+export default function middleware() {}

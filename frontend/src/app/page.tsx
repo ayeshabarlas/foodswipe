@@ -1,5 +1,5 @@
-// VERCEL BUILD TRIGGER - v2.2.24 - 2026-01-30 06:55
-// Force Redeploy v2.2.24 - 2026-01-30 06:55 - Manual Trigger
+// VERCEL BUILD TRIGGER - v2.2.26 - 2026-01-30 07:05
+// Force Redeploy v2.2.26 - 2026-01-30 07:05 - Brutal Debug Fix
 "use client";
 
 // Vercel Build Trigger: 2026-01-30 03:25 - Force Update
