@@ -235,6 +235,7 @@ export default function CODSettlementView() {
                                     const totalAdminNet = riderPendingTx.reduce((acc, tx) => acc + (tx.admin_balance || 0), 0);
 
                                     return (
+                                        <tr key={rider._id} className="hover:bg-gray-50/50 transition-colors">
                                             <td className="px-8 py-6">
                                                 <span className="text-[11px] font-mono bg-gray-100 text-gray-500 px-2 py-1 rounded-md">
                                                 #{String(rider._id || '').slice(-6).toUpperCase()}
