@@ -204,25 +204,25 @@ const MyOrders = forwardRef<MyOrdersRef, MyOrdersProps>(({ isOpen, onClose, onTr
                                         <div className="flex items-center justify-between mb-3">
                                             <div className="flex items-center gap-3">
                                                 <img
-                                                    src={order.restaurant.logo || 'https://via.placeholder.com/50'}
-                                                    alt={order.restaurant.name}
+                                                    src={order.restaurant?.logo || 'https://via.placeholder.com/50'}
+                                                    alt={order.restaurant?.name || 'Restaurant'}
                                                     className="w-12 h-12 rounded-lg object-cover"
                                                     onError={(e) => {
                                                         e.currentTarget.src = 'https://via.placeholder.com/50';
                                                     }}
                                                 />
                                                 <div>
-                                                    <h3 className="font-bold text-gray-900">{order.restaurant.name}</h3>
+                                                    <h3 className="font-bold text-gray-900">{order.restaurant?.name || 'Restaurant'}</h3>
                                                     <p className="text-xs text-gray-700 font-medium">{formatDate(order.createdAt)}</p>
                                                 </div>
                                             </div>
                                         </div>
 
                                         <div className="mb-3 pl-1">
-                                            {order.items.map((item, index) => (
+                                            {(order.items || []).map((item, index) => (
                                                 <div key={index} className="flex items-start gap-2 text-sm text-gray-800 font-medium mb-1">
                                                     <span className="text-orange-500">•</span>
-                                                    <span>{item.quantity}x {item.name}</span>
+                                                    <span>{(item?.quantity || 0)}x {item?.name || 'Item'}</span>
                                                 </div>
                                             ))}
                                         </div>

@@ -220,7 +220,32 @@ export default function LoginScreen({ navigation }: any) {
           setLoading(false);
         }
       } else if (role === 'restaurant') {
-        navigation.replace('RestaurantDashboard');
+        setLoading(true);
+        try {
+          const profileRes = await apiClient.get('/restaurants/my-restaurant');
+          const restaurant = profileRes.data;
+          
+          if (restaurant.verificationStatus === 'new' || restaurant.verificationStatus === 'pending') {
+            Alert.alert(
+              'Verification Pending',
+              'Your restaurant profile is under review. Please ensure you have completed all details on our website.',
+              [{ text: 'OK', onPress: () => navigation.replace('Home') }]
+            );
+          } else if (restaurant.verificationStatus === 'rejected') {
+            Alert.alert(
+              'Verification Rejected',
+              `Your restaurant profile was rejected. Reason: ${restaurant.rejectionReason || 'Documents did not meet requirements'}. Please update your details on our website.`,
+              [{ text: 'OK', onPress: () => navigation.replace('Home') }]
+            );
+          } else {
+            navigation.replace('RestaurantDashboard');
+          }
+        } catch (err) {
+          console.error('Error fetching restaurant profile on login:', err);
+          navigation.replace('RestaurantDashboard');
+        } finally {
+          setLoading(false);
+        }
       } else {
         navigation.replace('CustomerDashboard');
       }

@@ -98,6 +98,47 @@ const createRestaurant = async (req, res) => {
         // Check if user already has a restaurant
         const existingRestaurant = await Restaurant.findOne({ owner: req.user._id });
         if (existingRestaurant) {
+            // If the profile exists but is still in 'new' status, allow updating details
+            if (existingRestaurant.verificationStatus === 'new') {
+                let finalLocation = location;
+                if ((!location || (location.coordinates[0] === 0 && location.coordinates[1] === 0)) && address) {
+                    const coords = await geocodeAddress(address);
+                    if (coords) {
+                        finalLocation = {
+                            type: 'Point',
+                            coordinates: [coords.lng, coords.lat],
+                            description: address
+                        };
+                    }
+                }
+
+                existingRestaurant.name = name || existingRestaurant.name;
+                existingRestaurant.address = address || existingRestaurant.address;
+                existingRestaurant.contact = contact || existingRestaurant.contact;
+                existingRestaurant.description = description || existingRestaurant.description;
+                existingRestaurant.logo = logo ? normalizePath(logo) : existingRestaurant.logo;
+                existingRestaurant.location = finalLocation || existingRestaurant.location;
+                existingRestaurant.cuisineTypes = cuisineTypes || existingRestaurant.cuisineTypes;
+                existingRestaurant.priceRange = priceRange || existingRestaurant.priceRange;
+                existingRestaurant.socialMedia = socialMedia || existingRestaurant.socialMedia;
+                existingRestaurant.openingHours = openingHours || existingRestaurant.openingHours;
+                existingRestaurant.coverImage = coverImage ? normalizePath(coverImage) : existingRestaurant.coverImage;
+                existingRestaurant.ownerCNIC = ownerCNIC || existingRestaurant.ownerCNIC;
+                existingRestaurant.bankDetails = bankDetails || existingRestaurant.bankDetails;
+                existingRestaurant.documents = documents ? normalizePath(documents) : existingRestaurant.documents;
+                existingRestaurant.businessType = businessType || existingRestaurant.businessType;
+                existingRestaurant.kitchenPhotos = kitchenPhotos ? normalizePath(kitchenPhotos) : existingRestaurant.kitchenPhotos;
+                existingRestaurant.sampleDishPhotos = sampleDishPhotos ? normalizePath(sampleDishPhotos) : existingRestaurant.sampleDishPhotos;
+                existingRestaurant.taxNumber = taxNumber || existingRestaurant.taxNumber;
+                existingRestaurant.storefrontPhoto = storefrontPhoto ? normalizePath(storefrontPhoto) : existingRestaurant.storefrontPhoto;
+                existingRestaurant.menuPhotos = menuPhotos ? normalizePath(menuPhotos) : existingRestaurant.menuPhotos;
+                
+                // Change status to pending once details are submitted
+                existingRestaurant.verificationStatus = 'pending';
+                
+                await existingRestaurant.save();
+                return res.json({ message: 'Restaurant profile updated and is now pending approval', restaurant: existingRestaurant });
+            }
             return res.status(400).json({ message: 'You already have a restaurant registered' });
         }
 

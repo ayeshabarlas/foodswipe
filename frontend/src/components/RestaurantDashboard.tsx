@@ -881,10 +881,10 @@ export default function RestaurantDashboard() {
                             <div className="px-8 mb-6">
                                 <div className="bg-gray-50/80 rounded-3xl p-5 flex items-center gap-4 border border-gray-100">
                                     <div className="w-12 h-12 rounded-xl bg-blue-500 flex items-center justify-center text-white font-bold text-lg">
-                                        {newOrderModal.user?.name?.[0].toUpperCase() || 'C'}
+                                        {newOrderModal?.user?.name?.[0]?.toUpperCase() || 'C'}
                                     </div>
                                     <div className="flex-1 min-w-0">
-                                        <h4 className="font-bold text-gray-900 truncate">{newOrderModal.user?.name || 'Customer'}</h4>
+                                        <h4 className="font-bold text-gray-900 truncate">{newOrderModal?.user?.name || 'Customer'}</h4>
                                         <p className="text-[10px] text-blue-600 font-bold uppercase tracking-wider">Regular Customer</p>
                                     </div>
                                 </div>
@@ -927,19 +927,19 @@ export default function RestaurantDashboard() {
                             <div className="px-8 mb-8">
                                 <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-4">Order Items</p>
                                 <div className="space-y-3 max-h-[200px] overflow-y-auto pr-2 custom-scrollbar">
-                                    {newOrderModal.orderItems?.map((item: any, idx: number) => (
+                                    {(newOrderModal?.orderItems || []).map((item: any, idx: number) => (
                                         <div key={idx} className="flex justify-between items-start group py-2 border-b border-gray-50 last:border-0">
                                             <div className="flex items-start gap-3 flex-1">
                                                 <div className="w-2 h-2 rounded-full bg-gray-200 group-hover:bg-orange-400 transition-colors mt-1.5 shrink-0" />
                                                 <div className="flex flex-col">
-                                                    <p className="text-sm font-bold text-gray-800 leading-tight">{item.name}</p>
-                                                    {item.variant && (
+                                                    <p className="text-sm font-bold text-gray-800 leading-tight">{item?.name || 'Item'}</p>
+                                                    {item?.variant && (
                                                         <p className="text-[11px] text-gray-500 font-medium mt-0.5">{item.variant}</p>
                                                     )}
-                                                    <p className="text-[10px] text-gray-400 font-medium mt-0.5">Qty: {item.qty}</p>
+                                                    <p className="text-[10px] text-gray-400 font-medium mt-0.5">Qty: {item?.qty || 0}</p>
                                                 </div>
                                             </div>
-                                            <p className="text-sm font-bold text-gray-900 shrink-0 ml-4">Rs. {item.price * item.qty}</p>
+                                            <p className="text-sm font-bold text-gray-900 shrink-0 ml-4">Rs. {(item?.price || 0) * (item?.qty || 0)}</p>
                                         </div>
                                     ))}
                                 </div>

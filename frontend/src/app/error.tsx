@@ -12,6 +12,15 @@ export default function Error({
   useEffect(() => {
     // Log the error to an error reporting service
     console.error('Next.js Global Error:', error);
+
+    // Auto-reload if a chunk failed to load (usually after a new deployment)
+    if (error.message && (
+      error.message.includes('Loading chunk') || 
+      error.message.includes('Failed to fetch dynamically imported module')
+    )) {
+      console.log('🔄 Chunk load error detected, reloading page...');
+      window.location.reload();
+    }
   }, [error]);
 
   return (

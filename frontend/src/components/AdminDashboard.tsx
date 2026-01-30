@@ -212,7 +212,7 @@ export default function AdminDashboard() {
 
             socket.on('restaurant_registered', (restaurant) => {
                 console.log('New restaurant registered!', restaurant);
-                toast.success(`New Restaurant: ${restaurant.name} registered!`, {
+                toast.success(`New Restaurant: ${restaurant?.name || 'Partner'} registered!`, {
                     duration: 6000,
                     position: 'top-right',
                     icon: '🏪',
@@ -222,7 +222,7 @@ export default function AdminDashboard() {
 
             socket.on('rider_registered', (rider) => {
                 console.log('New rider registered!', rider);
-                toast.success(`New Rider: ${rider.fullName} registered!`, {
+                toast.success(`New Rider: ${rider?.fullName || rider?.name || 'Delivery Partner'} registered!`, {
                     duration: 6000,
                     position: 'top-right',
                     icon: '🏍️',
@@ -232,7 +232,7 @@ export default function AdminDashboard() {
 
             socket.on('user_registered', (user) => {
                 console.log('New user registered!', user);
-                toast.success(`New Customer: ${user.name} registered!`, {
+                toast.success(`New Customer: ${user?.name || 'User'} registered!`, {
                     duration: 5000,
                     position: 'top-right',
                     icon: '👤',

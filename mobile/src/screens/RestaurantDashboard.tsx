@@ -122,6 +122,25 @@ export default function RestaurantDashboard({ navigation }: any) {
         const restaurant = res.data;
         setRestaurantProfile(restaurant);
         await SecureStore.setItemAsync('restaurant_profile', JSON.stringify(restaurant));
+
+        // CHECK VERIFICATION STATUS AND REDIRECT IF NECESSARY
+        if (restaurant.verificationStatus === 'new' || restaurant.verificationStatus === 'pending') {
+          console.log('🔄 Redirecting to Home because restaurant profile is pending/new');
+          Alert.alert(
+            'Verification Pending',
+            'Your restaurant profile is under review. You will be able to access the dashboard once approved.',
+            [{ text: 'OK', onPress: () => navigation.replace('Home') }]
+          );
+          return;
+        } else if (restaurant.verificationStatus === 'rejected') {
+          console.log('🔄 Redirecting to Home because restaurant profile is rejected');
+          Alert.alert(
+            'Verification Rejected',
+            `Your restaurant profile was rejected. Reason: ${restaurant.rejectionReason || 'Please check your documents.'}`,
+            [{ text: 'OK', onPress: () => navigation.replace('Home') }]
+          );
+          return;
+        }
         
         const updatedUser = { ...latestUser, restaurantId: restaurant._id };
         setUserData(updatedUser);

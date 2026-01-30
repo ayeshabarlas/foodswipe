@@ -296,19 +296,19 @@ export default function OrderBoard({ restaurant, initialOrderId, onUpdate }: Ord
                 <div className="bg-[#F8FAFC]/50 rounded-2xl p-4 mb-5 border border-gray-50">
                     <p className="text-[9px] font-bold text-gray-400 uppercase tracking-widest mb-2.5 font-plus-jakarta">Items Summary</p>
                     <ul className="space-y-1.5">
-                        {order.orderItems.map((item, idx) => (
+                        {orderItems.map((item, idx) => (
                             <li key={idx} className="flex flex-col text-xs text-gray-600 font-medium border-b border-gray-100 last:border-0 pb-1 mb-1 last:mb-0 last:pb-0">
                                 <div className="flex items-start justify-between w-full">
                                     <div className="flex items-start gap-2 max-w-[85%]">
                                         <span className="w-1 h-1 rounded-full bg-gray-300 mt-1.5 shrink-0"></span>
                                         <div className="flex flex-col">
-                                            <span className="whitespace-normal leading-tight">{item.name}</span>
-                                            {item.variant && (
+                                            <span className="whitespace-normal leading-tight">{item?.name || 'Item'}</span>
+                                            {item?.variant && (
                                                 <span className="text-[10px] text-gray-400 font-medium mt-0.5">{item.variant}</span>
                                             )}
                                         </div>
                                     </div>
-                                    {item.qty > 1 && <span className="text-gray-400 text-[10px] font-bold shrink-0">x{item.qty}</span>}
+                                    {(item?.qty || 0) > 1 && <span className="text-gray-400 text-[10px] font-bold shrink-0">x{item.qty}</span>}
                                 </div>
                             </li>
                         ))}
@@ -766,13 +766,13 @@ export default function OrderBoard({ restaurant, initialOrderId, onUpdate }: Ord
                             <div className="mb-8">
                                 <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-4 px-2">Order Items</p>
                                 <div className="space-y-3">
-                                    {newOrderPopup.orderItems.map((item, idx) => (
+                                    {(newOrderPopup.orderItems || []).map((item, idx) => (
                                         <div key={idx} className="bg-[#F8FAFC] rounded-2xl p-4 flex justify-between items-center group hover:bg-white hover:shadow-md transition-all border border-transparent hover:border-gray-100">
                                             <div>
-                                                <span className="block font-bold text-gray-900 text-sm">{item.name}</span>
+                                                <span className="block font-bold text-gray-900 text-sm">{item?.name || 'Item'}</span>
                                                 <span className="text-[10px] text-gray-400 font-bold uppercase tracking-wider">Default Options</span>
                                             </div>
-                                            <span className="font-bold text-gray-900 text-sm">Rs. {item.price.toFixed(0)}</span>
+                                            <span className="font-bold text-gray-900 text-sm">Rs. {(item?.price || 0).toFixed(0)}</span>
                                         </div>
                                     ))}
                                 </div>

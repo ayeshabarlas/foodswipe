@@ -491,15 +491,15 @@ export default function EnhancedOrdersView() {
                             <div>
                                 <p className="text-[11px] font-bold text-gray-400 uppercase tracking-widest mb-4">Order Items</p>
                                 <div className="space-y-3">
-                                    {selectedOrder.orderItems?.map((item, idx) => (
+                                    {(selectedOrder.orderItems || []).map((item, idx) => (
                                         <div key={idx} className="flex justify-between items-center p-4 bg-gray-50 rounded-2xl">
                                             <div className="flex items-center gap-3">
                                                 <div className="w-8 h-8 bg-white rounded-lg flex items-center justify-center text-[12px] font-bold text-orange-500 border border-gray-100">
-                                                    {item.qty}x
+                                                    {item?.qty || 0}x
                                                 </div>
-                                                <p className="text-sm font-bold text-gray-900">{item.name}</p>
+                                                <p className="text-sm font-bold text-gray-900">{item?.name || 'Item'}</p>
                                             </div>
-                                            <p className="text-sm font-bold text-gray-900">Rs. {(item.price * item.qty).toLocaleString()}</p>
+                                            <p className="text-sm font-bold text-gray-900">Rs. {((item?.price || 0) * (item?.qty || 0)).toLocaleString()}</p>
                                         </div>
                                     ))}
                                 </div>

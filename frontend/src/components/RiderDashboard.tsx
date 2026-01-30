@@ -642,7 +642,7 @@ const RiderDashboard = ({
                                         <p className="text-gray-700 text-[9px] font-bold uppercase tracking-widest">Your Pay</p>
                                     </div>
                                     <div className="flex gap-2">
-                                        {activeOrder.restaurant?.location?.coordinates && (
+                                        {activeOrder?.restaurant?.location?.coordinates && (
                                             <button 
                                                 onClick={() => {
                                                     const [lng, lat] = activeOrder.restaurant.location.coordinates;
@@ -654,7 +654,7 @@ const RiderDashboard = ({
                                                 <FaLocationArrow size={12} />
                                             </button>
                                         )}
-                                        {activeOrder.restaurant?.contact && (
+                                        {activeOrder?.restaurant?.contact && (
                                             <a 
                                                 href={`tel:${activeOrder.restaurant.contact}`}
                                                 className="w-8 h-8 bg-green-500 text-white rounded-xl flex items-center justify-center shadow-lg shadow-green-200 active:scale-90 transition-transform"
