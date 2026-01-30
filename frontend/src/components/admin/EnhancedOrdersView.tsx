@@ -12,7 +12,10 @@ interface Order {
     createdAt: string;
     user: { name: string; email?: string; phone?: string };
     restaurant: { name: string; address?: string };
-    rider: { user: { name: string } } | null;
+    rider: { 
+        _id?: string;
+        user: { name: string } 
+    } | null;
     orderItems: any[];
     totalPrice: number;
     status: string;
@@ -262,6 +265,7 @@ export default function EnhancedOrdersView() {
                             <tr className="bg-gray-50/50 border-b border-gray-100">
                                 <th className="px-6 py-5 text-[13px] font-medium text-[#6B7280] uppercase tracking-wider">Order Info</th>
                                 <th className="px-6 py-5 text-[13px] font-medium text-[#6B7280] uppercase tracking-wider">Customer / Restaurant</th>
+                                <th className="px-6 py-5 text-[13px] font-medium text-[#6B7280] uppercase tracking-wider">Rider</th>
                                 <th className="px-6 py-5 text-[13px] font-medium text-[#6B7280] uppercase tracking-wider">Amount</th>
                                 <th className="px-6 py-5 text-[13px] font-medium text-[#6B7280] uppercase tracking-wider text-center">Commission</th>
                                 <th className="px-6 py-5 text-[13px] font-medium text-[#6B7280] uppercase tracking-wider text-center">Payouts</th>
@@ -300,6 +304,16 @@ export default function EnhancedOrdersView() {
                                                 <p className="text-[14px] font-bold text-[#111827]">{order.user?.name || 'Guest'}</p>
                                                 <p className="text-[12px] text-orange-500 font-bold uppercase tracking-tight">@{order.restaurant?.name || 'Restaurant'}</p>
                                             </div>
+                                        </td>
+                                        <td className="px-6 py-5">
+                                            {order.rider ? (
+                                                <div className="space-y-0.5">
+                                                    <p className="text-[14px] font-bold text-[#111827]">{order.rider.user?.name}</p>
+                                                    <p className="text-[11px] text-blue-500 font-bold uppercase tracking-tight">ID: #{String(order.rider._id || '').slice(-6)}</p>
+                                                </div>
+                                            ) : (
+                                                <span className="text-[11px] text-gray-400 font-bold uppercase tracking-widest bg-gray-50 px-2 py-1 rounded-lg border border-gray-100">Unassigned</span>
+                                            )}
                                         </td>
                                         <td className="px-6 py-5">
                                             <p className="text-[14px] font-bold text-[#111827]">Rs. {(order.totalPrice || 0).toLocaleString()}</p>
