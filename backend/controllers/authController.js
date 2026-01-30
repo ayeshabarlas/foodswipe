@@ -225,9 +225,9 @@ const loginUser = async (req, res) => {
             });
             if (anyRoleUser) {
                 console.log(`ℹ️ User found but with DIFFERENT role: ${anyRoleUser.role}`);
-                return res.status(401).json({ message: `Account found as ${anyRoleUser.role}. Please select correct role.` });
+                return res.status(401).json({ message: 'Account not registered for this role. Please sign up or select the correct role.' });
             }
-            return res.status(401).json({ message: 'Invalid credentials' });
+            return res.status(401).json({ message: 'Account not registered. Please sign up to continue.' });
         }
 
         console.log(`User found: ${user.email}, DB Role: ${user.role}, Status: ${user.status}`);
@@ -237,7 +237,7 @@ const loginUser = async (req, res) => {
         // Otherwise, the role must match.
         if (role && user.role !== role && user.role !== 'admin' && user.role !== 'super-admin') {
             console.log(`Login failed: Role mismatch. Frontend asked for "${role}", but user is "${user.role}"`);
-            return res.status(401).json({ message: 'Invalid role for this account' });
+            return res.status(401).json({ message: 'Account not registered for this role. Please sign up or select the correct role.' });
         }
 
         // 3. Status Check

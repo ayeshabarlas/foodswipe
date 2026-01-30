@@ -227,25 +227,6 @@ export default function LoginScreen({ onLogin }: LoginScreenProps) {
                     {error && (
                         <div className="mb-6 p-4 bg-red-50 border-l-4 border-red-500 text-red-700 text-sm rounded relative">
                             <p className="font-bold">{error}</p>
-                            <button 
-                                onClick={async () => {
-                                    try {
-                                        setError("Checking connection...");
-                                        const res = await axios.get(`${getApiUrl()}/health?t=${Date.now()}`);
-                                        const data = res.data;
-                                        let msg = `Backend: ${data.status}\nDB: ${data.db}\nFirebase: ${data.firebase}\nURL: ${getApiUrl()}`;
-                                        alert(msg);
-                                        setError("");
-                                    } catch (e: any) {
-                                        console.error(e);
-                                        alert(`Backend unreachable!\nURL: ${getApiUrl()}\nError: ${e.message}`);
-                                        setError(`Offline: ${e.message}`);
-                                    }
-                                }}
-                                className="mt-2 text-xs font-bold underline hover:text-red-900"
-                            >
-                                Check Connectivity
-                            </button>
                         </div>
                     )}
 

@@ -69,22 +69,6 @@ export default function AdminLoginForm() {
                 {error && (
                     <div className="mb-6 p-4 bg-red-50 border-l-4 border-red-500 text-red-700 text-sm rounded relative">
                         <p>{error}</p>
-                        <button 
-                            onClick={async () => {
-                                try {
-                                    setError("Checking connection...");
-                                    const res = await axios.get(`${getApiUrl()}/health?t=${Date.now()}`);
-                                    alert(`Backend is reachable! \nURL: ${getApiUrl()} \nStatus: ${JSON.stringify(res.data)}`);
-                                    setError("");
-                                } catch (e: any) {
-                                    alert(`Backend unreachable! \nURL: ${getApiUrl()} \nError: ${e.message}`);
-                                    setError(`Backend Unreachable: ${e.message}. URL: ${getApiUrl()}`);
-                                }
-                            }}
-                            className="mt-2 text-xs font-bold underline hover:text-red-900"
-                        >
-                            Check Connectivity
-                        </button>
                     </div>
                 )}
 
