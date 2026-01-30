@@ -22,7 +22,7 @@ export default function TermsPage() {
                     <section>
                         <h2 className="text-xl font-bold text-gray-900 mb-4">1. Business Information</h2>
                         <ul className="list-disc pl-5 space-y-2">
-                            <li>Registered Name: FoodSwipe (Private) Limited</li>
+                            <li>Registered Name: FoodSwipe</li>
                             <li>Business Address: Allama Iqbal Town, Lahore</li>
                             <li>Contact: +923295599855</li>
                             <li>Email: app.foodswipehelp@gmail.com</li>

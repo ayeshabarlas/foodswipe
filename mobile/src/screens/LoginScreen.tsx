@@ -333,7 +333,7 @@ export default function LoginScreen({ navigation }: any) {
                       </View>
                       <ScrollView contentContainerStyle={{ padding: 20 }}>
                         <Text style={{ fontSize: 18, fontWeight: '700', color: '#111827', marginBottom: 12 }}>1. Business Information</Text>
-                        <Text style={{ fontSize: 14, color: '#4B5563', lineHeight: 20, marginBottom: 8 }}>Registered Name: FoodSwipe (Private) Limited</Text>
+                        <Text style={{ fontSize: 14, color: '#4B5563', lineHeight: 20, marginBottom: 8 }}>Registered Name: FoodSwipe</Text>
                         <Text style={{ fontSize: 14, color: '#4B5563', lineHeight: 20, marginBottom: 8 }}>Business Address: Allama Iqbal Town, Lahore</Text>
                         <Text style={{ fontSize: 14, color: '#4B5563', lineHeight: 20, marginBottom: 16 }}>Contact: +923295599855 | Email: app.foodswipehelp@gmail.com</Text>
 

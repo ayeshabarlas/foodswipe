@@ -1520,7 +1520,7 @@ export default function RiderDashboard({ navigation }: any) {
           </View>
           <ScrollView contentContainerStyle={styles.modalScroll}>
             <Text style={styles.policyHeading}>1. Business Information</Text>
-            <Text style={styles.policyText}>Registered Name: FoodSwipe (Private) Limited</Text>
+            <Text style={styles.policyText}>Registered Name: FoodSwipe</Text>
             <Text style={styles.policyText}>Business Address: Allama Iqbal Town, Lahore</Text>
             <Text style={styles.policyText}>Contact: +923295599855 | Email: app.foodswipehelp@gmail.com</Text>
 

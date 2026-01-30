@@ -90,7 +90,7 @@ export default function Settings({ isOpen, onClose }: SettingsProps) {
             content: `Welcome to FoodSwipe! By using our service, you agree to these terms.
 
 1. Business Information
-   - Registered Name: FoodSwipe (Private) Limited
+   - Registered Name: FoodSwipe
    - Business Address: Allama Iqbal Town, Lahore
    - Contact: +923295599855
    - Email: app.foodswipehelp@gmail.com
