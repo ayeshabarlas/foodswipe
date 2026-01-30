@@ -77,8 +77,8 @@ app.use((req, res, next) => {
     next();
 });
 
-// 🚀 3. HEALTH & ROOT
-// Force deployment trigger - v1.1.0 - 2026-01-21 21:30
+// 🚀 3. HEALTH
+// Force deployment trigger - v2.2.39 - 2026-01-30 09:50
 app.get('/health', async (req, res) => {
     console.log('💓 Health check requested');
     const dbStatus = getDbStatus();
@@ -122,14 +122,16 @@ app.get('/health', async (req, res) => {
         firebase: firebaseConfigured ? 'configured' : 'missing_env_var',
         firebaseProject: firebaseProjectId,
         timestamp: new Date().toISOString(),
-        version: '2.0.1-FINAL-FIX', // Forced update to ensure deployment
+        version: '2.2.39-RENDER-FIX', // Updated version
         env: process.env.NODE_ENV,
+        render: !!process.env.RENDER,
         vercel: !!process.env.VERCEL || !!process.env.NOW_REGION || !!process.env.VERCEL_URL
     });
 });
 
-app.get('/', (req, res) => {
-    res.status(200).send('<h1>Foodswipe API is Live and Running!</h1><p>Status: OK</p>');
+// API Root Info
+app.get('/api', (req, res) => {
+    res.status(200).json({ message: 'Foodswipe API is Live', version: '2.2.39' });
 });
 
 // 🚀 4. API ROUTES
@@ -168,20 +170,37 @@ try {
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 // Serve Frontend in production (Fixes 404 for non-Vercel platforms)
-if (process.env.NODE_ENV === 'production' || process.env.RAILWAY_STATIC_URL || process.env.RENDER) {
+if (process.env.NODE_ENV === 'production' || process.env.RAILWAY_STATIC_URL || process.env.RENDER || true) {
     const frontendPath = path.join(__dirname, '../frontend/out');
     console.log(`🔍 Checking for frontend at: ${frontendPath}`);
     
     if (require('fs').existsSync(frontendPath)) {
         console.log('✅ Frontend "out" directory found, serving static files');
-        app.use(express.static(frontendPath));
+        
+        // Serve static files with extensions first
+        app.use(express.static(frontendPath, {
+            extensions: ['html', 'htm'],
+            index: 'index.html'
+        }));
+
+        // Catch-all route to serve index.html for SPA routing
         app.get('*', (req, res) => {
-            if (!req.url.startsWith('/api')) {
+            // Don't intercept API or Uploads
+            if (!req.url.startsWith('/api') && !req.url.startsWith('/uploads')) {
+                console.log(`🏠 Serving index.html for: ${req.url}`);
                 res.sendFile(path.join(frontendPath, 'index.html'));
             }
         });
     } else {
         console.log('❌ Frontend "out" directory NOT found at ' + frontendPath);
+        // Fallback for development if "out" isn't there but we want to know why
+        app.get('/', (req, res) => {
+            res.status(200).json({ 
+                message: 'Foodswipe API is Live', 
+                frontend: 'Not Built (out directory missing)',
+                path: frontendPath
+            });
+        });
     }
 }
 
