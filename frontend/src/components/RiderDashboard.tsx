@@ -471,24 +471,24 @@ const RiderDashboard = ({
             )}
 
             {/* Verification Status Banner */}
-            {displayRider.verificationStatus !== 'approved' && !loading && (
+            {(displayRider.verificationStatus !== 'approved' || !riderData?.cnicNumber) && !loading && (
                 <div 
                     onClick={() => {
-                        if (displayRider.verificationStatus !== 'pending') {
+                        if (displayRider.verificationStatus !== 'pending' || !riderData?.cnicNumber) {
                             onCompleteProfile ? onCompleteProfile() : window.location.href = '/rider/register';
                         }
                     }}
-                    className={`bg-orange-50 border-b border-orange-100 px-6 py-3 flex items-center gap-3 ${displayRider.verificationStatus !== 'pending' ? 'cursor-pointer hover:bg-orange-100 transition-colors' : ''}`}
+                    className={`bg-orange-50 border-b border-orange-100 px-6 py-3 flex items-center gap-3 ${(displayRider.verificationStatus !== 'pending' || !riderData?.cnicNumber) ? 'cursor-pointer hover:bg-orange-100 transition-colors' : ''}`}
                 >
                     <FaExclamationCircle className="text-orange-500 shrink-0" />
                     <div className="flex-1">
                         <p className="text-orange-800 text-[10px] font-medium leading-tight">
-                            {displayRider.verificationStatus === 'pending' 
+                            {displayRider.verificationStatus === 'pending' && riderData?.cnicNumber
                                 ? 'Your profile is under review. You can see orders but cannot accept them yet.'
-                                : 'Complete your profile registration to start accepting orders.'}
+                                : 'Complete your profile registration (CNIC & Details) to start accepting orders.'}
                         </p>
                     </div>
-                    {displayRider.verificationStatus !== 'pending' && (
+                    {(displayRider.verificationStatus !== 'pending' || !riderData?.cnicNumber) && (
                         <button 
                             className="bg-orange-500 text-white px-3 py-1.5 rounded-lg text-[9px] font-bold uppercase"
                         >
