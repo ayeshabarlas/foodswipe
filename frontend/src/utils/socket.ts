@@ -5,9 +5,9 @@ import Pusher from 'pusher-js';
 type SocketCallback = (data: any) => void;
 
 // Initialize these as null/empty and only use them inside functions
-let pusher: any = null;
-let activeChannels: Set<string> | null = null;
-let eventListeners: Map<string, Set<SocketCallback>> | null = null;
+var pusher: any = null;
+var activeChannels: Set<string> | null = null;
+var eventListeners: Map<string, Set<SocketCallback>> | null = null;
 
 function getPusherKey() { return process.env.NEXT_PUBLIC_PUSHER_KEY || ''; }
 function getPusherCluster() { return process.env.NEXT_PUBLIC_PUSHER_CLUSTER || 'ap2'; }

@@ -6,23 +6,25 @@ import { FaShoppingBag, FaUtensils, FaStore, FaChartLine, FaWallet, FaStar, FaBu
 import { motion, AnimatePresence } from 'framer-motion';
 import axios from 'axios';
 import toast from 'react-hot-toast';
-import CreateRestaurant from './CreateRestaurant';
-import OrderBoard from './OrderBoard';
-import DashboardMenu from './DashboardMenu';
-import DashboardStore from './DashboardStore';
-import DashboardReviews from './DashboardReviews';
-import DashboardAnalytics from './DashboardAnalytics';
-import PaymentHistory from './PaymentHistory';
-import KitchenDisplay from './KitchenDisplay';
-import DashboardPromotions from './DashboardPromotions';
-import DashboardSettings from './DashboardSettings';
-import DashboardOverview from './DashboardOverview';
-import DashboardSupport from './DashboardSupport';
+import dynamic from 'next/dynamic';
+
+// Dynamically import components to solve TDZ errors and improve performance
+const CreateRestaurant = dynamic(() => import('./CreateRestaurant'), { ssr: false });
+const OrderBoard = dynamic(() => import('./OrderBoard'), { ssr: false });
+const DashboardMenu = dynamic(() => import('./DashboardMenu'), { ssr: false });
+const DashboardStore = dynamic(() => import('./DashboardStore'), { ssr: false });
+const DashboardReviews = dynamic(() => import('./DashboardReviews'), { ssr: false });
+const DashboardAnalytics = dynamic(() => import('./DashboardAnalytics'), { ssr: false });
+const PaymentHistory = dynamic(() => import('./PaymentHistory'), { ssr: false });
+const DashboardPromotions = dynamic(() => import('./DashboardPromotions'), { ssr: false });
+const DashboardSettings = dynamic(() => import('./DashboardSettings'), { ssr: false });
+const DashboardOverview = dynamic(() => import('./DashboardOverview'), { ssr: false });
+const DashboardSupport = dynamic(() => import('./DashboardSupport'), { ssr: false });
+
 import { getImageUrl, getImageFallback } from '../utils/imageUtils';
 import { getApiUrl } from '../utils/config';
 import { initSocket, disconnectSocket, subscribeToChannel } from '../utils/socket';
 import { useSettings } from '../hooks/useSettings';
-import ModernLoader from './ModernLoader';
 export default function RestaurantDashboard() {
     const router = useRouter();
     const { settings } = useSettings();
@@ -419,11 +421,6 @@ export default function RestaurantDashboard() {
         }
     };
 
-    // If it's the "new" placeholder or status is not approved/pending, show CreateRestaurant
-    if (restaurant?.isNew || displayRestaurant.verificationStatus === 'new' || displayRestaurant.verificationStatus === 'not_started') {
-        return <CreateRestaurant onRestaurantCreated={fetchDashboardData} />;
-    }
-
     // Force verified status to avoid blocking banners if data is still loading
     const displayRestaurant = (() => {
         const info = userInfo || {};
@@ -449,6 +446,11 @@ export default function RestaurantDashboard() {
             ...(restaurant || {})
         };
     })();
+
+    // If it's the "new" placeholder or status is not approved/pending, show CreateRestaurant
+    if (restaurant?.isNew || displayRestaurant.verificationStatus === 'new' || displayRestaurant.verificationStatus === 'not_started') {
+        return <CreateRestaurant onRestaurantCreated={fetchDashboardData} />;
+    }
 
     const isPending = displayRestaurant.verificationStatus === 'pending' || displayRestaurant.verificationStatus === 'not_started';
     const isNew = displayRestaurant.verificationStatus === 'new';

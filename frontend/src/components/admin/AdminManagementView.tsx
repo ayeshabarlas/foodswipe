@@ -77,6 +77,10 @@ export default function AdminManagementView() {
     };
 
     const handleDelete = async (id: string) => {
+        if (!id) {
+            toast.error('Invalid ID: Admin reference missing');
+            return;
+        }
         if (!window.confirm('Are you sure you want to remove this administrator?')) return;
 
         try {

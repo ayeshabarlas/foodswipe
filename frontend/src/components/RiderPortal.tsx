@@ -3,9 +3,11 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { getApiUrl } from '../utils/config';
-import RiderRegistration from './RiderRegistration';
-import RiderDocumentUpload from './RiderDocumentUpload';
-import RiderDashboard from './RiderDashboard';
+import dynamic from 'next/dynamic';
+
+const RiderRegistration = dynamic(() => import('./RiderRegistration'), { ssr: false });
+const RiderDocumentUpload = dynamic(() => import('./RiderDocumentUpload'), { ssr: false });
+const RiderDashboard = dynamic(() => import('./RiderDashboard'), { ssr: false });
 
 export default function RiderPortal() {
     const [riderId, setRiderId] = useState<string | null>(null);

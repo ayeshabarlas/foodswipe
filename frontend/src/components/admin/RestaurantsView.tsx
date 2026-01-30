@@ -6,7 +6,7 @@ import {
     FaCheckCircle, FaTimesCircle, FaMapMarkerAlt, FaFileImage, 
     FaEye, FaSearch, FaFilter, FaStar, FaStore, FaClock, 
     FaExternalLinkAlt, FaPhone, FaEnvelope, FaUser, FaBuilding,
-    FaMoneyBillWave, FaPercentage, FaWallet, FaHistory
+    FaMoneyBillWave, FaPercentage, FaWallet, FaHistory, FaTrash
 } from 'react-icons/fa';
 import axios from 'axios';
 import { getApiUrl } from '../../utils/config';

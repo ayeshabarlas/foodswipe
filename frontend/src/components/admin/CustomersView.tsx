@@ -119,6 +119,10 @@ export default function CustomersView() {
 
     const handleDeleteUser = async (id: string, e: React.MouseEvent) => {
         e.stopPropagation();
+        if (!id) {
+            toast.error('Invalid ID: User reference missing');
+            return;
+        }
         if (!window.confirm('WARNING: This will permanently delete the customer account. Proceed?')) return;
         try {
             const userInfo = JSON.parse(localStorage.getItem('userInfo') || '{}');

@@ -213,11 +213,11 @@ export default function CreateRestaurant({ onRestaurantCreated }: CreateRestaura
                                     <FaUtensils size={22} />
                                 </div>
                                 <div className="flex-1">
-                                    <h3 className="font-medium text-gray-900 text-lg mb-1 tracking-tight">Home Chef</h3>
+                                    <h3 className="font-light text-gray-900 text-lg mb-1 tracking-tight">Home Chef</h3>
                                     <p className="text-gray-500 text-sm mb-3 font-light leading-relaxed">Home-based kitchen, no license required</p>
                                     <div className="flex gap-2 flex-wrap">
-                                        <span className="bg-green-50 text-green-700 text-[11px] font-medium px-3 py-1.5 rounded-full uppercase tracking-wider">No License Needed</span>
-                                        <span className="bg-blue-50 text-blue-600 text-[11px] font-medium px-3 py-1.5 rounded-full uppercase tracking-wider">Quick Setup</span>
+                                        <span className="bg-green-50 text-green-700 text-[11px] font-light px-3 py-1.5 rounded-full uppercase tracking-wider">No License Needed</span>
+                                        <span className="bg-blue-50 text-blue-600 text-[11px] font-light px-3 py-1.5 rounded-full uppercase tracking-wider">Quick Setup</span>
                                     </div>
                                 </div>
                             </div>
@@ -233,11 +233,11 @@ export default function CreateRestaurant({ onRestaurantCreated }: CreateRestaura
                                     <FaStore size={22} />
                                 </div>
                                 <div className="flex-1">
-                                    <h3 className="font-medium text-gray-900 text-lg mb-1 tracking-tight">Restaurant Owner</h3>
+                                    <h3 className="font-light text-gray-900 text-lg mb-1 tracking-tight">Restaurant Owner</h3>
                                     <p className="text-gray-500 text-sm mb-3 font-light leading-relaxed">Physical restaurant, license required</p>
                                     <div className="flex gap-2 flex-wrap">
-                                        <span className="bg-orange-50 text-orange-700 text-[11px] font-medium px-3 py-1.5 rounded-full uppercase tracking-wider">License Required</span>
-                                        <span className="bg-purple-50 text-purple-700 text-[11px] font-medium px-3 py-1.5 rounded-full uppercase tracking-wider">Verified Business</span>
+                                        <span className="bg-orange-50 text-orange-700 text-[11px] font-light px-3 py-1.5 rounded-full uppercase tracking-wider">License Required</span>
+                                        <span className="bg-purple-50 text-purple-700 text-[11px] font-light px-3 py-1.5 rounded-full uppercase tracking-wider">Verified Business</span>
                                     </div>
                                 </div>
                             </div>
@@ -245,7 +245,7 @@ export default function CreateRestaurant({ onRestaurantCreated }: CreateRestaura
 
                         <button
                             onClick={() => setStep('form')}
-                            className="w-full bg-gradient-to-r from-orange-500 to-red-600 hover:from-orange-600 hover:to-red-700 text-white font-semibold py-4 rounded-2xl mt-8 transition shadow-md"
+                            className="w-full bg-gradient-to-r from-orange-500 to-red-600 hover:from-orange-600 hover:to-red-700 text-white font-light py-4 rounded-2xl mt-8 transition shadow-md"
                         >
                             Continue
                         </button>
@@ -289,7 +289,7 @@ export default function CreateRestaurant({ onRestaurantCreated }: CreateRestaura
 
                         <div className="space-y-6">
                             <div>
-                                <label className="block text-[13px] font-medium text-gray-500 uppercase tracking-widest mb-2.5 ml-1">
+                                <label className="block text-[13px] font-light text-gray-500 uppercase tracking-widest mb-2.5 ml-1">
                                     {businessType === 'restaurant' ? 'Restaurant Name' : 'Full Name'} <span className="text-red-400">*</span>
                                 </label>
                                 <input
@@ -304,7 +304,7 @@ export default function CreateRestaurant({ onRestaurantCreated }: CreateRestaura
 
                             {businessType === 'restaurant' && (
                                 <div>
-                                    <label className="block text-[13px] font-medium text-gray-500 uppercase tracking-widest mb-2.5 ml-1">
+                                    <label className="block text-[13px] font-light text-gray-500 uppercase tracking-widest mb-2.5 ml-1">
                                         Owner Full Name <span className="text-red-400">*</span>
                                     </label>
                                     <input
@@ -320,7 +320,7 @@ export default function CreateRestaurant({ onRestaurantCreated }: CreateRestaura
 
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                 <div>
-                                    <label className="block text-[13px] font-medium text-gray-500 uppercase tracking-widest mb-2.5 ml-1">
+                                    <label className="block text-[13px] font-light text-gray-500 uppercase tracking-widest mb-2.5 ml-1">
                                         Phone Number <span className="text-red-400">*</span>
                                     </label>
                                     <div className="relative">
@@ -337,7 +337,7 @@ export default function CreateRestaurant({ onRestaurantCreated }: CreateRestaura
                                 </div>
 
                                 <div>
-                                    <label className="block text-[13px] font-medium text-gray-500 uppercase tracking-widest mb-2.5 ml-1">
+                                    <label className="block text-[13px] font-light text-gray-500 uppercase tracking-widest mb-2.5 ml-1">
                                         Email Address <span className="text-red-400">*</span>
                                     </label>
                                     <input
@@ -352,7 +352,7 @@ export default function CreateRestaurant({ onRestaurantCreated }: CreateRestaura
                             </div>
 
                             <div>
-                                <label className="block text-[13px] font-medium text-gray-500 uppercase tracking-widest mb-2.5 ml-1">
+                                <label className="block text-[13px] font-light text-gray-500 uppercase tracking-widest mb-2.5 ml-1">
                                     {businessType === 'restaurant' ? 'Business Address' : 'Home Address (Pickup Location)'} <span className="text-red-400">*</span>
                                 </label>
                                 <textarea
@@ -366,7 +366,7 @@ export default function CreateRestaurant({ onRestaurantCreated }: CreateRestaura
 
                             {businessType === 'restaurant' && (
                                 <div>
-                                    <label className="block text-[13px] font-medium text-gray-500 uppercase tracking-widest mb-2.5 ml-1">
+                                    <label className="block text-[13px] font-light text-gray-500 uppercase tracking-widest mb-2.5 ml-1">
                                         Tax Number / NTN
                                     </label>
                                     <input
@@ -393,7 +393,7 @@ export default function CreateRestaurant({ onRestaurantCreated }: CreateRestaura
 
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                             <div>
-                                <label className="block text-[13px] font-medium text-gray-500 uppercase tracking-widest mb-3 ml-1">
+                                <label className="block text-[13px] font-light text-gray-500 uppercase tracking-widest mb-3 ml-1">
                                     CNIC Front <span className="text-red-400">*</span>
                                 </label>
                                 <UploadBox
@@ -409,7 +409,7 @@ export default function CreateRestaurant({ onRestaurantCreated }: CreateRestaura
                             </div>
 
                             <div>
-                                <label className="block text-[13px] font-medium text-gray-500 uppercase tracking-widest mb-3 ml-1">
+                                <label className="block text-[13px] font-light text-gray-500 uppercase tracking-widest mb-3 ml-1">
                                     CNIC Back <span className="text-red-400">*</span>
                                 </label>
                                 <UploadBox
@@ -434,7 +434,7 @@ export default function CreateRestaurant({ onRestaurantCreated }: CreateRestaura
                                     <span className="w-1.5 h-6 bg-orange-500 rounded-full"></span>
                                     Restaurant License
                                 </h3>
-                                <span className="text-[11px] bg-orange-50 text-orange-600 px-3 py-1 rounded-full font-medium uppercase tracking-wider">Mandatory</span>
+                                <span className="text-[11px] bg-orange-50 text-orange-600 px-3 py-1 rounded-full font-light uppercase tracking-wider">Mandatory</span>
                             </div>
 
                             <UploadBox
@@ -462,7 +462,7 @@ export default function CreateRestaurant({ onRestaurantCreated }: CreateRestaura
                         <div className="space-y-8">
                             {businessType === 'restaurant' && (
                                 <div>
-                                    <label className="block text-[13px] font-medium text-gray-500 uppercase tracking-widest mb-3 ml-1">
+                                    <label className="block text-[13px] font-light text-gray-500 uppercase tracking-widest mb-3 ml-1">
                                         Storefront Photo <span className="text-red-400">*</span>
                                     </label>
                                     <UploadBox
@@ -479,7 +479,7 @@ export default function CreateRestaurant({ onRestaurantCreated }: CreateRestaura
                             )}
 
                             <div>
-                                <label className="block text-[13px] font-medium text-gray-500 uppercase tracking-widest mb-1 ml-1">
+                                <label className="block text-[13px] font-light text-gray-500 uppercase tracking-widest mb-1 ml-1">
                                     Kitchen Photos <span className="text-red-400">*</span>
                                 </label>
                                 <p className="text-[13px] text-orange-500/70 mb-4 ml-1 font-light">Upload 2 clear photos of your cooking area</p>
@@ -494,7 +494,7 @@ export default function CreateRestaurant({ onRestaurantCreated }: CreateRestaura
 
                             {businessType === 'restaurant' && (
                                 <div>
-                                    <label className="block text-[13px] font-medium text-gray-500 uppercase tracking-widest mb-1 ml-1">
+                                    <label className="block text-[13px] font-light text-gray-500 uppercase tracking-widest mb-1 ml-1">
                                         Menu Photos <span className="text-red-400">*</span>
                                     </label>
                                     <p className="text-[13px] text-orange-500/70 mb-4 ml-1 font-light">Upload menu photos or digital menu card</p>
@@ -511,52 +511,55 @@ export default function CreateRestaurant({ onRestaurantCreated }: CreateRestaura
                     </div>
 
                     {/* Bank Details */}
-                    <div className="bg-white rounded-2xl shadow-sm overflow-hidden border border-gray-100">
-                        <div className="px-6 py-4 border-b border-gray-100">
-                            <h3 className="font-semibold text-gray-900">Bank Details</h3>
-                            <p className="text-xs text-gray-500 font-light mt-1">For weekly payouts</p>
+                    <div className="bg-white rounded-[2rem] shadow-sm overflow-hidden border border-gray-100/50 p-8">
+                        <div className="mb-8">
+                            <h3 className="text-xl font-light text-gray-900 tracking-tight flex items-center gap-3">
+                                <span className="w-1.5 h-6 bg-orange-500 rounded-full"></span>
+                                Bank Details
+                            </h3>
+                            <p className="text-[13px] text-gray-400 font-light mt-1 ml-4.5">For weekly payouts</p>
                         </div>
 
-                        <div className="p-6 space-y-4">
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div className="space-y-6">
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                 <div>
-                                    <label className="block text-sm font-semibold text-gray-800 mb-2">
-                                        Account Title <span className="text-red-500">*</span>
+                                    <label className="block text-[13px] font-light text-gray-500 uppercase tracking-widest mb-2.5 ml-1">
+                                        Account Title <span className="text-red-400">*</span>
                                     </label>
                                     <input
                                         type="text"
                                         required
                                         value={formData.accountTitle}
                                         onChange={(e) => setFormData({ ...formData, accountTitle: e.target.value })}
-                                        className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-blue-400 focus:border-transparent outline-none transition text-sm font-medium text-gray-900 placeholder:text-gray-400 bg-gray-50/50"
+                                        className="w-full px-5 py-4 rounded-2xl border border-gray-100 focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 outline-none transition-all text-[15px] font-light text-gray-900 placeholder:text-gray-300 bg-gray-50/30"
                                         placeholder="Account holder name"
                                     />
                                 </div>
                                 <div>
-                                    <label className="block text-sm font-semibold text-gray-800 mb-2">
-                                        Bank Name <span className="text-red-500">*</span>
+                                    <label className="block text-[13px] font-light text-gray-500 uppercase tracking-widest mb-2.5 ml-1">
+                                        Bank Name <span className="text-red-400">*</span>
                                     </label>
                                     <input
                                         type="text"
                                         required
                                         value={formData.bankName}
                                         onChange={(e) => setFormData({ ...formData, bankName: e.target.value })}
-                                        className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-blue-400 focus:border-transparent outline-none transition text-sm font-medium text-gray-900 placeholder:text-gray-400 bg-gray-50/50"
+                                        className="w-full px-5 py-4 rounded-2xl border border-gray-100 focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 outline-none transition-all text-[15px] font-light text-gray-900 placeholder:text-gray-300 bg-gray-50/30"
                                         placeholder="e.g. HBL, Meezan Bank"
                                     />
                                 </div>
                             </div>
 
                             <div>
-                                <label className="block text-sm font-semibold text-gray-800 mb-2">
-                                    IBAN <span className="text-red-500">*</span>
+                                <label className="block text-[13px] font-light text-gray-500 uppercase tracking-widest mb-2.5 ml-1">
+                                    IBAN <span className="text-red-400">*</span>
                                 </label>
                                 <input
                                     type="text"
                                     required
                                     value={formData.iban}
                                     onChange={(e) => setFormData({ ...formData, iban: e.target.value.toUpperCase() })}
-                                    className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-blue-400 focus:border-transparent outline-none transition uppercase text-sm font-medium text-gray-900 placeholder:text-gray-400 bg-gray-50/50"
+                                    className="w-full px-5 py-4 rounded-2xl border border-gray-100 focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 outline-none transition-all uppercase text-[15px] font-light text-gray-900 placeholder:text-gray-300 bg-gray-50/30"
                                     placeholder="PK12ABCD0000001234567890"
                                 />
                             </div>
@@ -574,7 +577,7 @@ export default function CreateRestaurant({ onRestaurantCreated }: CreateRestaura
 
                         <div className="space-y-6">
                             <div>
-                                <label className="block text-[13px] font-medium text-gray-500 uppercase tracking-widest mb-2.5 ml-1">
+                                <label className="block text-[13px] font-light text-gray-500 uppercase tracking-widest mb-2.5 ml-1">
                                     Primary Cuisine / Category <span className="text-red-400">*</span>
                                 </label>
                                 <input
@@ -588,7 +591,7 @@ export default function CreateRestaurant({ onRestaurantCreated }: CreateRestaura
                             </div>
 
                             <div>
-                                <label className="block text-[13px] font-medium text-gray-500 uppercase tracking-widest mb-2.5 ml-1">
+                                <label className="block text-[13px] font-light text-gray-500 uppercase tracking-widest mb-2.5 ml-1">
                                     About Business
                                 </label>
                                 <textarea
@@ -624,7 +627,7 @@ export default function CreateRestaurant({ onRestaurantCreated }: CreateRestaura
                     <button
                         type="submit"
                         disabled={loading}
-                        className="w-full bg-gradient-to-r from-orange-500 to-red-600 hover:from-orange-600 hover:to-red-700 text-white py-5 rounded-[2rem] font-medium text-lg shadow-xl shadow-orange-500/20 transition-all active:scale-[0.99] disabled:opacity-70 disabled:cursor-not-allowed flex items-center justify-center gap-3 tracking-tight"
+                        className="w-full bg-gradient-to-r from-orange-500 to-red-600 hover:from-orange-600 hover:to-red-700 text-white py-5 rounded-[2rem] font-light text-lg shadow-xl shadow-orange-500/20 transition-all active:scale-[0.99] disabled:opacity-70 disabled:cursor-not-allowed flex items-center justify-center gap-3 tracking-tight"
                     >
                         {loading ? (
                             <>
@@ -673,7 +676,7 @@ function UploadBox({
                     >
                         <FaTrash size={12} />
                     </button>
-                    <div className="mt-3 text-[11px] font-medium text-green-600 uppercase tracking-widest">File Uploaded Successfully</div>
+                    <div className="mt-3 text-[11px] font-light text-green-600 uppercase tracking-widest">File Uploaded Successfully</div>
                 </div>
             ) : (
                 <label className="cursor-pointer block">

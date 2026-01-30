@@ -1,7 +1,7 @@
 // Deploy Trigger: 2026-01-26 14:00 - Fixed Vercel API URL priority and image paths
 // Lazy-loaded constants to avoid TDZ (Temporal Dead Zone) errors
-let cachedApiUrl: string | null = null;
-let cachedSocketUrl: string | null = null;
+var cachedApiUrl: string | null = null;
+var cachedSocketUrl: string | null = null;
 
 export function getApiUrl() {
   if (cachedApiUrl) return cachedApiUrl;

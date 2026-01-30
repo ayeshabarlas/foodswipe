@@ -3,28 +3,31 @@
 // Force Redeploy: 2026-01-24 16:45
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import Sidebar from './admin/Sidebar';
-import DashboardHome from './admin/DashboardHome';
-import FinanceView from './admin/FinanceView';
-import RestaurantWalletsView from './admin/RestaurantWalletsView';
-import RiderWalletsView from './admin/RiderWalletsView';
-import RestaurantsView from './admin/RestaurantsView';
-import OrdersView from './admin/OrdersView';
-import EnhancedOrdersView from './admin/EnhancedOrdersView';
-import RidersView from './admin/RidersView';
-import RiderLiveMap from './admin/RiderLiveMap';
-import PaymentsView from './admin/PaymentsView';
-import VouchersView from './admin/VouchersView';
-import ReportsView from './admin/ReportsView';
-import SettingsView from './admin/SettingsView';
-import VerificationsView from './admin/VerificationsView';
-import CustomersView from './admin/CustomersView';
-import BonusManagementView from './admin/BonusManagementView';
-import AdminManagementView from './admin/AdminManagementView';
-import SupportView from './admin/SupportView';
-import CODSettlementView from './admin/CODSettlementView';
-import NotificationList from './admin/NotificationList';
-import HistoryView from './admin/HistoryView';
+import dynamic from 'next/dynamic';
+
+// Dynamically import views to solve TDZ errors and improve performance
+const Sidebar = dynamic(() => import('./admin/Sidebar'), { ssr: false });
+const DashboardHome = dynamic(() => import('./admin/DashboardHome'), { ssr: false });
+const FinanceView = dynamic(() => import('./admin/FinanceView'), { ssr: false });
+const RestaurantWalletsView = dynamic(() => import('./admin/RestaurantWalletsView'), { ssr: false });
+const RiderWalletsView = dynamic(() => import('./admin/RiderWalletsView'), { ssr: false });
+const RestaurantsView = dynamic(() => import('./admin/RestaurantsView'), { ssr: false });
+const OrdersView = dynamic(() => import('./admin/OrdersView'), { ssr: false });
+const EnhancedOrdersView = dynamic(() => import('./admin/EnhancedOrdersView'), { ssr: false });
+const RidersView = dynamic(() => import('./admin/RidersView'), { ssr: false });
+const RiderLiveMap = dynamic(() => import('./admin/RiderLiveMap'), { ssr: false });
+const PaymentsView = dynamic(() => import('./admin/PaymentsView'), { ssr: false });
+const VouchersView = dynamic(() => import('./admin/VouchersView'), { ssr: false });
+const ReportsView = dynamic(() => import('./admin/ReportsView'), { ssr: false });
+const SettingsView = dynamic(() => import('./admin/SettingsView'), { ssr: false });
+const VerificationsView = dynamic(() => import('./admin/VerificationsView'), { ssr: false });
+const CustomersView = dynamic(() => import('./admin/CustomersView'), { ssr: false });
+const BonusManagementView = dynamic(() => import('./admin/BonusManagementView'), { ssr: false });
+const AdminManagementView = dynamic(() => import('./admin/AdminManagementView'), { ssr: false });
+const SupportView = dynamic(() => import('./admin/SupportView'), { ssr: false });
+const CODSettlementView = dynamic(() => import('./admin/CODSettlementView'), { ssr: false });
+const NotificationList = dynamic(() => import('./admin/NotificationList'), { ssr: false });
+const HistoryView = dynamic(() => import('./admin/HistoryView'), { ssr: false });
 
 import axios from 'axios';
 import { initSocket, getSocket, disconnectSocket } from '../utils/socket';
