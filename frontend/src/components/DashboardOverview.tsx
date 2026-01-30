@@ -48,48 +48,44 @@ export default function DashboardOverview({ stats, restaurant }: DashboardOvervi
             {/* Professional Under Approval / Profile Completion Banner */}
             {((restaurant?.verificationStatus !== 'verified' && restaurant?.verificationStatus !== 'approved') || !restaurant?.isVerified) && (
                 <motion.div 
-                    initial={{ opacity: 0, scale: 0.95 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    className="relative overflow-hidden rounded-[32px] shadow-2xl border border-white/20"
+                    initial={{ opacity: 0, y: -20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="relative overflow-hidden rounded-[2.5rem] border border-gray-100 bg-white shadow-sm"
                 >
-                    {/* Background with dynamic colors based on status */}
-                    <div className={`absolute inset-0 bg-gradient-to-br ${restaurant?.verificationStatus === 'new' ? 'from-orange-500 via-red-500 to-pink-500' : 'from-amber-400 via-orange-500 to-amber-600'} opacity-90`} />
-                    
-                    <div className="relative px-8 py-10 flex flex-col md:flex-row items-center justify-between gap-8 z-10 backdrop-blur-sm">
+                    <div className="relative px-8 py-10 flex flex-col md:flex-row items-center justify-between gap-8 z-10">
                         <div className="flex items-center gap-6">
-                            <div className="w-20 h-20 bg-white/20 backdrop-blur-md rounded-[24px] flex items-center justify-center shrink-0 border border-white/30 shadow-inner group-hover:scale-110 transition-transform duration-500">
+                            <div className="w-16 h-16 bg-orange-50 rounded-3xl flex items-center justify-center shrink-0 border border-orange-100/50">
                                 {restaurant?.verificationStatus === 'new' ? (
-                                    <FaUtensils className="text-white text-3xl" />
+                                    <FaUtensils className="text-orange-500 text-2xl" />
                                 ) : (
-                                    <FaClock className="text-white text-3xl animate-pulse" />
+                                    <FaClock className="text-orange-500 text-2xl animate-pulse" />
                                 )}
                             </div>
-                            <div className="text-white">
-                                <h3 className="text-2xl font-black mb-2 tracking-tight">
+                            <div>
+                                <h3 className="text-lg font-light text-gray-900 tracking-tight mb-1">
                                     {restaurant?.verificationStatus === 'new' ? 'Complete Your Store Setup' : 'Profile Under Review'}
                                 </h3>
-                                <p className="text-white/90 text-sm font-medium leading-relaxed max-w-lg">
+                                <p className="text-[13px] font-light text-gray-500 leading-relaxed max-w-lg">
                                     {restaurant?.verificationStatus === 'new' 
-                                        ? 'Your restaurant is almost ready! Complete your address and upload documents to start receiving orders from thousands of customers.'
-                                        : 'Our team is currently verifying your documents and store details. This process usually takes 24-48 hours. We\'ll notify you once you\'re live!'}
+                                        ? 'Your restaurant is almost ready! Complete your address and upload documents to start receiving orders.'
+                                        : 'Our team is currently verifying your documents and store details. We\'ll notify you once you\'re live!'}
                                 </p>
                                 
-                                <div className="mt-4 flex items-center gap-4">
-                                    <div className="flex items-center gap-2 bg-white/10 px-3 py-1 rounded-full border border-white/20">
-                                        <div className={`w-2 h-2 rounded-full ${restaurant?.verificationStatus === 'new' ? 'bg-red-400' : 'bg-amber-400 animate-pulse'}`} />
-                                        <span className="text-[10px] font-bold uppercase tracking-widest">
-                                            Status: {restaurant?.verificationStatus === 'new' ? 'Action Required' : 'Verification Pending'}
+                                <div className="mt-4 flex items-center gap-3">
+                                    <div className="flex items-center gap-2 bg-gray-50 px-3 py-1.5 rounded-full border border-gray-100">
+                                        <div className={`w-1.5 h-1.5 rounded-full ${restaurant?.verificationStatus === 'new' ? 'bg-red-400' : 'bg-amber-400 animate-pulse'}`} />
+                                        <span className="text-[10px] font-medium text-gray-600 uppercase tracking-widest">
+                                            {restaurant?.verificationStatus === 'new' ? 'Action Required' : 'Verification Pending'}
                                         </span>
                                     </div>
-                                    <div className="w-1 h-1 rounded-full bg-white/30" />
-                                    <span className="text-[10px] font-bold text-white/60 uppercase tracking-widest">
+                                    <span className="text-[10px] font-medium text-gray-400 uppercase tracking-widest">
                                         Estimated Time: 24h
                                     </span>
                                 </div>
                             </div>
                         </div>
                         
-                        <div className="flex flex-col sm:flex-row gap-4 w-full md:w-auto">
+                        <div className="flex flex-col sm:flex-row gap-3 w-full md:w-auto">
                             <button 
                                 onClick={() => {
                                     if (restaurant?.verificationStatus === 'new') {
@@ -98,22 +94,18 @@ export default function DashboardOverview({ stats, restaurant }: DashboardOvervi
                                         window.location.href = '/restaurant-registration';
                                     }
                                 }}
-                                className="bg-white text-gray-900 px-8 py-4 rounded-2xl text-sm font-black whitespace-nowrap hover:bg-gray-100 transition-all shadow-xl hover:shadow-2xl active:scale-95 uppercase tracking-wider"
+                                className="bg-orange-500 text-white px-8 py-3.5 rounded-2xl text-[13px] font-medium whitespace-nowrap hover:bg-orange-600 transition-all shadow-lg shadow-orange-500/20 active:scale-95 tracking-wide"
                             >
                                 {restaurant?.verificationStatus === 'new' ? 'Complete Now' : 'Check Details'}
                             </button>
                             <button 
                                 onClick={() => window.location.href = '/restaurant/dashboard?page=support'}
-                                className="bg-white/10 text-white border border-white/30 px-6 py-4 rounded-2xl text-sm font-bold whitespace-nowrap hover:bg-white/20 transition-all backdrop-blur-md uppercase tracking-wider"
+                                className="bg-white text-gray-600 border border-gray-200 px-6 py-3.5 rounded-2xl text-[13px] font-medium whitespace-nowrap hover:bg-gray-50 transition-all active:scale-95 tracking-wide"
                             >
                                 Contact Support
                             </button>
                         </div>
                     </div>
-                    
-                    {/* Decorative element */}
-                    <div className="absolute top-[-50px] right-[-50px] w-48 h-48 bg-white/10 rounded-full blur-3xl" />
-                    <div className="absolute bottom-[-50px] left-[-50px] w-48 h-48 bg-black/10 rounded-full blur-3xl" />
                 </motion.div>
             )}
 

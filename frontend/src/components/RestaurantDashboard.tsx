@@ -454,16 +454,17 @@ export default function RestaurantDashboard() {
 
     const isPending = displayRestaurant.verificationStatus === 'pending' || displayRestaurant.verificationStatus === 'not_started';
     const isNew = displayRestaurant.verificationStatus === 'new';
+    const isHold = isPending || isNew;
 
     const menuItems = [
         { id: 'overview', label: 'Overview', icon: FaThLarge },
-        { id: 'orders', label: 'Orders Board', icon: FaShoppingBag, disabled: isNew },
-        { id: 'menu', label: 'Menu Items', icon: FaUtensils, disabled: isNew },
+        { id: 'orders', label: 'Orders Board', icon: FaShoppingBag, disabled: isHold },
+        { id: 'menu', label: 'Menu Items', icon: FaUtensils, disabled: isHold },
         { id: 'store', label: 'Store Profile', icon: FaStore },
-        { id: 'analytics', label: 'Performance', icon: FaChartLine, disabled: isNew },
-        { id: 'payments', label: 'Earnings', icon: FaWallet, disabled: isNew },
-        { id: 'reviews', label: 'Customer Reviews', icon: FaStar, disabled: isNew },
-        { id: 'promotions', label: 'Promotions', icon: FaBullhorn, disabled: isNew },
+        { id: 'analytics', label: 'Performance', icon: FaChartLine, disabled: isHold },
+        { id: 'payments', label: 'Earnings', icon: FaWallet, disabled: isHold },
+        { id: 'reviews', label: 'Customer Reviews', icon: FaStar, disabled: isHold },
+        { id: 'promotions', label: 'Promotions', icon: FaBullhorn, disabled: isHold },
         { id: 'support', label: 'Help Center', icon: FaHeadset },
         { id: 'settings', label: 'Account Settings', icon: FaClock },
     ];
@@ -474,6 +475,29 @@ export default function RestaurantDashboard() {
             return (
                 <div className="flex flex-col items-center justify-center h-full">
                     <div className="w-10 h-10 border-4 border-orange-500 border-t-transparent rounded-full animate-spin"></div>
+                </div>
+            );
+        }
+
+        // Features on hold if not approved
+        const restrictedPages = ['orders', 'menu', 'analytics', 'payments', 'reviews', 'promotions'];
+        if (isHold && restrictedPages.includes(activePage)) {
+            return (
+                <div className="flex flex-col items-center justify-center h-[60vh] text-center p-6">
+                    <div className="w-20 h-20 bg-orange-50 rounded-[2.5rem] flex items-center justify-center mb-6 border border-orange-100">
+                        <FaBan className="text-orange-400 text-3xl" />
+                    </div>
+                    <h2 className="text-xl font-light text-gray-900 mb-2">Feature on Hold</h2>
+                    <p className="text-gray-500 font-light text-[13px] max-w-sm leading-relaxed">
+                        This feature will be available once your restaurant profile is approved by our team. 
+                        We are currently reviewing your documents.
+                    </p>
+                    <button 
+                        onClick={() => setActivePage('overview')}
+                        className="mt-8 px-8 py-3 bg-gray-900 text-white rounded-2xl text-[13px] font-medium hover:bg-gray-800 transition-all active:scale-95"
+                    >
+                        Back to Overview
+                    </button>
                 </div>
             );
         }
