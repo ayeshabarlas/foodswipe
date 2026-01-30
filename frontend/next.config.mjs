@@ -67,7 +67,6 @@ const nextConfig = {
     eslint: {
         ignoreDuringBuilds: true,
     },
-    output: 'standalone',
     transpilePackages: ['framer-motion'],
 };
 
