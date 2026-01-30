@@ -1,43 +1,32 @@
 const mongoose = require('mongoose');
-const User = require('./backend/models/User');
-const Rider = require('./backend/models/Rider');
-const Order = require('./backend/models/Order');
 const dotenv = require('dotenv');
+const path = require('path');
 
-dotenv.config({ path: './backend/.env' });
+dotenv.config({ path: path.join(__dirname, 'backend', '.env') });
 
-async function checkData() {
+const MONGO_URI = process.env.MONGO_URI;
+
+async function check() {
     try {
-        await mongoose.connect(process.env.MONGO_URI);
-        console.log('Connected to DB');
+        await mongoose.connect(MONGO_URI);
+        console.log('✅ Connected to MongoDB');
 
-        const userCount = await User.countDocuments();
-        const riderCount = await Rider.countDocuments();
-        const orderCount = await Order.countDocuments();
+        const Admin = mongoose.model('Admin', new mongoose.Schema({ email: String, role: String }));
+        const User = mongoose.model('User', new mongoose.Schema({ email: String, role: String }));
 
-        console.log('--- DB SUMMARY ---');
-        console.log(`Total Users: ${userCount}`);
-        console.log(`Total Riders: ${riderCount}`);
-        console.log(`Total Orders: ${orderCount}`);
+        const admins = await Admin.find({});
+        console.log('\n--- Admins in Admin Collection ---');
+        admins.forEach(a => console.log(`- ${a.email} (${a.role})`));
 
-        if (riderCount > 0) {
-            const riders = await Rider.find().populate('user', 'name role');
-            console.log('--- RIDERS ---');
-            riders.forEach(r => {
-                console.log(`Rider: ${r.fullName}, User: ${r.user?.name || 'MISSING'}, Role: ${r.user?.role || 'N/A'}, Status: ${r.verificationStatus}`);
-            });
-        }
+        const userAdmins = await User.find({ role: { $in: ['admin', 'super-admin'] } });
+        console.log('\n--- Admins in User Collection ---');
+        userAdmins.forEach(u => console.log(`- ${u.email} (${u.role})`));
 
-        const riderUsers = await User.countDocuments({ role: 'rider' });
-        console.log(`Users with role "rider": ${riderUsers}`);
-
-        const restaurantUsers = await User.countDocuments({ role: 'restaurant' });
-        console.log(`Users with role "restaurant": ${restaurantUsers}`);
-
-        await mongoose.disconnect();
-    } catch (error) {
-        console.error('Error:', error);
+        process.exit(0);
+    } catch (err) {
+        console.error(err);
+        process.exit(1);
     }
 }
 
-checkData();
+check();

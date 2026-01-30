@@ -36,8 +36,10 @@ export function getApiUrl() {
     const isVercel = window.location.hostname.includes('vercel.app') || window.location.hostname.includes('foodswipe.pk');
                    
     if (isVercel) {
-      // In monorepo deployment, the API is served from the same domain under /api
-      cachedApiUrl = window.location.origin;
+      // FIX: If we are on foodswipe.pk but the API is on Render, use RENDER_URL
+      // Only use window.location.origin if we are SURE the API is on the same domain
+      // For now, prioritize RENDER_URL to fix the 404 issue
+      cachedApiUrl = RENDER_URL;
       return cachedApiUrl;
     }
   }
