@@ -16,14 +16,14 @@ COPY backend/package*.json ./backend/
 COPY frontend/package*.json ./frontend/
 
 # Install all dependencies
-RUN npm install
+RUN npm install --legacy-peer-deps
 RUN cd frontend && npm install --legacy-peer-deps
 
 # Copy the rest of the application code
 COPY . .
 
-# Build the frontend
-RUN cd frontend && npm run build
+# Clear any previous builds and build the frontend
+RUN cd frontend && rm -rf .next && npm run build
 
 # Expose the port
 EXPOSE 10000
