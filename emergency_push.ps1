@@ -1,7 +1,7 @@
 Write-Host "Starting Git Operations..."
 git add .
 Write-Host "Staging done."
-git commit -m "v2.2.18: Fix 404 routing and remove standalone output"
+git commit -m "v2.2.19: Switch to rewrites in vercel.json and increment admin version"
 Write-Host "Commit done."
 git push origin main --force
 Write-Host "Push done."
