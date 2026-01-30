@@ -204,7 +204,7 @@ export default function LoginScreen({ navigation }: any) {
           const profileRes = await apiClient.get('/riders/my-profile');
           const rider = profileRes.data;
           
-          if (rider.verificationStatus === 'new') {
+          if (rider.verificationStatus === 'new' || rider.verificationStatus === 'pending') {
             if (!rider.cnicNumber || !rider.dateOfBirth) {
               navigation.replace('RiderRegistration');
             } else {

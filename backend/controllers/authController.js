@@ -532,6 +532,9 @@ const socialLogin = async (req, res) => {
 
         const token = generateToken(user._id);
 
+        // AUTO-REPAIR: Ensure role-specific profile exists for riders and restaurants
+        await ensureRoleProfile(user);
+
         res.json({
             _id: user._id,
             name: user.name,

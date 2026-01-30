@@ -302,6 +302,10 @@ export default function RiderDashboard({ navigation }: any) {
             navigation.replace('RiderDocumentUpload', { riderId: rider._id });
             return;
           }
+        } else if (rider.verificationStatus === 'pending') {
+          console.log('🔄 Redirecting to RiderDocumentUpload because profile is pending verification');
+          navigation.replace('RiderDocumentUpload', { riderId: rider._id });
+          return;
         } else if (rider.verificationStatus === 'rejected') {
           Alert.alert(
             'Account Rejected',
