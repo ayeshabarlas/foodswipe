@@ -31,7 +31,7 @@ const ensureRoleProfile = async (user) => {
                     user: user._id,
                     fullName: user.name,
                     phone: user.phone || '',
-                    verificationStatus: 'approved'
+                    verificationStatus: 'new'
                 });
             }
         } else if (activeRole === 'restaurant') {
@@ -43,7 +43,8 @@ const ensureRoleProfile = async (user) => {
                     owner: user._id,
                     name: `${user.name}'s Restaurant`,
                     contact: user.phone || '',
-                    status: 'active'
+                    verificationStatus: 'new',
+                    status: 'pending'
                 });
             }
         }
@@ -121,7 +122,7 @@ const registerUser = async (req, res) => {
                 await Rider.create({
                     user: user._id,
                     fullName: name,
-                    verificationStatus: 'approved' 
+                    verificationStatus: 'new' 
                 });
                 console.log(`✅ Created Rider profile for ${user.email}`);
             } catch (riderErr) {
@@ -138,8 +139,8 @@ const registerUser = async (req, res) => {
                     owner: user._id,
                     name: `${name}'s Restaurant`,
                     contact: phone || '',
-                    verificationStatus: 'approved',
-                    isActive: true
+                    verificationStatus: 'new',
+                    status: 'pending'
                 });
                 console.log(`✅ Created Restaurant profile for ${user.email}`);
             } catch (createErr) {
