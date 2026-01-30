@@ -4,12 +4,27 @@ import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import axios from 'axios';
 import { getApiUrl } from '../../utils/config';
-import { FaUpload, FaCheckCircle, FaTimesCircle } from 'react-icons/fa';
+import { getImageUrl } from '../../utils/imageUtils';
+import { FaUpload, FaCheckCircle, FaTimesCircle, FaArrowLeft } from 'react-icons/fa';
 
 export default function RestaurantRegistration() {
     const router = useRouter();
     const [step, setStep] = useState(1);
     const [uploading, setUploading] = useState(false);
+
+    // Masking functions
+    const maskCNIC = (value: string) => {
+        const digits = value.replace(/\D/g, '');
+        if (digits.length <= 5) return digits;
+        if (digits.length <= 12) return `${digits.slice(0, 5)}-${digits.slice(5)}`;
+        return `${digits.slice(0, 5)}-${digits.slice(5, 12)}-${digits.slice(12, 13)}`;
+    };
+
+    const maskPhone = (value: string) => {
+        const digits = value.replace(/\D/g, '');
+        if (digits.length <= 4) return digits;
+        return `${digits.slice(0, 4)}-${digits.slice(4, 11)}`;
+    };
     interface RestaurantFormData {
         name: string;
         address: string;
@@ -81,7 +96,7 @@ export default function RestaurantRegistration() {
             };
 
             const { data } = await axios.post(`${getApiUrl()}/api/upload`, uploadData, config);
-            const fullUrl = `${getApiUrl()}${data.imageUrl}`;
+            const fullUrl = getImageUrl(data.imageUrl);
 
             if (isArray) {
                 const keys = field.split('.');
@@ -128,7 +143,7 @@ export default function RestaurantRegistration() {
                 verificationStatus: 'pending'
             };
 
-            await axios.post(`${getApiUrl()}/api/restaurants`, submitData, config);
+            await axios.post(`${getApiUrl()}/api/restaurants/create`, submitData, config);
             alert('Registration submitted! Your application is pending admin approval.');
             router.push('/restaurant-dashboard');
         } catch (error: any) {
@@ -167,21 +182,30 @@ export default function RestaurantRegistration() {
                     />
                     <label
                         htmlFor={field}
-                        className="cursor-pointer flex items-center gap-2 px-4 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition"
+                        className={`cursor-pointer flex items-center gap-2 px-4 py-2 ${uploading ? 'bg-gray-400' : 'bg-orange-500 hover:bg-orange-600'} text-white rounded-lg transition`}
                     >
-                        <FaUpload /> Choose File
+                        {uploading ? (
+                            <>
+                                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                                Uploading...
+                            </>
+                        ) : (
+                            <>
+                                <FaUpload /> Choose File
+                            </>
+                        )}
                     </label>
                     {hasFile && (
                         <FaCheckCircle className="text-green-500 text-2xl" />
                     )}
                 </div>
                 {hasFile && !isArray && (
-                    <img src={value as string} alt="Preview" className="mt-2 w-32 h-32 object-cover rounded-lg" />
+                    <img src={getImageUrl(value as string)} alt="Preview" className="mt-2 w-32 h-32 object-cover rounded-lg" />
                 )}
                 {isArray && (value as string[])?.length > 0 && (
                     <div className="mt-2 flex gap-2 flex-wrap">
                         {(value as string[]).map((url, idx) => (
-                            <img key={idx} src={url} alt={`Preview ${idx + 1}`} className="w-20 h-20 object-cover rounded-lg" />
+                            <img key={idx} src={getImageUrl(url)} alt={`Preview ${idx + 1}`} className="w-20 h-20 object-cover rounded-lg" />
                         ))}
                     </div>
                 )}
@@ -192,6 +216,12 @@ export default function RestaurantRegistration() {
     return (
         <div className="min-h-screen bg-gradient-to-br from-orange-50 to-red-50 py-12 px-4 overflow-y-auto">
             <div className="max-w-4xl mx-auto bg-white rounded-2xl shadow-2xl p-8">
+                <button
+                    onClick={() => router.push('/login')}
+                    className="flex items-center gap-2 text-gray-600 hover:text-gray-900 mb-6 font-medium transition"
+                >
+                    <FaArrowLeft size={16} /> Back to Login
+                </button>
                 <h1 className="text-3xl font-bold text-gray-900 mb-2">Restaurant Registration</h1>
                 <p className="text-gray-600 mb-8">Complete all steps to submit your application for approval</p>
 
@@ -237,7 +267,8 @@ export default function RestaurantRegistration() {
                                 <input
                                     type="tel"
                                     value={formData.contact}
-                                    onChange={(e) => setFormData({ ...formData, contact: e.target.value })}
+                                    onChange={(e) => setFormData({ ...formData, contact: maskPhone(e.target.value) })}
+                                    placeholder="0300-1234567"
                                     className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-orange-500 outline-none text-gray-900 font-medium placeholder:text-gray-400 bg-gray-50/50"
                                     required
                                 />
@@ -247,7 +278,7 @@ export default function RestaurantRegistration() {
                                 <input
                                     type="text"
                                     value={formData.ownerCNIC}
-                                    onChange={(e) => setFormData({ ...formData, ownerCNIC: e.target.value })}
+                                    onChange={(e) => setFormData({ ...formData, ownerCNIC: maskCNIC(e.target.value) })}
                                     placeholder="12345-1234567-1"
                                     className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-orange-500 outline-none text-gray-900 font-medium placeholder:text-gray-400 bg-gray-50/50"
                                     required

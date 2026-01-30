@@ -217,13 +217,13 @@ const getDashboardStats = async (req, res) => {
                     _id: null,
                     totalRevenue: { $sum: { $ifNull: ['$totalPrice', 0] } },
                     totalCommission: { $sum: { $ifNull: ['$commissionAmount', 0] } },
-                    totalRiderEarnings: { $sum: { $toDouble: { $ifNull: ['$riderEarning', 0] } } },
-                    totalRestaurantEarnings: { $sum: { $toDouble: { $ifNull: ['$restaurantEarning', 0] } } },
-                    totalServiceFees: { $sum: { $toDouble: { $ifNull: ['$serviceFee', 0] } } },
-                    totalTax: { $sum: { $toDouble: { $ifNull: ['$tax', 0] } } },
-                    totalGatewayFees: { $sum: { $toDouble: { $ifNull: ['$gatewayFee', 0] } } },
-                    totalDiscounts: { $sum: { $toDouble: { $ifNull: ['$discount', 0] } } },
-                    totalDeliveryFees: { $sum: { $toDouble: { $ifNull: ['$deliveryFee', 0] } } }
+                    totalRiderEarnings: { $sum: { $convert: { input: { $ifNull: ['$riderEarning', 0] }, to: 'double', onError: 0, onNull: 0 } } },
+                    totalRestaurantEarnings: { $sum: { $convert: { input: { $ifNull: ['$restaurantEarning', 0] }, to: 'double', onError: 0, onNull: 0 } } },
+                    totalServiceFees: { $sum: { $convert: { input: { $ifNull: ['$serviceFee', 0] }, to: 'double', onError: 0, onNull: 0 } } },
+                    totalTax: { $sum: { $convert: { input: { $ifNull: ['$tax', 0] }, to: 'double', onError: 0, onNull: 0 } } },
+                    totalGatewayFees: { $sum: { $convert: { input: { $ifNull: ['$gatewayFee', 0] }, to: 'double', onError: 0, onNull: 0 } } },
+                    totalDiscounts: { $sum: { $convert: { input: { $ifNull: ['$discount', 0] }, to: 'double', onError: 0, onNull: 0 } } },
+                    totalDeliveryFees: { $sum: { $convert: { input: { $ifNull: ['$deliveryFee', 0] }, to: 'double', onError: 0, onNull: 0 } } }
                 }
             }
         ]);
@@ -248,16 +248,16 @@ const getDashboardStats = async (req, res) => {
                     createdAt: { $gte: todayStart }
                 }
             },
-            { $group: { _id: null, total: { $sum: { $ifNull: ['$totalPrice', 0] } } } }
+            { $group: { _id: null, total: { $sum: { $convert: { input: { $ifNull: ['$totalPrice', 0] }, to: 'double', onError: 0, onNull: 0 } } } } }
         ]);
         const todayRevenue = todayRevenueResult[0]?.total || 0;
 
         // Calculate Pending Payouts
         const resWalletStats = await RestaurantWallet.aggregate([
-            { $group: { _id: null, totalPending: { $sum: '$pendingPayout' } } }
+            { $group: { _id: null, totalPending: { $sum: { $convert: { input: { $ifNull: ['$pendingPayout', 0] }, to: 'double', onError: 0, onNull: 0 } } } } }
         ]);
         const riderWalletStats = await RiderWallet.aggregate([
-            { $group: { _id: null, totalPending: { $sum: '$availableWithdraw' } } }
+            { $group: { _id: null, totalPending: { $sum: { $convert: { input: { $ifNull: ['$availableWithdraw', 0] }, to: 'double', onError: 0, onNull: 0 } } } } }
         ]);
         const totalPendingPayouts = (resWalletStats[0]?.totalPending || 0) + (riderWalletStats[0]?.totalPending || 0);
 
@@ -276,8 +276,8 @@ const getDashboardStats = async (req, res) => {
             {
                 $group: {
                     _id: { $dateToString: { format: "%Y-%m-%d", date: "$createdAt" } },
-                    revenue: { $sum: { $ifNull: ["$totalPrice", 0] } },
-                    commission: { $sum: { $ifNull: ["$commissionAmount", { $multiply: [{ $ifNull: ["$totalPrice", 0] }, 0.15] }] } }
+                    revenue: { $sum: { $convert: { input: { $ifNull: ["$totalPrice", 0] }, to: 'double', onError: 0, onNull: 0 } } },
+                    commission: { $sum: { $convert: { input: { $ifNull: ["$commissionAmount", { $multiply: [{ $ifNull: ["$totalPrice", 0] }, 0.15] }] }, to: 'double', onError: 0, onNull: 0 } } }
                 }
             },
             { $sort: { _id: 1 } }
@@ -324,7 +324,7 @@ const getDashboardStats = async (req, res) => {
             {
                 $group: {
                     _id: "$restaurant",
-                    revenue: { $sum: { $ifNull: ["$totalPrice", 0] } },
+                    revenue: { $sum: { $convert: { input: { $ifNull: ["$totalPrice", 0] }, to: 'double', onError: 0, onNull: 0 } } },
                     orders: { $sum: 1 }
                 }
             },
@@ -451,8 +451,8 @@ const getAllRestaurants = async (req, res) => {
                         $group: {
                             _id: null,
                             totalOrders: { $sum: 1 },
-                            revenue: { $sum: { $ifNull: ["$subtotal", "$totalPrice"] } },
-                            commission: { $sum: { $ifNull: ["$commissionAmount", { $multiply: [{ $ifNull: ["$subtotal", "$totalPrice"] }, 0.15] }] } }
+                            revenue: { $sum: { $convert: { input: { $ifNull: ["$subtotal", { $ifNull: ["$totalPrice", 0] }] }, to: 'double', onError: 0, onNull: 0 } } },
+                            commission: { $sum: { $convert: { input: { $ifNull: ["$commissionAmount", { $multiply: [{ $ifNull: ["$subtotal", { $ifNull: ["$totalPrice", 0] }] }, 0.15] }] }, to: 'double', onError: 0, onNull: 0 } } }
                         }
                     }
                 ]);
@@ -660,7 +660,7 @@ const getDailyStats = async (req, res) => {
                 $group: {
                     _id: { $dateToString: { format: "%Y-%m-%d", date: "$createdAt" } },
                     orders: { $sum: 1 },
-                    revenue: { $sum: "$totalAmount" }
+                    revenue: { $sum: { $convert: { input: { $ifNull: ["$totalPrice", 0] }, to: 'double', onError: 0, onNull: 0 } } }
                 }
             },
             { $sort: { _id: 1 } }
@@ -969,28 +969,41 @@ const deleteUser = async (req, res) => {
             const restaurant = await Restaurant.findOne({ owner: user._id });
             if (restaurant) {
                 await Dish.deleteMany({ restaurant: restaurant._id });
+                await Video.deleteMany({ restaurant: restaurant._id });
+                await RestaurantWallet.deleteMany({ restaurant: restaurant._id });
                 await Restaurant.findByIdAndDelete(restaurant._id);
             }
         }
         if (user.role === 'rider') {
-            await Rider.findOneAndDelete({ user: user._id });
+            const rider = await Rider.findOne({ user: user._id });
+            if (rider) {
+                await RiderWallet.deleteMany({ rider: rider._id });
+                await Rider.findByIdAndDelete(rider._id);
+            }
         }
 
         await User.findByIdAndDelete(req.params.id);
 
         // Audit Log
-        await AuditLog.create({
-            event: 'USER_DELETED',
-            email: user.email,
-            details: { deletedBy: req.admin?._id, role: user.role }
-        });
+        try {
+            await AuditLog.create({
+                event: 'USER_DELETED',
+                email: user.email,
+                details: { deletedBy: req.admin?._id || 'system', role: user.role }
+            });
+        } catch (auditErr) {
+            console.warn('Audit log creation failed:', auditErr.message);
+        }
 
         // Notify admins to refresh UI
         triggerEvent('admin', 'restaurant_updated');
+        triggerEvent('admin', 'rider_updated');
+        triggerEvent('admin', 'user_updated');
         triggerEvent('admin', 'stats_updated');
 
         res.json({ message: 'User deleted successfully' });
     } catch (error) {
+        console.error('Delete User Error:', error);
         res.status(500).json({ message: 'Server error', error: error.message });
     }
 };
@@ -1003,17 +1016,21 @@ const deleteRestaurant = async (req, res) => {
             return res.status(404).json({ message: 'Restaurant not found' });
         }
 
-        // Delete all dishes associated with this restaurant
+        // Delete all associated data
         await Dish.deleteMany({ restaurant: restaurant._id });
-
+        await Video.deleteMany({ restaurant: restaurant._id });
+        await RestaurantWallet.deleteMany({ restaurant: restaurant._id });
+        
         // Delete the restaurant
         await Restaurant.findByIdAndDelete(req.params.id);
 
         // Notify admins
         triggerEvent('admin', 'restaurant_updated');
+        triggerEvent('admin', 'stats_updated');
 
-        res.json({ message: 'Restaurant and its dishes deleted successfully' });
+        res.json({ message: 'Restaurant and its associated data deleted successfully' });
     } catch (error) {
+        console.error('Delete Restaurant Error:', error);
         res.status(500).json({ message: 'Server error', error: error.message });
     }
 };
@@ -1026,6 +1043,8 @@ const deleteRider = async (req, res) => {
             return res.status(404).json({ message: 'Rider not found' });
         }
 
+        // Delete associated data
+        await RiderWallet.deleteMany({ rider: rider._id });
         await Rider.findByIdAndDelete(req.params.id);
 
         // Notify admins
@@ -1033,8 +1052,9 @@ const deleteRider = async (req, res) => {
         triggerEvent('admin', 'user_updated');
         triggerEvent('admin', 'stats_updated');
 
-        res.json({ message: 'Rider deleted successfully' });
+        res.json({ message: 'Rider and its associated data deleted successfully' });
     } catch (error) {
+        console.error('Delete Rider Error:', error);
         res.status(500).json({ message: 'Server error', error: error.message });
     }
 };

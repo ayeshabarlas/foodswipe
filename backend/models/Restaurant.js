@@ -59,7 +59,7 @@ const restaurantSchema = mongoose.Schema(
         },
         verificationStatus: {
             type: String,
-            enum: ['not_started', 'pending', 'approved', 'rejected'],
+            enum: ['not_started', 'new', 'pending', 'approved', 'rejected'],
             default: 'not_started',
         },
         rejectionReason: {

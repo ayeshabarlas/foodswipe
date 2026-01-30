@@ -4,7 +4,7 @@ import { getAuth, GoogleAuthProvider } from 'firebase/auth';
 // Firebase configuration
 const firebaseConfig = {
     apiKey: "AIzaSyBBwurPdZPLvTupX_YGiHYZRG3-ct3NWKU",
-    authDomain: "foodswipe-be395.firebaseapp.com",
+    authDomain: "foodswipe-be395.firebaseapp.com", // Ensure this matches exactly with Firebase Console -> Settings -> Authorized Domains
     projectId: "foodswipe-be395",
     storageBucket: "foodswipe-be395.firebasestorage.app",
     messagingSenderId: "975401301298",

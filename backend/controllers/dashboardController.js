@@ -53,7 +53,7 @@ const getDashboardStats = async (req, res) => {
                         $sum: {
                             $cond: [
                                 { $in: ['$status', ['Delivered', 'Completed']] },
-                                { $ifNull: ['$subtotal', '$totalPrice'] },
+                                { $convert: { input: { $ifNull: ['$subtotal', '$totalPrice'] }, to: 'double', onError: 0, onNull: 0 } },
                                 0
                             ]
                         }
@@ -62,7 +62,7 @@ const getDashboardStats = async (req, res) => {
                         $sum: {
                             $cond: [
                                 { $in: ['$status', ['Delivered', 'Completed']] },
-                                { $ifNull: ['$restaurantEarning', { $multiply: [{ $ifNull: ['$subtotal', '$totalPrice'] }, 0.85] }] },
+                                { $convert: { input: { $ifNull: ['$restaurantEarning', { $multiply: [{ $ifNull: ['$subtotal', '$totalPrice'] }, 0.85] }] }, to: 'double', onError: 0, onNull: 0 } },
                                 0
                             ]
                         }
@@ -71,7 +71,7 @@ const getDashboardStats = async (req, res) => {
                         $sum: {
                             $cond: [
                                 { $in: ['$status', ['Delivered', 'Completed']] },
-                                { $ifNull: ['$commissionAmount', { $multiply: [{ $ifNull: ['$subtotal', '$totalPrice'] }, 0.15] }] },
+                                { $convert: { input: { $ifNull: ['$commissionAmount', { $multiply: [{ $ifNull: ['$subtotal', '$totalPrice'] }, 0.15] }] }, to: 'double', onError: 0, onNull: 0 } },
                                 0
                             ]
                         }
