@@ -196,35 +196,35 @@ export default function LoginScreen({ navigation }: any) {
       }
       Alert.alert('Success!', `Welcome, ${user?.name || 'User'}`);
     
-    // Redirect based on role
-    const role = user?.role || selectedRole;
-    if (role === 'rider') {
-      setLoading(true);
-      try {
-        const profileRes = await apiClient.get('/riders/my-profile');
-        const rider = profileRes.data;
-        
-        if (rider.verificationStatus === 'new') {
-          if (!rider.cnicNumber || !rider.dateOfBirth) {
-            navigation.replace('RiderRegistration');
+      // Redirect based on role
+      const role = user?.role || selectedRole;
+      if (role === 'rider') {
+        setLoading(true);
+        try {
+          const profileRes = await apiClient.get('/riders/my-profile');
+          const rider = profileRes.data;
+          
+          if (rider.verificationStatus === 'new') {
+            if (!rider.cnicNumber || !rider.dateOfBirth) {
+              navigation.replace('RiderRegistration');
+            } else {
+              navigation.replace('RiderDocumentUpload', { riderId: rider._id });
+            }
           } else {
-            navigation.replace('RiderDocumentUpload', { riderId: rider._id });
+            navigation.replace('RiderDashboard');
           }
-        } else {
+        } catch (err) {
+          console.error('Error fetching rider profile on login:', err);
           navigation.replace('RiderDashboard');
+        } finally {
+          setLoading(false);
         }
-      } catch (err) {
-        console.error('Error fetching rider profile on login:', err);
-        navigation.replace('RiderDashboard');
-      } finally {
-        setLoading(false);
+      } else if (role === 'restaurant') {
+        navigation.replace('RestaurantDashboard');
+      } else {
+        navigation.replace('CustomerDashboard');
       }
-    } else if (role === 'restaurant') {
-      navigation.replace('RestaurantDashboard');
-    } else {
-      navigation.replace('CustomerDashboard');
-    }
-  } catch (err: any) {
+    } catch (err: any) {
       console.error('Save Auth Data Error:', err);
       Alert.alert('Error', 'Failed to save login session');
     }
