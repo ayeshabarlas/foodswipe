@@ -170,8 +170,10 @@ app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 // Serve Frontend in production (Fixes 404 for non-Vercel platforms)
 if (process.env.NODE_ENV === 'production' || process.env.RAILWAY_STATIC_URL || process.env.RENDER) {
     const frontendPath = path.join(__dirname, '../frontend/out');
-    // If you are using 'next export' (output: export)
+    console.log(`🔍 Checking for frontend at: ${frontendPath}`);
+    
     if (require('fs').existsSync(frontendPath)) {
+        console.log('✅ Frontend "out" directory found, serving static files');
         app.use(express.static(frontendPath));
         app.get('*', (req, res) => {
             if (!req.url.startsWith('/api')) {
@@ -179,8 +181,7 @@ if (process.env.NODE_ENV === 'production' || process.env.RAILWAY_STATIC_URL || p
             }
         });
     } else {
-        // Fallback for standard Next.js build if needed
-        console.log('ℹ️ Frontend "out" directory not found, skipping static serving');
+        console.log('❌ Frontend "out" directory NOT found at ' + frontendPath);
     }
 }
 

@@ -7,6 +7,7 @@ const __dirname = path.dirname(__filename);
 /** @type {import('next').NextConfig} */
 const nextConfig = {
     images: {
+        unoptimized: true,
         remotePatterns: [
             {
                 protocol: 'https',
@@ -67,6 +68,8 @@ const nextConfig = {
     eslint: {
         ignoreDuringBuilds: true,
     },
+    output: 'export',
+    distDir: 'out',
     transpilePackages: ['framer-motion'],
 };
 
