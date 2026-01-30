@@ -180,6 +180,27 @@ export default function RidersView() {
         }
     };
 
+    const handleReset = async (id: string, e: React.MouseEvent) => {
+        e.stopPropagation();
+        if (!window.confirm('Reset this rider to NEW status? This will require them to re-register and upload documents.')) return;
+        try {
+            const userInfo = JSON.parse(localStorage.getItem('userInfo') || '{}');
+            if (!userInfo.token) return;
+
+            await axios.put(`${getApiUrl()}/api/admin/riders/${id}/reset`, {}, {
+                headers: { Authorization: `Bearer ${userInfo.token}` }
+            });
+            toast.success('Rider reset to NEW status');
+            fetchRiders();
+            if (selectedRider?._id === id) {
+                setSelectedRider(prev => prev ? { ...prev, verificationStatus: 'new' } : null);
+            }
+        } catch (error: any) {
+            console.error('Error resetting rider:', error);
+            toast.error(error.response?.data?.message || 'Failed to reset rider');
+        }
+    };
+
     const handleSuspend = async (id: string, e: React.MouseEvent) => {
         e.stopPropagation();
         if (!window.confirm('Suspend this rider?')) return;
@@ -477,6 +498,13 @@ export default function RidersView() {
                                                         title="View Details"
                                                     >
                                                         <FaEye size={14} />
+                                                    </button>
+                                                    <button
+                                                        onClick={(e) => handleReset(rider._id, e)}
+                                                        className="p-2.5 bg-blue-50 text-blue-500 rounded-xl hover:bg-blue-600 hover:text-white transition-all"
+                                                        title="Reset Registration"
+                                                    >
+                                                        <FaHistory size={14} />
                                                     </button>
                                                     {rider.user?.status === 'suspended' ? (
                                                         <button
@@ -783,6 +811,12 @@ export default function RidersView() {
                                                 className="flex-1 bg-white border-2 border-red-100 text-red-500 hover:bg-red-600 hover:text-white hover:border-transparent px-8 py-4 rounded-2xl font-bold text-[14px] transition-all active:scale-95 flex items-center justify-center gap-2"
                                             >
                                                 <FaTrash /> Permanently Delete
+                                            </button>
+                                            <button
+                                                onClick={(e) => handleReset(selectedRider._id, e)}
+                                                className="flex-1 bg-blue-50 text-blue-600 hover:bg-blue-600 hover:text-white px-8 py-4 rounded-2xl font-bold text-[14px] transition-all active:scale-95 flex items-center justify-center gap-2"
+                                            >
+                                                <FaHistory /> Reset Registration
                                             </button>
                                         </div>
                                     )}

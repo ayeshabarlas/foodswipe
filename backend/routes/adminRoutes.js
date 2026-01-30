@@ -11,6 +11,7 @@ const {
     getAllRiders,
     approveRider,
     rejectRider,
+    resetRider,
     getRestaurantSales,
     getDailyStats,
     getSystemSettings,
@@ -72,6 +73,7 @@ router.post('/orders/:id/assign-rider', assignRiderToOrder);
 router.get('/riders', getAllRiders);
 router.put('/riders/:id/approve', approveRider);
 router.put('/riders/:id/reject', rejectRider);
+router.put('/riders/:id/reset', resetRider);
 router.delete('/riders/:id', deleteRider);
 
 // User management

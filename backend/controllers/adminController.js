@@ -252,6 +252,52 @@ const rejectRider = async (req, res) => {
     }
 };
 
+// @desc    Reset rider to 'new' status (to allow re-registration/document upload)
+// @route   PUT /api/admin/riders/:id/reset
+// @access  Private/Admin
+const resetRider = async (req, res) => {
+    try {
+        const rider = await Rider.findById(req.params.id);
+
+        if (!rider) {
+            return res.status(404).json({ message: 'Rider not found' });
+        }
+
+        rider.verificationStatus = 'new';
+        // Optional: clear documents if you want a complete fresh start
+        // rider.documents = { cnicFront: '', cnicBack: '', drivingLicense: '', vehicleRegistration: '', profileSelfie: '' };
+        // rider.cnicNumber = '';
+        
+        await rider.save();
+
+        // Audit Log
+        try {
+            await AuditLog.create({
+                event: 'RIDER_RESET',
+                userId: rider.user?._id || rider.user,
+                email: rider.fullName,
+                details: { resetBy: req.admin?._id || req.user?._id || 'system' }
+            });
+        } catch (auditErr) {
+            console.warn('⚠️ Audit log creation failed:', auditErr.message);
+        }
+
+        // Notify admins about status update
+        try {
+            const riderData = rider.toObject ? rider.toObject() : rider;
+            triggerEvent('admin', 'rider_updated', riderData);
+            triggerEvent('admin', 'user_updated');
+        } catch (socketErr) {
+            console.warn('⚠️ Socket notification failed:', socketErr.message);
+        }
+
+        res.json({ message: 'Rider reset to new status successfully', rider });
+    } catch (error) {
+        console.error('❌ Reset Rider Error:', error);
+        res.status(500).json({ message: 'Server error', error: error.message });
+    }
+};
+
 // @desc    Get all orders (admin overview)
 // @route   GET /api/admin/orders
 // @access  Private/Admin

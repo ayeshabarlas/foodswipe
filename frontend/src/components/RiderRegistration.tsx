@@ -3,7 +3,7 @@
 import React, { useState } from 'react';
 import axios from 'axios';
 import { getApiUrl } from '../utils/config';
-import { FaBicycle, FaArrowLeft, FaIdCard, FaCamera, FaCarSide, FaCheckCircle, FaTimes } from 'react-icons/fa';
+import { FaBicycle, FaArrowLeft, FaIdCard, FaCamera, FaCarSide, FaCheckCircle, FaTimes, FaUser, FaCalendarAlt, FaArrowRight } from 'react-icons/fa';
 
 interface RiderRegistrationProps {
     onComplete: (riderId: string) => void;
@@ -29,6 +29,36 @@ export default function RiderRegistration({ onComplete }: RiderRegistrationProps
         vehicleRegistration: '',
         profileSelfie: '',
     });
+
+    // Fetch existing data if any
+    React.useEffect(() => {
+        const fetchData = async () => {
+            try {
+                const userInfo = JSON.parse(localStorage.getItem("userInfo") || "{}");
+                if (!userInfo.token) return;
+
+                const res = await axios.get(`${getApiUrl()}/api/riders/my-profile`, {
+                    headers: { Authorization: `Bearer ${userInfo.token}` }
+                });
+
+                if (res.data) {
+                    setRiderId(res.data._id);
+                    setFormData({
+                        fullName: res.data.fullName || '',
+                        cnicNumber: res.data.cnicNumber || '',
+                        dateOfBirth: res.data.dateOfBirth ? new Date(res.data.dateOfBirth).toISOString().split('T')[0] : '',
+                        vehicleType: res.data.vehicleType || 'Bike',
+                    });
+                    if (res.data.documents) {
+                        setDocuments(res.data.documents);
+                    }
+                }
+            } catch (err) {
+                console.log("No existing profile found");
+            }
+        };
+        fetchData();
+    }, []);
 
     const formatCNIC = (value: string) => {
         const digits = value.replace(/\D/g, '');
@@ -59,13 +89,6 @@ export default function RiderRegistration({ onComplete }: RiderRegistrationProps
                 setLoading(false);
                 return;
             }
-            const dob = new Date(formData.dateOfBirth);
-            const now = new Date();
-            if (isNaN(dob.getTime()) || dob > now) {
-                setError('Invalid date of birth');
-                setLoading(false);
-                return;
-            }
             const userInfo = JSON.parse(localStorage.getItem("userInfo") || "{}");
             const token = userInfo.token;
 
@@ -93,19 +116,19 @@ export default function RiderRegistration({ onComplete }: RiderRegistrationProps
         if (!file) return;
 
         setUploading(type);
-        const formData = new FormData();
-        formData.append('file', file);
+        const uploadFormData = new FormData();
+        uploadFormData.append('file', file);
 
         try {
             const userInfo = JSON.parse(localStorage.getItem("userInfo") || "{}");
-            const res = await axios.post(`${getApiUrl()}/api/upload`, formData, {
+            const res = await axios.post(`${getApiUrl()}/api/upload`, uploadFormData, {
                 headers: {
                     'Content-Type': 'multipart/form-data',
                     Authorization: `Bearer ${userInfo.token}`
                 }
             });
 
-            const filePath = res.data.fileUrl || res.data.path;
+            const filePath = res.data.fileUrl || res.data.path || res.data.imageUrl;
             setDocuments(prev => ({ ...prev, [type]: filePath }));
 
             // Update rider profile with the new document
@@ -144,119 +167,110 @@ export default function RiderRegistration({ onComplete }: RiderRegistrationProps
     const handleBackToLogin = () => {
         localStorage.removeItem('userInfo');
         localStorage.removeItem('token');
-        window.location.reload();
+        window.location.href = '/login';
     };
 
     return (
-        <div className="min-h-screen bg-gradient-to-br from-orange-500 via-orange-600 to-pink-600 flex items-center justify-center p-4 overflow-y-auto">
+        <div className="min-h-screen bg-gradient-to-br from-orange-500 to-red-600 flex items-center justify-center p-4 overflow-y-auto">
             <div className="w-full max-w-sm my-8">
-                {step === 1 && (
-                    <button
-                        onClick={handleBackToLogin}
-                        className="flex items-center gap-2 text-white/90 hover:text-white mb-4 font-normal transition"
-                    >
-                        <FaArrowLeft size={14} /> Back to Login
-                    </button>
-                )}
-
                 <div className="text-center mb-8">
-                    <div className="w-16 h-16 bg-white rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg">
+                    <div className="w-16 h-16 bg-white rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-xl">
                         <FaBicycle className="text-orange-500 text-2xl" />
                     </div>
-                    <h1 className="text-3xl font-bold text-white mb-2">Rider Portal</h1>
-                    <p className="text-white/90 font-light">Join our delivery team</p>
+                    <h1 className="text-3xl font-bold text-white mb-1">Rider Portal</h1>
+                    <p className="text-white/80 font-light text-sm">Join our delivery team</p>
                 </div>
 
-                <div className="bg-white rounded-3xl p-6 shadow-2xl">
+                <div className="bg-white rounded-[2.5rem] p-8 shadow-2xl">
                     {step === 1 ? (
                         <>
-                            <div className="mb-6">
-                                <h2 className="text-lg font-semibold text-gray-900 mb-1">Your Details</h2>
-                                <p className="text-sm text-gray-500 font-light">Complete your profile to continue</p>
+                            <div className="mb-8">
+                                <h2 className="text-xl font-bold text-gray-900 mb-1">Your Details</h2>
+                                <p className="text-sm text-gray-400 font-light">Complete your profile to continue</p>
                             </div>
 
-                            <form onSubmit={handleSubmit} className="space-y-4">
+                            <form onSubmit={handleSubmit} className="space-y-6">
                                 <div>
-                                    <label className="block text-sm font-semibold text-gray-800 mb-2">Full Name</label>
+                                    <label className="block text-[13px] font-medium text-gray-700 mb-2 ml-1">Full Name</label>
                                     <div className="relative">
+                                        <div className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-300">
+                                            <FaUser size={16} />
+                                        </div>
                                         <input
                                             type="text"
                                             required
                                             value={formData.fullName}
                                             onChange={(e) => setFormData({ ...formData, fullName: e.target.value })}
-                                            className="w-full pl-10 pr-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-orange-400 focus:border-transparent outline-none transition text-sm font-medium text-gray-900 placeholder:text-gray-400 bg-gray-50/50"
+                                            className="w-full pl-12 pr-4 py-4 rounded-2xl border border-gray-100 bg-gray-50/30 focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 outline-none transition-all text-[15px] font-light text-gray-900 placeholder:text-gray-300"
                                             placeholder="Muhammad Ali"
                                         />
-                                        <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                                        </svg>
                                     </div>
                                 </div>
 
                                 <div>
-                                    <label className="block text-sm font-semibold text-gray-800 mb-2">CNIC Number</label>
+                                    <label className="block text-[13px] font-medium text-gray-700 mb-2 ml-1">CNIC Number</label>
                                     <div className="relative">
+                                        <div className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-300">
+                                            <FaIdCard size={16} />
+                                        </div>
                                         <input
                                             type="text"
                                             required
                                             value={formData.cnicNumber}
                                             onChange={handleCNICChange}
-                                            className="w-full pl-10 pr-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-orange-400 focus:border-transparent outline-none transition text-sm font-medium text-gray-900 placeholder:text-gray-400 bg-gray-50/50"
+                                            className="w-full pl-12 pr-4 py-4 rounded-2xl border border-gray-100 bg-gray-50/30 focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 outline-none transition-all text-[15px] font-light text-gray-900 placeholder:text-gray-300"
                                             placeholder="12345-1234567-1"
                                         />
-                                        <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V8a2 2 0 00-2-2h-5m-4 0V5a2 2 0 114 0v1m-4 0a2 2 0 104 0m-5 8a2 2 0 100-4 2 2 0 000 4zm0 0c1.306 0 2.417.835 2.83 2M9 14a3.001 3.001 0 00-2.83 2M15 11h3m-3 4h2" />
-                                        </svg>
                                     </div>
                                 </div>
 
                                 <div>
-                                    <label className="block text-sm font-semibold text-gray-800 mb-2">Date of Birth</label>
+                                    <label className="block text-[13px] font-medium text-gray-700 mb-2 ml-1">Date of Birth</label>
                                     <div className="relative">
+                                        <div className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-300">
+                                            <FaCalendarAlt size={16} />
+                                        </div>
                                         <input
                                             type="date"
                                             required
                                             value={formData.dateOfBirth}
                                             onChange={(e) => setFormData({ ...formData, dateOfBirth: e.target.value })}
-                                            className="w-full pl-10 pr-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-orange-400 focus:border-transparent outline-none transition text-sm font-medium text-gray-900 bg-gray-50/50"
+                                            className="w-full pl-12 pr-4 py-4 rounded-2xl border border-gray-100 bg-gray-50/30 focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 outline-none transition-all text-[15px] font-light text-gray-900"
                                         />
-                                        <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                                        </svg>
                                     </div>
                                 </div>
 
                                 <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-2">Vehicle Type</label>
-                                    <div className="grid grid-cols-2 gap-3">
+                                    <label className="block text-[13px] font-medium text-gray-700 mb-4 ml-1">Vehicle Type</label>
+                                    <div className="grid grid-cols-2 gap-4">
                                         <button
                                             type="button"
                                             onClick={() => setFormData({ ...formData, vehicleType: 'Bike' })}
-                                            className={`p-4 rounded-xl border-2 transition flex flex-col items-center gap-2 ${formData.vehicleType === 'Bike'
-                                                ? 'border-orange-500 bg-orange-50'
-                                                : 'border-gray-200 hover:border-gray-300'
+                                            className={`py-6 rounded-2xl border transition-all flex flex-col items-center gap-3 ${formData.vehicleType === 'Bike'
+                                                ? 'border-orange-500 bg-orange-50/50 shadow-sm shadow-orange-500/10'
+                                                : 'border-gray-100 bg-gray-50/30 hover:bg-gray-50 hover:border-gray-200'
                                                 }`}
                                         >
-                                            <FaBicycle className={`text-2xl ${formData.vehicleType === 'Bike' ? 'text-orange-500' : 'text-gray-400'}`} />
-                                            <span className={`text-sm font-medium ${formData.vehicleType === 'Bike' ? 'text-orange-600' : 'text-gray-600'}`}>Bike</span>
+                                            <FaBicycle className={`text-2xl ${formData.vehicleType === 'Bike' ? 'text-orange-500' : 'text-gray-300'}`} />
+                                            <span className={`text-[13px] font-medium ${formData.vehicleType === 'Bike' ? 'text-orange-600' : 'text-gray-400'}`}>Bike</span>
                                         </button>
 
                                         <button
                                             type="button"
                                             onClick={() => setFormData({ ...formData, vehicleType: 'Car' })}
-                                            className={`p-4 rounded-xl border-2 transition flex flex-col items-center gap-2 ${formData.vehicleType === 'Car'
-                                                ? 'border-orange-500 bg-orange-50'
-                                                : 'border-gray-200 hover:border-gray-300'
+                                            className={`py-6 rounded-2xl border transition-all flex flex-col items-center gap-3 ${formData.vehicleType === 'Car'
+                                                ? 'border-orange-500 bg-orange-50/50 shadow-sm shadow-orange-500/10'
+                                                : 'border-gray-100 bg-gray-50/30 hover:bg-gray-50 hover:border-gray-200'
                                                 }`}
                                         >
-                                            <FaCarSide className={`text-2xl ${formData.vehicleType === 'Car' ? 'text-orange-500' : 'text-gray-400'}`} />
-                                            <span className={`text-sm font-medium ${formData.vehicleType === 'Car' ? 'text-orange-600' : 'text-gray-600'}`}>Car</span>
+                                            <FaCarSide className={`text-2xl ${formData.vehicleType === 'Car' ? 'text-orange-500' : 'text-gray-300'}`} />
+                                            <span className={`text-[13px] font-medium ${formData.vehicleType === 'Car' ? 'text-orange-600' : 'text-gray-400'}`}>Car</span>
                                         </button>
                                     </div>
                                 </div>
 
                                 {error && (
-                                    <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-2.5 rounded-lg text-sm font-light">
+                                    <div className="bg-red-50 text-red-500 px-4 py-3 rounded-xl text-[12px] font-medium border border-red-100">
                                         {error}
                                     </div>
                                 )}
@@ -264,9 +278,13 @@ export default function RiderRegistration({ onComplete }: RiderRegistrationProps
                                 <button
                                     type="submit"
                                     disabled={loading}
-                                    className="w-full bg-gradient-to-r from-orange-500 to-pink-600 hover:from-orange-600 hover:to-pink-700 text-white font-semibold py-3.5 rounded-xl transition shadow-lg disabled:opacity-50 disabled:cursor-not-allowed mt-6"
+                                    className="w-full bg-orange-500 hover:bg-orange-600 text-white font-bold py-4 rounded-2xl transition shadow-xl shadow-orange-500/20 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed mt-8 flex items-center justify-center gap-2"
                                 >
-                                    {loading ? 'Processing...' : 'Continue'}
+                                    {loading ? 'Processing...' : (
+                                        <>
+                                            Save & Continue <FaArrowRight size={14} />
+                                        </>
+                                    )}
                                 </button>
                             </form>
                         </>

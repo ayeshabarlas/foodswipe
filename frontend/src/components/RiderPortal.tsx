@@ -50,8 +50,11 @@ export default function RiderPortal() {
                 setRiderId(res.data._id);
                 setVerificationStatus(res.data.verificationStatus);
                 
-                // If profile exists but documents or CNIC are missing, go to documents step
-                if (!res.data.cnicNumber || !res.data.documents?.cnicFront) {
+                // Logic updated: If cnicNumber is missing, go to registration (Details step)
+                if (!res.data.cnicNumber) {
+                    setStep('registration');
+                } else if (!res.data.documents?.cnicFront) {
+                    // If details exist but documents are missing, go to documents step
                     setStep('documents');
                 } else {
                     setStep('dashboard');
