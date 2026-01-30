@@ -4,9 +4,9 @@ import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import axios from 'axios';
-import { getApiUrl } from '@/utils/config';
+import { getApiUrl } from '../../utils/config';
 import { FaGoogle, FaEnvelope, FaExclamationCircle } from 'react-icons/fa';
-import { auth, googleProvider } from '@/config/firebase';
+import { auth, googleProvider } from '../../config/firebase';
 import { signInWithPopup } from 'firebase/auth';
 
 export default function LoginPage() {

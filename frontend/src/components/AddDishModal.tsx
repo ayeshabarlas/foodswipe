@@ -4,8 +4,8 @@ import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { FaPlus, FaTrash, FaTimes, FaSave } from 'react-icons/fa';
 import axios from 'axios';
-import { getApiUrl } from '@/utils/config';
-import { getImageUrl } from '@/utils/imageUtils';
+import { getApiUrl } from '../utils/config';
+import { getImageUrl } from '../utils/imageUtils';
 import ModernLoader from './ModernLoader';
 
 interface Variant {

@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import RiderRegistration from '@/components/RiderRegistration';
+import RiderRegistration from '../../components/RiderRegistration';
 
 export default function RiderRegisterPage() {
     const router = useRouter();

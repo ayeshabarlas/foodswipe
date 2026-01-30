@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
-import { useSettings } from '@/hooks/useSettings';
+import { useSettings } from '../hooks/useSettings';
 import {
     FaPhone,
     FaEnvelope,

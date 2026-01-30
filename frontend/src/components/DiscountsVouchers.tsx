@@ -4,7 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { FaTimes, FaCopy, FaCheck, FaTicketAlt } from 'react-icons/fa';
 import axios from 'axios';
-import { getApiUrl } from '@/utils/config';
+import { getApiUrl } from '../utils/config';
 
 interface DiscountsVouchersProps {
     isOpen: boolean;

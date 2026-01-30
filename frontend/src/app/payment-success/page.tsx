@@ -5,10 +5,10 @@ import { useSearchParams, useRouter } from 'next/navigation';
 import axios from 'axios';
 import { FaCheckCircle, FaHome, FaShoppingBag } from 'react-icons/fa';
 import Link from 'next/link';
-import ModernLoader from '@/components/ModernLoader';
-import { useCart } from '@/context/CartContext';
+import ModernLoader from '../../components/ModernLoader';
+import { useCart } from '../../context/CartContext';
 
-import { getApiUrl } from '@/utils/config';
+import { getApiUrl } from '../../utils/config';
 
 function PaymentSuccessContent() {
     const searchParams = useSearchParams();

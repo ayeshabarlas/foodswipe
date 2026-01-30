@@ -4,7 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { FaClock, FaBox, FaCheckCircle, FaUtensils, FaExclamationCircle } from 'react-icons/fa';
 import axios from 'axios';
-import { getApiUrl } from '@/utils/config';
+import { getApiUrl } from '../utils/config';
 
 interface OrderItem {
     product: any;

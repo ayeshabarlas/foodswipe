@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { useSettings } from '@/hooks/useSettings';
+import { useSettings } from '../hooks/useSettings';
 import { FaTimes, FaLock, FaCreditCard, FaMapMarkerAlt, FaGlobe, FaChevronRight, FaFileContract, FaShieldAlt, FaInfoCircle, FaPlus, FaTrash, FaCheck } from 'react-icons/fa';
 
 interface SettingsProps {

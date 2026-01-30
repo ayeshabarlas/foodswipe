@@ -4,7 +4,7 @@ import { Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { FaTimesCircle, FaHome, FaShoppingCart } from 'react-icons/fa';
 import Link from 'next/link';
-import ModernLoader from '@/components/ModernLoader';
+import ModernLoader from '../../components/ModernLoader';
 
 function PaymentCancelContent() {
     const searchParams = useSearchParams();

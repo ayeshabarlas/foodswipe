@@ -4,7 +4,7 @@ import React, { useState, useEffect, useImperativeHandle, forwardRef } from 'rea
 import { motion, AnimatePresence } from 'framer-motion';
 import { FaTimes, FaClock, FaBiking, FaReceipt, FaSync } from 'react-icons/fa';
 import axios from 'axios';
-import { getApiUrl } from '@/utils/config';
+import { getApiUrl } from '../utils/config';
 import { useSwipeBack } from '../hooks/useSwipeBack';
 import ModernLoader from './ModernLoader';
 

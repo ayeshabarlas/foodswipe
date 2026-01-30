@@ -2,7 +2,7 @@
 
 import React from 'react';
 import { FaPhoneAlt, FaComments, FaExclamationCircle, FaMapMarkerAlt, FaUserSlash, FaClock } from 'react-icons/fa';
-import { useSettings } from '@/hooks/useSettings';
+import { useSettings } from '../hooks/useSettings';
 
 export default function RiderSupport() {
     const { settings } = useSettings();

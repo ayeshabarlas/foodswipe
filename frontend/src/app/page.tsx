@@ -1,5 +1,5 @@
-// VERCEL BUILD TRIGGER - v2.2.32 - 2026-01-30 08:15
-// Force Redeploy v2.2.32 - 2026-01-30 08:15 - Ultimate Alias & Config Fix
+// VERCEL BUILD TRIGGER - v2.2.33 - 2026-01-30 08:30
+// Force Redeploy v2.2.33 - 2026-01-30 08:30 - Final Alias Cleanup & Admin 404 Fix
 "use client";
 
 // Vercel Build Trigger: 2026-01-30 03:25 - Force Update

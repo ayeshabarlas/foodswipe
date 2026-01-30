@@ -3,7 +3,7 @@
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import axios from 'axios';
-import { getApiUrl } from '@/utils/config';
+import { getApiUrl } from '../utils/config';
 import { FaUpload, FaCheckCircle, FaTimesCircle } from 'react-icons/fa';
 
 export default function RestaurantRegistration() {

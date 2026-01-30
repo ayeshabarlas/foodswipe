@@ -1,7 +1,7 @@
 'use client';
 import dynamic from 'next/dynamic';
 
-const AdminRegisterForm = dynamic(() => import('@/components/AdminRegisterForm'), {
+const AdminRegisterForm = dynamic(() => import('../../../components/AdminRegisterForm'), {
     ssr: false,
     loading: () => (
         <div className="min-h-screen bg-gradient-to-br from-orange-500 to-orange-600 flex items-center justify-center">
