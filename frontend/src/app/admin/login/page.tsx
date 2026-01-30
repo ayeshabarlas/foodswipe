@@ -2,7 +2,7 @@
 
 import dynamic from 'next/dynamic';
 
-const AdminLoginForm = dynamic(() => import('@/components/AdminLoginForm'), {
+const AdminLoginForm = dynamic(() => import('../../../components/AdminLoginForm'), {
     ssr: false,
     loading: () => (
         <div className="min-h-screen bg-gradient-to-br from-orange-500 to-orange-600 flex items-center justify-center">

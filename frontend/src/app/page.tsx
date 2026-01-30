@@ -1,5 +1,5 @@
-// VERCEL BUILD TRIGGER - v2.2.29 - 2026-01-30 07:40
-// Force Redeploy v2.2.29 - 2026-01-30 07:40 - Fix SWC Mismatch
+// VERCEL BUILD TRIGGER - v2.2.30 - 2026-01-30 07:55
+// Force Redeploy v2.2.30 - 2026-01-30 07:55 - Fix Module Resolution
 "use client";
 
 // Vercel Build Trigger: 2026-01-30 03:25 - Force Update

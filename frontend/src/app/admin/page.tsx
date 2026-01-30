@@ -5,7 +5,7 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import dynamic from 'next/dynamic';
 
-const AdminDashboard = dynamic(() => import('@/components/AdminDashboard'), { 
+const AdminDashboard = dynamic(() => import('../../components/AdminDashboard'), { 
     ssr: false,
     loading: () => (
         <div className="min-h-screen bg-gray-100 flex items-center justify-center">
