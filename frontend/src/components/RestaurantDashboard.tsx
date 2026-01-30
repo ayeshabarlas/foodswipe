@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { FaShoppingBag, FaUtensils, FaStore, FaChartLine, FaWallet, FaStar, FaBullhorn, FaHeadset, FaConciergeBell, FaBell, FaClock, FaBox, FaCheck, FaPaperPlane, FaSignOutAlt, FaBars, FaTimes, FaBan, FaThLarge, FaMapMarkerAlt, FaCommentDots } from 'react-icons/fa';
+import { FaShoppingBag, FaUtensils, FaStore, FaChartLine, FaWallet, FaStar, FaBullhorn, FaHeadset, FaConciergeBell, FaBell, FaClock, FaBox, FaCheck, FaPaperPlane, FaSignOutAlt, FaBars, FaTimes, FaBan, FaThLarge, FaMapMarkerAlt, FaCommentDots, FaExclamationCircle } from 'react-icons/fa';
 import { motion, AnimatePresence } from 'framer-motion';
 import axios from 'axios';
 import toast from 'react-hot-toast';
@@ -449,16 +449,17 @@ export default function RestaurantDashboard() {
     })();
 
     const isPending = displayRestaurant.verificationStatus === 'pending' || displayRestaurant.verificationStatus === 'not_started';
+    const isNew = displayRestaurant.verificationStatus === 'new';
 
     const menuItems = [
         { id: 'overview', label: 'Overview', icon: FaThLarge },
-        { id: 'orders', label: 'Orders Board', icon: FaShoppingBag },
-        { id: 'menu', label: 'Menu Items', icon: FaUtensils },
+        { id: 'orders', label: 'Orders Board', icon: FaShoppingBag, disabled: isNew },
+        { id: 'menu', label: 'Menu Items', icon: FaUtensils, disabled: isNew },
         { id: 'store', label: 'Store Profile', icon: FaStore },
-        { id: 'analytics', label: 'Performance', icon: FaChartLine },
-        { id: 'payments', label: 'Earnings', icon: FaWallet },
-        { id: 'reviews', label: 'Customer Reviews', icon: FaStar },
-        { id: 'promotions', label: 'Promotions', icon: FaBullhorn },
+        { id: 'analytics', label: 'Performance', icon: FaChartLine, disabled: isNew },
+        { id: 'payments', label: 'Earnings', icon: FaWallet, disabled: isNew },
+        { id: 'reviews', label: 'Customer Reviews', icon: FaStar, disabled: isNew },
+        { id: 'promotions', label: 'Promotions', icon: FaBullhorn, disabled: isNew },
         { id: 'support', label: 'Help Center', icon: FaHeadset },
         { id: 'settings', label: 'Account Settings', icon: FaClock },
     ];
@@ -785,22 +786,34 @@ export default function RestaurantDashboard() {
                     </div>
                 </header>
 
-                {/* Banner for Pending Status */}
-                {isPending && (
-                    <div className="bg-gradient-orange-red text-white px-6 py-2.5 text-[10px] font-bold uppercase tracking-wider flex items-center justify-between z-20 shadow-md sticky top-16 md:top-20">
-                        <div className="flex items-center gap-2">
-                            <div className="bg-white/20 p-1 rounded-full animate-pulse">
-                                <FaClock size={12} />
+                {/* Banner for Pending/New Status */}
+                {(isPending || isNew) && (
+                    <div 
+                        onClick={() => {
+                            if (isNew) {
+                                setActivePage('store');
+                            }
+                        }}
+                        className={`bg-gradient-to-r ${isNew ? 'from-orange-500 to-red-600 cursor-pointer hover:from-orange-600 hover:to-red-700' : 'from-orange-400 to-orange-500'} text-white px-6 py-3 text-[11px] font-bold uppercase tracking-wider flex items-center justify-between z-20 shadow-lg sticky top-16 md:top-20 transition-all`}
+                    >
+                        <div className="flex items-center gap-3">
+                            <div className="bg-white/20 p-1.5 rounded-full animate-pulse">
+                                {isNew ? <FaExclamationCircle size={14} /> : <FaClock size={14} />}
                             </div>
-                            <span>
-                                Your restaurant is currently in <strong>Verification Mode</strong>. Some features are restricted until approval.
+                            <span className="leading-tight">
+                                {isNew 
+                                    ? <strong>Action Required: Complete your restaurant registration (Address & Documents) to start receiving orders.</strong>
+                                    : <>Your restaurant is currently in <strong>Verification Mode</strong>. Some features are restricted until approval.</>}
                             </span>
                         </div>
                         <button
-                            onClick={() => setActivePage('support')}
-                            className="bg-white text-orange-600 px-3 py-1 rounded-lg text-[10px] font-bold hover:bg-gray-50 transition uppercase tracking-wider"
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                isNew ? setActivePage('store') : setActivePage('support');
+                            }}
+                            className="bg-white text-orange-600 px-4 py-1.5 rounded-xl text-[10px] font-black hover:bg-gray-50 transition shadow-sm uppercase tracking-widest"
                         >
-                            Contact Support
+                            {isNew ? 'Complete Now' : 'Contact Support'}
                         </button>
                     </div>
                 )}

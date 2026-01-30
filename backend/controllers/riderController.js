@@ -259,6 +259,14 @@ const submitForVerification = async (req, res) => {
         }
 
         // Submission for review
+        // Check if required documents are present
+        const docs = rider.documents || {};
+        if (!docs.cnicFront || !docs.cnicBack || !docs.drivingLicense || !docs.profileSelfie) {
+            return res.status(400).json({ 
+                message: 'Please upload all required documents (CNIC Front, CNIC Back, License, and Profile Selfie) before submitting for verification.' 
+            });
+        }
+
         rider.verificationStatus = 'pending';
         await rider.save();
 

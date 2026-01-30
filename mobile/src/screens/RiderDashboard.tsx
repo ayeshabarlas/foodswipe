@@ -704,8 +704,14 @@ export default function RiderDashboard({ navigation }: any) {
           } else if (riderProfile?.verificationStatus === 'rejected') {
             navigation.navigate('RiderRegistration');
           } else if (riderProfile?._id) {
-            // If profile exists but not approved/pending, go to documents
-            navigation.navigate('RiderDocumentUpload', { riderId: riderProfile._id });
+            // Check if details are missing
+            if (!riderProfile.cnicNumber || !riderProfile.dateOfBirth) {
+              console.log('🔄 Navigating to RiderRegistration from banner click');
+              navigation.navigate('RiderRegistration');
+            } else {
+              console.log('🔄 Navigating to RiderDocumentUpload from banner click');
+              navigation.navigate('RiderDocumentUpload', { riderId: riderProfile._id });
+            }
           } else {
             // No profile at all
             navigation.navigate('RiderRegistration');

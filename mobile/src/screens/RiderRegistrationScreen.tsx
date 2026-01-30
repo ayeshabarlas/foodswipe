@@ -83,10 +83,22 @@ export default function RiderRegistrationScreen({ navigation }: any) {
       navigation.navigate('RiderDocumentUpload', { riderId: res.data._id });
     } catch (err: any) {
       if (err.response?.data?.message === 'Rider profile already exists') {
-        // If already exists, fetch the profile and navigate
+        // If already exists, check if details are complete before redirecting
         try {
           const profileRes = await apiClient.get('/riders/my-profile');
-          navigation.navigate('RiderDocumentUpload', { riderId: profileRes.data._id });
+          const rider = profileRes.data;
+          
+          if (!rider.cnicNumber || !rider.dateOfBirth) {
+            // If details are still missing, try to update them
+            try {
+              const updateRes = await apiClient.post('/riders/register', formData);
+              navigation.navigate('RiderDocumentUpload', { riderId: updateRes.data._id });
+            } catch (updateErr) {
+              Alert.alert('Error', 'Please fill all details correctly.');
+            }
+          } else {
+            navigation.navigate('RiderDocumentUpload', { riderId: rider._id });
+          }
         } catch (profileErr) {
           Alert.alert('Error', 'Profile exists but could not be retrieved.');
         }

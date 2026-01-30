@@ -133,11 +133,17 @@ const createRestaurant = async (req, res) => {
                 existingRestaurant.storefrontPhoto = storefrontPhoto ? normalizePath(storefrontPhoto) : existingRestaurant.storefrontPhoto;
                 existingRestaurant.menuPhotos = menuPhotos ? normalizePath(menuPhotos) : existingRestaurant.menuPhotos;
                 
-                // Change status to pending once details are submitted
-                existingRestaurant.verificationStatus = 'pending';
+                // Check if basic documents are present before setting to pending
+                const docs = existingRestaurant.documents || {};
+                const hasDocs = docs.cnicFront && docs.cnicBack;
+                
+                existingRestaurant.verificationStatus = hasDocs ? 'pending' : 'new';
                 
                 await existingRestaurant.save();
-                return res.json({ message: 'Restaurant profile updated and is now pending approval', restaurant: existingRestaurant });
+                return res.json({ 
+                    message: hasDocs ? 'Restaurant profile updated and is now pending approval' : 'Restaurant profile created. Please upload documents for verification.', 
+                    restaurant: existingRestaurant 
+                });
             }
             return res.status(400).json({ message: 'You already have a restaurant registered' });
         }
@@ -155,7 +161,7 @@ const createRestaurant = async (req, res) => {
             }
         }
 
-        // Create restaurant
+        // Create restaurant with 'new' status
         const restaurant = await Restaurant.create({
             name,
             owner: req.user._id,
@@ -178,7 +184,7 @@ const createRestaurant = async (req, res) => {
             taxNumber,
             storefrontPhoto: normalizePath(storefrontPhoto),
             menuPhotos: normalizePath(menuPhotos),
-            verificationStatus: 'pending'
+            verificationStatus: 'new'
         });
 
         // Update user role to restaurant (preserve admin role)

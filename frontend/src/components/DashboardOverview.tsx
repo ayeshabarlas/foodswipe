@@ -46,7 +46,7 @@ export default function DashboardOverview({ stats, restaurant }: DashboardOvervi
     return (
         <div className="p-6 space-y-8 max-w-7xl mx-auto">
             {/* Verification Alert Banner */}
-            {(restaurant?.verificationStatus !== 'verified' || !restaurant?.isVerified) && (
+            {((restaurant?.verificationStatus !== 'verified' && restaurant?.verificationStatus !== 'approved') || !restaurant?.isVerified) && (
                 <motion.div 
                     initial={{ opacity: 0, y: -20 }}
                     animate={{ opacity: 1, y: 0 }}
@@ -57,15 +57,29 @@ export default function DashboardOverview({ stats, restaurant }: DashboardOvervi
                             <FaUtensils size={18} />
                         </div>
                         <div>
-                            <h4 className="text-sm font-bold text-amber-900">Verification Pending</h4>
-                            <p className="text-xs text-amber-700 font-medium">Your restaurant profile is under review. Please ensure all documents and store details are complete.</p>
+                            <h4 className="text-sm font-bold text-amber-900">
+                                {restaurant?.verificationStatus === 'new' ? 'Action Required: Complete Profile' : 'Verification Pending'}
+                            </h4>
+                            <p className="text-xs text-amber-700 font-medium">
+                                {restaurant?.verificationStatus === 'new' 
+                                    ? 'Please complete your restaurant address and documents to start accepting orders.'
+                                    : 'Your restaurant profile is under review. Please ensure all documents and store details are complete.'}
+                            </p>
                         </div>
                     </div>
                     <button 
-                        onClick={() => window.location.href = '/restaurant-registration'}
+                        onClick={() => {
+                            if (restaurant?.verificationStatus === 'new') {
+                                // Trigger navigation to store settings if in same component, 
+                                // but window.location is safer if we don't have access to setActivePage here
+                                window.location.href = '/restaurant/dashboard?page=store';
+                            } else {
+                                window.location.href = '/restaurant-registration';
+                            }
+                        }}
                         className="bg-amber-600 text-white px-4 py-2 rounded-xl text-xs font-bold whitespace-nowrap hover:bg-amber-700 transition-colors"
                     >
-                        Update Profile
+                        {restaurant?.verificationStatus === 'new' ? 'Complete Now' : 'Update Profile'}
                     </button>
                 </motion.div>
             )}

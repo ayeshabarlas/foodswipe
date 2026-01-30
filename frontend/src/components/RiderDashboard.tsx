@@ -908,7 +908,7 @@ function ActionItem({ icon, label, sublabel, onClick }: any) {
                         <div className="flex justify-between items-start mb-8">
                             <div>
                                 <h3 className="text-lg font-bold opacity-90 uppercase tracking-wider">Daily Target</h3>
-                                <p className="text-3xl font-bold mt-1">Rs. {bonusData.settings?.dailyBonusAmount || 500} Bonus</p>
+                                <p className="text-3xl font-bold mt-1">Rs. {bonusData.settings?.dailyBonusAmount || 200} Bonus</p>
                             </div>
                             <div className="w-12 h-12 bg-white/20 backdrop-blur-md rounded-2xl flex items-center justify-center">
                                 <FaGift size={24} />
