@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import { useRouter, usePathname } from 'next/navigation';
 import { FaShoppingBag, FaUtensils, FaStore, FaChartLine, FaWallet, FaStar, FaBullhorn, FaHeadset, FaConciergeBell, FaBell, FaClock, FaBox, FaCheck, FaPaperPlane, FaSignOutAlt, FaBars, FaTimes, FaBan, FaThLarge, FaMapMarkerAlt, FaCommentDots, FaExclamationCircle } from 'react-icons/fa';
 import { motion, AnimatePresence } from 'framer-motion';
 import axios from 'axios';
@@ -23,6 +24,7 @@ import { initSocket, disconnectSocket, subscribeToChannel } from '../utils/socke
 import { useSettings } from '../hooks/useSettings';
 import ModernLoader from './ModernLoader';
 export default function RestaurantDashboard() {
+    const router = useRouter();
     const { settings } = useSettings();
     const [restaurant, setRestaurant] = useState<any>(null);
     const [loading, setLoading] = useState(true);
@@ -790,31 +792,33 @@ export default function RestaurantDashboard() {
                 {(isPending || isNew) && (
                     <div 
                         onClick={() => {
-                            if (isNew) {
-                                setActivePage('store');
-                            }
+                            console.log("Banner clicked, navigating to registration...");
+                            router.push('/restaurant-registration');
                         }}
-                        className={`bg-gradient-to-r ${isNew ? 'from-orange-500 to-red-600 cursor-pointer hover:from-orange-600 hover:to-red-700' : 'from-orange-400 to-orange-500'} text-white px-6 py-3 text-[11px] font-bold uppercase tracking-wider flex items-center justify-between z-20 shadow-lg sticky top-16 md:top-20 transition-all`}
+                        className={`bg-gradient-to-r ${isNew ? 'from-orange-500 to-red-600 cursor-pointer hover:from-orange-600 hover:to-red-700' : 'from-orange-400 to-orange-500 cursor-pointer hover:from-orange-500 hover:to-orange-600'} text-white px-6 py-3 text-[11px] font-bold uppercase tracking-wider flex items-center justify-between z-[40] shadow-lg sticky top-[72px] md:top-[80px] transition-all active:scale-[0.99] group`}
                     >
                         <div className="flex items-center gap-3">
-                            <div className="bg-white/20 p-1.5 rounded-full animate-pulse">
+                            <div className="bg-white/20 p-1.5 rounded-full animate-pulse group-hover:scale-110 transition-transform">
                                 {isNew ? <FaExclamationCircle size={14} /> : <FaClock size={14} />}
                             </div>
                             <span className="leading-tight">
                                 {isNew 
                                     ? <strong>Action Required: Complete your restaurant registration (Address & Documents) to start receiving orders.</strong>
-                                    : <>Your restaurant is currently in <strong>Verification Mode</strong>. Some features are restricted until approval.</>}
+                                    : <>Your restaurant is currently in <strong>Verification Mode</strong>. Click here to check your registration details.</>}
                             </span>
                         </div>
-                        <button
-                            onClick={(e) => {
-                                e.stopPropagation();
-                                isNew ? setActivePage('store') : setActivePage('support');
-                            }}
-                            className="bg-white text-orange-600 px-4 py-1.5 rounded-xl text-[10px] font-black hover:bg-gray-50 transition shadow-sm uppercase tracking-widest"
-                        >
-                            {isNew ? 'Complete Now' : 'Contact Support'}
-                        </button>
+                        <div className="flex items-center gap-2">
+                            <button
+                                onClick={(e) => {
+                                    e.stopPropagation();
+                                    console.log("Banner button clicked, navigating to registration...");
+                                    router.push('/restaurant-registration');
+                                }}
+                                className="bg-white text-orange-600 px-4 py-1.5 rounded-xl text-[10px] font-black hover:bg-gray-50 transition shadow-sm uppercase tracking-widest whitespace-nowrap"
+                            >
+                                {isNew ? 'Complete Now' : 'View Details'}
+                            </button>
+                        </div>
                     </div>
                 )}
 

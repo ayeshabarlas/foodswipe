@@ -9,8 +9,10 @@ const auditLogSchema = mongoose.Schema(
                 'LOGIN', 'SIGNUP', 'LOGOUT', 'SYNC_FIREBASE', 
                 'USER_SUSPENDED', 'USER_UNSUSPENDED', 'USER_DELETED', 
                 'RESTAURANT_SUSPENDED', 'RESTAURANT_UNSUSPENDED', 'RESTAURANT_DELETED',
+                'RESTAURANT_APPROVED', 'RESTAURANT_REJECTED',
                 'RIDER_SUSPENDED', 'RIDER_UNSUSPENDED', 'RIDER_DELETED',
-                'ERROR'
+                'RIDER_APPROVED', 'RIDER_REJECTED',
+                'SETTLE_RIDER', 'ERROR'
             ],
         },
         userId: {

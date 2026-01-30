@@ -69,16 +69,34 @@ const approveRestaurant = async (req, res) => {
 
         await restaurant.save();
 
+        // Audit Log
+        try {
+            await AuditLog.create({
+                event: 'RESTAURANT_APPROVED',
+                userId: restaurant.owner?._id || restaurant.owner,
+                email: restaurant.name,
+                details: { approvedBy: req.admin?._id || req.user?._id || 'system' }
+            });
+        } catch (auditErr) {
+            console.warn('⚠️ Audit log creation failed:', auditErr.message);
+        }
+
         // Notify admins about status update
-        triggerEvent('admin', 'restaurant_updated', restaurant);
-        triggerEvent('admin', 'stats_updated');
-        triggerEvent('admin', 'notification', {
-            type: 'info',
-            message: `Restaurant ${restaurant.name} approved`
-        });
+        try {
+            const resData = restaurant.toObject ? restaurant.toObject() : restaurant;
+            triggerEvent('admin', 'restaurant_updated', resData);
+            triggerEvent('admin', 'stats_updated');
+            triggerEvent('admin', 'notification', {
+                type: 'info',
+                message: `Restaurant ${restaurant.name} approved`
+            });
+        } catch (socketErr) {
+            console.warn('⚠️ Socket notification failed:', socketErr.message);
+        }
 
         res.json({ message: 'Restaurant approved successfully', restaurant });
     } catch (error) {
+        console.error('❌ Approve Restaurant Error:', error);
         res.status(500).json({ message: 'Server error', error: error.message });
     }
 };
@@ -102,16 +120,37 @@ const rejectRestaurant = async (req, res) => {
 
         await restaurant.save();
 
+        // Audit Log
+        try {
+            await AuditLog.create({
+                event: 'RESTAURANT_REJECTED',
+                userId: restaurant.owner?._id || restaurant.owner,
+                email: restaurant.name,
+                details: { 
+                    reason,
+                    rejectedBy: req.admin?._id || req.user?._id || 'system' 
+                }
+            });
+        } catch (auditErr) {
+            console.warn('⚠️ Audit log creation failed:', auditErr.message);
+        }
+
         // Notify admins about status update
-        triggerEvent('admin', 'restaurant_updated', restaurant);
-        triggerEvent('admin', 'stats_updated');
-        triggerEvent('admin', 'notification', {
-            type: 'warning',
-            message: `Restaurant ${restaurant.name} rejected: ${reason || 'No reason provided'}`
-        });
+        try {
+            const resData = restaurant.toObject ? restaurant.toObject() : restaurant;
+            triggerEvent('admin', 'restaurant_updated', resData);
+            triggerEvent('admin', 'stats_updated');
+            triggerEvent('admin', 'notification', {
+                type: 'warning',
+                message: `Restaurant ${restaurant.name} rejected: ${reason || 'No reason provided'}`
+            });
+        } catch (socketErr) {
+            console.warn('⚠️ Socket notification failed:', socketErr.message);
+        }
 
         res.json({ message: 'Restaurant rejected', restaurant });
     } catch (error) {
+        console.error('❌ Reject Restaurant Error:', error);
         res.status(500).json({ message: 'Server error', error: error.message });
     }
 };
@@ -130,17 +169,35 @@ const approveRider = async (req, res) => {
         rider.verificationStatus = 'approved';
         await rider.save();
 
+        // Audit Log
+        try {
+            await AuditLog.create({
+                event: 'RIDER_APPROVED',
+                userId: rider.user?._id || rider.user,
+                email: rider.fullName,
+                details: { approvedBy: req.admin?._id || req.user?._id || 'system' }
+            });
+        } catch (auditErr) {
+            console.warn('⚠️ Audit log creation failed:', auditErr.message);
+        }
+
         // Notify admins about status update
-        triggerEvent('admin', 'rider_updated', rider);
-        triggerEvent('admin', 'user_updated');
-        triggerEvent('admin', 'stats_updated');
-        triggerEvent('admin', 'notification', {
-            type: 'info',
-            message: `Rider ${rider.fullName} approved`
-        });
+        try {
+            const riderData = rider.toObject ? rider.toObject() : rider;
+            triggerEvent('admin', 'rider_updated', riderData);
+            triggerEvent('admin', 'user_updated');
+            triggerEvent('admin', 'stats_updated');
+            triggerEvent('admin', 'notification', {
+                type: 'info',
+                message: `Rider ${rider.fullName} approved`
+            });
+        } catch (socketErr) {
+            console.warn('⚠️ Socket notification failed:', socketErr.message);
+        }
 
         res.json({ message: 'Rider approved successfully', rider });
     } catch (error) {
+        console.error('❌ Approve Rider Error:', error);
         res.status(500).json({ message: 'Server error', error: error.message });
     }
 };
@@ -161,12 +218,33 @@ const rejectRider = async (req, res) => {
         // Add rejection reason if you have a field for it, or just update status
         await rider.save();
 
+        // Audit Log
+        try {
+            await AuditLog.create({
+                event: 'RIDER_REJECTED',
+                userId: rider.user?._id || rider.user,
+                email: rider.fullName,
+                details: { 
+                    reason,
+                    rejectedBy: req.admin?._id || req.user?._id || 'system' 
+                }
+            });
+        } catch (auditErr) {
+            console.warn('⚠️ Audit log creation failed:', auditErr.message);
+        }
+
         // Notify admins about status update
-        triggerEvent('admin', 'rider_updated', rider);
-        triggerEvent('admin', 'user_updated');
+        try {
+            const riderData = rider.toObject ? rider.toObject() : rider;
+            triggerEvent('admin', 'rider_updated', riderData);
+            triggerEvent('admin', 'user_updated');
+        } catch (socketErr) {
+            console.warn('⚠️ Socket notification failed:', socketErr.message);
+        }
 
         res.json({ message: 'Rider rejected', rider });
     } catch (error) {
+        console.error('❌ Reject Rider Error:', error);
         res.status(500).json({ message: 'Server error', error: error.message });
     }
 };
@@ -215,8 +293,8 @@ const getDashboardStats = async (req, res) => {
             {
                 $group: {
                     _id: null,
-                    totalRevenue: { $sum: { $ifNull: ['$totalPrice', 0] } },
-                    totalCommission: { $sum: { $ifNull: ['$commissionAmount', 0] } },
+                    totalRevenue: { $sum: { $convert: { input: { $ifNull: ['$totalPrice', 0] }, to: 'double', onError: 0, onNull: 0 } } },
+                    totalCommission: { $sum: { $convert: { input: { $ifNull: ['$commissionAmount', 0] }, to: 'double', onError: 0, onNull: 0 } } },
                     totalRiderEarnings: { $sum: { $convert: { input: { $ifNull: ['$riderEarning', 0] }, to: 'double', onError: 0, onNull: 0 } } },
                     totalRestaurantEarnings: { $sum: { $convert: { input: { $ifNull: ['$restaurantEarning', 0] }, to: 'double', onError: 0, onNull: 0 } } },
                     totalServiceFees: { $sum: { $convert: { input: { $ifNull: ['$serviceFee', 0] }, to: 'double', onError: 0, onNull: 0 } } },
@@ -367,24 +445,28 @@ const getDashboardStats = async (req, res) => {
                 type: 'order',
                 text: `New order completed`,
                 subtext: `Order #${o._id.toString().slice(-5)} ${o.rider ? `(Rider: ${o.rider.fullName || (o.rider.user && o.rider.user.name) || 'Assigned'})` : ''} delivered successfully`,
-                time: o.createdAt
+                time: o.createdAt || new Date()
             })),
             ...recentRestaurants.map(r => ({
                 id: r._id,
                 type: 'restaurant_approval',
                 text: `New restaurant registered`,
                 subtext: `${r.name} has registered`,
-                time: r.createdAt
+                time: r.createdAt || new Date()
             })),
             ...recentRiders.map(r => ({
                 id: r._id,
                 type: 'rider_onboard',
                 text: `New rider onboarded`,
                 subtext: `${r.fullName || r.user?.name || 'Rider'} registered as rider`,
-                time: r.createdAt
+                time: r.createdAt || new Date()
             }))
         ]
-            .sort((a, b) => new Date(b.time) - new Date(a.time))
+            .sort((a, b) => {
+                const timeA = a.time ? new Date(a.time).getTime() : 0;
+                const timeB = b.time ? new Date(b.time).getTime() : 0;
+                return timeB - timeA;
+            })
             .slice(0, 10);
 
         // Rider Stats
@@ -616,10 +698,10 @@ const getRestaurantSales = async (req, res) => {
             {
                 $group: {
                     _id: '$restaurant',
-                    totalSales: { $sum: { $ifNull: ['$subtotal', '$totalPrice'] } },
+                    totalSales: { $sum: { $convert: { input: { $ifNull: ['$subtotal', { $ifNull: ['$totalPrice', 0] }] }, to: 'double', onError: 0, onNull: 0 } } },
                     orderCount: { $sum: 1 },
-                    commission: { $sum: { $ifNull: ['$commissionAmount', { $multiply: [{ $ifNull: ['$subtotal', '$totalPrice'] }, 0.15] }] } },
-                    netPayable: { $sum: { $ifNull: ['$restaurantEarning', { $multiply: [{ $ifNull: ['$subtotal', '$totalPrice'] }, 0.85] }] } }
+                    commission: { $sum: { $convert: { input: { $ifNull: ['$commissionAmount', { $multiply: [{ $convert: { input: { $ifNull: ['$subtotal', { $ifNull: ['$totalPrice', 0] }] }, to: 'double', onError: 0, onNull: 0 } }, 0.15] }] }, to: 'double', onError: 0, onNull: 0 } } },
+                    netPayable: { $sum: { $convert: { input: { $ifNull: ['$restaurantEarning', { $multiply: [{ $convert: { input: { $ifNull: ['$subtotal', { $ifNull: ['$totalPrice', 0] }] }, to: 'double', onError: 0, onNull: 0 } }, 0.85] }] }, to: 'double', onError: 0, onNull: 0 } } }
                 }
             },
             {
@@ -919,7 +1001,15 @@ const getUsers = async (req, res) => {
             {
                 $addFields: {
                     totalOrders: { $size: '$orders' },
-                    totalSpent: { $sum: '$orders.totalAmount' },
+                    totalSpent: {
+                        $sum: {
+                            $map: {
+                                input: '$orders',
+                                as: 'o',
+                                in: { $convert: { input: { $ifNull: ['$$o.totalPrice', { $ifNull: ['$$o.totalAmount', 0] }] }, to: 'double', onError: 0, onNull: 0 } }
+                            }
+                        }
+                    },
                     lastOrderDate: { $max: '$orders.createdAt' },
                     cancellations: {
                         $size: {
@@ -960,14 +1050,22 @@ const getUsers = async (req, res) => {
 // @desc    Delete a user
 const deleteUser = async (req, res) => {
     try {
-        const user = await User.findById(req.params.id);
+        const userId = req.params.id;
+        if (!mongoose.Types.ObjectId.isValid(userId)) {
+            return res.status(400).json({ message: 'Invalid User ID format' });
+        }
+
+        const user = await User.findById(userId);
         if (!user) {
             return res.status(404).json({ message: 'User not found' });
         }
 
+        console.log(`🗑️ Deleting user: ${user.email} (${user.role})`);
+
         if (user.role === 'restaurant') {
             const restaurant = await Restaurant.findOne({ owner: user._id });
             if (restaurant) {
+                console.log(`🗑️ Deleting associated restaurant: ${restaurant.name}`);
                 await Dish.deleteMany({ restaurant: restaurant._id });
                 await Video.deleteMany({ restaurant: restaurant._id });
                 await RestaurantWallet.deleteMany({ restaurant: restaurant._id });
@@ -977,44 +1075,56 @@ const deleteUser = async (req, res) => {
         if (user.role === 'rider') {
             const rider = await Rider.findOne({ user: user._id });
             if (rider) {
+                console.log(`🗑️ Deleting associated rider profile: ${rider.fullName || rider.name}`);
                 await RiderWallet.deleteMany({ rider: rider._id });
                 await Rider.findByIdAndDelete(rider._id);
             }
         }
 
-        await User.findByIdAndDelete(req.params.id);
+        await User.findByIdAndDelete(userId);
 
         // Audit Log
         try {
             await AuditLog.create({
                 event: 'USER_DELETED',
                 email: user.email,
-                details: { deletedBy: req.admin?._id || 'system', role: user.role }
+                details: { deletedBy: req.admin?._id || req.user?._id || 'system', role: user.role }
             });
         } catch (auditErr) {
-            console.warn('Audit log creation failed:', auditErr.message);
+            console.warn('⚠️ Audit log creation failed:', auditErr.message);
         }
 
         // Notify admins to refresh UI
-        triggerEvent('admin', 'restaurant_updated');
-        triggerEvent('admin', 'rider_updated');
-        triggerEvent('admin', 'user_updated');
-        triggerEvent('admin', 'stats_updated');
+        try {
+            triggerEvent('admin', 'restaurant_updated');
+            triggerEvent('admin', 'rider_updated');
+            triggerEvent('admin', 'user_updated');
+            triggerEvent('admin', 'stats_updated');
+        } catch (socketErr) {
+            console.warn('⚠️ Socket notification failed:', socketErr.message);
+        }
 
-        res.json({ message: 'User deleted successfully' });
+        res.json({ message: 'User and associated data deleted successfully' });
     } catch (error) {
-        console.error('Delete User Error:', error);
-        res.status(500).json({ message: 'Server error', error: error.message });
+        console.error('❌ Delete User Error:', error);
+        res.status(500).json({ message: 'Server error during user deletion', error: error.message });
     }
 };
 
 // @desc    Delete a restaurant
 const deleteRestaurant = async (req, res) => {
     try {
-        const restaurant = await Restaurant.findById(req.params.id);
+        const restaurantId = req.params.id;
+        if (!mongoose.Types.ObjectId.isValid(restaurantId)) {
+            return res.status(400).json({ message: 'Invalid Restaurant ID format' });
+        }
+
+        const restaurant = await Restaurant.findById(restaurantId);
         if (!restaurant) {
             return res.status(404).json({ message: 'Restaurant not found' });
         }
+
+        console.log(`🗑️ Deleting restaurant: ${restaurant.name}`);
 
         // Delete all associated data
         await Dish.deleteMany({ restaurant: restaurant._id });
@@ -1022,40 +1132,83 @@ const deleteRestaurant = async (req, res) => {
         await RestaurantWallet.deleteMany({ restaurant: restaurant._id });
         
         // Delete the restaurant
-        await Restaurant.findByIdAndDelete(req.params.id);
+        await Restaurant.findByIdAndDelete(restaurantId);
+
+        // Audit Log
+        try {
+            await AuditLog.create({
+                event: 'RESTAURANT_DELETED',
+                details: { 
+                    restaurantId, 
+                    name: restaurant.name,
+                    deletedBy: req.admin?._id || req.user?._id || 'system' 
+                }
+            });
+        } catch (auditErr) {
+            console.warn('⚠️ Audit log creation failed:', auditErr.message);
+        }
 
         // Notify admins
-        triggerEvent('admin', 'restaurant_updated');
-        triggerEvent('admin', 'stats_updated');
+        try {
+            triggerEvent('admin', 'restaurant_updated');
+            triggerEvent('admin', 'stats_updated');
+        } catch (socketErr) {
+            console.warn('⚠️ Socket notification failed:', socketErr.message);
+        }
 
         res.json({ message: 'Restaurant and its associated data deleted successfully' });
     } catch (error) {
-        console.error('Delete Restaurant Error:', error);
-        res.status(500).json({ message: 'Server error', error: error.message });
+        console.error('❌ Delete Restaurant Error:', error);
+        res.status(500).json({ message: 'Server error during restaurant deletion', error: error.message });
     }
 };
 
 // @desc    Delete a rider
 const deleteRider = async (req, res) => {
     try {
-        const rider = await Rider.findById(req.params.id);
+        const riderId = req.params.id;
+        if (!mongoose.Types.ObjectId.isValid(riderId)) {
+            return res.status(400).json({ message: 'Invalid Rider ID format' });
+        }
+
+        const rider = await Rider.findById(riderId);
         if (!rider) {
             return res.status(404).json({ message: 'Rider not found' });
         }
 
+        console.log(`🗑️ Deleting rider: ${rider.fullName || rider.name}`);
+
         // Delete associated data
         await RiderWallet.deleteMany({ rider: rider._id });
-        await Rider.findByIdAndDelete(req.params.id);
+        await Rider.findByIdAndDelete(riderId);
+
+        // Audit Log
+        try {
+            await AuditLog.create({
+                event: 'RIDER_DELETED',
+                details: { 
+                    riderId, 
+                    name: rider.fullName || rider.name,
+                    deletedBy: req.admin?._id || req.user?._id || 'system' 
+                }
+            });
+        } catch (auditErr) {
+            console.warn('⚠️ Audit log creation failed:', auditErr.message);
+        }
 
         // Notify admins
-        triggerEvent('admin', 'rider_updated');
-        triggerEvent('admin', 'user_updated');
-        triggerEvent('admin', 'stats_updated');
+        try {
+            triggerEvent('admin', 'rider_updated');
+            triggerEvent('admin', 'user_updated');
+            triggerEvent('admin', 'stats_updated');
+        } catch (socketErr) {
+            console.warn('⚠️ Socket notification failed:', socketErr.message);
+        }
 
         res.json({ message: 'Rider and its associated data deleted successfully' });
     } catch (error) {
-        console.error('Delete Rider Error:', error);
-        res.status(500).json({ message: 'Server error', error: error.message });
+        console.error('❌ Delete Rider Error:', error);
+        res.status(500).json({ message: 'Server error during rider deletion', error: error.message });
     }
 };
 
@@ -1103,12 +1256,16 @@ const cleanupMockData = async (req, res) => {
         // await seedData(); // Commented out to avoid wiping everything, just fixing data
 
         // Notify all admins to refresh their dashboards
-        triggerEvent('admin', 'restaurant_updated');
-        triggerEvent('admin', 'stats_updated');
-        triggerEvent('admin', 'notification', {
-            type: 'success',
-            message: 'Data cleanup and inflation fix completed successfully'
-        });
+        try {
+            triggerEvent('admin', 'restaurant_updated');
+            triggerEvent('admin', 'stats_updated');
+            triggerEvent('admin', 'notification', {
+                type: 'success',
+                message: 'Data cleanup and inflation fix completed successfully'
+            });
+        } catch (socketErr) {
+            console.warn('⚠️ Socket notification failed:', socketErr.message);
+        }
 
         res.json({ message: 'Data cleanup and inflation fix completed successfully. All dashboards will refresh.' });
     } catch (error) {
@@ -1207,7 +1364,7 @@ const settleRider = async (req, res) => {
         // Log the settlement
         await AuditLog.create([{
             event: 'SETTLE_RIDER',
-            userId: req.user._id,
+            userId: req.admin?._id || req.user?._id || 'system',
             details: {
                 riderId,
                 amountCollected,
@@ -1220,11 +1377,16 @@ const settleRider = async (req, res) => {
         session.endSession();
 
         // Trigger real-time update
-        triggerEvent(`rider-${riderId}`, 'wallet_updated', {
-            cod_balance: rider.cod_balance,
-            earnings_balance: rider.earnings_balance,
-            settlementStatus: rider.settlementStatus
-        });
+        try {
+            const riderData = rider.toObject ? rider.toObject() : rider;
+            triggerEvent(`rider-${riderId}`, 'wallet_updated', {
+                cod_balance: riderData.cod_balance,
+                earnings_balance: riderData.earnings_balance,
+                settlementStatus: riderData.settlementStatus
+            });
+        } catch (socketErr) {
+            console.warn('⚠️ Socket notification failed:', socketErr.message);
+        }
 
         res.json({ message: 'Rider settled successfully', rider });
     } catch (error) {
@@ -1414,7 +1576,12 @@ const getAdminNotifications = async (req, res) => {
 
         // Find notifications where recipient is the current admin or generic admin notifications
         // In our system, recipient is specifically set in adminNotifier.js
-        const notifications = await Notification.find({ recipient: req.user._id })
+        const recipientId = req.admin?._id || req.user?._id;
+        if (!recipientId) {
+            return res.status(401).json({ message: 'Unauthorized' });
+        }
+
+        const notifications = await Notification.find({ recipient: recipientId })
             .sort({ createdAt: -1 })
             .limit(50);
 
@@ -1467,10 +1634,15 @@ const assignRiderToOrder = async (req, res) => {
                 await prevRider.save();
                 
                 // Notify previous rider
-                triggerEvent(`rider-${prevRider._id}`, 'orderUnassigned', { orderId });
-                triggerEvent(`rider-${prevRider._id}`, 'orderStatusUpdate', { _id: orderId, status: 'Unassigned' });
-                // Notify admins about status change
-                triggerEvent('admin', 'rider_status_updated', prevRider);
+                try {
+                    const prevRiderData = prevRider.toObject ? prevRider.toObject() : prevRider;
+                    triggerEvent(`rider-${prevRider._id}`, 'orderUnassigned', { orderId });
+                    triggerEvent(`rider-${prevRider._id}`, 'orderStatusUpdate', { _id: orderId, status: 'Unassigned' });
+                    // Notify admins about status change
+                    triggerEvent('admin', 'rider_status_updated', prevRiderData);
+                } catch (socketErr) {
+                    console.warn('⚠️ Socket notification failed:', socketErr.message);
+                }
             }
         }
 
@@ -1496,7 +1668,12 @@ const assignRiderToOrder = async (req, res) => {
         await rider.save();
         
         // Notify admins about status change
-        triggerEvent('admin', 'rider_status_updated', rider);
+        try {
+            const riderData = rider.toObject ? rider.toObject() : rider;
+            triggerEvent('admin', 'rider_status_updated', riderData);
+        } catch (socketErr) {
+            console.warn('⚠️ Socket notification failed:', socketErr.message);
+        }
 
         const updatedOrder = await Order.findById(orderId)
             .populate('user', 'name phone')
@@ -1507,11 +1684,16 @@ const assignRiderToOrder = async (req, res) => {
             });
 
         // 4. Trigger events
-        triggerEvent(`rider-${riderId}`, 'orderAssigned', updatedOrder);
-        triggerEvent(`rider-${riderId}`, 'orderStatusUpdate', updatedOrder);
-        triggerEvent(`user-${order.user}`, 'orderStatusUpdate', updatedOrder);
-        triggerEvent(`restaurant-${order.restaurant}`, 'orderStatusUpdate', updatedOrder);
-        triggerEvent('admin', 'order_updated', updatedOrder);
+        try {
+            const orderData = updatedOrder.toObject ? updatedOrder.toObject() : updatedOrder;
+            triggerEvent(`rider-${riderId}`, 'orderAssigned', orderData);
+            triggerEvent(`rider-${riderId}`, 'orderStatusUpdate', orderData);
+            triggerEvent(`user-${order.user}`, 'orderStatusUpdate', orderData);
+            triggerEvent(`restaurant-${order.restaurant}`, 'orderStatusUpdate', orderData);
+            triggerEvent('admin', 'order_updated', orderData);
+        } catch (socketErr) {
+            console.warn('⚠️ Socket notification failed:', socketErr.message);
+        }
 
         res.json({ message: 'Rider assigned successfully', order: updatedOrder });
     } catch (error) {
@@ -1548,7 +1730,7 @@ const suspendUser = async (req, res) => {
                     action: 'suspended',
                     date: suspendedAt,
                     reason: reason || 'Violation of terms',
-                    adminId: req.user._id
+                    adminId: req.admin?._id || req.user?._id || 'system'
                 }
             ]
         };
@@ -1572,14 +1754,19 @@ const suspendUser = async (req, res) => {
             userId: user._id,
             email: user.email,
             role: user.role,
-            details: { reason, durationWeeks, suspendedBy: req.user._id, unsuspendAt }
+            details: { reason, durationWeeks, suspendedBy: req.admin?._id || req.user?._id || 'system', unsuspendAt }
         });
 
-        triggerEvent('admin', 'user_updated', user);
-        triggerEvent('admin', 'notification', {
-            type: 'warning',
-            message: `${user.role.toUpperCase()} ${user.name} has been suspended for ${durationWeeks} week(s)`
-        });
+        try {
+            const userData = user.toObject ? user.toObject() : user;
+            triggerEvent('admin', 'user_updated', userData);
+            triggerEvent('admin', 'notification', {
+                type: 'warning',
+                message: `${user.role.toUpperCase()} ${user.name} has been suspended for ${durationWeeks} week(s)`
+            });
+        } catch (socketErr) {
+            console.warn('⚠️ Socket notification failed:', socketErr.message);
+        }
 
         res.json({ message: 'User suspended successfully', user });
     } catch (error) {
@@ -1604,7 +1791,7 @@ const unsuspendUser = async (req, res) => {
             action: 'unsuspended',
             date: new Date(),
             reason: 'Manual unsuspend by admin',
-            adminId: req.user._id
+            adminId: req.admin?._id || req.user?._id || 'system'
         });
 
         await user.save();
@@ -1625,10 +1812,15 @@ const unsuspendUser = async (req, res) => {
             userId: user._id,
             email: user.email,
             role: user.role,
-            details: { unsuspendedBy: req.user._id }
+            details: { unsuspendedBy: req.admin?._id || req.user?._id || 'system' }
         });
 
-        triggerEvent('admin', 'user_updated', user);
+        try {
+            const userData = user.toObject ? user.toObject() : user;
+            triggerEvent('admin', 'user_updated', userData);
+        } catch (socketErr) {
+            console.warn('⚠️ Socket notification failed:', socketErr.message);
+        }
 
         res.json({ message: 'User unsuspended successfully', user });
     } catch (error) {

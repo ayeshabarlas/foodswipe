@@ -296,6 +296,14 @@ const updateStatus = async (req, res) => {
             });
         }
 
+        // Prevent unverified users from going online
+        if (req.body.isOnline && rider.verificationStatus !== 'approved') {
+            return res.status(403).json({ 
+                message: 'Your account is not verified. Please complete your profile and wait for admin approval.',
+                verificationStatus: rider.verificationStatus
+            });
+        }
+
         rider.isOnline = req.body.isOnline;
         rider.status = req.body.isOnline ? 'Available' : 'Offline';
 
@@ -416,6 +424,11 @@ const acceptOrder = async (req, res) => {
                 message: 'You already have an active order. Please complete or cancel it before accepting a new one.',
                 activeOrderId: rider.currentOrder 
             });
+        }
+
+        // Verification Check
+        if (rider.verificationStatus !== 'approved') {
+            return res.status(403).json({ message: 'Account not verified. You cannot accept orders yet.' });
         }
 
         // COD Block Check
