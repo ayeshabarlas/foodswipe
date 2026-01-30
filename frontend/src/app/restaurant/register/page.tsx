@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import CreateRestaurant from '../../components/CreateRestaurant';
+import CreateRestaurant from '../../../components/CreateRestaurant';
 
 export default function RestaurantRegisterPage() {
     const router = useRouter();

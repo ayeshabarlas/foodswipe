@@ -1,4 +1,4 @@
-// Admin Page - Force Build v2.2.35 - 2026-01-30 09:00
+// Admin Page - Force Build v2.2.36 - 2026-01-30 09:10
 "use client";
 
 import { useEffect, useState } from 'react';
