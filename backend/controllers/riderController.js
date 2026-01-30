@@ -163,6 +163,18 @@ const getMyProfile = async (req, res) => {
             await User.findByIdAndUpdate(req.user._id, { role: 'rider' });
         }
 
+        // VALIDATION: If approved but missing documents, revert to 'new'
+        if (rider.verificationStatus === 'approved') {
+            const docs = rider.documents || {};
+            const hasRequiredDocs = docs.cnicFront && docs.cnicBack && docs.drivingLicense && docs.profileSelfie;
+            
+            if (!hasRequiredDocs) {
+                console.log(`[Rider] Approved rider ${rider._id} is missing documents. Reverting to 'new'.`);
+                rider.verificationStatus = 'new';
+                await rider.save();
+            }
+        }
+
         // SYNC COD BALANCE: Ensure rider sees correct COD balance from pending ledger
         const CODLedger = require('../models/CODLedger');
         const pendingTx = await CODLedger.find({ rider: rider._id, status: 'pending' });
@@ -297,11 +309,24 @@ const updateStatus = async (req, res) => {
         }
 
         // Prevent unverified users from going online
-        if (req.body.isOnline && rider.verificationStatus !== 'approved') {
-            return res.status(403).json({ 
-                message: 'Your account is not verified. Please complete your profile and wait for admin approval.',
-                verificationStatus: rider.verificationStatus
-            });
+        if (req.body.isOnline) {
+            if (rider.verificationStatus !== 'approved') {
+                return res.status(403).json({ 
+                    message: 'Your account is not yet verified. Please wait for admin approval.',
+                    verificationStatus: rider.verificationStatus
+                });
+            }
+
+            // Double check documents for 'approved' riders
+            const docs = rider.documents || {};
+            const hasRequiredDocs = docs.cnicFront && docs.cnicBack && docs.drivingLicense && docs.profileSelfie;
+            if (!hasRequiredDocs) {
+                rider.verificationStatus = 'new';
+                await rider.save();
+                return res.status(403).json({ 
+                    message: 'Required documents are missing. Please upload them to continue.',
+                });
+            }
         }
 
         rider.isOnline = req.body.isOnline;

@@ -90,7 +90,7 @@ async function fixRiderAccounts() {
                     fullName: data.name,
                     email: data.email,
                     phone: data.phone,
-                    verificationStatus: 'approved',
+                    verificationStatus: 'new',
                     status: 'Available',
                     cod_balance: 0,
                     earnings_balance: 0,

@@ -1050,14 +1050,54 @@ const getUsers = async (req, res) => {
 // @desc    Delete a user
 const deleteUser = async (req, res) => {
     try {
-        const userId = req.params.id;
-        if (!mongoose.Types.ObjectId.isValid(userId)) {
-            return res.status(400).json({ message: 'Invalid User ID format' });
+        const id = req.params.id;
+        if (!mongoose.Types.ObjectId.isValid(id)) {
+            return res.status(400).json({ message: 'Invalid ID format' });
         }
 
-        const user = await User.findById(userId);
+        let user = await User.findById(id);
+        
+        // If user not found, check if it's a Rider ID or Restaurant ID being passed
         if (!user) {
-            return res.status(404).json({ message: 'User not found' });
+            console.log(`🔍 User not found with ID ${id}, checking for Rider/Restaurant...`);
+            
+            // Check if it's a Rider ID
+            const rider = await Rider.findById(id);
+            if (rider) {
+                console.log(`🗑️ Deleting rider directly: ${rider.fullName}`);
+                await RiderWallet.deleteMany({ rider: rider._id });
+                await Rider.findByIdAndDelete(id);
+                
+                // Audit Log
+                await AuditLog.create({
+                    event: 'RIDER_DELETED',
+                    email: rider.fullName,
+                    details: { deletedBy: req.admin?._id || req.user?._id || 'system', direct: true }
+                }).catch(e => console.warn('Audit failed:', e.message));
+
+                return res.json({ message: 'Rider record deleted successfully' });
+            }
+
+            // Check if it's a Restaurant ID
+            const restaurant = await Restaurant.findById(id);
+            if (restaurant) {
+                console.log(`🗑️ Deleting restaurant directly: ${restaurant.name}`);
+                await Dish.deleteMany({ restaurant: restaurant._id });
+                await Video.deleteMany({ restaurant: restaurant._id });
+                await RestaurantWallet.deleteMany({ restaurant: restaurant._id });
+                await Restaurant.findByIdAndDelete(id);
+
+                // Audit Log
+                await AuditLog.create({
+                    event: 'RESTAURANT_DELETED',
+                    email: restaurant.name,
+                    details: { deletedBy: req.admin?._id || req.user?._id || 'system', direct: true }
+                }).catch(e => console.warn('Audit failed:', e.message));
+
+                return res.json({ message: 'Restaurant record deleted successfully' });
+            }
+
+            return res.status(404).json({ message: 'User or Partner not found' });
         }
 
         console.log(`🗑️ Deleting user: ${user.email} (${user.role})`);
@@ -1081,7 +1121,7 @@ const deleteUser = async (req, res) => {
             }
         }
 
-        await User.findByIdAndDelete(userId);
+        await User.findByIdAndDelete(id);
 
         // Audit Log
         try {

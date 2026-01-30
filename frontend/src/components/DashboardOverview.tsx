@@ -45,42 +45,75 @@ export default function DashboardOverview({ stats, restaurant }: DashboardOvervi
 
     return (
         <div className="p-6 space-y-8 max-w-7xl mx-auto">
-            {/* Verification Alert Banner */}
+            {/* Professional Under Approval / Profile Completion Banner */}
             {((restaurant?.verificationStatus !== 'verified' && restaurant?.verificationStatus !== 'approved') || !restaurant?.isVerified) && (
                 <motion.div 
-                    initial={{ opacity: 0, y: -20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    className="bg-amber-50 border border-amber-200 p-4 rounded-2xl flex items-center justify-between gap-4"
+                    initial={{ opacity: 0, scale: 0.95 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    className="relative overflow-hidden rounded-[32px] shadow-2xl border border-white/20"
                 >
-                    <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 bg-amber-100 text-amber-600 rounded-xl flex items-center justify-center shrink-0">
-                            <FaUtensils size={18} />
+                    {/* Background with dynamic colors based on status */}
+                    <div className={`absolute inset-0 bg-gradient-to-br ${restaurant?.verificationStatus === 'new' ? 'from-orange-500 via-red-500 to-pink-500' : 'from-amber-400 via-orange-500 to-amber-600'} opacity-90`} />
+                    
+                    <div className="relative px-8 py-10 flex flex-col md:flex-row items-center justify-between gap-8 z-10 backdrop-blur-sm">
+                        <div className="flex items-center gap-6">
+                            <div className="w-20 h-20 bg-white/20 backdrop-blur-md rounded-[24px] flex items-center justify-center shrink-0 border border-white/30 shadow-inner group-hover:scale-110 transition-transform duration-500">
+                                {restaurant?.verificationStatus === 'new' ? (
+                                    <FaUtensils className="text-white text-3xl" />
+                                ) : (
+                                    <FaClock className="text-white text-3xl animate-pulse" />
+                                )}
+                            </div>
+                            <div className="text-white">
+                                <h3 className="text-2xl font-black mb-2 tracking-tight">
+                                    {restaurant?.verificationStatus === 'new' ? 'Complete Your Store Setup' : 'Profile Under Review'}
+                                </h3>
+                                <p className="text-white/90 text-sm font-medium leading-relaxed max-w-lg">
+                                    {restaurant?.verificationStatus === 'new' 
+                                        ? 'Your restaurant is almost ready! Complete your address and upload documents to start receiving orders from thousands of customers.'
+                                        : 'Our team is currently verifying your documents and store details. This process usually takes 24-48 hours. We\'ll notify you once you\'re live!'}
+                                </p>
+                                
+                                <div className="mt-4 flex items-center gap-4">
+                                    <div className="flex items-center gap-2 bg-white/10 px-3 py-1 rounded-full border border-white/20">
+                                        <div className={`w-2 h-2 rounded-full ${restaurant?.verificationStatus === 'new' ? 'bg-red-400' : 'bg-amber-400 animate-pulse'}`} />
+                                        <span className="text-[10px] font-bold uppercase tracking-widest">
+                                            Status: {restaurant?.verificationStatus === 'new' ? 'Action Required' : 'Verification Pending'}
+                                        </span>
+                                    </div>
+                                    <div className="w-1 h-1 rounded-full bg-white/30" />
+                                    <span className="text-[10px] font-bold text-white/60 uppercase tracking-widest">
+                                        Estimated Time: 24h
+                                    </span>
+                                </div>
+                            </div>
                         </div>
-                        <div>
-                            <h4 className="text-sm font-bold text-amber-900">
-                                {restaurant?.verificationStatus === 'new' ? 'Action Required: Complete Profile' : 'Verification Pending'}
-                            </h4>
-                            <p className="text-xs text-amber-700 font-medium">
-                                {restaurant?.verificationStatus === 'new' 
-                                    ? 'Please complete your restaurant address and documents to start accepting orders.'
-                                    : 'Your restaurant profile is under review. Please ensure all documents and store details are complete.'}
-                            </p>
+                        
+                        <div className="flex flex-col sm:flex-row gap-4 w-full md:w-auto">
+                            <button 
+                                onClick={() => {
+                                    if (restaurant?.verificationStatus === 'new') {
+                                        window.location.href = '/restaurant/dashboard?page=store';
+                                    } else {
+                                        window.location.href = '/restaurant-registration';
+                                    }
+                                }}
+                                className="bg-white text-gray-900 px-8 py-4 rounded-2xl text-sm font-black whitespace-nowrap hover:bg-gray-100 transition-all shadow-xl hover:shadow-2xl active:scale-95 uppercase tracking-wider"
+                            >
+                                {restaurant?.verificationStatus === 'new' ? 'Complete Now' : 'Check Details'}
+                            </button>
+                            <button 
+                                onClick={() => window.location.href = '/restaurant/dashboard?page=support'}
+                                className="bg-white/10 text-white border border-white/30 px-6 py-4 rounded-2xl text-sm font-bold whitespace-nowrap hover:bg-white/20 transition-all backdrop-blur-md uppercase tracking-wider"
+                            >
+                                Contact Support
+                            </button>
                         </div>
                     </div>
-                    <button 
-                        onClick={() => {
-                            if (restaurant?.verificationStatus === 'new') {
-                                // Trigger navigation to store settings if in same component, 
-                                // but window.location is safer if we don't have access to setActivePage here
-                                window.location.href = '/restaurant/dashboard?page=store';
-                            } else {
-                                window.location.href = '/restaurant-registration';
-                            }
-                        }}
-                        className="bg-amber-600 text-white px-4 py-2 rounded-xl text-xs font-bold whitespace-nowrap hover:bg-amber-700 transition-colors"
-                    >
-                        {restaurant?.verificationStatus === 'new' ? 'Complete Now' : 'Update Profile'}
-                    </button>
+                    
+                    {/* Decorative element */}
+                    <div className="absolute top-[-50px] right-[-50px] w-48 h-48 bg-white/10 rounded-full blur-3xl" />
+                    <div className="absolute bottom-[-50px] left-[-50px] w-48 h-48 bg-black/10 rounded-full blur-3xl" />
                 </motion.div>
             )}
 

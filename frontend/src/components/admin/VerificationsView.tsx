@@ -110,8 +110,12 @@ export default function VerificationsView({ initialTab = 'restaurants' }: { init
                         <p className="text-[12px] text-[#6B7280]">{item.owner?.email || item.user?.email}</p>
                     </div>
                 </div>
-                <span className="px-2.5 py-1 bg-yellow-50 text-yellow-600 rounded-full text-[10px] font-bold uppercase tracking-wider">
-                    Pending
+                <span className={`px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider ${
+                    item.verificationStatus === 'new' 
+                        ? 'bg-blue-50 text-blue-600' 
+                        : 'bg-yellow-50 text-yellow-600'
+                }`}>
+                    {item.verificationStatus || 'Pending'}
                 </span>
             </div>
 

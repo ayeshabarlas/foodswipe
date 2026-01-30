@@ -63,9 +63,11 @@ export default function Home() {
           const ui = JSON.parse(userInfoStr);
           if (ui.role === "restaurant") {
             setUserRole("restaurant");
-            setHasRestaurant(true); // Trust the role, show dashboard
+            // Check if we already know they have a restaurant
+            const cachedHasRes = localStorage.getItem("hasRestaurant") === "true";
+            setHasRestaurant(cachedHasRes); 
             setIsLoggedIn(true);
-            setLoading(false); // STOP LOADING EARLY
+            setLoading(false);
           } else if (ui.role) {
             setUserRole(ui.role);
             setIsLoggedIn(true);
@@ -174,7 +176,22 @@ export default function Home() {
         // Set states
         setUserRole(role);
         if (role === "restaurant") {
-          setHasRestaurant(true);
+          // IMPORTANT: Check if restaurant already exists
+          try {
+            const resCheck = await axios.get(`${getApiUrl()}/api/restaurants/my-restaurant`, {
+              headers: { Authorization: `Bearer ${token}` }
+            });
+            if (resCheck.data) {
+              setHasRestaurant(true);
+              localStorage.setItem("hasRestaurant", "true");
+            } else {
+              setHasRestaurant(false);
+              localStorage.setItem("hasRestaurant", "false");
+            }
+          } catch (err) {
+            setHasRestaurant(false);
+            localStorage.setItem("hasRestaurant", "false");
+          }
         }
         setIsLoggedIn(true);
 

@@ -419,8 +419,8 @@ export default function RestaurantDashboard() {
         }
     };
 
-    // If it's the "new" placeholder, show CreateRestaurant
-    if (restaurant?.isNew) {
+    // If it's the "new" placeholder or status is not approved/pending, show CreateRestaurant
+    if (restaurant?.isNew || displayRestaurant.verificationStatus === 'new' || displayRestaurant.verificationStatus === 'not_started') {
         return <CreateRestaurant onRestaurantCreated={fetchDashboardData} />;
     }
 
@@ -788,40 +788,8 @@ export default function RestaurantDashboard() {
                     </div>
                 </header>
 
-                {/* Banner for Pending/New Status */}
-                {(isPending || isNew) && (
-                    <div 
-                        onClick={() => {
-                            console.log("Banner clicked, navigating to registration...");
-                            router.push('/restaurant-registration');
-                        }}
-                        className={`bg-gradient-to-r ${isNew ? 'from-orange-500 to-red-600 cursor-pointer hover:from-orange-600 hover:to-red-700' : 'from-orange-400 to-orange-500 cursor-pointer hover:from-orange-500 hover:to-orange-600'} text-white px-6 py-3 text-[11px] font-bold uppercase tracking-wider flex items-center justify-between z-[40] shadow-lg sticky top-[72px] md:top-[80px] transition-all active:scale-[0.99] group`}
-                    >
-                        <div className="flex items-center gap-3">
-                            <div className="bg-white/20 p-1.5 rounded-full animate-pulse group-hover:scale-110 transition-transform">
-                                {isNew ? <FaExclamationCircle size={14} /> : <FaClock size={14} />}
-                            </div>
-                            <span className="leading-tight">
-                                {isNew 
-                                    ? <strong>Action Required: Complete your restaurant registration (Address & Documents) to start receiving orders.</strong>
-                                    : <>Your restaurant is currently in <strong>Verification Mode</strong>. Click here to check your registration details.</>}
-                            </span>
-                        </div>
-                        <div className="flex items-center gap-2">
-                            <button
-                                onClick={(e) => {
-                                    e.stopPropagation();
-                                    console.log("Banner button clicked, navigating to registration...");
-                                    router.push('/restaurant-registration');
-                                }}
-                                className="bg-white text-orange-600 px-4 py-1.5 rounded-xl text-[10px] font-black hover:bg-gray-50 transition shadow-sm uppercase tracking-widest whitespace-nowrap"
-                            >
-                                {isNew ? 'Complete Now' : 'View Details'}
-                            </button>
-                        </div>
-                    </div>
-                )}
-
+                {/* Banner for Pending/New Status removed as requested */}
+                
                 <div className="flex-1 bg-gray-50/50 flex flex-col">
                     <div className="flex-1 overflow-y-auto custom-scrollbar p-4 lg:p-6 max-w-7xl mx-auto w-full text-[13px]">
                         <AnimatePresence mode="wait">

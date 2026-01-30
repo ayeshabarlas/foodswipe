@@ -470,31 +470,52 @@ const RiderDashboard = ({
                 </div>
             )}
 
-            {/* Verification Status Banner */}
-            {(displayRider.verificationStatus !== 'approved' || !riderData?.cnicNumber) && !loading && (
-                <div 
-                    onClick={() => {
-                        if (displayRider.verificationStatus !== 'pending' || !riderData?.cnicNumber) {
-                            onCompleteProfile ? onCompleteProfile() : window.location.href = '/rider/register';
-                        }
-                    }}
-                    className={`bg-orange-50 border-b border-orange-100 px-6 py-3 flex items-center gap-3 ${(displayRider.verificationStatus !== 'pending' || !riderData?.cnicNumber) ? 'cursor-pointer hover:bg-orange-100 transition-colors' : ''}`}
-                >
-                    <FaExclamationCircle className="text-orange-500 shrink-0" />
-                    <div className="flex-1">
-                        <p className="text-orange-800 text-[10px] font-medium leading-tight">
-                            {displayRider.verificationStatus === 'pending' && riderData?.cnicNumber
-                                ? 'Your profile is under review. You can see orders but cannot accept them yet.'
-                                : 'Complete your profile registration (CNIC & Details) to start accepting orders.'}
-                        </p>
-                    </div>
-                    {(displayRider.verificationStatus !== 'pending' || !riderData?.cnicNumber) && (
-                        <button 
-                            className="bg-orange-500 text-white px-3 py-1.5 rounded-lg text-[9px] font-bold uppercase"
-                        >
-                            Complete
-                        </button>
-                    )}
+            {/* Professional Verification Status Banner */}
+            {(displayRider.verificationStatus !== 'approved' || !riderData?.cnicNumber || !riderData?.documents?.cnicFront) && !loading && (
+                <div className="px-4 mt-2">
+                    <motion.div 
+                        initial={{ opacity: 0, scale: 0.95 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        className="relative overflow-hidden rounded-[32px] shadow-xl border border-white/20"
+                    >
+                        {/* Background with dynamic colors based on status */}
+                        <div className={`absolute inset-0 bg-gradient-to-br ${(!riderData?.cnicNumber || !riderData?.documents?.cnicFront) ? 'from-orange-500 via-red-500 to-pink-500' : 'from-amber-400 via-orange-500 to-amber-600'} opacity-90`} />
+                        
+                        <div className="relative px-6 py-8 flex flex-col items-center text-center gap-4 z-10 backdrop-blur-sm">
+                            <div className="w-16 h-16 bg-white/20 backdrop-blur-md rounded-2xl flex items-center justify-center shrink-0 border border-white/30 shadow-inner group-hover:scale-110 transition-transform duration-500">
+                                {(!riderData?.cnicNumber || !riderData?.documents?.cnicFront) ? (
+                                    <FaMotorcycle className="text-white text-3xl" />
+                                ) : (
+                                    <FaClock className="text-white text-3xl animate-pulse" />
+                                )}
+                            </div>
+                            
+                            <div className="text-white">
+                                <h3 className="text-xl font-black mb-1 tracking-tight">
+                                    {(!riderData?.cnicNumber || !riderData?.documents?.cnicFront) ? 'Activate Your Account' : 'Verification in Progress'}
+                                </h3>
+                                <p className="text-white/90 text-[11px] font-medium leading-relaxed max-w-xs mx-auto">
+                                    {(!riderData?.cnicNumber || !riderData?.documents?.cnicFront)
+                                        ? 'Complete your profile with CNIC and documents to start accepting orders and earning money.'
+                                        : 'Our team is reviewing your documents. You\'ll be able to start delivery as soon as you\'re verified!'}
+                                </p>
+                            </div>
+
+                            <button 
+                                onClick={() => {
+                                    if (displayRider.verificationStatus !== 'pending' || !riderData?.cnicNumber || !riderData?.documents?.cnicFront) {
+                                        onCompleteProfile ? onCompleteProfile() : window.location.href = '/rider/register';
+                                    }
+                                }}
+                                className="bg-white text-gray-900 px-8 py-3 rounded-xl text-xs font-black whitespace-nowrap hover:bg-gray-100 transition-all shadow-xl active:scale-95 uppercase tracking-wider"
+                            >
+                                {(!riderData?.cnicNumber || !riderData?.documents?.cnicFront) ? 'Complete Profile' : 'Check Status'}
+                            </button>
+                        </div>
+                        
+                        {/* Decorative element */}
+                        <div className="absolute top-[-30px] right-[-30px] w-32 h-32 bg-white/10 rounded-full blur-2xl" />
+                    </motion.div>
                 </div>
             )}
 

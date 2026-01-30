@@ -217,7 +217,11 @@ export default function RidersView() {
 
     const handleDeleteUser = async (id: string, e: React.MouseEvent) => {
         e.stopPropagation();
-        if (!window.confirm('DANGER: Permanently delete this rider account?')) return;
+        if (!id) {
+            toast.error('Invalid ID: User reference missing');
+            return;
+        }
+        if (!window.confirm('DANGER: Permanently delete this rider account? This will remove the user login, rider profile, wallet, and all history.')) return;
         try {
             const userInfo = JSON.parse(localStorage.getItem('userInfo') || '{}');
             if (!userInfo.token) return;
@@ -225,8 +229,8 @@ export default function RidersView() {
             await axios.delete(`${getApiUrl()}/api/admin/users/${id}`, {
                 headers: { Authorization: `Bearer ${userInfo.token}` }
             });
-            toast.success('Rider deleted');
-            if (selectedRider?.user?._id === id) setSelectedRider(null);
+            toast.success('Rider and user account deleted');
+            if (selectedRider?.user?._id === id || selectedRider?._id === id) setSelectedRider(null);
             fetchRiders();
         } catch (error: any) {
             console.error('Error deleting rider:', error);
@@ -775,10 +779,10 @@ export default function RidersView() {
                                                 </button>
                                             )}
                                             <button
-                                                onClick={(e) => handleDeleteUser(selectedRider.user?._id, e)}
-                                                className="flex-1 bg-white border-2 border-red-100 text-red-500 hover:bg-red-600 hover:text-white hover:border-transparent px-8 py-4 rounded-2xl font-bold text-[14px] transition-all active:scale-95"
+                                                onClick={(e) => handleDeleteUser(selectedRider.user?._id || selectedRider._id, e)}
+                                                className="flex-1 bg-white border-2 border-red-100 text-red-500 hover:bg-red-600 hover:text-white hover:border-transparent px-8 py-4 rounded-2xl font-bold text-[14px] transition-all active:scale-95 flex items-center justify-center gap-2"
                                             >
-                                                Permanently Delete
+                                                <FaTrash /> Permanently Delete
                                             </button>
                                         </div>
                                     )}

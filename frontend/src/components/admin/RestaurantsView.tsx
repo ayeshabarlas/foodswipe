@@ -198,8 +198,11 @@ export default function RestaurantsView() {
 
     const handleDeleteUser = async (id: string, e: React.MouseEvent) => {
         e.stopPropagation();
-        if (!id) return;
-        if (!window.confirm('DANGER: Permanently delete this user and their restaurant?')) return;
+        if (!id) {
+            toast.error('Invalid ID: User reference missing');
+            return;
+        }
+        if (!window.confirm('DANGER: Permanently delete this user and their restaurant? This will remove everything including dishes, orders, and wallet.')) return;
         try {
             const userInfo = JSON.parse(localStorage.getItem('userInfo') || '{}');
             if (!userInfo.token) return;
@@ -207,7 +210,8 @@ export default function RestaurantsView() {
             await axios.delete(`${getApiUrl()}/api/admin/users/${id}`, {
                 headers: { Authorization: `Bearer ${userInfo.token}` }
             });
-            toast.success('User deleted');
+            toast.success('Restaurant and user account deleted');
+            if (selectedRestaurant?.owner?._id === id || selectedRestaurant?._id === id) setSelectedRestaurant(null);
             fetchRestaurants();
         } catch (error: any) {
             console.error('Error deleting user:', error);
@@ -876,10 +880,10 @@ export default function RestaurantsView() {
                                                 </button>
                                             )}
                                             <button
-                                                onClick={(e) => handleDeleteUser(selectedRestaurant.owner?._id, e)}
-                                                className="flex-1 bg-red-50 text-red-600 hover:bg-red-600 hover:text-white px-8 py-4 rounded-2xl font-bold text-[14px] transition-all active:scale-[0.98]"
+                                                onClick={(e) => handleDeleteUser(selectedRestaurant.owner?._id || selectedRestaurant._id, e)}
+                                                className="flex-1 bg-red-50 text-red-600 hover:bg-red-600 hover:text-white px-8 py-4 rounded-2xl font-bold text-[14px] transition-all active:scale-[0.98] flex items-center justify-center gap-2"
                                             >
-                                                Permanently Delete
+                                                <FaTrash /> Permanently Delete
                                             </button>
                                         </div>
                                     )}

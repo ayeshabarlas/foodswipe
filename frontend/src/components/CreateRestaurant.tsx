@@ -185,8 +185,8 @@ export default function CreateRestaurant({ onRestaurantCreated }: CreateRestaura
                         </button>
 
                     <div className="bg-gradient-to-r from-orange-500 to-red-600 p-10 rounded-t-3xl text-white text-center">
-                        <h2 className="text-3xl font-bold mb-2">Create Your Food Business Profile</h2>
-                        <p className="opacity-95 font-light">Select your business type to get started</p>
+                        <h2 className="text-3xl font-light tracking-tight mb-2">Create Your Food Business Profile</h2>
+                        <p className="opacity-95 font-light tracking-wide">Select your business type to get started</p>
                     </div>
 
                     <div className="bg-white p-8 rounded-b-3xl shadow-xl">
@@ -213,11 +213,11 @@ export default function CreateRestaurant({ onRestaurantCreated }: CreateRestaura
                                     <FaUtensils size={22} />
                                 </div>
                                 <div className="flex-1">
-                                    <h3 className="font-bold text-gray-900 text-lg mb-1">Home Chef</h3>
-                                    <p className="text-gray-600 text-sm mb-3 font-light">Home-based kitchen, no license required</p>
+                                    <h3 className="font-medium text-gray-900 text-lg mb-1 tracking-tight">Home Chef</h3>
+                                    <p className="text-gray-500 text-sm mb-3 font-light leading-relaxed">Home-based kitchen, no license required</p>
                                     <div className="flex gap-2 flex-wrap">
-                                        <span className="bg-green-50 text-green-700 text-xs font-medium px-3 py-1.5 rounded-full">No License Needed</span>
-                                        <span className="bg-blue-50 text-blue-600 text-xs font-medium px-3 py-1.5 rounded-full">Quick Setup</span>
+                                        <span className="bg-green-50 text-green-700 text-[11px] font-medium px-3 py-1.5 rounded-full uppercase tracking-wider">No License Needed</span>
+                                        <span className="bg-blue-50 text-blue-600 text-[11px] font-medium px-3 py-1.5 rounded-full uppercase tracking-wider">Quick Setup</span>
                                     </div>
                                 </div>
                             </div>
@@ -233,11 +233,11 @@ export default function CreateRestaurant({ onRestaurantCreated }: CreateRestaura
                                     <FaStore size={22} />
                                 </div>
                                 <div className="flex-1">
-                                    <h3 className="font-bold text-gray-900 text-lg mb-1">Restaurant Owner</h3>
-                                    <p className="text-gray-600 text-sm mb-3 font-light">Physical restaurant, license required</p>
+                                    <h3 className="font-medium text-gray-900 text-lg mb-1 tracking-tight">Restaurant Owner</h3>
+                                    <p className="text-gray-500 text-sm mb-3 font-light leading-relaxed">Physical restaurant, license required</p>
                                     <div className="flex gap-2 flex-wrap">
-                                        <span className="bg-orange-50 text-orange-700 text-xs font-medium px-3 py-1.5 rounded-full">License Required</span>
-                                        <span className="bg-purple-50 text-purple-700 text-xs font-medium px-3 py-1.5 rounded-full">Verified Business</span>
+                                        <span className="bg-orange-50 text-orange-700 text-[11px] font-medium px-3 py-1.5 rounded-full uppercase tracking-wider">License Required</span>
+                                        <span className="bg-purple-50 text-purple-700 text-[11px] font-medium px-3 py-1.5 rounded-full uppercase tracking-wider">Verified Business</span>
                                     </div>
                                 </div>
                             </div>
@@ -263,112 +263,117 @@ export default function CreateRestaurant({ onRestaurantCreated }: CreateRestaura
                     <FaArrowLeft size={14} /> Back to selection
                 </button>
 
-                <div className="flex items-center gap-4 mb-8 bg-white p-5 rounded-2xl shadow-sm">
-                    <div className={`p-3 rounded-xl ${businessType === 'home-chef' ? 'bg-gradient-to-br from-orange-500 to-red-500' : 'bg-orange-600'} text-white`}>
-                        {businessType === 'home-chef' ? <FaUtensils size={22} /> : <FaStore size={22} />}
+                <div className="flex items-center gap-4 mb-8 bg-white p-6 rounded-3xl shadow-sm border border-gray-100">
+                    <div className={`p-4 rounded-2xl ${businessType === 'home-chef' ? 'bg-gradient-to-br from-orange-500 to-red-500' : 'bg-orange-600'} text-white shadow-lg`}>
+                        {businessType === 'home-chef' ? <FaUtensils size={24} /> : <FaStore size={24} />}
                     </div>
                     <div>
-                        <h1 className="text-xl md:text-2xl font-bold text-gray-900">
+                        <h1 className="text-2xl md:text-3xl font-light text-gray-900 tracking-tight">
                             {businessType === 'home-chef' ? 'Home Chef Profile' : 'Restaurant Owner Profile'}
                         </h1>
-                        <p className="text-gray-500 text-sm font-light mt-0.5">
-                            {businessType === 'home-chef' ? 'License required • Verified business' : 'License required • Verified business'}
+                        <p className="text-gray-400 text-[13px] font-light mt-1 tracking-wide uppercase">
+                            {businessType === 'home-chef' ? 'Partner Registration • Step 2 of 2' : 'Partner Registration • Step 2 of 2'}
                         </p>
                     </div>
                 </div>
 
-                <form onSubmit={handleSubmit} className="space-y-5">
+                <form onSubmit={handleSubmit} className="space-y-6">
                     {/* Business Information */}
-                    <div className="bg-white rounded-2xl shadow-sm overflow-hidden border border-gray-100">
-                        <div className="px-6 py-4 border-b border-gray-100">
-                            <h3 className="font-semibold text-gray-900">Business Information</h3>
+                    <div className="bg-white rounded-[2rem] shadow-sm overflow-hidden border border-gray-100/50 p-8">
+                        <div className="mb-8">
+                            <h3 className="text-xl font-light text-gray-900 tracking-tight flex items-center gap-3">
+                                <span className="w-1.5 h-6 bg-orange-500 rounded-full"></span>
+                                Business Information
+                            </h3>
                         </div>
 
-                        <div className="p-6 space-y-4">
+                        <div className="space-y-6">
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-2">
-                                    {businessType === 'restaurant' ? 'Restaurant Name' : 'Full Name'} <span className="text-red-500">*</span>
+                                <label className="block text-[13px] font-medium text-gray-500 uppercase tracking-widest mb-2.5 ml-1">
+                                    {businessType === 'restaurant' ? 'Restaurant Name' : 'Full Name'} <span className="text-red-400">*</span>
                                 </label>
                                 <input
                                     type="text"
                                     required
                                     value={businessType === 'restaurant' ? formData.restaurantName : formData.ownerFullName}
                                     onChange={(e) => setFormData({ ...formData, [businessType === 'restaurant' ? 'restaurantName' : 'ownerFullName']: e.target.value })}
-                                    className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-blue-400 focus:border-transparent outline-none transition text-sm font-medium text-gray-900 placeholder:text-gray-400 bg-gray-50/50"
-                                    placeholder={businessType === 'restaurant' ? 'Enter restaurant name' : 'Enter your full name'}
+                                    className="w-full px-5 py-4 rounded-2xl border border-gray-100 focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 outline-none transition-all text-[15px] font-light text-gray-900 placeholder:text-gray-300 bg-gray-50/30"
+                                    placeholder={businessType === 'restaurant' ? 'e.g. Tasty Bites' : 'Enter your full name'}
                                 />
                             </div>
 
                             {businessType === 'restaurant' && (
                                 <div>
-                                    <label className="block text-sm font-semibold text-gray-800 mb-2">
-                                        Owner Full Name <span className="text-red-500">*</span>
+                                    <label className="block text-[13px] font-medium text-gray-500 uppercase tracking-widest mb-2.5 ml-1">
+                                        Owner Full Name <span className="text-red-400">*</span>
                                     </label>
                                     <input
                                         type="text"
                                         required
                                         value={formData.ownerFullName}
                                         onChange={(e) => setFormData({ ...formData, ownerFullName: e.target.value })}
-                                        className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-blue-400 focus:border-transparent outline-none transition text-sm font-medium text-gray-900 placeholder:text-gray-400 bg-gray-50/50"
+                                        className="w-full px-5 py-4 rounded-2xl border border-gray-100 focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 outline-none transition-all text-[15px] font-light text-gray-900 placeholder:text-gray-300 bg-gray-50/30"
                                         placeholder="Enter owner's full name"
                                     />
                                 </div>
                             )}
 
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-2">
-                                    Phone Number <span className="text-red-500">*</span>
-                                </label>
-                                <div className="relative">
-                                    <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500 text-sm font-light">+92</span>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                <div>
+                                    <label className="block text-[13px] font-medium text-gray-500 uppercase tracking-widest mb-2.5 ml-1">
+                                        Phone Number <span className="text-red-400">*</span>
+                                    </label>
+                                    <div className="relative">
+                                        <span className="absolute left-5 top-1/2 -translate-y-1/2 text-gray-400 text-[15px] font-light">+92</span>
+                                        <input
+                                            type="tel"
+                                            required
+                                            value={formData.phone}
+                                            onChange={handlePhoneChange}
+                                            className="w-full pl-14 pr-5 py-4 rounded-2xl border border-gray-100 focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 outline-none transition-all text-[15px] font-light text-gray-900 placeholder:text-gray-300 bg-gray-50/30"
+                                            placeholder="300 1234567"
+                                        />
+                                    </div>
+                                </div>
+
+                                <div>
+                                    <label className="block text-[13px] font-medium text-gray-500 uppercase tracking-widest mb-2.5 ml-1">
+                                        Email Address <span className="text-red-400">*</span>
+                                    </label>
                                     <input
-                                        type="tel"
+                                        type="email"
                                         required
-                                        value={formData.phone}
-                                        onChange={handlePhoneChange}
-                                        className="w-full pl-12 pr-4 py-2.5 rounded-lg border border-gray-200 focus:ring-2 focus:ring-blue-400 focus:border-transparent outline-none transition text-sm font-light"
-                                        placeholder="300 1234567"
+                                        value={formData.email}
+                                        onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                                        className="w-full px-5 py-4 rounded-2xl border border-gray-100 focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 outline-none transition-all text-[15px] font-light text-gray-900 placeholder:text-gray-300 bg-gray-50/30"
+                                        placeholder="business@foodswipe.pk"
                                     />
                                 </div>
                             </div>
 
                             <div>
-                                <label className="block text-sm font-semibold text-gray-800 mb-2">
-                                    Email <span className="text-red-500">*</span>
-                                </label>
-                                <input
-                                    type="email"
-                                    required
-                                    value={formData.email}
-                                    onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                                    className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-blue-400 focus:border-transparent outline-none transition text-sm font-medium text-gray-900 placeholder:text-gray-400 bg-gray-50/50"
-                                    placeholder="restaurant@example.com"
-                                />
-                            </div>
-
-                            <div>
-                                <label className="block text-sm font-semibold text-gray-800 mb-2">
-                                    {businessType === 'restaurant' ? 'Business Address' : 'Home Address (Pickup Location)'} <span className="text-red-500">*</span>
+                                <label className="block text-[13px] font-medium text-gray-500 uppercase tracking-widest mb-2.5 ml-1">
+                                    {businessType === 'restaurant' ? 'Business Address' : 'Home Address (Pickup Location)'} <span className="text-red-400">*</span>
                                 </label>
                                 <textarea
                                     required
                                     value={formData.address}
                                     onChange={(e) => setFormData({ ...formData, address: e.target.value })}
-                                    className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-blue-400 focus:border-transparent outline-none transition resize-none h-24 text-sm font-medium text-gray-900 placeholder:text-gray-400 bg-gray-50/50"
-                                    placeholder="Enter complete business address"
+                                    className="w-full px-5 py-4 rounded-2xl border border-gray-100 focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 outline-none transition-all resize-none h-28 text-[15px] font-light text-gray-900 placeholder:text-gray-300 bg-gray-50/30"
+                                    placeholder="Enter complete address for delivery pickups"
                                 />
                             </div>
 
                             {businessType === 'restaurant' && (
                                 <div>
-                                    <label className="block text-sm font-semibold text-gray-800 mb-2">
+                                    <label className="block text-[13px] font-medium text-gray-500 uppercase tracking-widest mb-2.5 ml-1">
                                         Tax Number / NTN
                                     </label>
                                     <input
                                         type="text"
                                         value={formData.taxNumber}
                                         onChange={(e) => setFormData({ ...formData, taxNumber: e.target.value })}
-                                        className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-blue-400 focus:border-transparent outline-none transition text-sm font-medium text-gray-900 placeholder:text-gray-400 bg-gray-50/50"
+                                        className="w-full px-5 py-4 rounded-2xl border border-gray-100 focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 outline-none transition-all text-[15px] font-light text-gray-900 placeholder:text-gray-300 bg-gray-50/30"
                                         placeholder="Enter tax registration number"
                                     />
                                 </div>
@@ -377,16 +382,19 @@ export default function CreateRestaurant({ onRestaurantCreated }: CreateRestaura
                     </div>
 
                     {/* CNIC Documents */}
-                    <div className="bg-white rounded-2xl shadow-sm overflow-hidden border border-gray-100">
-                        <div className="px-6 py-4 border-b border-gray-100">
-                            <h3 className="font-semibold text-gray-900">CNIC Documents</h3>
-                            <p className="text-sm text-gray-500 font-light mt-1">Required for verification</p>
+                    <div className="bg-white rounded-[2rem] shadow-sm overflow-hidden border border-gray-100/50 p-8">
+                        <div className="mb-8">
+                            <h3 className="text-xl font-light text-gray-900 tracking-tight flex items-center gap-3">
+                                <span className="w-1.5 h-6 bg-orange-500 rounded-full"></span>
+                                CNIC Documents
+                            </h3>
+                            <p className="text-[13px] text-gray-400 font-light mt-1 ml-4.5">Required for identity verification</p>
                         </div>
 
-                        <div className="p-6 grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-3">
-                                    CNIC Front <span className="text-red-500">*</span>
+                                <label className="block text-[13px] font-medium text-gray-500 uppercase tracking-widest mb-3 ml-1">
+                                    CNIC Front <span className="text-red-400">*</span>
                                 </label>
                                 <UploadBox
                                     label="Upload CNIC Front"
@@ -401,8 +409,8 @@ export default function CreateRestaurant({ onRestaurantCreated }: CreateRestaura
                             </div>
 
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-3">
-                                    CNIC Back <span className="text-red-500">*</span>
+                                <label className="block text-[13px] font-medium text-gray-500 uppercase tracking-widest mb-3 ml-1">
+                                    CNIC Back <span className="text-red-400">*</span>
                                 </label>
                                 <UploadBox
                                     label="Upload CNIC Back"
@@ -420,39 +428,42 @@ export default function CreateRestaurant({ onRestaurantCreated }: CreateRestaura
 
                     {/* Restaurant License (Restaurant Owner Only) */}
                     {businessType === 'restaurant' && (
-                        <div className="bg-white rounded-2xl shadow-sm overflow-hidden border border-orange-200">
-                            <div className="bg-gradient-orange-red text-white px-6 py-3.5 flex items-center gap-2">
-                                <FaExclamationTriangle size={16} />
-                                <h3 className="font-bold">Restaurant License</h3>
-                                <span className="ml-auto text-xs bg-white text-orange-600 px-2.5 py-1 rounded-full font-bold">Mandatory</span>
+                        <div className="bg-white rounded-[2rem] shadow-sm overflow-hidden border border-orange-100 p-8">
+                            <div className="mb-8 flex items-center justify-between">
+                                <h3 className="text-xl font-light text-gray-900 tracking-tight flex items-center gap-3">
+                                    <span className="w-1.5 h-6 bg-orange-500 rounded-full"></span>
+                                    Restaurant License
+                                </h3>
+                                <span className="text-[11px] bg-orange-50 text-orange-600 px-3 py-1 rounded-full font-medium uppercase tracking-wider">Mandatory</span>
                             </div>
 
-                            <div className="p-6">
-                                <UploadBox
-                                    label="Upload Restaurant License"
-                                    required
-                                    value={formData.license}
-                                    uploading={uploading['license']}
-                                    onUpload={(e) => handleFileUpload(e, 'license')}
-                                    onRemove={() => setFormData({ ...formData, license: '' })}
-                                    description="Click to browse or drag & drop"
-                                    subDescription="PDF, JPG, PNG (Max 10MB)"
-                                />
-                            </div>
+                            <UploadBox
+                                label="Upload Restaurant License"
+                                required
+                                value={formData.license}
+                                uploading={uploading['license']}
+                                onUpload={(e) => handleFileUpload(e, 'license')}
+                                onRemove={() => setFormData({ ...formData, license: '' })}
+                                description="Click to browse or drag & drop"
+                                subDescription="PDF, JPG, PNG (Max 10MB)"
+                            />
                         </div>
                     )}
 
                     {/* Restaurant Photos */}
-                    <div className="bg-white rounded-2xl shadow-sm overflow-hidden border border-gray-100">
-                        <div className="px-6 py-4 border-b border-gray-100">
-                            <h3 className="font-semibold text-gray-900">{businessType === 'restaurant' ? 'Restaurant Photos' : 'Kitchen Photos'}</h3>
+                    <div className="bg-white rounded-[2rem] shadow-sm overflow-hidden border border-gray-100/50 p-8">
+                        <div className="mb-8">
+                            <h3 className="text-xl font-light text-gray-900 tracking-tight flex items-center gap-3">
+                                <span className="w-1.5 h-6 bg-orange-500 rounded-full"></span>
+                                {businessType === 'restaurant' ? 'Restaurant Photos' : 'Kitchen Photos'}
+                            </h3>
                         </div>
 
-                        <div className="p-6 space-y-6">
+                        <div className="space-y-8">
                             {businessType === 'restaurant' && (
                                 <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-3">
-                                        Storefront Photo <span className="text-red-500">*</span>
+                                    <label className="block text-[13px] font-medium text-gray-500 uppercase tracking-widest mb-3 ml-1">
+                                        Storefront Photo <span className="text-red-400">*</span>
                                     </label>
                                     <UploadBox
                                         label="Upload storefront photo"
@@ -462,16 +473,16 @@ export default function CreateRestaurant({ onRestaurantCreated }: CreateRestaura
                                         onUpload={(e) => handleFileUpload(e, 'storefrontPhoto')}
                                         onRemove={() => setFormData({ ...formData, storefrontPhoto: '' })}
                                         description="Click to browse or drag & drop"
-                                        subDescription="PDF, JPG, PNG (Max 10MB)"
+                                        subDescription="JPG, PNG (Max 10MB)"
                                     />
                                 </div>
                             )}
 
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-2">
-                                    Kitchen Photos <span className="text-red-500">*</span>
+                                <label className="block text-[13px] font-medium text-gray-500 uppercase tracking-widest mb-1 ml-1">
+                                    Kitchen Photos <span className="text-red-400">*</span>
                                 </label>
-                                <p className="text-sm text-blue-600 mb-3 font-light">Upload 2 clear photos of your kitchen</p>
+                                <p className="text-[13px] text-orange-500/70 mb-4 ml-1 font-light">Upload 2 clear photos of your cooking area</p>
                                 <PhotoGrid
                                     photos={formData.kitchenPhotos}
                                     maxPhotos={2}
@@ -483,10 +494,10 @@ export default function CreateRestaurant({ onRestaurantCreated }: CreateRestaura
 
                             {businessType === 'restaurant' && (
                                 <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                                        Menu Photos <span className="text-red-500">*</span>
+                                    <label className="block text-[13px] font-medium text-gray-500 uppercase tracking-widest mb-1 ml-1">
+                                        Menu Photos <span className="text-red-400">*</span>
                                     </label>
-                                    <p className="text-sm text-blue-600 mb-3 font-light">Upload menu photos or digital menu</p>
+                                    <p className="text-[13px] text-orange-500/70 mb-4 ml-1 font-light">Upload menu photos or digital menu card</p>
                                     <PhotoGrid
                                         photos={formData.menuPhotos}
                                         maxPhotos={5}
@@ -552,50 +563,38 @@ export default function CreateRestaurant({ onRestaurantCreated }: CreateRestaura
                         </div>
                     </div>
 
-                    {/* Optional Information */}
-                    <div className="bg-white rounded-2xl shadow-sm overflow-hidden border border-gray-100">
-                        <div className="px-6 py-4 border-b border-gray-100">
-                            <h3 className="font-semibold text-gray-900">Optional Information</h3>
-                            <p className="text-sm text-gray-500 font-light mt-1">Stand out from the competition</p>
+                    {/* Additional Details */}
+                    <div className="bg-white rounded-[2rem] shadow-sm overflow-hidden border border-gray-100/50 p-8">
+                        <div className="mb-8">
+                            <h3 className="text-xl font-light text-gray-900 tracking-tight flex items-center gap-3">
+                                <span className="w-1.5 h-6 bg-orange-500 rounded-full"></span>
+                                Additional Details
+                            </h3>
                         </div>
 
-                        <div className="p-6 space-y-6">
+                        <div className="space-y-6">
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-3">
-                                    {businessType === 'restaurant' ? 'Restaurant Logo' : 'Your Logo'}
-                                </label>
-                                <UploadBox
-                                    label="Upload your logo"
-                                    value={formData.logo}
-                                    uploading={uploading['logo']}
-                                    onUpload={(e) => handleFileUpload(e, 'logo')}
-                                    onRemove={() => setFormData({ ...formData, logo: '' })}
-                                    description="Click to browse or drag & drop"
-                                    subDescription="PDF, JPG, PNG (Max 10MB)"
-                                />
-                            </div>
-
-                            <div>
-                                <label className="block text-sm font-semibold text-gray-800 mb-2">
-                                    Food Category / Specialties
+                                <label className="block text-[13px] font-medium text-gray-500 uppercase tracking-widest mb-2.5 ml-1">
+                                    Primary Cuisine / Category <span className="text-red-400">*</span>
                                 </label>
                                 <input
                                     type="text"
+                                    required
                                     value={formData.foodCategory}
                                     onChange={(e) => setFormData({ ...formData, foodCategory: e.target.value })}
-                                    className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-blue-400 focus:border-transparent outline-none transition text-sm font-medium text-gray-900 placeholder:text-gray-400 bg-gray-50/50"
+                                    className="w-full px-5 py-4 rounded-2xl border border-gray-100 focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 outline-none transition-all text-[15px] font-light text-gray-900 placeholder:text-gray-300 bg-gray-50/30"
                                     placeholder="e.g. Desi, Fast Food, Chinese"
                                 />
                             </div>
 
                             <div>
-                                <label className="block text-sm font-semibold text-gray-800 mb-2">
+                                <label className="block text-[13px] font-medium text-gray-500 uppercase tracking-widest mb-2.5 ml-1">
                                     About Business
                                 </label>
                                 <textarea
                                     value={formData.description}
                                     onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                                    className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-blue-400 focus:border-transparent outline-none transition resize-none h-32 text-sm font-medium text-gray-900 placeholder:text-gray-400 bg-gray-50/50"
+                                    className="w-full px-5 py-4 rounded-2xl border border-gray-100 focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 outline-none transition-all resize-none h-32 text-[15px] font-light text-gray-900 placeholder:text-gray-300 bg-gray-50/30"
                                     placeholder={businessType === 'restaurant'
                                         ? "Tell customers about your restaurant, cuisine, and what makes you special..."
                                         : "Tell customers about your cooking style, specialties, and experience..."}
@@ -625,9 +624,16 @@ export default function CreateRestaurant({ onRestaurantCreated }: CreateRestaura
                     <button
                         type="submit"
                         disabled={loading}
-                        className="w-full py-4 bg-gradient-to-r from-orange-500 to-red-500 text-white font-bold rounded-xl shadow-lg shadow-orange-500/20 hover:from-orange-600 hover:to-red-600 transition-all disabled:opacity-50"
+                        className="w-full bg-gradient-to-r from-orange-500 to-red-600 hover:from-orange-600 hover:to-red-700 text-white py-5 rounded-[2rem] font-medium text-lg shadow-xl shadow-orange-500/20 transition-all active:scale-[0.99] disabled:opacity-70 disabled:cursor-not-allowed flex items-center justify-center gap-3 tracking-tight"
                     >
-                        {loading ? 'Submitting...' : 'Submit Profile for Review'}
+                        {loading ? (
+                            <>
+                                <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                                Processing...
+                            </>
+                        ) : (
+                            'Submit Profile for Review'
+                        )}
                     </button>
                 </form>
             </div>
@@ -656,33 +662,36 @@ function UploadBox({
     subDescription: string;
 }) {
     return (
-        <div className="border-2 border-dashed border-gray-200 rounded-xl bg-gray-50 p-6 text-center hover:bg-gray-100 hover:border-gray-300 transition relative group">
+        <div className="border border-dashed border-gray-200 rounded-3xl bg-gray-50/30 p-8 text-center hover:bg-gray-50 hover:border-orange-200 transition-all relative group overflow-hidden">
             {value ? (
                 <div className="relative">
-                    <img src={value} alt={label} className="max-h-32 mx-auto rounded-lg" />
+                    <img src={value} alt={label} className="max-h-40 mx-auto rounded-2xl shadow-sm" />
                     <button
                         type="button"
                         onClick={onRemove}
-                        className="absolute top-2 right-2 bg-red-500 text-white p-2 rounded-full opacity-0 group-hover:opacity-100 transition"
+                        className="absolute top-2 right-2 bg-red-500/90 text-white p-2.5 rounded-full opacity-0 group-hover:opacity-100 transition-all backdrop-blur-sm shadow-lg hover:bg-red-600"
                     >
                         <FaTrash size={12} />
                     </button>
+                    <div className="mt-3 text-[11px] font-medium text-green-600 uppercase tracking-widest">File Uploaded Successfully</div>
                 </div>
             ) : (
                 <label className="cursor-pointer block">
-                    <div className="w-14 h-14 bg-blue-50 text-blue-500 rounded-full flex items-center justify-center mx-auto mb-3">
+                    <div className="w-16 h-16 bg-white text-orange-500 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-sm border border-gray-100 group-hover:scale-110 transition-transform">
                         {uploading ? (
                             <ModernLoader size="sm" />
                         ) : (
-                            <FaCloudUploadAlt size={22} />
+                            <FaCloudUploadAlt size={24} />
                         )}
                     </div>
-                    <span className="block text-sm font-medium text-gray-700 mb-1">
-                        {label} {required && <span className="text-red-500">*</span>}
-                    </span>
-                    <span className="block text-xs text-gray-600 mb-1 font-light">{description}</span>
-                    <span className="block text-xs text-gray-400 font-light">{subDescription}</span>
-                    <input type="file" className="hidden" accept="image/*,.pdf" onChange={onUpload} />
+                    <div className="text-[15px] font-light text-gray-900 mb-1">{description}</div>
+                    <div className="text-[12px] text-gray-400 font-light">{subDescription}</div>
+                    <input
+                        type="file"
+                        className="hidden"
+                        onChange={onUpload}
+                        accept="image/*,.pdf"
+                    />
                 </label>
             )}
         </div>

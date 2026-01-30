@@ -11,7 +11,7 @@ const { triggerEvent } = require('../socket');
 router.get('/restaurants', protect, requireAdmin, async (req, res) => {
     try {
         const restaurants = await Restaurant.find({
-            verificationStatus: { $in: ['pending', 'not_started'] }
+            verificationStatus: { $in: ['pending', 'not_started', 'new'] }
         }).populate('owner', 'name email');
 
         res.json(restaurants);
@@ -26,7 +26,7 @@ router.get('/restaurants', protect, requireAdmin, async (req, res) => {
 router.get('/riders', protect, requireAdmin, async (req, res) => {
     try {
         const riders = await Rider.find({
-            verificationStatus: 'pending'
+            verificationStatus: { $in: ['pending', 'new'] }
         }).populate('user', 'name email');
 
         res.json(riders);

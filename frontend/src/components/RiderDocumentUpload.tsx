@@ -44,9 +44,20 @@ export default function RiderDocumentUpload({ riderId, onVerified }: RiderDocume
                     setVerificationStatus(res.data.verificationStatus);
                 }
 
-                // Check if already verified
-                if (res.data.verificationStatus === 'approved') {
+                // Check if already verified AND has required documents
+                const hasRequiredDocs = res.data.documents && 
+                    res.data.documents.cnicFront && 
+                    res.data.documents.cnicBack && 
+                    res.data.documents.drivingLicense && 
+                    res.data.documents.profileSelfie &&
+                    res.data.cnicNumber;
+
+                if (res.data.verificationStatus === 'approved' && hasRequiredDocs) {
                     setVerified(true);
+                } else if (res.data.verificationStatus === 'approved' && !hasRequiredDocs) {
+                    // If approved but missing docs, reset status locally to allow upload
+                    setVerificationStatus('new');
+                    setVerified(false);
                 }
             } catch (error) {
                 console.error('Error fetching documents:', error);

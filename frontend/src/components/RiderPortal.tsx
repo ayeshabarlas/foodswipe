@@ -47,7 +47,13 @@ export default function RiderPortal() {
             if (res.data) {
                 setRiderId(res.data._id);
                 setVerificationStatus(res.data.verificationStatus);
-                setStep('dashboard');
+                
+                // If profile exists but documents or CNIC are missing, go to documents step
+                if (!res.data.cnicNumber || !res.data.documents?.cnicFront) {
+                    setStep('documents');
+                } else {
+                    setStep('dashboard');
+                }
             } else {
                 // No profile found, go to registration
                 setStep('registration');
