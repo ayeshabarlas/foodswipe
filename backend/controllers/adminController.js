@@ -1065,8 +1065,14 @@ const deleteUser = async (req, res) => {
             const rider = await Rider.findById(id);
             if (rider) {
                 console.log(`🗑️ Deleting rider directly: ${rider.fullName}`);
-                await RiderWallet.deleteMany({ rider: rider._id });
-                await Rider.findByIdAndDelete(id);
+                const riderId = rider._id;
+                await Promise.all([
+                    RiderWallet.deleteMany({ rider: riderId }),
+                    RiderBonus.deleteMany({ rider: riderId }),
+                    CODLedger.deleteMany({ rider: riderId }),
+                    Notification.deleteMany({ user: rider.user }),
+                    Rider.findByIdAndDelete(riderId)
+                ]);
                 
                 // Audit Log
                 await AuditLog.create({
@@ -1082,10 +1088,15 @@ const deleteUser = async (req, res) => {
             const restaurant = await Restaurant.findById(id);
             if (restaurant) {
                 console.log(`🗑️ Deleting restaurant directly: ${restaurant.name}`);
-                await Dish.deleteMany({ restaurant: restaurant._id });
-                await Video.deleteMany({ restaurant: restaurant._id });
-                await RestaurantWallet.deleteMany({ restaurant: restaurant._id });
-                await Restaurant.findByIdAndDelete(id);
+                const restaurantId = restaurant._id;
+                await Promise.all([
+                    Dish.deleteMany({ restaurant: restaurantId }),
+                    Video.deleteMany({ restaurant: restaurantId }),
+                    RestaurantWallet.deleteMany({ restaurant: restaurantId }),
+                    Review.deleteMany({ restaurant: restaurantId }),
+                    Notification.deleteMany({ user: restaurant.owner }),
+                    Restaurant.findByIdAndDelete(restaurantId)
+                ]);
 
                 // Audit Log
                 await AuditLog.create({
@@ -1106,18 +1117,29 @@ const deleteUser = async (req, res) => {
             const restaurant = await Restaurant.findOne({ owner: user._id });
             if (restaurant) {
                 console.log(`🗑️ Deleting associated restaurant: ${restaurant.name}`);
-                await Dish.deleteMany({ restaurant: restaurant._id });
-                await Video.deleteMany({ restaurant: restaurant._id });
-                await RestaurantWallet.deleteMany({ restaurant: restaurant._id });
-                await Restaurant.findByIdAndDelete(restaurant._id);
+                const restaurantId = restaurant._id;
+                await Promise.all([
+                    Dish.deleteMany({ restaurant: restaurantId }),
+                    Video.deleteMany({ restaurant: restaurantId }),
+                    RestaurantWallet.deleteMany({ restaurant: restaurantId }),
+                    Review.deleteMany({ restaurant: restaurantId }),
+                    Notification.deleteMany({ user: user._id }),
+                    Restaurant.findByIdAndDelete(restaurantId)
+                ]);
             }
         }
         if (user.role === 'rider') {
             const rider = await Rider.findOne({ user: user._id });
             if (rider) {
                 console.log(`🗑️ Deleting associated rider profile: ${rider.fullName || rider.name}`);
-                await RiderWallet.deleteMany({ rider: rider._id });
-                await Rider.findByIdAndDelete(rider._id);
+                const riderId = rider._id;
+                await Promise.all([
+                    RiderWallet.deleteMany({ rider: riderId }),
+                    RiderBonus.deleteMany({ rider: riderId }),
+                    CODLedger.deleteMany({ rider: riderId }),
+                    Notification.deleteMany({ user: user._id }),
+                    Rider.findByIdAndDelete(riderId)
+                ]);
             }
         }
 
