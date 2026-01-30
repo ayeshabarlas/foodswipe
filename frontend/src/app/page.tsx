@@ -1,19 +1,19 @@
-// VERCEL BUILD TRIGGER - v2.2.30 - 2026-01-30 07:55
-// Force Redeploy v2.2.30 - 2026-01-30 07:55 - Fix Module Resolution
+// VERCEL BUILD TRIGGER - v2.2.31 - 2026-01-30 08:05
+// Force Redeploy v2.2.31 - 2026-01-30 08:05 - Brutal Relative Paths Fix
 "use client";
 
 // Vercel Build Trigger: 2026-01-30 03:25 - Force Update
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import dynamic from "next/dynamic";
-const VideoFeed = dynamic(() => import("@/components/VideoFeed"), { ssr: false });
-const RestaurantDashboard = dynamic(() => import("@/components/RestaurantDashboard"), { ssr: false });
-const RiderPortal = dynamic(() => import("@/components/RiderPortal"), { ssr: false });
-const LoginScreen = dynamic(() => import("@/components/LoginScreen"), { ssr: false });
-const SplashScreen = dynamic(() => import("@/components/SplashScreen"), { ssr: false });
-const CreateRestaurant = dynamic(() => import("@/components/CreateRestaurant"), { ssr: false });
+const VideoFeed = dynamic(() => import("../components/VideoFeed"), { ssr: false });
+const RestaurantDashboard = dynamic(() => import("../components/RestaurantDashboard"), { ssr: false });
+const RiderPortal = dynamic(() => import("../components/RiderPortal"), { ssr: false });
+const LoginScreen = dynamic(() => import("../components/LoginScreen"), { ssr: false });
+const SplashScreen = dynamic(() => import("../components/SplashScreen"), { ssr: false });
+const CreateRestaurant = dynamic(() => import("../components/CreateRestaurant"), { ssr: false });
 import axios from "axios";
-import { getApiUrl } from "@/utils/config";
+import { getApiUrl } from "../utils/config";
 
 // Force Redeploy for "es" error fix - 2026-01-23 11:31
 export default function Home() {

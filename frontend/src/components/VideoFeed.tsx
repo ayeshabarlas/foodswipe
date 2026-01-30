@@ -23,7 +23,7 @@ const PromotionPopup = dynamic(() => import('./PromotionPopup'), { ssr: false })
 import VideoCard, { Dish } from './VideoCard';
 
 import { getImageUrl, getImageFallback } from '../utils/imageUtils';
-import { useCart } from '@/context/CartContext';
+import { useCart } from '../context/CartContext';
 import { getApiUrl } from '../utils/config';
 import { initSocket, subscribeToChannel, unsubscribeFromChannel } from '../utils/socket';
 import toast from 'react-hot-toast';

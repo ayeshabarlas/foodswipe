@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { FaEnvelope, FaUser, FaPhone, FaGoogle, FaArrowLeft, FaStore, FaMotorcycle } from "react-icons/fa";
 import axios from "axios";
-import { getApiUrl } from "@/utils/config";
+import { getApiUrl } from "../utils/config";
 import { useRouter } from "next/navigation";
 import { signInWithPopup } from "firebase/auth";
 import { auth, googleProvider } from "../config/firebase";

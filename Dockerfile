@@ -22,8 +22,10 @@ RUN cd frontend && npm install --legacy-peer-deps
 # Copy the rest of the application code
 COPY . .
 
-# Clear any previous builds and build the frontend
-RUN cd frontend && rm -rf .next && npm run build
+# Clear any previous builds and build the frontend with a clean environment
+RUN cd frontend && \
+    rm -rf .next && \
+    NODE_OPTIONS="--max-old-space-size=4096" npm run build
 
 # Expose the port
 EXPOSE 10000
