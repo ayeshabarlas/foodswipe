@@ -187,6 +187,21 @@ if (process.env.NODE_ENV === 'production' || process.env.RAILWAY_STATIC_URL || p
         app.get('*', (req, res) => {
             // Don't intercept API or Uploads
             if (!req.url.startsWith('/api') && !req.url.startsWith('/uploads')) {
+                // SPECIAL CASE: If URL contains /admin and it's not a file request,
+                // try to serve admin/index.html or admin.html if it exists
+                if (req.url.includes('/admin')) {
+                    const adminIndex = path.join(frontendPath, 'admin.html');
+                    const adminDirIndex = path.join(frontendPath, 'admin/index.html');
+                    
+                    if (require('fs').existsSync(adminIndex)) {
+                        console.log(`👑 Serving admin.html for: ${req.url}`);
+                        return res.sendFile(adminIndex);
+                    } else if (require('fs').existsSync(adminDirIndex)) {
+                        console.log(`👑 Serving admin/index.html for: ${req.url}`);
+                        return res.sendFile(adminDirIndex);
+                    }
+                }
+
                 console.log(`🏠 Serving index.html for: ${req.url}`);
                 res.sendFile(path.join(frontendPath, 'index.html'));
             }
