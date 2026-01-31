@@ -192,8 +192,13 @@ const createRestaurant = async (req, res) => {
             await User.findByIdAndUpdate(req.user._id, { role: 'restaurant' });
         }
 
-        // Notify admins about new registration
-        triggerEvent('admin', 'restaurant_registered', restaurant);
+        // Notify admins for real-time dashboard update
+        try {
+            triggerEvent('admin', 'restaurant_updated', { restaurantId: restaurant._id });
+            triggerEvent('admin', 'stats_updated', { type: 'restaurant_created' });
+        } catch (socketErr) {
+            console.warn('⚠️ Socket notification failed:', socketErr.message);
+        }
 
         // Detailed admin notification
         notifyAdmins(
@@ -386,6 +391,15 @@ const updateRestaurant = async (req, res) => {
         });
 
         await restaurant.save();
+
+        // Notify admins for real-time dashboard update
+        try {
+            triggerEvent('admin', 'restaurant_updated', { restaurantId: restaurant._id });
+            triggerEvent('admin', 'stats_updated', { type: 'restaurant_updated' });
+        } catch (socketErr) {
+            console.warn('⚠️ Socket notification failed:', socketErr.message);
+        }
+
         res.json(restaurant);
     } catch (error) {
         console.error('Update restaurant error:', error);

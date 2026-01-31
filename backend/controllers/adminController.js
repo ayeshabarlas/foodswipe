@@ -326,6 +326,78 @@ const getAllOrders = async (req, res) => {
     }
 };
 
+// @desc    Get Quick Dashboard Statistics (Counts only, fast)
+// @route   GET /api/admin/stats/quick
+// @access  Private/Admin
+const getQuickStats = async (req, res) => {
+    try {
+        const todayStart = new Date();
+        todayStart.setHours(0, 0, 0, 0);
+
+        const [totalUsers, totalRestaurants, totalOrders, todayOrders, totalRiders] = await Promise.all([
+            User.countDocuments({ role: 'customer' }).maxTimeMS(3000),
+            Restaurant.countDocuments({}).maxTimeMS(3000),
+            Order.countDocuments({}).maxTimeMS(3000),
+            Order.countDocuments({ createdAt: { $gte: todayStart } }).maxTimeMS(3000),
+            Rider.countDocuments({}).maxTimeMS(3000)
+        ]);
+
+        res.json({
+            totalUsers,
+            totalRestaurants,
+            totalOrders,
+            todayOrders,
+            totalRiders
+        });
+    } catch (error) {
+        console.error('❌ Quick Stats Error:', error);
+        res.status(500).json({ message: 'Error fetching quick stats', error: error.message });
+    }
+};
+
+// @desc    Get Finance Dashboard Statistics (Aggregations, slower)
+// @route   GET /api/admin/stats/finance
+// @access  Private/Admin
+const getFinanceStats = async (req, res) => {
+    try {
+        const finance = await Order.aggregate([
+            { $match: { status: { $nin: ['Cancelled', 'Rejected'] } } },
+            {
+                $group: {
+                    _id: null,
+                    totalRevenue: { $sum: '$totalPrice' },
+                    totalCommission: { $sum: '$commissionAmount' },
+                    totalRiderEarnings: { $sum: '$riderEarning' },
+                    totalRestaurantEarnings: { $sum: '$restaurantEarning' },
+                    totalServiceFees: { $sum: '$serviceFee' },
+                    totalTax: { $sum: '$tax' },
+                    totalDeliveryFees: { $sum: '$deliveryFee' }
+                }
+            }
+        ]).option({ maxTimeMS: 15000 });
+
+        const f = finance[0] || {};
+        const netProfit = (f.totalCommission || 0) +
+                        ((f.totalDeliveryFees || 0) - (f.totalRiderEarnings || 0)) +
+                        (f.totalServiceFees || 0) +
+                        (f.totalTax || 0);
+
+        res.json({
+            totalRevenue: f.totalRevenue || 0,
+            totalCommission: f.totalCommission || 0,
+            totalRiderEarnings: f.totalRiderEarnings || 0,
+            totalRestaurantEarnings: f.totalRestaurantEarnings || 0,
+            totalServiceFees: f.totalServiceFees || 0,
+            totalTax: f.totalTax || 0,
+            totalDeliveryFees: f.totalDeliveryFees || 0,
+            netPlatformProfit: netProfit
+        });
+    } catch (error) {
+        console.error('❌ Finance Stats Error:', error);
+        res.status(500).json({ message: 'Error fetching finance stats', error: error.message });
+    }
+};
+
 // @desc    Get dashboard statistics
 // @route   GET /api/admin/stats
 // @access  Private/Admin
@@ -1119,6 +1191,16 @@ const deleteUser = async (req, res) => {
 
         await User.findByIdAndDelete(id);
 
+        // Notify admins to refresh UI
+        try {
+            triggerEvent('admin', 'restaurant_updated');
+            triggerEvent('admin', 'rider_updated');
+            triggerEvent('admin', 'user_updated');
+            triggerEvent('admin', 'stats_updated');
+        } catch (socketErr) {
+            console.warn('⚠️ Socket notification failed:', socketErr.message);
+        }
+
         // Audit Log
         try {
             await AuditLog.create({
@@ -1898,6 +1980,8 @@ module.exports = {
     rejectRestaurant,
     getAllOrders,
     getDashboardStats,
+    getQuickStats,
+    getFinanceStats,
     getAllRestaurants,
     getAllRiders,
     approveRider,

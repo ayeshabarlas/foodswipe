@@ -106,6 +106,14 @@ const registerUser = async (req, res) => {
 
         console.log(`✅ User registered: id=${user._id}, email=${user.email}, role=${user.role}`);
 
+        // Notify admins for real-time dashboard update
+        try {
+            triggerEvent('admin', 'user_updated', { userId: user._id, role: user.role });
+            triggerEvent('admin', 'stats_updated', { type: 'user_registered' });
+        } catch (socketErr) {
+            console.warn('⚠️ Socket notification failed:', socketErr.message);
+        }
+
         // Notify Admins (non-blocking)
         notifyAdmins(
             'New User Registration',

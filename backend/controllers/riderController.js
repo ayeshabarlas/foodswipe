@@ -89,6 +89,16 @@ const registerRider = async (req, res) => {
             await User.findByIdAndUpdate(req.user._id, { role: 'rider' });
         }
 
+        console.log(`✅ Rider registered: ${rider.fullName}`);
+
+        // Notify admins for real-time dashboard update
+        try {
+            triggerEvent('admin', 'rider_updated', { riderId: rider._id });
+            triggerEvent('admin', 'stats_updated', { type: 'rider_registered' });
+        } catch (socketErr) {
+            console.warn('⚠️ Socket notification failed:', socketErr.message);
+        }
+
         // Notify admins about new registration
         triggerEvent('admin', 'rider_registered', rider);
         notifyAdmins(
@@ -282,6 +292,14 @@ const submitForVerification = async (req, res) => {
         rider.verificationStatus = 'pending';
         await rider.save();
 
+        // Notify admins for real-time dashboard update
+        try {
+            triggerEvent('admin', 'rider_updated', { riderId: rider._id, status: 'pending' });
+            triggerEvent('admin', 'stats_updated', { type: 'rider_verification_submitted' });
+        } catch (socketErr) {
+            console.warn('⚠️ Socket notification failed:', socketErr.message);
+        }
+
         res.json(rider);
     } catch (error) {
         console.error('Submit verification error:', error);
@@ -336,6 +354,7 @@ const updateStatus = async (req, res) => {
 
         // Trigger socket event for admin real-time updates
         triggerEvent('admin', 'rider_status_updated', rider);
+        triggerEvent('admin', 'stats_updated', { type: 'rider_status_updated', riderId: rider._id, isOnline: rider.isOnline });
         
         res.json(rider);
     } catch (error) {

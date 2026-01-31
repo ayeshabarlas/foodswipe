@@ -1,4 +1,5 @@
 const User = require('../models/User');
+const { triggerEvent } = require('../socket');
 
 // @desc    Get user profile
 // @route   GET /api/users/profile
@@ -49,6 +50,13 @@ const updateUserProfile = async (req, res) => {
             user.houseNumber = req.body.houseNumber || user.houseNumber;
 
             const updatedUser = await user.save();
+
+            // Notify admins for real-time dashboard update
+            try {
+                triggerEvent('admin', 'user_updated', { userId: updatedUser._id, role: updatedUser.role });
+            } catch (socketErr) {
+                console.warn('⚠️ Socket notification failed:', socketErr.message);
+            }
 
             res.json({
                 _id: updatedUser._id,

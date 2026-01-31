@@ -244,6 +244,22 @@ export default function AdminDashboard() {
                 updateStats();
             });
 
+            socket.on('stats_updated', (data) => {
+                console.log('Real-time stats update received:', data);
+                // For critical updates, fetch everything. For others, just quick stats.
+                if (data?.type === 'order_created' || data?.type === 'order_delivered') {
+                    fetchStats();
+                } else {
+                    // Just update the counts quickly
+                    axios.get(`${getApiUrl()}/api/admin/stats/quick`, {
+                        headers: { Authorization: `Bearer ${authToken}` },
+                        timeout: 30000
+                    }).then(res => {
+                        setStats(prev => ({ ...prev, ...res.data }));
+                    }).catch(err => console.error('Quick stats refresh failed:', err));
+                }
+            });
+
             socket.on('rider_status_updated', updateStats);
             socket.on('rider_updated', updateStats);
             socket.on('restaurant_updated', updateStats);
@@ -306,26 +322,41 @@ export default function AdminDashboard() {
 
             console.log('Fetching stats from:', `${getApiUrl()}/api/admin/stats`);
             
-            // Fetch stats and counts separately so one failing doesn't kill the other
-            const fetchStatsPromise = axios.get(`${getApiUrl()}/api/admin/stats`, axiosConfig)
+            // 1. Fetch Quick Stats (Very fast, counts only)
+            const fetchQuickStats = axios.get(`${getApiUrl()}/api/admin/stats/quick`, axiosConfig)
                 .then(res => {
-                    console.log('Stats received:', res.data);
+                    console.log('Quick stats received:', res.data);
+                    setStats(prev => ({ ...prev, ...res.data }));
+                    // If we get quick stats, we can show the dashboard shell
+                    setLoading(false);
+                    setStatsError(null);
+                })
+                .catch(err => {
+                    console.error('Quick stats failed:', err);
+                    setStatsError(err.response?.data?.message || err.message || 'Failed to fetch quick stats');
+                });
+
+            // 2. Fetch Finance Stats (Heavier, revenue/profit)
+            const fetchFinanceStats = axios.get(`${getApiUrl()}/api/admin/stats/finance`, axiosConfig)
+                .then(res => {
+                    console.log('Finance stats received:', res.data);
+                    setStats(prev => ({ ...prev, ...res.data }));
+                })
+                .catch(err => {
+                    console.error('Finance stats failed:', err);
+                    // Don't set global error here yet, but maybe a partial error state if we had one
+                });
+
+            // 3. Fetch Full Stats (Activity, Charts, etc.)
+            const fetchFullStats = axios.get(`${getApiUrl()}/api/admin/stats`, axiosConfig)
+                .then(res => {
+                    console.log('Full stats received:', res.data);
                     setStats(res.data);
                     setStatsError(null);
                 })
                 .catch(err => {
-                    console.error('Error fetching stats:', err);
+                    console.error('Error fetching full stats:', err);
                     setStatsError(err.response?.data?.message || err.message || 'Failed to fetch dashboard stats');
-                    // Fallback stats if first load fails
-                    if (!stats) {
-                        setStats({
-                            totalUsers: 0, totalRestaurants: 0, pendingRestaurants: 0, totalOrders: 0,
-                            todayOrders: 0, totalRevenue: 0, todayRevenue: 0, totalCommission: 0,
-                            totalPendingPayouts: 0, revenueStats: [], orderStatusDist: { delivered: 0, cancelled: 0, inProgress: 0 },
-                            topRestaurants: [], recentActivity: [], totalRiders: 0, pendingRiders: 0,
-                            onlineRiders: 0, avgRiderRating: 0
-                        });
-                    }
                 });
 
             const fetchCountsPromise = axios.get(`${getApiUrl()}/api/admin/notifications/counts`, axiosConfig)
@@ -337,16 +368,15 @@ export default function AdminDashboard() {
                     console.error('Error fetching counts:', err);
                 });
 
-            // Start fetching but don't block the whole UI if it's slow
-            Promise.allSettled([fetchStatsPromise, fetchCountsPromise]).finally(() => {
+            // Initial loading ends when we either get quick stats or everything settles
+            Promise.allSettled([fetchQuickStats, fetchCountsPromise]).finally(() => {
                 setLoading(false);
             });
-            
-            // Set loading to false after a short delay anyway to show the shell
-            // if the network is being very slow, but give it a chance to load data first
+
+            // If everything is taking too long, just stop the spinner so user can see what's there
             setTimeout(() => {
                 if (mounted) setLoading(false);
-            }, 3000); // 3 seconds max for the initial blank screen
+            }, 5000); 
 
         } catch (error: any) {
             console.error('Error in fetchStats wrapper:', error);

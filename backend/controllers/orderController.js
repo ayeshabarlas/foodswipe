@@ -538,6 +538,14 @@ const updateOrderStatus = async (req, res) => {
             });
         }
 
+        // Notify admins for real-time dashboard update
+        try {
+            triggerEvent('admin', 'order_updated', { orderId: order._id, status });
+            triggerEvent('admin', 'stats_updated', { type: 'order_status_updated', orderId: order._id, status });
+        } catch (socketErr) {
+            console.warn('⚠️ Socket notification failed:', socketErr.message);
+        }
+
         res.json(updatedOrder);
     } catch (error) {
         console.error('Update order status error:', error);

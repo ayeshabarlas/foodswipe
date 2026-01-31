@@ -42,6 +42,7 @@ interface Stats {
     todayRevenue: number;
     totalCommission: number;
     totalRiderEarnings: number;
+    totalRestaurantEarnings: number;
     totalDeliveryFees: number;
     netPlatformProfit: number;
     totalPendingPayouts: number;
@@ -59,11 +60,12 @@ interface DashboardHomeProps {
     stats: Stats | null;
     statsError?: string | null;
     refreshStats?: () => void;
+    loading?: boolean;
 }
 
 const COLORS = ['#FF6A00', '#10B981', '#F59E0B'];
 
-export default function DashboardHome({ stats, statsError, refreshStats }: DashboardHomeProps) {
+export default function DashboardHome({ stats, statsError, refreshStats, loading }: DashboardHomeProps) {
     const handleCleanupMock = async () => {
         if (!window.confirm('Are you sure you want to delete all mock restaurants and data? This cannot be undone.')) return;
         
@@ -82,6 +84,17 @@ export default function DashboardHome({ stats, statsError, refreshStats }: Dashb
         }
     };
 
+    // If we have stats but they are partial (from quick stats), we still show the dashboard
+    // We only show the full loader if we have absolutely nothing
+    if (!stats && (typeof loading !== 'undefined' ? loading : false)) {
+        return (
+            <div className="flex flex-col items-center justify-center min-h-[400px]">
+                <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-orange-500 mb-4"></div>
+                <p className="text-gray-500 font-medium">Initializing Dashboard...</p>
+            </div>
+        );
+    }
+
     const defaultStats: Stats = {
         totalUsers: 0,
         totalRestaurants: 0,
@@ -91,9 +104,10 @@ export default function DashboardHome({ stats, statsError, refreshStats }: Dashb
         totalRevenue: 0,
         todayRevenue: 0,
         totalCommission: 0,
-        totalRiderEarnings: 0,
-        totalDeliveryFees: 0,
         netPlatformProfit: 0,
+        totalDeliveryFees: 0,
+        totalRiderEarnings: 0,
+        totalRestaurantEarnings: 0,
         totalPendingPayouts: 0,
         revenueStats: [],
         orderStatusDist: { delivered: 0, cancelled: 0, inProgress: 0 },
@@ -105,7 +119,15 @@ export default function DashboardHome({ stats, statsError, refreshStats }: Dashb
         avgRiderRating: 0
     };
 
-    const displayStats = { ...defaultStats, ...(stats || {}) };
+    // Merge logic: ensure nested objects like orderStatusDist don't get wiped out
+    const displayStats = {
+        ...defaultStats,
+        ...(stats || {}),
+        orderStatusDist: {
+            ...defaultStats.orderStatusDist,
+            ...(stats?.orderStatusDist || {})
+        }
+    };
 
     const hasData = displayStats.totalUsers > 0 || displayStats.totalRestaurants > 0 || displayStats.totalOrders > 0;
 
@@ -157,15 +179,6 @@ export default function DashboardHome({ stats, statsError, refreshStats }: Dashb
         { name: 'In Progress', value: displayStats.orderStatusDist?.inProgress || 0 },
         { name: 'Cancelled', value: displayStats.orderStatusDist?.cancelled || 0 },
     ];
-
-    if (!stats) {
-        return (
-            <div className="flex flex-col items-center justify-center min-h-[400px]">
-                <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-orange-500 mb-4"></div>
-                <p className="text-gray-500 font-medium">Loading Dashboard Data...</p>
-            </div>
-        );
-    }
 
     return (
         <div className="p-6 space-y-8 max-w-[1600px] mx-auto font-sans">

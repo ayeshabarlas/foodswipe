@@ -97,6 +97,8 @@ router.put('/settings', updateSystemSettings);
 
 // Dashboard stats
 router.get('/stats', getDashboardStats);
+router.get('/stats/quick', getQuickStats);
+router.get('/stats/finance', getFinanceStats);
 router.get('/notifications/counts', getNotificationCounts);
 router.get('/notifications', getAdminNotifications);
 router.put('/notifications/:id/read', markNotificationRead);

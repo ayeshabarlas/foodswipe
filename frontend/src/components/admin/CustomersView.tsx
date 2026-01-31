@@ -34,6 +34,22 @@ export default function CustomersView() {
 
     useEffect(() => {
         fetchCustomers();
+
+        const socket = getSocket();
+        if (socket) {
+            const handleUpdate = () => {
+                console.log('Customer update received, refreshing...');
+                fetchCustomers();
+            };
+
+            socket.on('user_updated', handleUpdate);
+            socket.on('user_registered', handleUpdate);
+
+            return () => {
+                socket.off('user_updated', handleUpdate);
+                socket.off('user_registered', handleUpdate);
+            };
+        }
     }, []);
 
     const fetchCustomers = async () => {
