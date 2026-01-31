@@ -231,13 +231,13 @@ orderSchema.pre('save', async function (next) {
     next();
 });
 
-const Order = mongoose.model('Order', orderSchema);
-
 // Optimize for admin dashboard and user queries
 orderSchema.index({ status: 1 });
 orderSchema.index({ createdAt: -1 });
 orderSchema.index({ user: 1, createdAt: -1 });
 orderSchema.index({ restaurant: 1, status: 1 });
 orderSchema.index({ rider: 1, status: 1 });
+
+const Order = mongoose.model('Order', orderSchema);
 
 module.exports = Order;

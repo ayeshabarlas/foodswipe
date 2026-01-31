@@ -330,10 +330,12 @@ const getAllOrders = async (req, res) => {
 // @route   GET /api/admin/stats
 // @access  Private/Admin
 const getDashboardStats = async (req, res) => {
-    console.log('📊 [getDashboardStats] Optimized Start - Memory:', process.memoryUsage().rss / 1024 / 1024, 'MB');
+    console.log('📊 [getDashboardStats] API HIT');
     const startTime = Date.now();
     
     try {
+        console.log('🔍 [getDashboardStats] DB Connection State:', mongoose.connection.readyState);
+        
         const todayStart = new Date();
         todayStart.setHours(0, 0, 0, 0);
 
@@ -348,8 +350,10 @@ const getDashboardStats = async (req, res) => {
             onlineRiders: 0, avgRiderRating: 0
         };
 
+        console.log('⏳ [getDashboardStats] Starting parallel queries...');
+        const queryStart = Date.now();
+
         // 1. Parallelize ALL Core Queries using Promise.allSettled
-        // This prevents one slow query from blocking everything
         const results = await Promise.allSettled([
             // [0] Core Counts
             User.countDocuments({ role: 'customer' }),
@@ -368,21 +372,21 @@ const getDashboardStats = async (req, res) => {
             // [7]
             Rider.countDocuments({ isOnline: true, verificationStatus: 'approved' }),
 
-            // [8] Financial Summaries (Aggregations)
+            // [8] Financial Summaries (Aggregations) - Optimized to avoid $convert where possible if data is already numbers
             Order.aggregate([
                 { $match: { status: { $nin: ['Cancelled', 'Rejected'] } } },
                 {
                     $group: {
                         _id: null,
-                        totalRevenue: { $sum: { $convert: { input: { $ifNull: ['$totalPrice', 0] }, to: 'double', onError: 0, onNull: 0 } } },
-                        totalCommission: { $sum: { $convert: { input: { $ifNull: ['$commissionAmount', 0] }, to: 'double', onError: 0, onNull: 0 } } },
-                        totalRiderEarnings: { $sum: { $convert: { input: { $ifNull: ['$riderEarning', 0] }, to: 'double', onError: 0, onNull: 0 } } },
-                        totalRestaurantEarnings: { $sum: { $convert: { input: { $ifNull: ['$restaurantEarning', 0] }, to: 'double', onError: 0, onNull: 0 } } },
-                        totalServiceFees: { $sum: { $convert: { input: { $ifNull: ['$serviceFee', 0] }, to: 'double', onError: 0, onNull: 0 } } },
-                        totalTax: { $sum: { $convert: { input: { $ifNull: ['$tax', 0] }, to: 'double', onError: 0, onNull: 0 } } },
-                        totalGatewayFees: { $sum: { $convert: { input: { $ifNull: ['$gatewayFee', 0] }, to: 'double', onError: 0, onNull: 0 } } },
-                        totalDiscounts: { $sum: { $convert: { input: { $ifNull: ['$discount', 0] }, to: 'double', onError: 0, onNull: 0 } } },
-                        totalDeliveryFees: { $sum: { $convert: { input: { $ifNull: ['$deliveryFee', 0] }, to: 'double', onError: 0, onNull: 0 } } }
+                        totalRevenue: { $sum: { $ifNull: ['$totalPrice', 0] } },
+                        totalCommission: { $sum: { $ifNull: ['$commissionAmount', 0] } },
+                        totalRiderEarnings: { $sum: { $ifNull: ['$riderEarning', 0] } },
+                        totalRestaurantEarnings: { $sum: { $ifNull: ['$restaurantEarning', 0] } },
+                        totalServiceFees: { $sum: { $ifNull: ['$serviceFee', 0] } },
+                        totalTax: { $sum: { $ifNull: ['$tax', 0] } },
+                        totalGatewayFees: { $sum: { $ifNull: ['$gatewayFee', 0] } },
+                        totalDiscounts: { $sum: { $ifNull: ['$discount', 0] } },
+                        totalDeliveryFees: { $sum: { $ifNull: ['$deliveryFee', 0] } }
                     }
                 }
             ]),
@@ -395,7 +399,7 @@ const getDashboardStats = async (req, res) => {
                         createdAt: { $gte: todayStart }
                     }
                 },
-                { $group: { _id: null, total: { $sum: { $convert: { input: { $ifNull: ['$totalPrice', 0] }, to: 'double', onError: 0, onNull: 0 } } } } }
+                { $group: { _id: null, total: { $sum: { $ifNull: ['$totalPrice', 0] } } } }
             ]),
 
             // [10] Order Status Distribution
@@ -403,19 +407,21 @@ const getDashboardStats = async (req, res) => {
                 { $group: { _id: "$status", count: { $sum: 1 } } }
             ]),
 
-            // [11] Recent Activity
-            Order.find().sort({ createdAt: -1 }).limit(5).populate('restaurant', 'name').populate({ path: 'rider', populate: { path: 'user', select: 'name' } }),
+            // [11] Recent Activity - REMOVED heavy populates for speed
+            Order.find().sort({ createdAt: -1 }).limit(5).select('status createdAt rider restaurant'),
             
-            // [12] Wallet Stats for Payouts
+            // [12] Wallet Stats
             RestaurantWallet.aggregate([
-                { $group: { _id: null, totalPending: { $sum: { $convert: { input: { $ifNull: ['$pendingPayout', 0] }, to: 'double', onError: 0, onNull: 0 } } } } }
+                { $group: { _id: null, totalPending: { $sum: { $ifNull: ['$pendingPayout', 0] } } } }
             ]),
             
             // [13] Rider Wallet Stats
             RiderWallet.aggregate([
-                { $group: { _id: null, totalPending: { $sum: { $convert: { input: { $ifNull: ['$availableWithdraw', 0] }, to: 'double', onError: 0, onNull: 0 } } } } }
+                { $group: { _id: null, totalPending: { $sum: { $ifNull: ['$availableWithdraw', 0] } } } }
             ])
         ]);
+
+        console.log(`⏱️ [getDashboardStats] Queries finished in ${Date.now() - queryStart}ms`);
 
         // Map results to stats object
         if (results[0].status === 'fulfilled') stats.totalUsers = results[0].value;
@@ -455,13 +461,13 @@ const getDashboardStats = async (req, res) => {
             });
         }
 
-        // Activity mapping
+        // Activity mapping - simplified text to avoid population overhead
         if (results[11].status === 'fulfilled') {
             stats.recentActivity = results[11].value.map(o => ({
                 id: o._id,
                 type: 'order',
-                text: `Order status: ${o.status}`,
-                subtext: `Order #${o._id.toString().slice(-5)} ${o.rider ? `(Rider: ${o.rider.fullName || (o.rider.user && o.rider.user.name) || 'Assigned'})` : ''}`,
+                text: `Order #${o._id.toString().slice(-5)}`,
+                subtext: `Status: ${o.status}`,
                 time: o.createdAt || new Date()
             }));
         }
@@ -1455,6 +1461,8 @@ const blockRider = async (req, res) => {
  * @route   GET /api/admin/notification-counts
  */
 const getNotificationCounts = async (req, res) => {
+    console.log('🔔 [getNotificationCounts] API HIT');
+    const startTime = Date.now();
     try {
         const [
             pendingRestaurants,
@@ -1471,6 +1479,7 @@ const getNotificationCounts = async (req, res) => {
             })
         ]);
 
+        console.log(`✅ [getNotificationCounts] Finished in ${Date.now() - startTime}ms`);
         res.json({
             pendingRestaurants,
             pendingRiders,
@@ -1479,6 +1488,7 @@ const getNotificationCounts = async (req, res) => {
             totalNotifications: pendingRestaurants + pendingRiders + newOrders + newUsers
         });
     } catch (error) {
+        console.error('🔥 [getNotificationCounts] Error:', error);
         res.status(500).json({ message: 'Error fetching notification counts', error: error.message });
     }
 };

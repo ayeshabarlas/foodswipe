@@ -111,6 +111,11 @@ const riderSchema = mongoose.Schema(
     }
 );
 
+// Optimize for queries
+riderSchema.index({ verificationStatus: 1 });
+riderSchema.index({ isOnline: 1, verificationStatus: 1 });
+riderSchema.index({ user: 1 });
+
 const Rider = mongoose.model('Rider', riderSchema);
 
 module.exports = Rider;

@@ -2,7 +2,7 @@ const mongoose = require('mongoose');
 
 // Disable buffering globally to prevent long-running timeouts
 // This makes queries fail fast if the DB is not connected
-// mongoose.set('bufferCommands', false);
+mongoose.set('bufferCommands', false);
 
 let isConnected = false;
 let lastError = null;
