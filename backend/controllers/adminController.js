@@ -322,6 +322,7 @@ const getAllOrders = async (req, res) => {
 // @route   GET /api/admin/stats
 // @access  Private/Admin
 const getDashboardStats = async (req, res) => {
+    console.log('📊 [getDashboardStats] Started fetching stats...');
     try {
         const todayStr = new Date().toISOString().split('T')[0];
         const todayStart = new Date();
@@ -335,8 +336,10 @@ const getDashboardStats = async (req, res) => {
         const todayOrders = await Order.countDocuments({
             createdAt: { $gte: todayStart }
         });
+        console.log('   - Basic counts fetched');
 
         // Calculate Revenue & Commission (Total & Today)
+        console.log('   - Aggregating total stats...');
         const totalStatsResult = await Order.aggregate([
             { $match: { status: { $nin: ['Cancelled', 'Rejected'] } } },
             {
@@ -354,6 +357,7 @@ const getDashboardStats = async (req, res) => {
                 }
             }
         ]);
+        console.log('   - Total stats aggregated');
 
         const totalRevenue = totalStatsResult[0]?.totalRevenue || 0;
         const totalCommission = totalStatsResult[0]?.totalCommission || 0;
@@ -368,6 +372,7 @@ const getDashboardStats = async (req, res) => {
         // Calculate Net Platform Profit: Commission + (Delivery Fees - Rider Earnings) + Service Fees + Tax - Gateway Fees - Discounts
         const netPlatformProfit = totalCommission + (totalDeliveryFees - totalRiderEarnings) + totalServiceFees + totalTax - totalGatewayFees - totalDiscounts;
 
+        console.log('   - Aggregating today revenue...');
         const todayRevenueResult = await Order.aggregate([
             {
                 $match: {
@@ -378,8 +383,10 @@ const getDashboardStats = async (req, res) => {
             { $group: { _id: null, total: { $sum: { $convert: { input: { $ifNull: ['$totalPrice', 0] }, to: 'double', onError: 0, onNull: 0 } } } } }
         ]);
         const todayRevenue = todayRevenueResult[0]?.total || 0;
+        console.log('   - Today revenue aggregated');
 
         // Calculate Pending Payouts
+        console.log('   - Aggregating pending payouts...');
         const resWalletStats = await RestaurantWallet.aggregate([
             { $group: { _id: null, totalPending: { $sum: { $convert: { input: { $ifNull: ['$pendingPayout', 0] }, to: 'double', onError: 0, onNull: 0 } } } } }
         ]);
@@ -387,6 +394,7 @@ const getDashboardStats = async (req, res) => {
             { $group: { _id: null, totalPending: { $sum: { $convert: { input: { $ifNull: ['$availableWithdraw', 0] }, to: 'double', onError: 0, onNull: 0 } } } } }
         ]);
         const totalPendingPayouts = (resWalletStats[0]?.totalPending || 0) + (riderWalletStats[0]?.totalPending || 0);
+        console.log('   - Pending payouts aggregated');
 
         // Revenue Graph Data (Last 7 days)
         const sevenDaysAgo = new Date();

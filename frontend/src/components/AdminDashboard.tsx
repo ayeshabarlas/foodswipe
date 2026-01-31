@@ -301,9 +301,13 @@ export default function AdminDashboard() {
             };
 
             console.log('Fetching stats from:', `${getApiUrl()}/api/admin/stats`);
+            
+            // Add a timeout to axios requests
+            const axiosConfig = { ...config, timeout: 15000 }; // 15 seconds timeout
+
             const [statsRes, countsRes] = await Promise.all([
-                axios.get(`${getApiUrl()}/api/admin/stats`, config),
-                axios.get(`${getApiUrl()}/api/admin/notifications/counts`, config)
+                axios.get(`${getApiUrl()}/api/admin/stats`, axiosConfig),
+                axios.get(`${getApiUrl()}/api/admin/notifications/counts`, axiosConfig)
             ]);
 
             console.log('Stats received:', statsRes.data);
@@ -312,6 +316,18 @@ export default function AdminDashboard() {
             setNotificationCounts(countsRes.data);
         } catch (error: any) {
             console.error('Error fetching admin stats:', error);
+            
+            // Set dummy stats if it fails so dashboard can still render
+            if (!stats) {
+                setStats({
+                    totalUsers: 0, totalRestaurants: 0, pendingRestaurants: 0, totalOrders: 0,
+                    todayOrders: 0, totalRevenue: 0, todayRevenue: 0, totalCommission: 0,
+                    totalPendingPayouts: 0, revenueStats: [], orderStatusDist: { delivered: 0, cancelled: 0, inProgress: 0 },
+                    topRestaurants: [], recentActivity: [], totalRiders: 0, pendingRiders: 0,
+                    onlineRiders: 0, avgRiderRating: 0
+                });
+            }
+
             if (!error.response) {
                 // Network error - silence after first toast to avoid spam
                 if (loading) {
