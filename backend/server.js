@@ -154,7 +154,14 @@ try {
     app.use('/api/riders', require('./routes/riderRoutes'));
     app.use('/api/bonus', require('./routes/bonusRoutes'));
     app.use('/api/notifications', require('./routes/notificationRoutes'));
-    app.use('/api/admin', require('./routes/adminRoutes'));
+    
+    // Admin route with extra logging
+    app.use('/api/admin', (req, res, next) => {
+        console.log(`👑 ADMIN API REQUEST: ${req.method} ${req.url}`);
+        console.log(`   Headers: ${JSON.stringify(req.headers['origin'])}`);
+        next();
+    }, require('./routes/adminRoutes'));
+    
     app.use('/api/finance', require('./routes/financeRoutes'));
     app.use('/api/payments', require('./routes/paymentRoutes'));
     app.use('/api/verifications', require('./routes/verificationRoutes'));

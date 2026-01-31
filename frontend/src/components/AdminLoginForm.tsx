@@ -50,9 +50,21 @@ export default function AdminLoginForm() {
                 setError(`Not authorized. Got: ${debugInfo.substring(0, 100)}...`);
             }
         } catch (err: any) {
-            console.error('Login error:', err);
-            console.error('Error response:', err.response?.data);
-            setError(err.response?.data?.message || 'Invalid email or password');
+            console.error('Login error full:', err);
+            const status = err.response?.status;
+            const message = err.response?.data?.message;
+            
+            if (status === 404) {
+                setError(`API Route Not Found (404). URL: ${getApiUrl()}/api/admin/login`);
+            } else if (status === 401) {
+                setError('Invalid email or password (401)');
+            } else if (status === 500) {
+                setError(`Server Error (500): ${message || 'Unknown'}`);
+            } else if (!err.response) {
+                setError('Network Error: Cannot reach server. Please check internet.');
+            } else {
+                setError(message || `Login Failed (Status: ${status})`);
+            }
         } finally {
             setLoading(false);
         }

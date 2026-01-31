@@ -219,18 +219,14 @@ const deleteAdmin = async (req, res) => {
  * @access  Public
  */
 const loginAdmin = async (req, res) => {
-    const { identifier, email, password } = req.body;
-
     try {
+        const { identifier, email, password } = req.body;
         const loginEmail = (email || identifier || "").trim().toLowerCase();
-        console.log(`\n=== [DEBUG] ADMIN LOGIN ATTEMPT ===`);
-        console.log(`- Raw Email: "${email}"`);
-        console.log(`- Raw Identifier: "${identifier}"`);
-        console.log(`- Processed Email: "${loginEmail}"`);
-        console.log(`- Password Provided: ${password ? 'YES' : 'NO'}`);
-
+        
+        console.log(`🔐 Admin Login Attempt: ${loginEmail}`);
+        console.log(`   - Body keys: ${Object.keys(req.body)}`);
+        
         if (!loginEmail || !password) {
-            console.log('❌ Login failed: Missing email or password');
             return res.status(400).json({ message: 'Email and password are required' });
         }
 
