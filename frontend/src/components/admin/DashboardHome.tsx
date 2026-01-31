@@ -15,7 +15,8 @@ import {
     FaWallet,
     FaPercentage,
     FaStar,
-    FaCalculator
+    FaCalculator,
+    FaExclamationTriangle
 } from 'react-icons/fa';
 import {
     LineChart,
@@ -184,8 +185,17 @@ export default function DashboardHome({ stats, statsError, refreshStats }: Dashb
                     animate={{ opacity: 1 }}
                     className="bg-orange-50 border border-orange-100 p-4 rounded-2xl flex items-center gap-3 text-orange-700"
                 >
-                    <FaExclamationTriangle />
-                    <span className="text-sm font-bold">Note: No active data found in the system yet.</span>
+                    {stats === null ? (
+                        <>
+                            <div className="w-4 h-4 border-2 border-orange-500 border-t-transparent rounded-full animate-spin"></div>
+                            <span className="text-sm font-bold">Loading dashboard data...</span>
+                        </>
+                    ) : (
+                        <>
+                            <FaExclamationTriangle />
+                            <span className="text-sm font-bold">Note: No active data found in the system yet.</span>
+                        </>
+                    )}
                 </motion.div>
             )}
 

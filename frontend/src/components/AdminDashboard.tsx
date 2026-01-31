@@ -32,7 +32,7 @@ const HistoryView = dynamic(() => import('./admin/HistoryView'), { ssr: false })
 import axios from 'axios';
 import { initSocket, getSocket, disconnectSocket } from '../utils/socket';
 import { getApiUrl } from '../utils/config';
-import { FaClock, FaBell } from 'react-icons/fa';
+import { FaClock, FaBell, FaExclamationTriangle } from 'react-icons/fa';
 import toast, { Toaster } from 'react-hot-toast';
 
 import ModernLoader from './ModernLoader';
@@ -337,7 +337,17 @@ export default function AdminDashboard() {
                     console.error('Error fetching counts:', err);
                 });
 
-            await Promise.allSettled([fetchStatsPromise, fetchCountsPromise]);
+            // Start fetching but don't block the whole UI if it's slow
+            Promise.allSettled([fetchStatsPromise, fetchCountsPromise]).finally(() => {
+                setLoading(false);
+            });
+            
+            // Set loading to false after a short delay anyway to show the shell
+            // if the network is being very slow, but give it a chance to load data first
+            setTimeout(() => {
+                if (mounted) setLoading(false);
+            }, 3000); // 3 seconds max for the initial blank screen
+
         } catch (error: any) {
             console.error('Error in fetchStats wrapper:', error);
             toast.error('Connection issue. Please check if backend is online.');
