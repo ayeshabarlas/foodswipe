@@ -359,73 +359,61 @@ const getDashboardStats = async (req, res) => {
             }
         };
 
-        console.log('🚀 Starting parallel queries...');
+        console.log('🚀 Starting extreme simplified parallel queries...');
         const queryStart = Date.now();
 
         const results = await Promise.allSettled([
-            timedQuery('totalUsers', User.countDocuments({ role: 'customer' }).maxTimeMS(4000)),
-            timedQuery('totalRestaurants', Restaurant.countDocuments({}).maxTimeMS(4000)),
-            timedQuery('pendingRestaurants', Restaurant.countDocuments({ verificationStatus: 'pending' }).maxTimeMS(4000)),
-            timedQuery('totalOrders', Order.countDocuments({}).maxTimeMS(4000)),
-            timedQuery('todayOrders', Order.countDocuments({ createdAt: { $gte: todayStart } }).maxTimeMS(4000)),
-            timedQuery('totalRiders', Rider.countDocuments({}).maxTimeMS(4000)),
-            timedQuery('pendingRiders', Rider.countDocuments({ verificationStatus: 'pending' }).maxTimeMS(4000)),
-            timedQuery('onlineRiders', Rider.countDocuments({ isOnline: true, verificationStatus: 'approved' }).maxTimeMS(4000)),
+            timedQuery('totalUsers', User.countDocuments({ role: 'customer' }).maxTimeMS(5000)),
+            timedQuery('totalRestaurants', Restaurant.countDocuments({}).maxTimeMS(5000)),
+            timedQuery('pendingRestaurants', Restaurant.countDocuments({ verificationStatus: 'pending' }).maxTimeMS(5000)),
+            timedQuery('totalOrders', Order.countDocuments({}).maxTimeMS(5000)),
+            timedQuery('todayOrders', Order.countDocuments({ createdAt: { $gte: todayStart } }).maxTimeMS(5000)),
+            timedQuery('totalRiders', Rider.countDocuments({}).maxTimeMS(5000)),
+            timedQuery('pendingRiders', Rider.countDocuments({ verificationStatus: 'pending' }).maxTimeMS(5000)),
+            timedQuery('onlineRiders', Rider.countDocuments({ isOnline: true, verificationStatus: 'approved' }).maxTimeMS(5000)),
             
-            // Financial Aggregation
-            timedQuery('financials', Order.aggregate([
+            // Simplified Finance (No $facet, just one group)
+            timedQuery('financeGroup', Order.aggregate([
+                { $match: { status: { $nin: ['Cancelled', 'Rejected'] } } },
                 {
-                    $facet: {
-                        "globalFinance": [
-                            { $match: { status: { $nin: ['Cancelled', 'Rejected'] } } },
-                            {
-                                $group: {
-                                    _id: null,
-                                    totalRevenue: { $sum: '$totalPrice' },
-                                    totalCommission: { $sum: '$commissionAmount' },
-                                    totalRiderEarnings: { $sum: '$riderEarning' },
-                                    totalRestaurantEarnings: { $sum: '$restaurantEarning' },
-                                    totalServiceFees: { $sum: '$serviceFee' },
-                                    totalTax: { $sum: '$tax' },
-                                    totalDeliveryFees: { $sum: '$deliveryFee' },
-                                    totalGatewayFees: { $sum: '$gatewayFee' },
-                                    totalDiscounts: { $sum: '$discount' }
-                                }
-                            }
-                        ],
-                        "todayFinance": [
-                            { $match: { status: { $nin: ['Cancelled', 'Rejected'] }, createdAt: { $gte: todayStart } } },
-                            { $group: { _id: null, total: { $sum: '$totalPrice' } } }
-                        ],
-                        "statusDist": [
-                            { $group: { _id: "$status", count: { $sum: 1 } } }
-                        ],
-                        "recentOrders": [
-                            { $sort: { createdAt: -1 } },
-                            { $limit: 10 },
-                            { $project: { _id: 1, status: 1, createdAt: 1, totalPrice: 1 } }
-                        ]
+                    $group: {
+                        _id: null,
+                        totalRevenue: { $sum: '$totalPrice' },
+                        totalCommission: { $sum: '$commissionAmount' },
+                        totalRiderEarnings: { $sum: '$riderEarning' },
+                        totalRestaurantEarnings: { $sum: '$restaurantEarning' },
+                        totalServiceFees: { $sum: '$serviceFee' },
+                        totalTax: { $sum: '$tax' },
+                        totalDeliveryFees: { $sum: '$deliveryFee' },
+                        totalGatewayFees: { $sum: '$gatewayFee' },
+                        totalDiscounts: { $sum: '$discount' }
                     }
                 }
-            ]).option({ maxTimeMS: 8000 })),
+            ]).option({ maxTimeMS: 10000 })),
 
-            timedQuery('resWallet', RestaurantWallet.aggregate([{ $group: { _id: null, total: { $sum: '$pendingPayout' } } }]).option({ maxTimeMS: 4000 })),
-            timedQuery('riderWallet', RiderWallet.aggregate([{ $group: { _id: null, total: { $sum: '$availableWithdraw' } } }]).option({ maxTimeMS: 4000 }))
+            timedQuery('todayRevenue', Order.aggregate([
+                { $match: { status: { $nin: ['Cancelled', 'Rejected'] }, createdAt: { $gte: todayStart } } },
+                { $group: { _id: null, total: { $sum: '$totalPrice' } } }
+            ]).option({ maxTimeMS: 5000 })),
+
+            timedQuery('statusDist', Order.aggregate([
+                { $group: { _id: "$status", count: { $sum: 1 } } }
+            ]).option({ maxTimeMS: 5000 })),
+
+            timedQuery('recentOrders', Order.find({})
+                .sort({ createdAt: -1 })
+                .limit(10)
+                .select('_id status createdAt totalPrice')
+                .lean()
+                .maxTimeMS(5000)
+            ),
+
+            timedQuery('resWallet', RestaurantWallet.aggregate([{ $group: { _id: null, total: { $sum: '$pendingPayout' } } }]).option({ maxTimeMS: 5000 })),
+            timedQuery('riderWallet', RiderWallet.aggregate([{ $group: { _id: null, total: { $sum: '$availableWithdraw' } } }]).option({ maxTimeMS: 5000 }))
         ]);
 
         const totalQueryTime = Date.now() - queryStart;
         console.log(`📊 All queries settled in ${totalQueryTime}ms`);
-
-        // Debug Info
-        const debugInfo = {
-            queries: results.map((r, i) => ({
-                id: i,
-                status: r.status,
-                error: r.status === 'rejected' ? r.reason?.message : null
-            })),
-            totalTime: Date.now() - startTime,
-            dbStatus: mongoose.connection.readyState
-        };
 
         // Map Results safely
         if (results[0].status === 'fulfilled') stats.totalUsers = results[0].value || 0;
@@ -437,52 +425,52 @@ const getDashboardStats = async (req, res) => {
         if (results[6].status === 'fulfilled') stats.pendingRiders = results[6].value || 0;
         if (results[7].status === 'fulfilled') stats.onlineRiders = results[7].value || 0;
 
+        // Process Finance [8]
         if (results[8].status === 'fulfilled' && results[8].value && results[8].value[0]) {
-            const data = results[8].value[0];
-            
-            if (data.globalFinance && data.globalFinance[0]) {
-                const gf = data.globalFinance[0];
-                stats.totalRevenue = gf.totalRevenue || 0;
-                stats.totalCommission = gf.totalCommission || 0;
-                stats.totalRiderEarnings = gf.totalRiderEarnings || 0;
-                stats.totalRestaurantEarnings = gf.totalRestaurantEarnings || 0;
-                stats.totalServiceFees = gf.totalServiceFees || 0;
-                stats.totalTax = gf.totalTax || 0;
-                stats.totalDeliveryFees = gf.totalDeliveryFees || 0;
+            const gf = results[8].value[0];
+            stats.totalRevenue = gf.totalRevenue || 0;
+            stats.totalCommission = gf.totalCommission || 0;
+            stats.totalRiderEarnings = gf.totalRiderEarnings || 0;
+            stats.totalRestaurantEarnings = gf.totalRestaurantEarnings || 0;
+            stats.totalServiceFees = gf.totalServiceFees || 0;
+            stats.totalTax = gf.totalTax || 0;
+            stats.totalDeliveryFees = gf.totalDeliveryFees || 0;
 
-                stats.netPlatformProfit = (gf.totalCommission || 0) +
-                    ((gf.totalDeliveryFees || 0) - (gf.totalRiderEarnings || 0)) +
-                    (gf.totalServiceFees || 0) +
-                    (gf.totalTax || 0) -
-                    (gf.totalGatewayFees || 0) -
-                    (gf.totalDiscounts || 0);
-            }
-
-            if (data.todayFinance && data.todayFinance[0]) {
-                stats.todayRevenue = data.todayFinance[0].total || 0;
-            }
-
-            if (data.statusDist) {
-                data.statusDist.forEach(item => {
-                    if (['Delivered', 'Completed'].includes(item._id)) stats.orderStatusDist.delivered += item.count;
-                    else if (['Cancelled', 'Rejected'].includes(item._id)) stats.orderStatusDist.cancelled += item.count;
-                    else stats.orderStatusDist.inProgress += item.count;
-                });
-            }
-
-            if (data.recentOrders) {
-                stats.recentActivity = data.recentOrders.map(o => ({
-                    id: o._id,
-                    type: 'order',
-                    text: `Order #${o._id.toString().slice(-4).toUpperCase()}`,
-                    subtext: `${o.status} - Rs. ${o.totalPrice}`,
-                    time: o.createdAt
-                }));
-            }
+            stats.netPlatformProfit = (gf.totalCommission || 0) +
+                ((gf.totalDeliveryFees || 0) - (gf.totalRiderEarnings || 0)) +
+                (gf.totalServiceFees || 0) +
+                (gf.totalTax || 0) -
+                (gf.totalGatewayFees || 0) -
+                (gf.totalDiscounts || 0);
         }
 
-        const resPending = (results[9].status === 'fulfilled' && results[9].value && results[9].value[0]) ? results[9].value[0].total : 0;
-        const riderPending = (results[10].status === 'fulfilled' && results[10].value && results[10].value[0]) ? results[10].value[0].total : 0;
+        // Today Revenue [9]
+        if (results[9].status === 'fulfilled' && results[9].value && results[9].value[0]) {
+            stats.todayRevenue = results[9].value[0].total || 0;
+        }
+
+        // Status Dist [10]
+        if (results[10].status === 'fulfilled' && results[10].value) {
+            results[10].value.forEach(item => {
+                if (['Delivered', 'Completed'].includes(item._id)) stats.orderStatusDist.delivered += item.count;
+                else if (['Cancelled', 'Rejected'].includes(item._id)) stats.orderStatusDist.cancelled += item.count;
+                else stats.orderStatusDist.inProgress += item.count;
+            });
+        }
+
+        // Recent Orders [11]
+        if (results[11].status === 'fulfilled' && results[11].value) {
+            stats.recentActivity = results[11].value.map(o => ({
+                id: o._id,
+                type: 'order',
+                text: `Order #${o._id.toString().slice(-4).toUpperCase()}`,
+                subtext: `${o.status} - Rs. ${o.totalPrice}`,
+                time: o.createdAt
+            }));
+        }
+
+        const resPending = (results[12].status === 'fulfilled' && results[12].value && results[12].value[0]) ? results[12].value[0].total : 0;
+        const riderPending = (results[13].status === 'fulfilled' && results[13].value && results[13].value[0]) ? results[13].value[0].total : 0;
         stats.totalPendingPayouts = resPending + riderPending;
 
         console.log(`✅ [getDashboardStats] FINISHED in ${Date.now() - startTime}ms`);

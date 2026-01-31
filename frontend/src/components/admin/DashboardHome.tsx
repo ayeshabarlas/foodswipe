@@ -158,6 +158,15 @@ export default function DashboardHome({ stats, statsError, refreshStats }: Dashb
         { name: 'Cancelled', value: displayStats.orderStatusDist?.cancelled || 0 },
     ];
 
+    if (!stats) {
+        return (
+            <div className="flex flex-col items-center justify-center min-h-[400px]">
+                <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-orange-500 mb-4"></div>
+                <p className="text-gray-500 font-medium">Loading Dashboard Data...</p>
+            </div>
+        );
+    }
+
     return (
         <div className="p-6 space-y-8 max-w-[1600px] mx-auto font-sans">
             {statsError && (
