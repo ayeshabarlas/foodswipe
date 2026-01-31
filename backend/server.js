@@ -131,12 +131,23 @@ app.get('/health', async (req, res) => {
 
 // API Root Info
 app.get('/api', (req, res) => {
-    res.status(200).json({ message: 'Foodswipe API is Live', version: '2.2.43' });
+    res.status(200).json({ 
+        message: 'Foodswipe API is Live', 
+        version: '2.2.46-SUPER-LOGGING',
+        timestamp: new Date().toISOString()
+    });
 });
 
 // 🚀 4. API ROUTES
 console.log('🛣️ Loading Routes...');
 try {
+    // 🚩 EMERGENCY: Direct Login Route in server.js to bypass any routing issues
+    const { loginAdmin } = require('./controllers/adminAuthController');
+    app.post('/api/admin/login', (req, res, next) => {
+        console.log('🚨 EMERGENCY LOGIN ROUTE HIT!');
+        next();
+    }, loginAdmin);
+
     app.use('/api/auth', require('./routes/authRoutes'));
     app.use('/api/users', require('./routes/userRoutes'));
     app.use('/api/restaurants', require('./routes/restaurantRoutes'));

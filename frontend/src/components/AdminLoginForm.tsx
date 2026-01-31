@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { FaShoppingBag, FaLock, FaEnvelope } from 'react-icons/fa';
@@ -12,7 +12,21 @@ export default function AdminLoginForm() {
     const [password, setPassword] = useState('');
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
+    const [serverVersion, setServerVersion] = useState('Checking...');
     const router = useRouter();
+
+    useEffect(() => {
+        // Check server version on mount
+        const checkVersion = async () => {
+            try {
+                const { data } = await axios.get(`${getApiUrl()}/api`);
+                setServerVersion(data.version || 'Unknown');
+            } catch (err) {
+                setServerVersion('Error connecting');
+            }
+        };
+        checkVersion();
+    }, []);
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -79,6 +93,7 @@ export default function AdminLoginForm() {
                     </div>
                     <h1 className="text-2xl font-bold text-gray-800">FOODSWIPE</h1>
                     <p className="text-gray-500">Admin Dashboard</p>
+                    <p className="text-[10px] text-gray-400 mt-1">Backend v{serverVersion}</p>
                 </div>
 
                 {error && (
