@@ -8,21 +8,29 @@ export function getApiUrl() {
   
   const RENDER_URL = 'https://foodswipe-6178.onrender.com';
   
+  // Highest Priority: If we are on any production-like domain, FORCE Render URL
   if (typeof window !== 'undefined') {
     const hostname = window.location.hostname;
-    const isProductionDomain = hostname.includes('foodswipe.pk') || hostname.includes('vercel.app');
+    const isProduction = 
+      hostname.includes('foodswipe.pk') || 
+      hostname.includes('vercel.app') || 
+      hostname.includes('onrender.com');
     
-    if (isProductionDomain) {
-      // FORCE Render URL on production domains to avoid 404s
+    if (isProduction) {
+      console.log('Production detected, forcing API URL:', RENDER_URL);
       cachedApiUrl = RENDER_URL;
       return cachedApiUrl;
     }
   }
 
-  // Priority 2: Use Environment variable if provided (from .env.local or Vercel)
-  const ENV_URL = process.env.NEXT_PUBLIC_API_URL;
-  if (ENV_URL) {
-    cachedApiUrl = ENV_URL.endsWith('/') ? ENV_URL.slice(0, -1) : ENV_URL;
+  // Priority 2: Local development checks
+  if (typeof window !== 'undefined' && (
+    window.location.hostname === 'localhost' || 
+    window.location.hostname === '127.0.0.1' ||
+    window.location.hostname.startsWith('192.168.') ||
+    window.location.hostname.endsWith('.trae.app')
+  )) {
+    cachedApiUrl = 'http://localhost:5000';
     return cachedApiUrl;
   }
   
