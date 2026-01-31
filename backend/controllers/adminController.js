@@ -330,14 +330,13 @@ const getAllOrders = async (req, res) => {
 // @route   GET /api/admin/stats
 // @access  Private/Admin
 const getDashboardStats = async (req, res) => {
-    console.log('📊 [getDashboardStats] API HIT');
+    console.log('📊 [getDashboardStats] API START');
     const startTime = Date.now();
 
     try {
         const todayStart = new Date();
         todayStart.setHours(0, 0, 0, 0);
 
-        // Define default values
         let stats = {
             totalUsers: 0, totalRestaurants: 0, pendingRestaurants: 0, totalOrders: 0, todayOrders: 0,
             totalRevenue: 0, todayRevenue: 0, totalCommission: 0, totalRiderEarnings: 0, totalRestaurantEarnings: 0,
@@ -347,22 +346,34 @@ const getDashboardStats = async (req, res) => {
             onlineRiders: 0, avgRiderRating: 0, netPlatformProfit: 0
         };
 
+        // Helper to run query with timing
+        const timedQuery = async (name, queryPromise) => {
+            const start = Date.now();
+            try {
+                const result = await queryPromise;
+                console.log(`⏱️ Query [${name}] took ${Date.now() - start}ms`);
+                return result;
+            } catch (err) {
+                console.error(`❌ Query [${name}] failed after ${Date.now() - start}ms:`, err.message);
+                throw err;
+            }
+        };
+
+        console.log('🚀 Starting parallel queries...');
         const queryStart = Date.now();
 
-        // 1. Parallelize core counts and complex aggregations
         const results = await Promise.allSettled([
-            // [0-7] Basic Counts
-            User.countDocuments({ role: 'customer' }).maxTimeMS(5000),
-            Restaurant.countDocuments({}).maxTimeMS(5000),
-            Restaurant.countDocuments({ verificationStatus: 'pending' }).maxTimeMS(5000),
-            Order.countDocuments({}).maxTimeMS(5000),
-            Order.countDocuments({ createdAt: { $gte: todayStart } }).maxTimeMS(5000),
-            Rider.countDocuments({}).maxTimeMS(5000),
-            Rider.countDocuments({ verificationStatus: 'pending' }).maxTimeMS(5000),
-            Rider.countDocuments({ isOnline: true, verificationStatus: 'approved' }).maxTimeMS(5000),
-
-            // [8] FINANCIALS & STATUS (All-in-one aggregation using $facet for speed)
-            Order.aggregate([
+            timedQuery('totalUsers', User.countDocuments({ role: 'customer' }).maxTimeMS(4000)),
+            timedQuery('totalRestaurants', Restaurant.countDocuments({}).maxTimeMS(4000)),
+            timedQuery('pendingRestaurants', Restaurant.countDocuments({ verificationStatus: 'pending' }).maxTimeMS(4000)),
+            timedQuery('totalOrders', Order.countDocuments({}).maxTimeMS(4000)),
+            timedQuery('todayOrders', Order.countDocuments({ createdAt: { $gte: todayStart } }).maxTimeMS(4000)),
+            timedQuery('totalRiders', Rider.countDocuments({}).maxTimeMS(4000)),
+            timedQuery('pendingRiders', Rider.countDocuments({ verificationStatus: 'pending' }).maxTimeMS(4000)),
+            timedQuery('onlineRiders', Rider.countDocuments({ isOnline: true, verificationStatus: 'approved' }).maxTimeMS(4000)),
+            
+            // Financial Aggregation
+            timedQuery('financials', Order.aggregate([
                 {
                     $facet: {
                         "globalFinance": [
@@ -396,68 +407,62 @@ const getDashboardStats = async (req, res) => {
                         ]
                     }
                 }
-            ]).option({ maxTimeMS: 10000 }),
+            ]).option({ maxTimeMS: 8000 })),
 
-            // [9] Payout Stats (Simplified)
-            RestaurantWallet.aggregate([{ $group: { _id: null, total: { $sum: '$pendingPayout' } } }]).option({ maxTimeMS: 5000 }),
-            RiderWallet.aggregate([{ $group: { _id: null, total: { $sum: '$availableWithdraw' } } }]).option({ maxTimeMS: 5000 })
+            timedQuery('resWallet', RestaurantWallet.aggregate([{ $group: { _id: null, total: { $sum: '$pendingPayout' } } }]).option({ maxTimeMS: 4000 })),
+            timedQuery('riderWallet', RiderWallet.aggregate([{ $group: { _id: null, total: { $sum: '$availableWithdraw' } } }]).option({ maxTimeMS: 4000 }))
         ]);
 
-        console.log(`⏱️ [getDashboardStats] Core queries finished in ${Date.now() - queryStart}ms`);
+        const totalQueryTime = Date.now() - queryStart;
+        console.log(`📊 All queries settled in ${totalQueryTime}ms`);
 
-        // Debug Info to track performance/failures on Render
+        // Debug Info
         const debugInfo = {
-            queryResults: results.map((r, i) => ({
+            queries: results.map((r, i) => ({
                 id: i,
                 status: r.status,
-                reason: r.status === 'rejected' ? r.reason?.message : null,
-                value_exists: r.status === 'fulfilled' && !!r.value
+                error: r.status === 'rejected' ? r.reason?.message : null
             })),
             totalTime: Date.now() - startTime,
-            dbConnected: !!(results[0].status === 'fulfilled' || results[1].status === 'fulfilled')
+            dbStatus: mongoose.connection.readyState
         };
 
-        // Map Results
-        if (results[0].status === 'fulfilled') stats.totalUsers = results[0].value;
-        if (results[1].status === 'fulfilled') stats.totalRestaurants = results[1].value;
-        if (results[2].status === 'fulfilled') stats.pendingRestaurants = results[2].value;
-        if (results[3].status === 'fulfilled') stats.totalOrders = results[3].value;
-        if (results[4].status === 'fulfilled') stats.todayOrders = results[4].value;
-        if (results[5].status === 'fulfilled') stats.totalRiders = results[5].value;
-        if (results[6].status === 'fulfilled') stats.pendingRiders = results[6].value;
-        if (results[7].status === 'fulfilled') stats.onlineRiders = results[7].value;
+        // Map Results safely
+        if (results[0].status === 'fulfilled') stats.totalUsers = results[0].value || 0;
+        if (results[1].status === 'fulfilled') stats.totalRestaurants = results[1].value || 0;
+        if (results[2].status === 'fulfilled') stats.pendingRestaurants = results[2].value || 0;
+        if (results[3].status === 'fulfilled') stats.totalOrders = results[3].value || 0;
+        if (results[4].status === 'fulfilled') stats.todayOrders = results[4].value || 0;
+        if (results[5].status === 'fulfilled') stats.totalRiders = results[5].value || 0;
+        if (results[6].status === 'fulfilled') stats.pendingRiders = results[6].value || 0;
+        if (results[7].status === 'fulfilled') stats.onlineRiders = results[7].value || 0;
 
-        // Process Faceted Aggregation [8]
-        if (results[8].status === 'fulfilled' && results[8].value && results[8].value.length > 0) {
+        if (results[8].status === 'fulfilled' && results[8].value && results[8].value[0]) {
             const data = results[8].value[0];
             
-            // Safety checks for data fields
-            if (data && data.globalFinance) {
-                if (data.globalFinance.length > 0) {
-                    const gf = data.globalFinance[0];
-                    stats.totalRevenue = gf.totalRevenue || 0;
-                    stats.totalCommission = gf.totalCommission || 0;
-                    stats.totalRiderEarnings = gf.totalRiderEarnings || 0;
-                    stats.totalRestaurantEarnings = gf.totalRestaurantEarnings || 0;
-                    stats.totalServiceFees = gf.totalServiceFees || 0;
-                    stats.totalTax = gf.totalTax || 0;
-                    stats.totalDeliveryFees = gf.totalDeliveryFees || 0;
+            if (data.globalFinance && data.globalFinance[0]) {
+                const gf = data.globalFinance[0];
+                stats.totalRevenue = gf.totalRevenue || 0;
+                stats.totalCommission = gf.totalCommission || 0;
+                stats.totalRiderEarnings = gf.totalRiderEarnings || 0;
+                stats.totalRestaurantEarnings = gf.totalRestaurantEarnings || 0;
+                stats.totalServiceFees = gf.totalServiceFees || 0;
+                stats.totalTax = gf.totalTax || 0;
+                stats.totalDeliveryFees = gf.totalDeliveryFees || 0;
 
-                    // Profit logic
-                    stats.netPlatformProfit = (gf.totalCommission || 0) +
-                        ((gf.totalDeliveryFees || 0) - (gf.totalRiderEarnings || 0)) +
-                        (gf.totalServiceFees || 0) +
-                        (gf.totalTax || 0) -
-                        (gf.totalGatewayFees || 0) -
-                        (gf.totalDiscounts || 0);
-                }
+                stats.netPlatformProfit = (gf.totalCommission || 0) +
+                    ((gf.totalDeliveryFees || 0) - (gf.totalRiderEarnings || 0)) +
+                    (gf.totalServiceFees || 0) +
+                    (gf.totalTax || 0) -
+                    (gf.totalGatewayFees || 0) -
+                    (gf.totalDiscounts || 0);
             }
 
-            if (data && data.todayFinance && data.todayFinance.length > 0) {
+            if (data.todayFinance && data.todayFinance[0]) {
                 stats.todayRevenue = data.todayFinance[0].total || 0;
             }
 
-            if (data && data.statusDist) {
+            if (data.statusDist) {
                 data.statusDist.forEach(item => {
                     if (['Delivered', 'Completed'].includes(item._id)) stats.orderStatusDist.delivered += item.count;
                     else if (['Cancelled', 'Rejected'].includes(item._id)) stats.orderStatusDist.cancelled += item.count;
@@ -465,7 +470,7 @@ const getDashboardStats = async (req, res) => {
                 });
             }
 
-            if (data && data.recentOrders) {
+            if (data.recentOrders) {
                 stats.recentActivity = data.recentOrders.map(o => ({
                     id: o._id,
                     type: 'order',
@@ -476,21 +481,25 @@ const getDashboardStats = async (req, res) => {
             }
         }
 
-        // Payouts
         const resPending = (results[9].status === 'fulfilled' && results[9].value && results[9].value[0]) ? results[9].value[0].total : 0;
         const riderPending = (results[10].status === 'fulfilled' && results[10].value && results[10].value[0]) ? results[10].value[0].total : 0;
         stats.totalPendingPayouts = resPending + riderPending;
 
-        console.log(`✅ [getDashboardStats] Completed in ${Date.now() - startTime}ms`);
-        res.status(200).json({ 
+        console.log(`✅ [getDashboardStats] FINISHED in ${Date.now() - startTime}ms`);
+        
+        return res.status(200).json({ 
             ...stats, 
             _debug: debugInfo,
-            _version: '2.3.1-DEBUG' 
+            _version: '2.4.0-STABLE'
         });
 
     } catch (error) {
-        console.error('🔥 [getDashboardStats] Error:', error);
-        res.status(500).json({ message: 'Server error', error: error.message });
+        console.error('🔥 [getDashboardStats] CRITICAL ERROR:', error);
+        return res.status(500).json({ 
+            message: 'Server error while fetching stats', 
+            error: error.message,
+            _debug: { error: error.stack }
+        });
     }
 };
 

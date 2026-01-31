@@ -38,7 +38,8 @@ const connectDB = async () => {
                 serverSelectionTimeoutMS: 20000,
                 connectTimeoutMS: 20000,
                 socketTimeoutMS: 60000,
-                // Removed family: 4 to allow IPv6 if needed
+                maxPoolSize: 10, // Increase pool size for parallel dashboard queries
+                minPoolSize: 2
             });
 
             isConnected = true;

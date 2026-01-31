@@ -301,8 +301,8 @@ export default function AdminDashboard() {
                 },
             };
 
-            // Increase timeout to 30s and handle requests individually to be more resilient
-            const axiosConfig = { ...config, timeout: 30000 };
+            // Increase timeout to 60s for slow database responses on Render
+            const axiosConfig = { ...config, timeout: 60000 };
 
             console.log('Fetching stats from:', `${getApiUrl()}/api/admin/stats`);
             
