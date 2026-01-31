@@ -92,11 +92,13 @@ export default function RestaurantsView() {
 
     const fetchRestaurants = async () => {
         try {
+            setLoading(true);
             const userInfo = JSON.parse(localStorage.getItem('userInfo') || '{}');
             if (!userInfo.token) return;
 
             const res = await axios.get(`${getApiUrl()}/api/admin/restaurants`, {
-                headers: { Authorization: `Bearer ${userInfo.token}` }
+                headers: { Authorization: `Bearer ${userInfo.token}` },
+                timeout: 30000 // 30s timeout
             });
             const data = res.data;
             const restaurantList = Array.isArray(data) ? data : (Array.isArray(data.restaurants) ? data.restaurants : []);
@@ -104,7 +106,9 @@ export default function RestaurantsView() {
         } catch (error: any) {
             console.error('Error fetching restaurants:', error);
             if (error.response?.status !== 401) {
-                if (!error.response) {
+                if (error.code === 'ECONNABORTED') {
+                    toast.error('Restaurant data is taking too long to load. Please refresh.');
+                } else if (!error.response) {
                     toast.error('Network error: Cannot reach backend server');
                 } else {
                     toast.error(`Failed to fetch restaurants: ${error.response?.data?.message || error.message}`);

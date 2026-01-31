@@ -322,23 +322,30 @@ const getAllOrders = async (req, res) => {
 // @route   GET /api/admin/stats
 // @access  Private/Admin
 const getDashboardStats = async (req, res) => {
-    console.log('📊 [getDashboardStats] Started fetching stats...');
+    console.log('📊 [getDashboardStats] Start - Memory usage:', process.memoryUsage().rss / 1024 / 1024, 'MB');
+    const startTime = Date.now();
     try {
-        const todayStr = new Date().toISOString().split('T')[0];
         const todayStart = new Date();
         todayStart.setHours(0, 0, 0, 0);
 
-        // Basic Counts
-        const totalUsers = await User.countDocuments({ role: 'customer' });
-        const totalRestaurants = await Restaurant.countDocuments({}); // Count all restaurants
-        const pendingRestaurants = await Restaurant.countDocuments({ verificationStatus: 'pending' });
-        const totalOrders = await Order.countDocuments({});
-        const todayOrders = await Order.countDocuments({
-            createdAt: { $gte: todayStart }
-        });
-        console.log('   - Basic counts fetched');
+        // Run independent basic counts in parallel
+        console.log('   - Fetching basic counts...');
+        const [
+            totalUsers,
+            totalRestaurants,
+            pendingRestaurants,
+            totalOrders,
+            todayOrders
+        ] = await Promise.all([
+            User.countDocuments({ role: 'customer' }),
+            Restaurant.countDocuments({}),
+            Restaurant.countDocuments({ verificationStatus: 'pending' }),
+            Order.countDocuments({}),
+            Order.countDocuments({ createdAt: { $gte: todayStart } })
+        ]);
+        console.log('   - Basic counts done in', Date.now() - startTime, 'ms');
 
-        // Calculate Revenue & Commission (Total & Today)
+        // Total Stats Aggregation
         console.log('   - Aggregating total stats...');
         const totalStatsResult = await Order.aggregate([
             { $match: { status: { $nin: ['Cancelled', 'Rejected'] } } },
@@ -357,7 +364,7 @@ const getDashboardStats = async (req, res) => {
                 }
             }
         ]);
-        console.log('   - Total stats aggregated');
+        console.log('   - Total stats done in', Date.now() - startTime, 'ms');
 
         const totalRevenue = totalStatsResult[0]?.totalRevenue || 0;
         const totalCommission = totalStatsResult[0]?.totalCommission || 0;

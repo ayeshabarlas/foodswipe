@@ -300,45 +300,44 @@ export default function AdminDashboard() {
                 },
             };
 
+            // Increase timeout to 30s and handle requests individually to be more resilient
+            const axiosConfig = { ...config, timeout: 30000 };
+
             console.log('Fetching stats from:', `${getApiUrl()}/api/admin/stats`);
             
-            // Add a timeout to axios requests
-            const axiosConfig = { ...config, timeout: 15000 }; // 15 seconds timeout
-
-            const [statsRes, countsRes] = await Promise.all([
-                axios.get(`${getApiUrl()}/api/admin/stats`, axiosConfig),
-                axios.get(`${getApiUrl()}/api/admin/notifications/counts`, axiosConfig)
-            ]);
-
-            console.log('Stats received:', statsRes.data);
-            console.log('Counts received:', countsRes.data);
-            setStats(statsRes.data);
-            setNotificationCounts(countsRes.data);
-        } catch (error: any) {
-            console.error('Error fetching admin stats:', error);
-            
-            // Set dummy stats if it fails so dashboard can still render
-            if (!stats) {
-                setStats({
-                    totalUsers: 0, totalRestaurants: 0, pendingRestaurants: 0, totalOrders: 0,
-                    todayOrders: 0, totalRevenue: 0, todayRevenue: 0, totalCommission: 0,
-                    totalPendingPayouts: 0, revenueStats: [], orderStatusDist: { delivered: 0, cancelled: 0, inProgress: 0 },
-                    topRestaurants: [], recentActivity: [], totalRiders: 0, pendingRiders: 0,
-                    onlineRiders: 0, avgRiderRating: 0
+            // Fetch stats and counts separately so one failing doesn't kill the other
+            const fetchStatsPromise = axios.get(`${getApiUrl()}/api/admin/stats`, axiosConfig)
+                .then(res => {
+                    console.log('Stats received:', res.data);
+                    setStats(res.data);
+                })
+                .catch(err => {
+                    console.error('Error fetching stats:', err);
+                    // Fallback stats if first load fails
+                    if (!stats) {
+                        setStats({
+                            totalUsers: 0, totalRestaurants: 0, pendingRestaurants: 0, totalOrders: 0,
+                            todayOrders: 0, totalRevenue: 0, todayRevenue: 0, totalCommission: 0,
+                            totalPendingPayouts: 0, revenueStats: [], orderStatusDist: { delivered: 0, cancelled: 0, inProgress: 0 },
+                            topRestaurants: [], recentActivity: [], totalRiders: 0, pendingRiders: 0,
+                            onlineRiders: 0, avgRiderRating: 0
+                        });
+                    }
                 });
-            }
 
-            if (!error.response) {
-                // Network error - silence after first toast to avoid spam
-                if (loading) {
-                    toast.error('Cannot connect to backend server. Is it running?', { id: 'backend-conn-error' });
-                }
-            } else if (error.response.status === 401) {
-                toast.error('Session expired. Please login again.');
-                handleLogout();
-            } else {
-                toast.error(`Failed to fetch dashboard data: ${error.response?.data?.message || error.message}`);
-            }
+            const fetchCountsPromise = axios.get(`${getApiUrl()}/api/admin/notifications/counts`, axiosConfig)
+                .then(res => {
+                    console.log('Counts received:', res.data);
+                    setNotificationCounts(res.data);
+                })
+                .catch(err => {
+                    console.error('Error fetching counts:', err);
+                });
+
+            await Promise.allSettled([fetchStatsPromise, fetchCountsPromise]);
+        } catch (error: any) {
+            console.error('Error in fetchStats wrapper:', error);
+            toast.error('Connection issue. Please check if backend is online.');
         } finally {
             setLoading(false);
         }
