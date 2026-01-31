@@ -232,9 +232,15 @@ const loginAdmin = async (req, res) => {
 
         // 1. Check Admin Collection
         console.log(`- Searching Admin collection for: ${loginEmail}`);
-        let admin = await Admin.findOne({
-            email: { $regex: new RegExp(`^${loginEmail.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}$`, 'i') }
-        });
+        // Optimization: Try direct match first (fastest with index)
+        let admin = await Admin.findOne({ email: loginEmail });
+        
+        // Fallback to case-insensitive regex if not found (in case it was stored with different casing)
+        if (!admin) {
+            admin = await Admin.findOne({
+                email: { $regex: new RegExp(`^${loginEmail.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}$`, 'i') }
+            });
+        }
 
         if (admin) {
             console.log(`- ✅ Found in Admin collection: ${admin.email}, Role: ${admin.role}`);
@@ -264,10 +270,21 @@ const loginAdmin = async (req, res) => {
 
         // 2. Check User Collection
         console.log(`- Not found in Admin collection. Searching User collection for: ${loginEmail}`);
-        const user = await User.findOne({
-            email: { $regex: new RegExp(`^${loginEmail.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}$`, 'i') },
-            role: { $in: ['admin', 'super-admin', 'finance-admin', 'support-admin', 'restaurant-manager'] }
+        const adminRoles = ['admin', 'super-admin', 'finance-admin', 'support-admin', 'restaurant-manager'];
+        
+        // Try direct match first
+        let user = await User.findOne({
+            email: loginEmail,
+            role: { $in: adminRoles }
         });
+
+        // Fallback to case-insensitive regex
+        if (!user) {
+            user = await User.findOne({
+                email: { $regex: new RegExp(`^${loginEmail.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}$`, 'i') },
+                role: { $in: adminRoles }
+            });
+        }
 
         if (user) {
             console.log(`- ✅ Found in User collection: ${user.email}, Role: ${user.role}`);

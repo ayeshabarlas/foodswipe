@@ -330,27 +330,38 @@ const getAllOrders = async (req, res) => {
 // @route   GET /api/admin/stats/quick
 // @access  Private/Admin
 const getQuickStats = async (req, res) => {
+    console.log('📊 [getQuickStats] API START');
+    const startTime = Date.now();
     try {
         const todayStart = new Date();
         todayStart.setHours(0, 0, 0, 0);
 
-        const [totalUsers, totalRestaurants, totalOrders, todayOrders, totalRiders] = await Promise.all([
-            User.countDocuments({ role: 'customer' }).maxTimeMS(3000),
-            Restaurant.countDocuments({}).maxTimeMS(3000),
-            Order.countDocuments({}).maxTimeMS(3000),
-            Order.countDocuments({ createdAt: { $gte: todayStart } }).maxTimeMS(3000),
-            Rider.countDocuments({}).maxTimeMS(3000)
+        console.log('- Fetching counts...');
+        const results = await Promise.allSettled([
+            User.countDocuments({ role: 'customer' }).maxTimeMS(5000),
+            Restaurant.countDocuments({}).maxTimeMS(5000),
+            Order.countDocuments({}).maxTimeMS(5000),
+            Order.countDocuments({ createdAt: { $gte: todayStart } }).maxTimeMS(5000),
+            Rider.countDocuments({}).maxTimeMS(5000)
         ]);
 
+        const totalUsers = results[0].status === 'fulfilled' ? results[0].value : 0;
+        const totalRestaurants = results[1].status === 'fulfilled' ? results[1].value : 0;
+        const totalOrders = results[2].status === 'fulfilled' ? results[2].value : 0;
+        const todayOrders = results[3].status === 'fulfilled' ? results[3].value : 0;
+        const totalRiders = results[4].status === 'fulfilled' ? results[4].value : 0;
+
+        console.log(`✅ [getQuickStats] Success in ${Date.now() - startTime}ms`);
         res.json({
             totalUsers,
             totalRestaurants,
             totalOrders,
             todayOrders,
-            totalRiders
+            totalRiders,
+            _timestamp: new Date()
         });
     } catch (error) {
-        console.error('❌ Quick Stats Error:', error);
+        console.error(`❌ [getQuickStats] Error after ${Date.now() - startTime}ms:`, error);
         res.status(500).json({ message: 'Error fetching quick stats', error: error.message });
     }
 };
@@ -359,6 +370,8 @@ const getQuickStats = async (req, res) => {
 // @route   GET /api/admin/stats/finance
 // @access  Private/Admin
 const getFinanceStats = async (req, res) => {
+    console.log('💰 [getFinanceStats] API START');
+    const startTime = Date.now();
     try {
         const finance = await Order.aggregate([
             { $match: { status: { $nin: ['Cancelled', 'Rejected'] } } },
@@ -374,7 +387,7 @@ const getFinanceStats = async (req, res) => {
                     totalDeliveryFees: { $sum: '$deliveryFee' }
                 }
             }
-        ]).option({ maxTimeMS: 15000 });
+        ]).option({ maxTimeMS: 20000 });
 
         const f = finance[0] || {};
         const netProfit = (f.totalCommission || 0) +
@@ -382,6 +395,7 @@ const getFinanceStats = async (req, res) => {
                         (f.totalServiceFees || 0) +
                         (f.totalTax || 0);
 
+        console.log(`✅ [getFinanceStats] Success in ${Date.now() - startTime}ms`);
         res.json({
             totalRevenue: f.totalRevenue || 0,
             totalCommission: f.totalCommission || 0,
@@ -390,10 +404,11 @@ const getFinanceStats = async (req, res) => {
             totalServiceFees: f.totalServiceFees || 0,
             totalTax: f.totalTax || 0,
             totalDeliveryFees: f.totalDeliveryFees || 0,
-            netPlatformProfit: netProfit
+            netPlatformProfit: netProfit,
+            _timestamp: new Date()
         });
     } catch (error) {
-        console.error('❌ Finance Stats Error:', error);
+        console.error(`❌ [getFinanceStats] Error after ${Date.now() - startTime}ms:`, error);
         res.status(500).json({ message: 'Error fetching finance stats', error: error.message });
     }
 };
@@ -431,10 +446,11 @@ const getDashboardStats = async (req, res) => {
             }
         };
 
-        console.log('🚀 Starting extreme simplified parallel queries...');
+        console.log('🚀 Starting optimized parallel queries with facet aggregation...');
         const queryStart = Date.now();
 
         const results = await Promise.allSettled([
+            // Basic Counts (Fast)
             timedQuery('totalUsers', User.countDocuments({ role: 'customer' }).maxTimeMS(5000)),
             timedQuery('totalRestaurants', Restaurant.countDocuments({}).maxTimeMS(5000)),
             timedQuery('pendingRestaurants', Restaurant.countDocuments({ verificationStatus: 'pending' }).maxTimeMS(5000)),
@@ -444,31 +460,35 @@ const getDashboardStats = async (req, res) => {
             timedQuery('pendingRiders', Rider.countDocuments({ verificationStatus: 'pending' }).maxTimeMS(5000)),
             timedQuery('onlineRiders', Rider.countDocuments({ isOnline: true, verificationStatus: 'approved' }).maxTimeMS(5000)),
             
-            // Simplified Finance (Calculated from recent orders if possible, or simple group)
-            timedQuery('financeGroup', Order.aggregate([
-                { $match: { status: { $nin: ['Cancelled', 'Rejected'] } } },
+            // Combined Order Stats Aggregation (Much more efficient than separate calls)
+            timedQuery('combinedOrderStats', Order.aggregate([
                 {
-                    $group: {
-                        _id: null,
-                        totalRevenue: { $sum: '$totalPrice' },
-                        totalCommission: { $sum: '$commissionAmount' },
-                        totalRiderEarnings: { $sum: '$riderEarning' },
-                        totalRestaurantEarnings: { $sum: '$restaurantEarning' },
-                        totalServiceFees: { $sum: '$serviceFee' },
-                        totalTax: { $sum: '$tax' },
-                        totalDeliveryFees: { $sum: '$deliveryFee' }
+                    $facet: {
+                        financeGroup: [
+                            { $match: { status: { $nin: ['Cancelled', 'Rejected'] } } },
+                            {
+                                $group: {
+                                    _id: null,
+                                    totalRevenue: { $sum: '$totalPrice' },
+                                    totalCommission: { $sum: '$commissionAmount' },
+                                    totalRiderEarnings: { $sum: '$riderEarning' },
+                                    totalRestaurantEarnings: { $sum: '$restaurantEarning' },
+                                    totalServiceFees: { $sum: '$serviceFee' },
+                                    totalTax: { $sum: '$tax' },
+                                    totalDeliveryFees: { $sum: '$deliveryFee' }
+                                }
+                            }
+                        ],
+                        todayRevenue: [
+                            { $match: { status: { $nin: ['Cancelled', 'Rejected'] }, createdAt: { $gte: todayStart } } },
+                            { $group: { _id: null, total: { $sum: '$totalPrice' } } }
+                        ],
+                        statusDist: [
+                            { $group: { _id: "$status", count: { $sum: 1 } } }
+                        ]
                     }
                 }
-            ]).option({ maxTimeMS: 8000 })),
-
-            timedQuery('todayRevenue', Order.aggregate([
-                { $match: { status: { $nin: ['Cancelled', 'Rejected'] }, createdAt: { $gte: todayStart } } },
-                { $group: { _id: null, total: { $sum: '$totalPrice' } } }
-            ]).option({ maxTimeMS: 5000 })),
-
-            timedQuery('statusDist', Order.aggregate([
-                { $group: { _id: "$status", count: { $sum: 1 } } }
-            ]).option({ maxTimeMS: 5000 })),
+            ]).option({ maxTimeMS: 15000 })),
 
             timedQuery('recentOrders', Order.find({})
                 .sort({ createdAt: -1 })
@@ -495,40 +515,45 @@ const getDashboardStats = async (req, res) => {
         if (results[6].status === 'fulfilled') stats.pendingRiders = results[6].value || 0;
         if (results[7].status === 'fulfilled') stats.onlineRiders = results[7].value || 0;
 
-        // Process Finance [8]
+        // Process Combined Aggregation [8]
         if (results[8].status === 'fulfilled' && results[8].value && results[8].value[0]) {
-            const gf = results[8].value[0];
-            stats.totalRevenue = gf.totalRevenue || 0;
-            stats.totalCommission = gf.totalCommission || 0;
-            stats.totalRiderEarnings = gf.totalRiderEarnings || 0;
-            stats.totalRestaurantEarnings = gf.totalRestaurantEarnings || 0;
-            stats.totalServiceFees = gf.totalServiceFees || 0;
-            stats.totalTax = gf.totalTax || 0;
-            stats.totalDeliveryFees = gf.totalDeliveryFees || 0;
+            const facet = results[8].value[0];
+            
+            // financeGroup
+            if (facet.financeGroup && facet.financeGroup[0]) {
+                const gf = facet.financeGroup[0];
+                stats.totalRevenue = gf.totalRevenue || 0;
+                stats.totalCommission = gf.totalCommission || 0;
+                stats.totalRiderEarnings = gf.totalRiderEarnings || 0;
+                stats.totalRestaurantEarnings = gf.totalRestaurantEarnings || 0;
+                stats.totalServiceFees = gf.totalServiceFees || 0;
+                stats.totalTax = gf.totalTax || 0;
+                stats.totalDeliveryFees = gf.totalDeliveryFees || 0;
 
-            stats.netPlatformProfit = (gf.totalCommission || 0) +
-                ((gf.totalDeliveryFees || 0) - (gf.totalRiderEarnings || 0)) +
-                (gf.totalServiceFees || 0) +
-                (gf.totalTax || 0);
+                stats.netPlatformProfit = (gf.totalCommission || 0) +
+                    ((gf.totalDeliveryFees || 0) - (gf.totalRiderEarnings || 0)) +
+                    (gf.totalServiceFees || 0) +
+                    (gf.totalTax || 0);
+            }
+
+            // todayRevenue
+            if (facet.todayRevenue && facet.todayRevenue[0]) {
+                stats.todayRevenue = facet.todayRevenue[0].total || 0;
+            }
+
+            // statusDist
+            if (facet.statusDist) {
+                facet.statusDist.forEach(item => {
+                    if (['Delivered', 'Completed'].includes(item._id)) stats.orderStatusDist.delivered += item.count;
+                    else if (['Cancelled', 'Rejected'].includes(item._id)) stats.orderStatusDist.cancelled += item.count;
+                    else stats.orderStatusDist.inProgress += item.count;
+                });
+            }
         }
 
-        // Today Revenue [9]
-        if (results[9].status === 'fulfilled' && results[9].value && results[9].value[0]) {
-            stats.todayRevenue = results[9].value[0].total || 0;
-        }
-
-        // Status Dist [10]
-        if (results[10].status === 'fulfilled' && results[10].value) {
-            results[10].value.forEach(item => {
-                if (['Delivered', 'Completed'].includes(item._id)) stats.orderStatusDist.delivered += item.count;
-                else if (['Cancelled', 'Rejected'].includes(item._id)) stats.orderStatusDist.cancelled += item.count;
-                else stats.orderStatusDist.inProgress += item.count;
-            });
-        }
-
-        // Recent Orders [11]
-        if (results[11].status === 'fulfilled' && results[11].value) {
-            stats.recentActivity = results[11].value.map(o => ({
+        // Recent Orders [9]
+        if (results[9].status === 'fulfilled' && results[9].value) {
+            stats.recentActivity = results[9].value.map(o => ({
                 id: o._id,
                 type: 'order',
                 text: `Order #${o._id.toString().slice(-4).toUpperCase()}`,
@@ -537,8 +562,8 @@ const getDashboardStats = async (req, res) => {
             }));
         }
 
-        const resPending = (results[12].status === 'fulfilled' && results[12].value && results[12].value[0]) ? results[12].value[0].total : 0;
-        const riderPending = (results[13].status === 'fulfilled' && results[13].value && results[13].value[0]) ? results[13].value[0].total : 0;
+        const resPending = (results[10].status === 'fulfilled' && results[10].value && results[10].value[0]) ? results[10].value[0].total : 0;
+        const riderPending = (results[11].status === 'fulfilled' && results[11].value && results[11].value[0]) ? results[11].value[0].total : 0;
         stats.totalPendingPayouts = resPending + riderPending;
 
         console.log(`✅ [getDashboardStats] FINISHED in ${Date.now() - startTime}ms`);
@@ -1986,6 +2011,7 @@ module.exports = {
     getAllRiders,
     approveRider,
     rejectRider,
+    resetRider,
     getRestaurantSales,
     getDailyStats,
     getSystemSettings,

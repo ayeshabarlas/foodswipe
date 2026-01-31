@@ -35,11 +35,11 @@ const connectDB = async () => {
             console.log(`🔌 Attempting to connect to: ${maskedUri} (Retries left: ${retries - 1})`);
 
             const conn = await mongoose.connect(mongoUri, {
-                serverSelectionTimeoutMS: 20000,
-                connectTimeoutMS: 20000,
-                socketTimeoutMS: 60000,
-                maxPoolSize: 10, // Increase pool size for parallel dashboard queries
-                minPoolSize: 2
+                serverSelectionTimeoutMS: 30000,
+                connectTimeoutMS: 30000,
+                socketTimeoutMS: 120000,
+                maxPoolSize: 50, // Increase pool size significantly
+                minPoolSize: 5
             });
 
             isConnected = true;

@@ -317,72 +317,76 @@ export default function AdminDashboard() {
                 },
             };
 
-            // Increase timeout to 90s for slow database responses on Render
-            const axiosConfig = { ...config, timeout: 90000 };
+            // Increase timeout to 60s for slow database responses on Render
+            const axiosConfig = { ...config, timeout: 60000 };
 
-            console.log('Fetching stats from:', `${getApiUrl()}/api/admin/stats`);
+            console.log('📊 [fetchStats] START - URL:', getApiUrl());
             
+            // Set a safety timeout to force stop loading if things hang at network level
+            const safetyTimeout = setTimeout(() => {
+                if (mounted) {
+                    console.warn('⚠️ [fetchStats] Safety timeout reached (30s)');
+                    setLoading(false);
+                }
+            }, 30000);
+
             // 1. Fetch Quick Stats (Very fast, counts only)
             const fetchQuickStats = axios.get(`${getApiUrl()}/api/admin/stats/quick`, axiosConfig)
                 .then(res => {
-                    console.log('Quick stats received:', res.data);
+                    console.log('✅ Quick stats received:', res.data);
                     setStats(prev => ({ ...prev, ...res.data }));
-                    // If we get quick stats, we can show the dashboard shell
-                    setLoading(false);
                     setStatsError(null);
+                    return res.data;
                 })
                 .catch(err => {
-                    console.error('Quick stats failed:', err);
-                    setStatsError(err.response?.data?.message || err.message || 'Failed to fetch quick stats');
+                    console.error('❌ Quick stats failed:', err);
+                    const msg = err.response?.data?.message || err.message || 'Quick stats failed';
+                    setStatsError(msg);
+                    throw err;
                 });
 
             // 2. Fetch Finance Stats (Heavier, revenue/profit)
             const fetchFinanceStats = axios.get(`${getApiUrl()}/api/admin/stats/finance`, axiosConfig)
                 .then(res => {
-                    console.log('Finance stats received:', res.data);
+                    console.log('✅ Finance stats received:', res.data);
                     setStats(prev => ({ ...prev, ...res.data }));
+                    return res.data;
                 })
                 .catch(err => {
-                    console.error('Finance stats failed:', err);
-                    // Don't set global error here yet, but maybe a partial error state if we had one
+                    console.error('❌ Finance stats failed:', err);
                 });
 
             // 3. Fetch Full Stats (Activity, Charts, etc.)
             const fetchFullStats = axios.get(`${getApiUrl()}/api/admin/stats`, axiosConfig)
                 .then(res => {
-                    console.log('Full stats received:', res.data);
-                    setStats(res.data);
-                    setStatsError(null);
+                    console.log('✅ Full stats received:', res.data);
+                    setStats(prev => ({ ...prev, ...res.data }));
+                    return res.data;
                 })
                 .catch(err => {
-                    console.error('Error fetching full stats:', err);
-                    setStatsError(err.response?.data?.message || err.message || 'Failed to fetch dashboard stats');
+                    console.error('❌ Error fetching full stats:', err);
                 });
 
             const fetchCountsPromise = axios.get(`${getApiUrl()}/api/admin/notifications/counts`, axiosConfig)
                 .then(res => {
-                    console.log('Counts received:', res.data);
+                    console.log('✅ Counts received:', res.data);
                     setNotificationCounts(res.data);
+                    return res.data;
                 })
                 .catch(err => {
-                    console.error('Error fetching counts:', err);
+                    console.error('❌ Error fetching counts:', err);
                 });
 
-            // Initial loading ends when we either get quick stats or everything settles
+            // Wait for critical data to settle before stopping initial loader
             Promise.allSettled([fetchQuickStats, fetchCountsPromise]).finally(() => {
-                setLoading(false);
-            });
-
-            // If everything is taking too long, just stop the spinner so user can see what's there
-            setTimeout(() => {
+                clearTimeout(safetyTimeout);
+                console.log('🏁 [fetchStats] Initial critical data settled');
                 if (mounted) setLoading(false);
-            }, 5000); 
-
+            });
         } catch (error: any) {
             console.error('Error in fetchStats wrapper:', error);
             toast.error('Connection issue. Please check if backend is online.');
-        } finally {
-            setLoading(false);
+            if (mounted) setLoading(false);
         }
     };
 

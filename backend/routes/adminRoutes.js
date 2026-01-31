@@ -7,6 +7,8 @@ const {
     rejectRestaurant,
     getAllOrders,
     getDashboardStats,
+    getQuickStats,
+    getFinanceStats,
     getAllRestaurants,
     getAllRiders,
     approveRider,

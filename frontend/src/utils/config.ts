@@ -6,29 +6,46 @@ var cachedSocketUrl: string | null = null;
 export function getApiUrl() {
   if (cachedApiUrl) return cachedApiUrl;
 
-  // Priority 1: Local development checks (Must be first to avoid Trae/Tunnel domain conflicts)
+  // Priority 0: Manual Override for debugging
+  if (typeof window !== 'undefined') {
+    const override = localStorage.getItem('API_URL_OVERRIDE');
+    if (override) return override;
+    
+    // Check URL params too
+    const urlParams = new URLSearchParams(window.location.search);
+    const paramOverride = urlParams.get('api_url');
+    if (paramOverride) {
+      localStorage.setItem('API_URL_OVERRIDE', paramOverride);
+      return paramOverride;
+    }
+  }
+
+  const RENDER_URL = 'https://foodswipe-6178.onrender.com';
+
+  // Priority 1: Local development checks
   if (typeof window !== 'undefined' && (
     window.location.hostname === 'localhost' ||
     window.location.hostname === '127.0.0.1' ||
     window.location.hostname.startsWith('192.168.') ||
+    window.location.hostname.startsWith('172.') ||
+    window.location.hostname.startsWith('10.') ||
     window.location.hostname.endsWith('.trae.app')
   )) {
     cachedApiUrl = 'http://localhost:5000';
     return cachedApiUrl;
   }
 
-  const RENDER_URL = 'https://foodswipe-6178.onrender.com';
-
-  // Priority 2: If we are on any production-like domain, FORCE Render URL
+  // Priority 2: If we are on any production-like domain or Trae preview, FORCE Render URL
   if (typeof window !== 'undefined') {
     const hostname = window.location.hostname;
     const isProduction =
       hostname.includes('foodswipe.pk') ||
       hostname.includes('vercel.app') ||
-      hostname.includes('onrender.com');
+      hostname.includes('onrender.com') ||
+      hostname.includes('trae.app');
 
     if (isProduction) {
-      console.log('Production detected, forcing API URL:', RENDER_URL);
+      console.log('Environment detected, using Render API:', RENDER_URL);
       cachedApiUrl = RENDER_URL;
       return cachedApiUrl;
     }

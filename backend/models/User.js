@@ -17,7 +17,7 @@ const userSchema = mongoose.Schema(
         },
         role: {
             type: String,
-            enum: ['customer', 'restaurant', 'rider', 'admin'],
+            enum: ['customer', 'restaurant', 'rider', 'admin', 'super-admin'],
             default: 'customer',
         },
         phone: {
@@ -111,6 +111,7 @@ const userSchema = mongoose.Schema(
 
 // Compound unique index: same email can exist for different roles
 userSchema.index({ email: 1, role: 1 }, { unique: true });
+
 // Compound unique index: same phone can exist for different roles
 // partialFilterExpression ensures we only index valid strings, ignoring null/undefined/empty
 userSchema.index({ phone: 1, role: 1 }, { 
@@ -119,6 +120,7 @@ userSchema.index({ phone: 1, role: 1 }, {
         phone: { $gt: "" } 
     } 
 });
+
 // Index for phoneNumber uniqueness across ALL accounts if verified
 userSchema.index({ phoneNumber: 1 }, { unique: true, partialFilterExpression: { phoneVerified: true } });
 
@@ -150,7 +152,6 @@ userSchema.pre('save', async function (next) {
 // Optimize for role-based counts and login lookups
 userSchema.index({ email: 1 });
 userSchema.index({ role: 1 });
-userSchema.index({ phone: 1 });
 userSchema.index({ createdAt: -1 });
 
 const User = mongoose.model('User', userSchema);
