@@ -6,42 +6,24 @@ var cachedSocketUrl: string | null = null;
 export function getApiUrl() {
   if (cachedApiUrl) return cachedApiUrl;
   
-  // Priority 1: Use Environment variable if provided (from .env.local or Vercel)
+  const RENDER_URL = 'https://foodswipe-6178.onrender.com';
+  
+  if (typeof window !== 'undefined') {
+    const hostname = window.location.hostname;
+    const isProductionDomain = hostname.includes('foodswipe.pk') || hostname.includes('vercel.app');
+    
+    if (isProductionDomain) {
+      // FORCE Render URL on production domains to avoid 404s
+      cachedApiUrl = RENDER_URL;
+      return cachedApiUrl;
+    }
+  }
+
+  // Priority 2: Use Environment variable if provided (from .env.local or Vercel)
   const ENV_URL = process.env.NEXT_PUBLIC_API_URL;
   if (ENV_URL) {
     cachedApiUrl = ENV_URL.endsWith('/') ? ENV_URL.slice(0, -1) : ENV_URL;
     return cachedApiUrl;
-  }
-
-  // Priority 2: Force localhost/local IP if we are on a local network in browser
-  if (typeof window !== 'undefined' && (
-    window.location.hostname === 'localhost' || 
-    window.location.hostname === '127.0.0.1' ||
-    window.location.hostname.startsWith('192.168.') ||
-    window.location.hostname.startsWith('10.') ||
-    window.location.hostname.startsWith('172.') ||
-    window.location.hostname.endsWith('.trae.app') // Support Trae preview
-  )) {
-    if (window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1' && !window.location.hostname.endsWith('.trae.app')) {
-      cachedApiUrl = `http://${window.location.hostname}:5000`;
-      return cachedApiUrl;
-    }
-    cachedApiUrl = 'http://localhost:5000';
-    return cachedApiUrl;
-  }
-
-  const RENDER_URL = 'https://foodswipe-6178.onrender.com';
-  
-  if (typeof window !== 'undefined') {
-    const isVercel = window.location.hostname.includes('vercel.app') || window.location.hostname.includes('foodswipe.pk');
-                   
-    if (isVercel) {
-      // FIX: If we are on foodswipe.pk but the API is on Render, use RENDER_URL
-      // Only use window.location.origin if we are SURE the API is on the same domain
-      // For now, prioritize RENDER_URL to fix the 404 issue
-      cachedApiUrl = RENDER_URL;
-      return cachedApiUrl;
-    }
   }
   
   if (process.env.NODE_ENV === 'production') {
