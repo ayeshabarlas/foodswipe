@@ -405,6 +405,18 @@ const getDashboardStats = async (req, res) => {
 
         console.log(`⏱️ [getDashboardStats] Core queries finished in ${Date.now() - queryStart}ms`);
 
+        // Debug Info to track performance/failures on Render
+        const debugInfo = {
+            queryResults: results.map((r, i) => ({
+                id: i,
+                status: r.status,
+                reason: r.status === 'rejected' ? r.reason?.message : null,
+                value_exists: r.status === 'fulfilled' && !!r.value
+            })),
+            totalTime: Date.now() - startTime,
+            dbConnected: !!(results[0].status === 'fulfilled' || results[1].status === 'fulfilled')
+        };
+
         // Map Results
         if (results[0].status === 'fulfilled') stats.totalUsers = results[0].value;
         if (results[1].status === 'fulfilled') stats.totalRestaurants = results[1].value;
@@ -416,58 +428,65 @@ const getDashboardStats = async (req, res) => {
         if (results[7].status === 'fulfilled') stats.onlineRiders = results[7].value;
 
         // Process Faceted Aggregation [8]
-        if (results[8].status === 'fulfilled' && results[8].value.length > 0) {
+        if (results[8].status === 'fulfilled' && results[8].value && results[8].value.length > 0) {
             const data = results[8].value[0];
+            
+            // Safety checks for data fields
+            if (data && data.globalFinance) {
+                if (data.globalFinance.length > 0) {
+                    const gf = data.globalFinance[0];
+                    stats.totalRevenue = gf.totalRevenue || 0;
+                    stats.totalCommission = gf.totalCommission || 0;
+                    stats.totalRiderEarnings = gf.totalRiderEarnings || 0;
+                    stats.totalRestaurantEarnings = gf.totalRestaurantEarnings || 0;
+                    stats.totalServiceFees = gf.totalServiceFees || 0;
+                    stats.totalTax = gf.totalTax || 0;
+                    stats.totalDeliveryFees = gf.totalDeliveryFees || 0;
 
-            // Finance
-            if (data.globalFinance.length > 0) {
-                const gf = data.globalFinance[0];
-                stats.totalRevenue = gf.totalRevenue || 0;
-                stats.totalCommission = gf.totalCommission || 0;
-                stats.totalRiderEarnings = gf.totalRiderEarnings || 0;
-                stats.totalRestaurantEarnings = gf.totalRestaurantEarnings || 0;
-                stats.totalServiceFees = gf.totalServiceFees || 0;
-                stats.totalTax = gf.totalTax || 0;
-                stats.totalDeliveryFees = gf.totalDeliveryFees || 0;
-
-                // Profit logic: Commission + (Delivery Fees - Rider Pay) + Service Fee + Tax - (Gateways + Discounts)
-                stats.netPlatformProfit = (gf.totalCommission || 0) +
-                    ((gf.totalDeliveryFees || 0) - (gf.totalRiderEarnings || 0)) +
-                    (gf.totalServiceFees || 0) +
-                    (gf.totalTax || 0) -
-                    (gf.totalGatewayFees || 0) -
-                    (gf.totalDiscounts || 0);
+                    // Profit logic
+                    stats.netPlatformProfit = (gf.totalCommission || 0) +
+                        ((gf.totalDeliveryFees || 0) - (gf.totalRiderEarnings || 0)) +
+                        (gf.totalServiceFees || 0) +
+                        (gf.totalTax || 0) -
+                        (gf.totalGatewayFees || 0) -
+                        (gf.totalDiscounts || 0);
+                }
             }
 
-            // Today
-            if (data.todayFinance.length > 0) {
+            if (data && data.todayFinance && data.todayFinance.length > 0) {
                 stats.todayRevenue = data.todayFinance[0].total || 0;
             }
 
-            // Status Distribution
-            data.statusDist.forEach(item => {
-                if (['Delivered', 'Completed'].includes(item._id)) stats.orderStatusDist.delivered += item.count;
-                else if (['Cancelled', 'Rejected'].includes(item._id)) stats.orderStatusDist.cancelled += item.count;
-                else stats.orderStatusDist.inProgress += item.count;
-            });
+            if (data && data.statusDist) {
+                data.statusDist.forEach(item => {
+                    if (['Delivered', 'Completed'].includes(item._id)) stats.orderStatusDist.delivered += item.count;
+                    else if (['Cancelled', 'Rejected'].includes(item._id)) stats.orderStatusDist.cancelled += item.count;
+                    else stats.orderStatusDist.inProgress += item.count;
+                });
+            }
 
-            // Activity
-            stats.recentActivity = data.recentOrders.map(o => ({
-                id: o._id,
-                type: 'order',
-                text: `Order #${o._id.toString().slice(-4).toUpperCase()}`,
-                subtext: `${o.status} - Rs. ${o.totalPrice}`,
-                time: o.createdAt
-            }));
+            if (data && data.recentOrders) {
+                stats.recentActivity = data.recentOrders.map(o => ({
+                    id: o._id,
+                    type: 'order',
+                    text: `Order #${o._id.toString().slice(-4).toUpperCase()}`,
+                    subtext: `${o.status} - Rs. ${o.totalPrice}`,
+                    time: o.createdAt
+                }));
+            }
         }
 
         // Payouts
-        const resPending = (results[9].status === 'fulfilled' && results[9].value[0]) ? results[9].value[0].total : 0;
-        const riderPending = (results[10].status === 'fulfilled' && results[10].value[0]) ? results[10].value[0].total : 0;
+        const resPending = (results[9].status === 'fulfilled' && results[9].value && results[9].value[0]) ? results[9].value[0].total : 0;
+        const riderPending = (results[10].status === 'fulfilled' && results[10].value && results[10].value[0]) ? results[10].value[0].total : 0;
         stats.totalPendingPayouts = resPending + riderPending;
 
         console.log(`✅ [getDashboardStats] Completed in ${Date.now() - startTime}ms`);
-        res.status(200).json(stats);
+        res.status(200).json({ 
+            ...stats, 
+            _debug: debugInfo,
+            _version: '2.3.1-DEBUG' 
+        });
 
     } catch (error) {
         console.error('🔥 [getDashboardStats] Error:', error);
