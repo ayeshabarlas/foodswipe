@@ -147,12 +147,12 @@ userSchema.pre('save', async function (next) {
     next();
 });
 
-const User = mongoose.model('User', userSchema);
-
 // Optimize for role-based counts and login lookups
 userSchema.index({ email: 1 });
 userSchema.index({ role: 1 });
 userSchema.index({ phone: 1 });
 userSchema.index({ createdAt: -1 });
+
+const User = mongoose.model('User', userSchema);
 
 module.exports = User;

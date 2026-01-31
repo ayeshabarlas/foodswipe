@@ -64,6 +64,7 @@ interface Stats {
 export default function AdminDashboard() {
     const [activeTab, setActiveTab] = useState('dashboard');
     const [stats, setStats] = useState<Stats | null>(null);
+    const [statsError, setStatsError] = useState<string | null>(null);
     const [notificationCounts, setNotificationCounts] = useState({
         pendingRestaurants: 0,
         pendingRiders: 0,
@@ -310,9 +311,11 @@ export default function AdminDashboard() {
                 .then(res => {
                     console.log('Stats received:', res.data);
                     setStats(res.data);
+                    setStatsError(null);
                 })
                 .catch(err => {
                     console.error('Error fetching stats:', err);
+                    setStatsError(err.response?.data?.message || err.message || 'Failed to fetch dashboard stats');
                     // Fallback stats if first load fails
                     if (!stats) {
                         setStats({
@@ -352,7 +355,7 @@ export default function AdminDashboard() {
     const renderView = () => {
         switch (activeTab) {
             case 'dashboard':
-                return <DashboardHome stats={stats} refreshStats={fetchStats} />;
+                return <DashboardHome stats={stats} statsError={statsError} refreshStats={fetchStats} />;
 
             // Restaurant Sub-menus
             case 'restaurants': // Default fallback

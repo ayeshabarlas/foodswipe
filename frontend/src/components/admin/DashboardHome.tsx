@@ -56,12 +56,13 @@ interface Stats {
 
 interface DashboardHomeProps {
     stats: Stats | null;
+    statsError?: string | null;
     refreshStats?: () => void;
 }
 
 const COLORS = ['#FF6A00', '#10B981', '#F59E0B'];
 
-export default function DashboardHome({ stats, refreshStats }: DashboardHomeProps) {
+export default function DashboardHome({ stats, statsError, refreshStats }: DashboardHomeProps) {
     const handleCleanupMock = async () => {
         if (!window.confirm('Are you sure you want to delete all mock restaurants and data? This cannot be undone.')) return;
         
@@ -104,6 +105,8 @@ export default function DashboardHome({ stats, refreshStats }: DashboardHomeProp
     };
 
     const displayStats = { ...defaultStats, ...(stats || {}) };
+
+    const hasData = displayStats.totalUsers > 0 || displayStats.totalRestaurants > 0 || displayStats.totalOrders > 0;
 
     const widgets = [
         {
@@ -156,6 +159,36 @@ export default function DashboardHome({ stats, refreshStats }: DashboardHomeProp
 
     return (
         <div className="p-6 space-y-8 max-w-[1600px] mx-auto font-sans">
+            {statsError && (
+                <motion.div 
+                    initial={{ opacity: 0, y: -20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="bg-red-50 border border-red-100 p-4 rounded-2xl flex items-center justify-between"
+                >
+                    <div className="flex items-center gap-3 text-red-700">
+                        <FaExclamationTriangle />
+                        <span className="text-sm font-bold">API Error: {statsError}</span>
+                    </div>
+                    <button 
+                        onClick={refreshStats}
+                        className="px-4 py-1.5 bg-red-100 hover:bg-red-200 text-red-700 rounded-lg text-xs font-bold transition-colors"
+                    >
+                        Retry Fetch
+                    </button>
+                </motion.div>
+            )}
+
+            {!hasData && !statsError && (
+                <motion.div 
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    className="bg-orange-50 border border-orange-100 p-4 rounded-2xl flex items-center gap-3 text-orange-700"
+                >
+                    <FaExclamationTriangle />
+                    <span className="text-sm font-bold">Note: No active data found in the system yet.</span>
+                </motion.div>
+            )}
+
             <div className="flex justify-between items-center mb-4">
                 <div>
                     <div className="flex items-center gap-3">

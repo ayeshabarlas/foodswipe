@@ -16,6 +16,14 @@ const RiderBonus = require('../models/RiderBonus');
 const { triggerEvent } = require('../socket');
 const AuditLog = require('../models/AuditLog');
 const Admin = require('../models/Admin');
+
+console.log('✅ Admin Controller Models Loaded:', {
+    User: !!User,
+    Restaurant: !!Restaurant,
+    Order: !!Order,
+    Rider: !!Rider
+});
+
 const sendEmail = require('../utils/email');
 const { calculateRiderEarning } = require('../utils/paymentUtils');
 
@@ -328,256 +336,279 @@ const getDashboardStats = async (req, res) => {
         const todayStart = new Date();
         todayStart.setHours(0, 0, 0, 0);
 
-        // Run independent basic counts in parallel
-        console.log('   - Fetching basic counts...');
-        const [
-            totalUsers,
-            totalRestaurants,
-            pendingRestaurants,
-            totalOrders,
-            todayOrders
-        ] = await Promise.all([
-            User.countDocuments({ role: 'customer' }),
-            Restaurant.countDocuments({}),
-            Restaurant.countDocuments({ verificationStatus: 'pending' }),
-            Order.countDocuments({}),
-            Order.countDocuments({ createdAt: { $gte: todayStart } })
-        ]);
-        console.log('   - Basic counts done in', Date.now() - startTime, 'ms');
+        // Define default values
+        let totalUsers = 0, totalRestaurants = 0, pendingRestaurants = 0, totalOrders = 0, todayOrders = 0;
+        let totalRevenue = 0, totalCommission = 0, totalRiderEarnings = 0, totalRestaurantEarnings = 0;
+        let totalDeliveryFees = 0, totalServiceFees = 0, totalTax = 0, totalGatewayFees = 0, totalDiscounts = 0;
+        let netPlatformProfit = 0, todayRevenue = 0, totalPendingPayouts = 0;
+        let revenueStats = [], orderStatusDist = { delivered: 0, cancelled: 0, inProgress: 0 };
+        let topRestaurants = [], recentActivity = [];
+        let totalRiders = 0, pendingRiders = 0, onlineRiders = 0, avgRiderRating = 0;
 
-        // Total Stats Aggregation
-        console.log('   - Aggregating total stats...');
-        const totalStatsResult = await Order.aggregate([
-            { $match: { status: { $nin: ['Cancelled', 'Rejected'] } } },
-            {
-                $group: {
-                    _id: null,
-                    totalRevenue: { $sum: { $convert: { input: { $ifNull: ['$totalPrice', 0] }, to: 'double', onError: 0, onNull: 0 } } },
-                    totalCommission: { $sum: { $convert: { input: { $ifNull: ['$commissionAmount', 0] }, to: 'double', onError: 0, onNull: 0 } } },
-                    totalRiderEarnings: { $sum: { $convert: { input: { $ifNull: ['$riderEarning', 0] }, to: 'double', onError: 0, onNull: 0 } } },
-                    totalRestaurantEarnings: { $sum: { $convert: { input: { $ifNull: ['$restaurantEarning', 0] }, to: 'double', onError: 0, onNull: 0 } } },
-                    totalServiceFees: { $sum: { $convert: { input: { $ifNull: ['$serviceFee', 0] }, to: 'double', onError: 0, onNull: 0 } } },
-                    totalTax: { $sum: { $convert: { input: { $ifNull: ['$tax', 0] }, to: 'double', onError: 0, onNull: 0 } } },
-                    totalGatewayFees: { $sum: { $convert: { input: { $ifNull: ['$gatewayFee', 0] }, to: 'double', onError: 0, onNull: 0 } } },
-                    totalDiscounts: { $sum: { $convert: { input: { $ifNull: ['$discount', 0] }, to: 'double', onError: 0, onNull: 0 } } },
-                    totalDeliveryFees: { $sum: { $convert: { input: { $ifNull: ['$deliveryFee', 0] }, to: 'double', onError: 0, onNull: 0 } } }
-                }
-            }
-        ]);
-        console.log('   - Total stats done in', Date.now() - startTime, 'ms');
-
-        const totalRevenue = totalStatsResult[0]?.totalRevenue || 0;
-        const totalCommission = totalStatsResult[0]?.totalCommission || 0;
-        const totalRiderEarnings = totalStatsResult[0]?.totalRiderEarnings || 0;
-        const totalRestaurantEarnings = totalStatsResult[0]?.totalRestaurantEarnings || 0;
-        const totalDeliveryFees = totalStatsResult[0]?.totalDeliveryFees || 0;
-        const totalServiceFees = totalStatsResult[0]?.totalServiceFees || 0;
-        const totalTax = totalStatsResult[0]?.totalTax || 0;
-        const totalGatewayFees = totalStatsResult[0]?.totalGatewayFees || 0;
-        const totalDiscounts = totalStatsResult[0]?.totalDiscounts || 0;
-
-        // Calculate Net Platform Profit: Commission + (Delivery Fees - Rider Earnings) + Service Fees + Tax - Gateway Fees - Discounts
-        const netPlatformProfit = totalCommission + (totalDeliveryFees - totalRiderEarnings) + totalServiceFees + totalTax - totalGatewayFees - totalDiscounts;
-
-        console.log('   - Aggregating today revenue...');
-        const todayRevenueResult = await Order.aggregate([
-            {
-                $match: {
-                    status: { $nin: ['Cancelled', 'Rejected'] },
-                    createdAt: { $gte: todayStart }
-                }
-            },
-            { $group: { _id: null, total: { $sum: { $convert: { input: { $ifNull: ['$totalPrice', 0] }, to: 'double', onError: 0, onNull: 0 } } } } }
-        ]);
-        const todayRevenue = todayRevenueResult[0]?.total || 0;
-        console.log('   - Today revenue aggregated');
-
-        // Calculate Pending Payouts
-        console.log('   - Aggregating pending payouts...');
-        const [resWalletStats, riderWalletStats] = await Promise.all([
-            RestaurantWallet.aggregate([
-                { $group: { _id: null, totalPending: { $sum: { $convert: { input: { $ifNull: ['$pendingPayout', 0] }, to: 'double', onError: 0, onNull: 0 } } } } }
-            ]),
-            RiderWallet.aggregate([
-                { $group: { _id: null, totalPending: { $sum: { $convert: { input: { $ifNull: ['$availableWithdraw', 0] }, to: 'double', onError: 0, onNull: 0 } } } } }
-            ])
-        ]);
-        const totalPendingPayouts = (resWalletStats[0]?.totalPending || 0) + (riderWalletStats[0]?.totalPending || 0);
-        console.log('   - Pending payouts done in', Date.now() - startTime, 'ms');
-
-        // Revenue Graph Data (Last 7 days)
-        const sevenDaysAgo = new Date();
-        sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 6);
-        sevenDaysAgo.setHours(0, 0, 0, 0);
-
-        const revenueStatsRaw = await Order.aggregate([
-            {
-                $match: {
-                    status: { $nin: ['Cancelled', 'Rejected'] },
-                    createdAt: { $gte: sevenDaysAgo }
-                }
-            },
-            {
-                $group: {
-                    _id: { $dateToString: { format: "%Y-%m-%d", date: "$createdAt" } },
-                    revenue: { $sum: { $convert: { input: { $ifNull: ["$totalPrice", 0] }, to: 'double', onError: 0, onNull: 0 } } },
-                    commission: { $sum: { $convert: { input: { $ifNull: ["$commissionAmount", { $multiply: [{ $ifNull: ["$totalPrice", 0] }, 0.15] }] }, to: 'double', onError: 0, onNull: 0 } } }
-                }
-            },
-            { $sort: { _id: 1 } }
-        ]);
-
-        // Fill in missing days with 0
-        const revenueStats = [];
-        for (let i = 0; i < 7; i++) {
-            const d = new Date(sevenDaysAgo);
-            d.setDate(d.getDate() + i);
-            const dateStr = d.toISOString().split('T')[0];
-            const found = revenueStatsRaw.find(r => r._id === dateStr);
-            revenueStats.push({
-                date: dateStr,
-                revenue: found ? found.revenue : 0,
-                commission: found ? found.commission : 0
-            });
+        // 1. Basic Counts
+                try {
+                    console.log('   - Fetching basic counts...');
+                    const counts = await Promise.all([
+                        User.countDocuments({ role: 'customer' }).catch(e => { console.error('Error countUsers:', e); return 0; }),
+                        Restaurant.countDocuments({}).catch(e => { console.error('Error countRestaurants:', e); return 0; }),
+                        Restaurant.countDocuments({ verificationStatus: 'pending' }).catch(e => { console.error('Error countPendingRestaurants:', e); return 0; }),
+                        Order.countDocuments({}).catch(e => { console.error('Error countOrders:', e); return 0; }),
+                        Order.countDocuments({ createdAt: { $gte: todayStart } }).catch(e => { console.error('Error countTodayOrders:', e); return 0; })
+                    ]);
+                    [totalUsers, totalRestaurants, pendingRestaurants, totalOrders, todayOrders] = counts;
+                    console.log(`   - Basic counts: Users=${totalUsers}, Restaurants=${totalRestaurants}, Orders=${totalOrders}`);
+                    console.log('   - Basic counts done in', Date.now() - startTime, 'ms');
+                } catch (err) {
+            console.error('Error in basic counts section:', err);
         }
 
-        // Order Status Distribution
-        const orderStatusStats = await Order.aggregate([
-            {
-                $group: {
-                    _id: "$status",
-                    count: { $sum: 1 }
+        // 2. Total Financial Stats Aggregation
+        try {
+            console.log('   - Aggregating total financial stats...');
+            const totalStatsResult = await Order.aggregate([
+                { $match: { status: { $nin: ['Cancelled', 'Rejected'] } } },
+                {
+                    $group: {
+                        _id: null,
+                        totalRevenue: { $sum: { $convert: { input: { $ifNull: ['$totalPrice', 0] }, to: 'double', onError: 0, onNull: 0 } } },
+                        totalCommission: { $sum: { $convert: { input: { $ifNull: ['$commissionAmount', 0] }, to: 'double', onError: 0, onNull: 0 } } },
+                        totalRiderEarnings: { $sum: { $convert: { input: { $ifNull: ['$riderEarning', 0] }, to: 'double', onError: 0, onNull: 0 } } },
+                        totalRestaurantEarnings: { $sum: { $convert: { input: { $ifNull: ['$restaurantEarning', 0] }, to: 'double', onError: 0, onNull: 0 } } },
+                        totalServiceFees: { $sum: { $convert: { input: { $ifNull: ['$serviceFee', 0] }, to: 'double', onError: 0, onNull: 0 } } },
+                        totalTax: { $sum: { $convert: { input: { $ifNull: ['$tax', 0] }, to: 'double', onError: 0, onNull: 0 } } },
+                        totalGatewayFees: { $sum: { $convert: { input: { $ifNull: ['$gatewayFee', 0] }, to: 'double', onError: 0, onNull: 0 } } },
+                        totalDiscounts: { $sum: { $convert: { input: { $ifNull: ['$discount', 0] }, to: 'double', onError: 0, onNull: 0 } } },
+                        totalDeliveryFees: { $sum: { $convert: { input: { $ifNull: ['$deliveryFee', 0] }, to: 'double', onError: 0, onNull: 0 } } }
+                    }
                 }
+            ]).catch(e => { console.error('Error totalStatsAggregation:', e); return []; });
+
+            if (totalStatsResult.length > 0) {
+                const s = totalStatsResult[0];
+                totalRevenue = s.totalRevenue || 0;
+                totalCommission = s.totalCommission || 0;
+                totalRiderEarnings = s.totalRiderEarnings || 0;
+                totalRestaurantEarnings = s.totalRestaurantEarnings || 0;
+                totalDeliveryFees = s.totalDeliveryFees || 0;
+                totalServiceFees = s.totalServiceFees || 0;
+                totalTax = s.totalTax || 0;
+                totalGatewayFees = s.totalGatewayFees || 0;
+                totalDiscounts = s.totalDiscounts || 0;
+                
+                // Calculate Net Platform Profit
+                netPlatformProfit = totalCommission + (totalDeliveryFees - totalRiderEarnings) + totalServiceFees + totalTax - totalGatewayFees - totalDiscounts;
             }
-        ]);
+            console.log('   - Total stats done in', Date.now() - startTime, 'ms');
+        } catch (err) {
+            console.error('Error in total stats section:', err);
+        }
 
-        const orderStatusDist = {
-            delivered: orderStatusStats.find(s => s._id === 'Delivered' || s._id === 'Completed')?.count || 0,
-            cancelled: orderStatusStats.find(s => ['Cancelled', 'Rejected'].includes(s._id))?.count || 0,
-            inProgress: orderStatusStats.reduce((sum, s) => {
-                if (['Pending', 'Confirmed', 'Accepted', 'Preparing', 'Ready', 'Picked Up', 'OnTheWay', 'Arrived', 'ArrivedAtCustomer'].includes(s._id)) {
-                    return sum + s.count;
-                }
-                return sum;
-            }, 0)
-        };
+        // 3. Today Revenue
+        try {
+            console.log('   - Aggregating today revenue...');
+            const todayRevenueResult = await Order.aggregate([
+                {
+                    $match: {
+                        status: { $nin: ['Cancelled', 'Rejected'] },
+                        createdAt: { $gte: todayStart }
+                    }
+                },
+                { $group: { _id: null, total: { $sum: { $convert: { input: { $ifNull: ['$totalPrice', 0] }, to: 'double', onError: 0, onNull: 0 } } } } }
+            ]).catch(e => { console.error('Error todayRevenueAggregation:', e); return []; });
+            todayRevenue = todayRevenueResult[0]?.total || 0;
+            console.log('   - Today revenue aggregated');
+        } catch (err) {
+            console.error('Error in today revenue section:', err);
+        }
 
-        // Top Performing Restaurants (by Revenue)
-        const topRestaurants = await Order.aggregate([
-            { $match: { status: { $in: ['Delivered', 'Completed'] } } },
-            {
-                $group: {
-                    _id: "$restaurant",
-                    revenue: { $sum: { $convert: { input: { $ifNull: ["$totalPrice", 0] }, to: 'double', onError: 0, onNull: 0 } } },
-                    orders: { $sum: 1 }
-                }
-            },
-            { $sort: { revenue: -1 } },
-            { $limit: 5 },
-            {
-                $lookup: {
-                    from: "restaurants",
-                    localField: "_id",
-                    foreignField: "_id",
-                    as: "details"
-                }
-            },
-            { $unwind: "$details" },
-            {
-                $project: {
-                    name: "$details.name",
-                    rating: "$details.rating",
-                    revenue: 1,
-                    orders: 1
-                }
+        // 4. Pending Payouts
+        try {
+            console.log('   - Aggregating pending payouts...');
+            const [resWalletStats, riderWalletStats] = await Promise.all([
+                RestaurantWallet.aggregate([
+                    { $group: { _id: null, totalPending: { $sum: { $convert: { input: { $ifNull: ['$pendingPayout', 0] }, to: 'double', onError: 0, onNull: 0 } } } } }
+                ]).catch(e => { console.error('Error resWalletAggregation:', e); return []; }),
+                RiderWallet.aggregate([
+                    { $group: { _id: null, totalPending: { $sum: { $convert: { input: { $ifNull: ['$availableWithdraw', 0] }, to: 'double', onError: 0, onNull: 0 } } } } }
+                ]).catch(e => { console.error('Error riderWalletAggregation:', e); return []; })
+            ]);
+            totalPendingPayouts = (resWalletStats[0]?.totalPending || 0) + (riderWalletStats[0]?.totalPending || 0);
+            console.log('   - Pending payouts done in', Date.now() - startTime, 'ms');
+        } catch (err) {
+            console.error('Error in pending payouts section:', err);
+        }
+
+        // 5. Revenue Graph Data (Last 7 days)
+        try {
+            console.log('   - Fetching revenue stats for graph...');
+            const sevenDaysAgo = new Date();
+            sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 6);
+            sevenDaysAgo.setHours(0, 0, 0, 0);
+
+            const revenueStatsRaw = await Order.aggregate([
+                {
+                    $match: {
+                        status: { $nin: ['Cancelled', 'Rejected'] },
+                        createdAt: { $gte: sevenDaysAgo }
+                    }
+                },
+                {
+                    $group: {
+                        _id: { $dateToString: { format: "%Y-%m-%d", date: "$createdAt" } },
+                        revenue: { $sum: { $convert: { input: { $ifNull: ["$totalPrice", 0] }, to: 'double', onError: 0, onNull: 0 } } },
+                        commission: { $sum: { $convert: { input: { $ifNull: ["$commissionAmount", { $multiply: [{ $ifNull: ["$totalPrice", 0] }, 0.15] }] }, to: 'double', onError: 0, onNull: 0 } } }
+                    }
+                },
+                { $sort: { _id: 1 } }
+            ]).catch(e => { console.error('Error revenueGraphAggregation:', e); return []; });
+
+            // Fill in missing days with 0
+            revenueStats = [];
+            for (let i = 0; i < 7; i++) {
+                const d = new Date(sevenDaysAgo);
+                d.setDate(d.getDate() + i);
+                const dateStr = d.toISOString().split('T')[0];
+                const found = revenueStatsRaw.find(r => r._id === dateStr);
+                revenueStats.push({
+                    date: dateStr,
+                    revenue: found ? found.revenue : 0,
+                    commission: found ? found.commission : 0
+                });
             }
-        ]);
+            console.log('   - Revenue graph data done in', Date.now() - startTime, 'ms');
+        } catch (err) {
+            console.error('Error in revenue stats section:', err);
+        }
 
-        // Recent Activity (Orders, New Restaurants, New Riders)
-        console.log('   - Fetching recent activity...');
-        const [recentOrders, recentRestaurants, recentRiders] = await Promise.all([
-            Order.find()
-                .sort({ createdAt: -1 })
-                .limit(5)
-                .populate('restaurant', 'name')
-                .populate({
-                    path: 'rider',
-                    populate: { path: 'user', select: 'name' }
-                }),
-            Restaurant.find().sort({ createdAt: -1 }).limit(3).populate('owner', 'name email status'),
-            Rider.find().sort({ createdAt: -1 }).limit(3).populate('user', 'name email status')
-        ]);
-        console.log('   - Recent activity done in', Date.now() - startTime, 'ms');
+        // 6. Order Status Distribution
+        try {
+            console.log('   - Aggregating order status distribution...');
+            const orderStatusStats = await Order.aggregate([
+                {
+                    $group: {
+                        _id: "$status",
+                        count: { $sum: 1 }
+                    }
+                }
+            ]).catch(e => { console.error('Error statusDistAggregation:', e); return []; });
 
-        const recentActivity = [
-            ...recentOrders.map(o => ({
-                id: o._id,
-                type: 'order',
-                text: `New order completed`,
-                subtext: `Order #${o._id.toString().slice(-5)} ${o.rider ? `(Rider: ${o.rider.fullName || (o.rider.user && o.rider.user.name) || 'Assigned'})` : ''} delivered successfully`,
-                time: o.createdAt || new Date()
-            })),
-            ...recentRestaurants.map(r => ({
-                id: r._id,
-                type: 'restaurant_approval',
-                text: `New restaurant registered`,
-                subtext: `${r.name} has registered`,
-                time: r.createdAt || new Date()
-            })),
-            ...recentRiders.map(r => ({
-                id: r._id,
-                type: 'rider_onboard',
-                text: `New rider onboarded`,
-                subtext: `${r.fullName || r.user?.name || 'Rider'} registered as rider`,
-                time: r.createdAt || new Date()
-            }))
-        ]
-            .sort((a, b) => {
-                const timeA = a.time ? new Date(a.time).getTime() : 0;
-                const timeB = b.time ? new Date(b.time).getTime() : 0;
-                return timeB - timeA;
-            })
-            .slice(0, 10);
+            orderStatusDist = {
+                delivered: orderStatusStats.find(s => s._id === 'Delivered' || s._id === 'Completed')?.count || 0,
+                cancelled: orderStatusStats.find(s => ['Cancelled', 'Rejected'].includes(s._id))?.count || 0,
+                inProgress: orderStatusStats.reduce((sum, s) => {
+                    if (['Pending', 'Confirmed', 'Accepted', 'Preparing', 'Ready', 'Picked Up', 'OnTheWay', 'Arrived', 'ArrivedAtCustomer'].includes(s._id)) {
+                        return sum + s.count;
+                    }
+                    return sum;
+                }, 0)
+            };
+            console.log('   - Order status distribution done in', Date.now() - startTime, 'ms');
+        } catch (err) {
+            console.error('Error in order status distribution section:', err);
+        }
 
-        // Rider Stats
-        console.log('   - Fetching rider stats...');
-        const [totalRiders, pendingRiders, onlineRiders, riderRatings] = await Promise.all([
-            Rider.countDocuments({}),
-            Rider.countDocuments({ verificationStatus: 'pending' }),
-            Rider.countDocuments({ isOnline: true, verificationStatus: 'approved' }),
-            Rider.aggregate([
-                { $match: { verificationStatus: 'approved' } },
-                { $group: { _id: null, avgRating: { $avg: '$stats.rating' } } }
-            ])
-        ]);
-        console.log('   - Rider stats done in', Date.now() - startTime, 'ms');
-        const avgRiderRating = riderRatings[0]?.avgRating || 0;
+        // 7. Top Restaurants
+        try {
+            console.log('   - Fetching top restaurants...');
+            topRestaurants = await Order.aggregate([
+                { $match: { status: { $in: ['Delivered', 'Completed'] } } },
+                {
+                    $group: {
+                        _id: "$restaurant",
+                        revenue: { $sum: { $convert: { input: { $ifNull: ["$totalPrice", 0] }, to: 'double', onError: 0, onNull: 0 } } },
+                        orders: { $sum: 1 }
+                    }
+                },
+                { $sort: { revenue: -1 } },
+                { $limit: 5 },
+                {
+                    $lookup: {
+                        from: "restaurants",
+                        localField: "_id",
+                        foreignField: "_id",
+                        as: "details"
+                    }
+                },
+                { $unwind: "$details" },
+                {
+                    $project: {
+                        name: "$details.name",
+                        rating: "$details.rating",
+                        revenue: 1,
+                        orders: 1
+                    }
+                }
+            ]).catch(e => { console.error('Error topRestaurantsAggregation:', e); return []; });
+            console.log('   - Top restaurants done in', Date.now() - startTime, 'ms');
+        } catch (err) {
+            console.error('Error in top restaurants section:', err);
+        }
+
+        // 8. Recent Activity
+        try {
+            console.log('   - Fetching recent activity...');
+            const [recentOrders, recentRestaurants, recentRiders] = await Promise.all([
+                Order.find().sort({ createdAt: -1 }).limit(5).populate('restaurant', 'name').populate({ path: 'rider', populate: { path: 'user', select: 'name' } }).catch(e => []),
+                Restaurant.find().sort({ createdAt: -1 }).limit(3).populate('owner', 'name email status').catch(e => []),
+                Rider.find().sort({ createdAt: -1 }).limit(3).populate('user', 'name email status').catch(e => [])
+            ]);
+
+            recentActivity = [
+                ...recentOrders.map(o => ({
+                    id: o._id,
+                    type: 'order',
+                    text: `New order completed`,
+                    subtext: `Order #${o._id.toString().slice(-5)} ${o.rider ? `(Rider: ${o.rider.fullName || (o.rider.user && o.rider.user.name) || 'Assigned'})` : ''} delivered successfully`,
+                    time: o.createdAt || new Date()
+                })),
+                ...recentRestaurants.map(r => ({
+                    id: r._id,
+                    type: 'restaurant_approval',
+                    text: `New restaurant registered`,
+                    subtext: `${r.name} has registered`,
+                    time: r.createdAt || new Date()
+                })),
+                ...recentRiders.map(r => ({
+                    id: r._id,
+                    type: 'rider_onboard',
+                    text: `New rider onboarded`,
+                    subtext: `${r.fullName || r.user?.name || 'Rider'} registered as rider`,
+                    time: r.createdAt || new Date()
+                }))
+            ].sort((a, b) => new Date(b.time).getTime() - new Date(a.time).getTime()).slice(0, 10);
+            console.log('   - Recent activity done in', Date.now() - startTime, 'ms');
+        } catch (err) {
+            console.error('Error in recent activity section:', err);
+        }
+
+        // 9. Rider Stats
+        try {
+            console.log('   - Fetching rider stats...');
+            const riderData = await Promise.all([
+                Rider.countDocuments({}).catch(e => 0),
+                Rider.countDocuments({ verificationStatus: 'pending' }).catch(e => 0),
+                Rider.countDocuments({ isOnline: true, verificationStatus: 'approved' }).catch(e => 0),
+                Rider.aggregate([
+                    { $match: { verificationStatus: 'approved' } },
+                    { $group: { _id: null, avgRating: { $avg: '$stats.rating' } } }
+                ]).catch(e => [])
+            ]);
+            [totalRiders, pendingRiders, onlineRiders] = riderData;
+            avgRiderRating = riderData[3][0]?.avgRating || 0;
+            console.log('   - Rider stats done in', Date.now() - startTime, 'ms');
+        } catch (err) {
+            console.error('Error in rider stats section:', err);
+        }
 
         res.json({
-            totalUsers,
-            totalRestaurants,
-            pendingRestaurants,
-            totalOrders,
-            todayOrders,
-            totalRevenue,
-            todayRevenue,
-            totalCommission,
-            netPlatformProfit,
-            totalDeliveryFees,
-            totalPendingPayouts,
-            totalRiderEarnings,
-            totalRestaurantEarnings,
-            revenueStats,
-            orderStatusDist,
-            topRestaurants,
-            recentActivity,
-            totalRiders,
-            pendingRiders,
-            onlineRiders,
-            avgRiderRating
+            totalUsers, totalRestaurants, pendingRestaurants, totalOrders, todayOrders,
+            totalRevenue, todayRevenue, totalCommission, netPlatformProfit,
+            totalDeliveryFees, totalPendingPayouts, totalRiderEarnings, totalRestaurantEarnings,
+            revenueStats, orderStatusDist, topRestaurants, recentActivity,
+            totalRiders, pendingRiders, onlineRiders, avgRiderRating
         });
     } catch (error) {
-        console.error('Error in getDashboardStats:', error);
+        console.error('🔥 FATAL ERROR in getDashboardStats:', error);
         res.status(500).json({ message: 'Server error', error: error.message });
     }
 };
