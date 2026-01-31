@@ -137,9 +137,9 @@ const rejectRestaurant = async (req, res) => {
                 event: 'RESTAURANT_REJECTED',
                 userId: restaurant.owner?._id || restaurant.owner,
                 email: restaurant.name,
-                details: { 
+                details: {
                     reason,
-                    rejectedBy: req.admin?._id || req.user?._id || 'system' 
+                    rejectedBy: req.admin?._id || req.user?._id || 'system'
                 }
             });
         } catch (auditErr) {
@@ -235,9 +235,9 @@ const rejectRider = async (req, res) => {
                 event: 'RIDER_REJECTED',
                 userId: rider.user?._id || rider.user,
                 email: rider.fullName,
-                details: { 
+                details: {
                     reason,
-                    rejectedBy: req.admin?._id || req.user?._id || 'system' 
+                    rejectedBy: req.admin?._id || req.user?._id || 'system'
                 }
             });
         } catch (auditErr) {
@@ -275,7 +275,7 @@ const resetRider = async (req, res) => {
         // Optional: clear documents if you want a complete fresh start
         // rider.documents = { cnicFront: '', cnicBack: '', drivingLicense: '', vehicleRegistration: '', profileSelfie: '' };
         // rider.cnicNumber = '';
-        
+
         await rider.save();
 
         // Audit Log
@@ -332,98 +332,80 @@ const getAllOrders = async (req, res) => {
 const getDashboardStats = async (req, res) => {
     console.log('📊 [getDashboardStats] API HIT');
     const startTime = Date.now();
-    
+
     try {
-        console.log('🔍 [getDashboardStats] DB Connection State:', mongoose.connection.readyState);
-        
         const todayStart = new Date();
         todayStart.setHours(0, 0, 0, 0);
 
         // Define default values
         let stats = {
             totalUsers: 0, totalRestaurants: 0, pendingRestaurants: 0, totalOrders: 0, todayOrders: 0,
-            totalRevenue: 0, totalCommission: 0, totalRiderEarnings: 0, totalRestaurantEarnings: 0,
-            totalDeliveryFees: 0, totalServiceFees: 0, totalTax: 0, totalGatewayFees: 0, totalDiscounts: 0,
-            netPlatformProfit: 0, todayRevenue: 0, totalPendingPayouts: 0,
+            totalRevenue: 0, todayRevenue: 0, totalCommission: 0, totalRiderEarnings: 0, totalRestaurantEarnings: 0,
+            totalDeliveryFees: 0, totalServiceFees: 0, totalTax: 0, totalPendingPayouts: 0,
             revenueStats: [], orderStatusDist: { delivered: 0, cancelled: 0, inProgress: 0 },
             topRestaurants: [], recentActivity: [], totalRiders: 0, pendingRiders: 0,
-            onlineRiders: 0, avgRiderRating: 0
+            onlineRiders: 0, avgRiderRating: 0, netPlatformProfit: 0
         };
 
-        console.log('⏳ [getDashboardStats] Starting parallel queries...');
         const queryStart = Date.now();
 
-        // 1. Parallelize ALL Core Queries using Promise.allSettled
+        // 1. Parallelize core counts and complex aggregations
         const results = await Promise.allSettled([
-            // [0] Core Counts
+            // [0-7] Basic Counts
             User.countDocuments({ role: 'customer' }),
-            // [1]
             Restaurant.countDocuments({}),
-            // [2]
             Restaurant.countDocuments({ verificationStatus: 'pending' }),
-            // [3]
             Order.countDocuments({}),
-            // [4]
             Order.countDocuments({ createdAt: { $gte: todayStart } }),
-            // [5]
             Rider.countDocuments({}),
-            // [6]
             Rider.countDocuments({ verificationStatus: 'pending' }),
-            // [7]
             Rider.countDocuments({ isOnline: true, verificationStatus: 'approved' }),
 
-            // [8] Financial Summaries (Aggregations) - Optimized to avoid $convert where possible if data is already numbers
+            // [8] FINANCIALS & STATUS (All-in-one aggregation using $facet for speed)
             Order.aggregate([
-                { $match: { status: { $nin: ['Cancelled', 'Rejected'] } } },
                 {
-                    $group: {
-                        _id: null,
-                        totalRevenue: { $sum: { $ifNull: ['$totalPrice', 0] } },
-                        totalCommission: { $sum: { $ifNull: ['$commissionAmount', 0] } },
-                        totalRiderEarnings: { $sum: { $ifNull: ['$riderEarning', 0] } },
-                        totalRestaurantEarnings: { $sum: { $ifNull: ['$restaurantEarning', 0] } },
-                        totalServiceFees: { $sum: { $ifNull: ['$serviceFee', 0] } },
-                        totalTax: { $sum: { $ifNull: ['$tax', 0] } },
-                        totalGatewayFees: { $sum: { $ifNull: ['$gatewayFee', 0] } },
-                        totalDiscounts: { $sum: { $ifNull: ['$discount', 0] } },
-                        totalDeliveryFees: { $sum: { $ifNull: ['$deliveryFee', 0] } }
+                    $facet: {
+                        "globalFinance": [
+                            { $match: { status: { $nin: ['Cancelled', 'Rejected'] } } },
+                            {
+                                $group: {
+                                    _id: null,
+                                    totalRevenue: { $sum: '$totalPrice' },
+                                    totalCommission: { $sum: '$commissionAmount' },
+                                    totalRiderEarnings: { $sum: '$riderEarning' },
+                                    totalRestaurantEarnings: { $sum: '$restaurantEarning' },
+                                    totalServiceFees: { $sum: '$serviceFee' },
+                                    totalTax: { $sum: '$tax' },
+                                    totalDeliveryFees: { $sum: '$deliveryFee' },
+                                    totalGatewayFees: { $sum: '$gatewayFee' },
+                                    totalDiscounts: { $sum: '$discount' }
+                                }
+                            }
+                        ],
+                        "todayFinance": [
+                            { $match: { status: { $nin: ['Cancelled', 'Rejected'] }, createdAt: { $gte: todayStart } } },
+                            { $group: { _id: null, total: { $sum: '$totalPrice' } } }
+                        ],
+                        "statusDist": [
+                            { $group: { _id: "$status", count: { $sum: 1 } } }
+                        ],
+                        "recentOrders": [
+                            { $sort: { createdAt: -1 } },
+                            { $limit: 10 },
+                            { $project: { _id: 1, status: 1, createdAt: 1, totalPrice: 1 } }
+                        ]
                     }
                 }
             ]),
 
-            // [9] Today's Revenue
-            Order.aggregate([
-                {
-                    $match: {
-                        status: { $nin: ['Cancelled', 'Rejected'] },
-                        createdAt: { $gte: todayStart }
-                    }
-                },
-                { $group: { _id: null, total: { $sum: { $ifNull: ['$totalPrice', 0] } } } }
-            ]),
-
-            // [10] Order Status Distribution
-            Order.aggregate([
-                { $group: { _id: "$status", count: { $sum: 1 } } }
-            ]),
-
-            // [11] Recent Activity - REMOVED heavy populates for speed
-            Order.find().sort({ createdAt: -1 }).limit(5).select('status createdAt rider restaurant'),
-            
-            // [12] Wallet Stats
-            RestaurantWallet.aggregate([
-                { $group: { _id: null, totalPending: { $sum: { $ifNull: ['$pendingPayout', 0] } } } }
-            ]),
-            
-            // [13] Rider Wallet Stats
-            RiderWallet.aggregate([
-                { $group: { _id: null, totalPending: { $sum: { $ifNull: ['$availableWithdraw', 0] } } } }
-            ])
+            // [9] Payout Stats (Simplified)
+            RestaurantWallet.aggregate([{ $group: { _id: null, total: { $sum: '$pendingPayout' } } }]),
+            RiderWallet.aggregate([{ $group: { _id: null, total: { $sum: '$availableWithdraw' } } }])
         ]);
 
-        console.log(`⏱️ [getDashboardStats] Queries finished in ${Date.now() - queryStart}ms`);
+        console.log(`⏱️ [getDashboardStats] Core queries finished in ${Date.now() - queryStart}ms`);
 
-        // Map results to stats object
+        // Map Results
         if (results[0].status === 'fulfilled') stats.totalUsers = results[0].value;
         if (results[1].status === 'fulfilled') stats.totalRestaurants = results[1].value;
         if (results[2].status === 'fulfilled') stats.pendingRestaurants = results[2].value;
@@ -433,55 +415,62 @@ const getDashboardStats = async (req, res) => {
         if (results[6].status === 'fulfilled') stats.pendingRiders = results[6].value;
         if (results[7].status === 'fulfilled') stats.onlineRiders = results[7].value;
 
-        // Financials mapping
+        // Process Faceted Aggregation [8]
         if (results[8].status === 'fulfilled' && results[8].value.length > 0) {
-            const s = results[8].value[0];
-            stats.totalRevenue = s.totalRevenue || 0;
-            stats.totalCommission = s.totalCommission || 0;
-            stats.totalRiderEarnings = s.totalRiderEarnings || 0;
-            stats.totalRestaurantEarnings = s.totalRestaurantEarnings || 0;
-            stats.totalDeliveryFees = s.totalDeliveryFees || 0;
-            stats.totalServiceFees = s.totalServiceFees || 0;
-            stats.totalTax = s.totalTax || 0;
-            stats.netPlatformProfit = stats.totalCommission + (stats.totalDeliveryFees - stats.totalRiderEarnings) + stats.totalServiceFees + stats.totalTax - (s.totalGatewayFees || 0) - (s.totalDiscounts || 0);
-        }
+            const data = results[8].value[0];
 
-        if (results[9].status === 'fulfilled' && results[9].value.length > 0) {
-            stats.todayRevenue = results[9].value[0].total || 0;
-        }
+            // Finance
+            if (data.globalFinance.length > 0) {
+                const gf = data.globalFinance[0];
+                stats.totalRevenue = gf.totalRevenue || 0;
+                stats.totalCommission = gf.totalCommission || 0;
+                stats.totalRiderEarnings = gf.totalRiderEarnings || 0;
+                stats.totalRestaurantEarnings = gf.totalRestaurantEarnings || 0;
+                stats.totalServiceFees = gf.totalServiceFees || 0;
+                stats.totalTax = gf.totalTax || 0;
+                stats.totalDeliveryFees = gf.totalDeliveryFees || 0;
 
-        // Status distribution mapping
-        if (results[10].status === 'fulfilled') {
-            results[10].value.forEach(item => {
+                // Profit logic: Commission + (Delivery Fees - Rider Pay) + Service Fee + Tax - (Gateways + Discounts)
+                stats.netPlatformProfit = (gf.totalCommission || 0) +
+                    ((gf.totalDeliveryFees || 0) - (gf.totalRiderEarnings || 0)) +
+                    (gf.totalServiceFees || 0) +
+                    (gf.totalTax || 0) -
+                    (gf.totalGatewayFees || 0) -
+                    (gf.totalDiscounts || 0);
+            }
+
+            // Today
+            if (data.todayFinance.length > 0) {
+                stats.todayRevenue = data.todayFinance[0].total || 0;
+            }
+
+            // Status Distribution
+            data.statusDist.forEach(item => {
                 if (['Delivered', 'Completed'].includes(item._id)) stats.orderStatusDist.delivered += item.count;
                 else if (['Cancelled', 'Rejected'].includes(item._id)) stats.orderStatusDist.cancelled += item.count;
-                else if (['Pending', 'Confirmed', 'Accepted', 'Preparing', 'Ready', 'Picked Up', 'OnTheWay', 'Arrived', 'ArrivedAtCustomer'].includes(item._id)) {
-                    stats.orderStatusDist.inProgress += item.count;
-                }
+                else stats.orderStatusDist.inProgress += item.count;
             });
-        }
 
-        // Activity mapping - simplified text to avoid population overhead
-        if (results[11].status === 'fulfilled') {
-            stats.recentActivity = results[11].value.map(o => ({
+            // Activity
+            stats.recentActivity = data.recentOrders.map(o => ({
                 id: o._id,
                 type: 'order',
-                text: `Order #${o._id.toString().slice(-5)}`,
-                subtext: `Status: ${o.status}`,
-                time: o.createdAt || new Date()
+                text: `Order #${o._id.toString().slice(-4).toUpperCase()}`,
+                subtext: `${o.status} - Rs. ${o.totalPrice}`,
+                time: o.createdAt
             }));
         }
 
-        // Payouts mapping
-        let resPending = results[12].status === 'fulfilled' && results[12].value[0] ? results[12].value[0].totalPending : 0;
-        let riderPending = results[13].status === 'fulfilled' && results[13].value[0] ? results[13].value[0].totalPending : 0;
+        // Payouts
+        const resPending = (results[9].status === 'fulfilled' && results[9].value[0]) ? results[9].value[0].total : 0;
+        const riderPending = (results[10].status === 'fulfilled' && results[10].value[0]) ? results[10].value[0].total : 0;
         stats.totalPendingPayouts = resPending + riderPending;
 
-        console.log(`✅ [getDashboardStats] Optimized completed in ${Date.now() - startTime}ms`);
+        console.log(`✅ [getDashboardStats] Completed in ${Date.now() - startTime}ms`);
         res.status(200).json(stats);
 
     } catch (error) {
-        console.error('🔥 FATAL ERROR in getDashboardStats:', error);
+        console.error('🔥 [getDashboardStats] Error:', error);
         res.status(500).json({ message: 'Server error', error: error.message });
     }
 };
@@ -490,58 +479,45 @@ const getDashboardStats = async (req, res) => {
 const getAllRestaurants = async (req, res) => {
     try {
         console.log('Fetching all restaurants for admin...');
-        const restaurants = await Restaurant.find()
-            .populate('owner')
-            .lean();
 
-        console.log(`Found ${restaurants.length} restaurants. Enriching with stats...`);
+        // 1. Fetch all restaurants efficiently
+        const restaurants = await Restaurant.find().populate('owner', 'name email phone').lean();
 
-        const enrichedRestaurants = await Promise.all(restaurants.map(async (restaurant) => {
-            try {
-                const stats = await Order.aggregate([
-                    {
-                        $match: {
-                            restaurant: new mongoose.Types.ObjectId(restaurant._id),
-                            status: { $in: ['Delivered', 'Completed'] }
-                        }
-                    },
-                    {
-                        $group: {
-                            _id: null,
-                            totalOrders: { $sum: 1 },
-                            revenue: { $sum: { $convert: { input: { $ifNull: ["$subtotal", { $ifNull: ["$totalPrice", 0] }] }, to: 'double', onError: 0, onNull: 0 } } },
-                            commission: { $sum: { $convert: { input: { $ifNull: ["$commissionAmount", { $multiply: [{ $ifNull: ["$subtotal", { $ifNull: ["$totalPrice", 0] }] }, 0.15] }] }, to: 'double', onError: 0, onNull: 0 } } }
-                        }
-                    }
-                ]);
-
-                const stat = stats[0] || { totalOrders: 0, revenue: 0, commission: 0 };
-
-                return {
-                    ...restaurant,
-                    owner: restaurant.owner, // Explicitly preserve owner
-                    totalOrders: stat.totalOrders,
-                    revenue: stat.revenue,
-                    commission: stat.commission,
-                    // Ensure documents are explicitly included if lean() missed them or they need formatting
-                    documents: restaurant.documents || {}
-                };
-            } catch (err) {
-                console.error(`Error enriching restaurant ${restaurant._id}:`, err);
-                return {
-                    ...restaurant,
-                    totalOrders: 0,
-                    revenue: 0,
-                    commission: 0
-                };
+        // 2. Fetch stats for ALL restaurants in ONE aggregation pass to solve N+1 problem
+        const allStats = await Order.aggregate([
+            {
+                $match: { status: { $in: ['Delivered', 'Completed'] } }
+            },
+            {
+                $group: {
+                    _id: '$restaurant',
+                    totalOrders: { $sum: 1 },
+                    revenue: { $sum: '$totalPrice' },
+                    commission: { $sum: '$commissionAmount' }
+                }
             }
-        }));
+        ]);
 
-        enrichedRestaurants.sort((a, b) => {
-            const dateA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
-            const dateB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
-            return dateB - dateA;
+        // Create a lookup map for stats
+        const statsMap = allStats.reduce((acc, curr) => {
+            acc[curr._id.toString()] = curr;
+            return acc;
+        }, {});
+
+        // 3. Enrich restaurants from the map
+        const enrichedRestaurants = restaurants.map(restaurant => {
+            const stat = statsMap[restaurant._id.toString()] || { totalOrders: 0, revenue: 0, commission: 0 };
+            return {
+                ...restaurant,
+                totalOrders: stat.totalOrders,
+                revenue: stat.revenue,
+                commission: stat.commission
+            };
         });
+
+        // Sort by newest first
+        enrichedRestaurants.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+
         console.log(`Returning ${enrichedRestaurants.length} enriched restaurants`);
         res.json(enrichedRestaurants);
     } catch (error) {
@@ -1032,11 +1008,11 @@ const deleteUser = async (req, res) => {
         }
 
         let user = await User.findById(id);
-        
+
         // If user not found, check if it's a Rider ID or Restaurant ID being passed
         if (!user) {
             console.log(`🔍 User not found with ID ${id}, checking for Rider/Restaurant...`);
-            
+
             // Check if it's a Rider ID
             const rider = await Rider.findById(id);
             if (rider) {
@@ -1049,7 +1025,7 @@ const deleteUser = async (req, res) => {
                     Notification.deleteMany({ user: rider.user }),
                     Rider.findByIdAndDelete(riderId)
                 ]);
-                
+
                 // Audit Log
                 await AuditLog.create({
                     event: 'RIDER_DELETED',
@@ -1168,7 +1144,7 @@ const deleteRestaurant = async (req, res) => {
         await Dish.deleteMany({ restaurant: restaurant._id });
         await Video.deleteMany({ restaurant: restaurant._id });
         await RestaurantWallet.deleteMany({ restaurant: restaurant._id });
-        
+
         // Delete the restaurant
         await Restaurant.findByIdAndDelete(restaurantId);
 
@@ -1176,10 +1152,10 @@ const deleteRestaurant = async (req, res) => {
         try {
             await AuditLog.create({
                 event: 'RESTAURANT_DELETED',
-                details: { 
-                    restaurantId, 
+                details: {
+                    restaurantId,
                     name: restaurant.name,
-                    deletedBy: req.admin?._id || req.user?._id || 'system' 
+                    deletedBy: req.admin?._id || req.user?._id || 'system'
                 }
             });
         } catch (auditErr) {
@@ -1224,10 +1200,10 @@ const deleteRider = async (req, res) => {
         try {
             await AuditLog.create({
                 event: 'RIDER_DELETED',
-                details: { 
-                    riderId, 
+                details: {
+                    riderId,
                     name: rider.fullName || rider.name,
-                    deletedBy: req.admin?._id || req.user?._id || 'system' 
+                    deletedBy: req.admin?._id || req.user?._id || 'system'
                 }
             });
         } catch (auditErr) {
@@ -1266,12 +1242,12 @@ const cleanupMockData = async (req, res) => {
             if (order.riderEarning) {
                 order.netRiderEarning = order.riderEarning;
                 order.grossRiderEarning = order.riderEarning;
-                
+
                 // Recalculate admin earning for this order without caps
                 const commissionAmount = order.commissionAmount || 0;
                 const deliveryFee = order.deliveryFee || 0;
                 order.adminEarning = commissionAmount + (deliveryFee - order.riderEarning);
-                
+
                 await order.save();
             }
         }
@@ -1674,7 +1650,7 @@ const assignRiderToOrder = async (req, res) => {
                 prevRider.currentOrder = null;
                 prevRider.status = 'Available';
                 await prevRider.save();
-                
+
                 // Notify previous rider
                 try {
                     const prevRiderData = prevRider.toObject ? prevRider.toObject() : prevRider;
@@ -1691,7 +1667,7 @@ const assignRiderToOrder = async (req, res) => {
         // 2. Assign new rider to order
         order.rider = riderId;
         order.riderAcceptedAt = order.riderAcceptedAt || new Date();
-        
+
         // Calculate earnings if not present
         if (!order.netRiderEarning) {
             const settings = await Settings.getSettings();
@@ -1708,7 +1684,7 @@ const assignRiderToOrder = async (req, res) => {
         rider.currentOrder = orderId;
         rider.status = 'Busy';
         await rider.save();
-        
+
         // Notify admins about status change
         try {
             const riderData = rider.toObject ? rider.toObject() : rider;
@@ -1791,8 +1767,8 @@ const suspendUser = async (req, res) => {
 
         // Audit Log
         await AuditLog.create({
-            event: user.role === 'restaurant' ? 'RESTAURANT_SUSPENDED' : 
-                   user.role === 'rider' ? 'RIDER_SUSPENDED' : 'USER_SUSPENDED',
+            event: user.role === 'restaurant' ? 'RESTAURANT_SUSPENDED' :
+                user.role === 'rider' ? 'RIDER_SUSPENDED' : 'USER_SUSPENDED',
             userId: user._id,
             email: user.email,
             role: user.role,
@@ -1849,8 +1825,8 @@ const unsuspendUser = async (req, res) => {
 
         // Audit Log
         await AuditLog.create({
-            event: user.role === 'restaurant' ? 'RESTAURANT_UNSUSPENDED' : 
-                   user.role === 'rider' ? 'RIDER_UNSUSPENDED' : 'USER_UNSUSPENDED',
+            event: user.role === 'restaurant' ? 'RESTAURANT_UNSUSPENDED' :
+                user.role === 'rider' ? 'RIDER_UNSUSPENDED' : 'USER_UNSUSPENDED',
             userId: user._id,
             email: user.email,
             role: user.role,
@@ -1876,17 +1852,17 @@ const unsuspendUser = async (req, res) => {
 const getActionHistory = async (req, res) => {
     try {
         const history = await AuditLog.find({
-            event: { 
+            event: {
                 $in: [
                     'USER_SUSPENDED', 'USER_UNSUSPENDED', 'USER_DELETED',
                     'RESTAURANT_SUSPENDED', 'RESTAURANT_UNSUSPENDED', 'RESTAURANT_DELETED',
                     'RIDER_SUSPENDED', 'RIDER_UNSUSPENDED', 'RIDER_DELETED'
-                ] 
+                ]
             }
         })
-        .populate('userId', 'name email role avatar')
-        .sort({ createdAt: -1 })
-        .limit(100);
+            .populate('userId', 'name email role avatar')
+            .sort({ createdAt: -1 })
+            .limit(100);
 
         res.json(history);
     } catch (error) {

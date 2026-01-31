@@ -104,7 +104,7 @@ const restaurantSchema = mongoose.Schema(
         },
         commissionRate: {
             type: Number,
-            default: function() {
+            default: function () {
                 return this.businessType === 'home-chef' ? 10 : 15;
             }
         },
@@ -217,6 +217,7 @@ const restaurantSchema = mongoose.Schema(
 );
 
 // Create geospatial index for location-based queries
+restaurantSchema.index({ verificationStatus: 1 });
 restaurantSchema.index({ location: '2dsphere' });
 
 const Restaurant = mongoose.model('Restaurant', restaurantSchema);

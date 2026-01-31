@@ -5,27 +5,10 @@ var cachedSocketUrl: string | null = null;
 
 export function getApiUrl() {
   if (cachedApiUrl) return cachedApiUrl;
-  
-  const RENDER_URL = 'https://foodswipe-6178.onrender.com';
-  
-  // Highest Priority: If we are on any production-like domain, FORCE Render URL
-  if (typeof window !== 'undefined') {
-    const hostname = window.location.hostname;
-    const isProduction = 
-      hostname.includes('foodswipe.pk') || 
-      hostname.includes('vercel.app') || 
-      hostname.includes('onrender.com');
-    
-    if (isProduction) {
-      console.log('Production detected, forcing API URL:', RENDER_URL);
-      cachedApiUrl = RENDER_URL;
-      return cachedApiUrl;
-    }
-  }
 
-  // Priority 2: Local development checks
+  // Priority 1: Local development checks (Must be first to avoid Trae/Tunnel domain conflicts)
   if (typeof window !== 'undefined' && (
-    window.location.hostname === 'localhost' || 
+    window.location.hostname === 'localhost' ||
     window.location.hostname === '127.0.0.1' ||
     window.location.hostname.startsWith('192.168.') ||
     window.location.hostname.endsWith('.trae.app')
@@ -33,18 +16,35 @@ export function getApiUrl() {
     cachedApiUrl = 'http://localhost:5000';
     return cachedApiUrl;
   }
-  
+
+  const RENDER_URL = 'https://foodswipe-6178.onrender.com';
+
+  // Priority 2: If we are on any production-like domain, FORCE Render URL
+  if (typeof window !== 'undefined') {
+    const hostname = window.location.hostname;
+    const isProduction =
+      hostname.includes('foodswipe.pk') ||
+      hostname.includes('vercel.app') ||
+      hostname.includes('onrender.com');
+
+    if (isProduction) {
+      console.log('Production detected, forcing API URL:', RENDER_URL);
+      cachedApiUrl = RENDER_URL;
+      return cachedApiUrl;
+    }
+  }
+
   if (process.env.NODE_ENV === 'production') {
     cachedApiUrl = RENDER_URL;
     return cachedApiUrl;
   }
-  
+
   let url = 'http://localhost:5000';
   if (!url.startsWith('http')) url = `https://${url}`;
-  
+
   url = url.endsWith('/') ? url.slice(0, -1) : url;
   if (url.endsWith('/api')) url = url.slice(0, -4);
-  
+
   cachedApiUrl = url;
   return url;
 }
@@ -53,9 +53,9 @@ export function getSocketUrl() {
   if (cachedSocketUrl) return cachedSocketUrl;
 
   let url = process.env.NEXT_PUBLIC_SOCKET_URL;
-  
+
   if (typeof window !== 'undefined' && (
-    window.location.hostname === 'localhost' || 
+    window.location.hostname === 'localhost' ||
     window.location.hostname === '127.0.0.1' ||
     window.location.hostname.startsWith('192.168.') ||
     window.location.hostname.startsWith('10.') ||
@@ -84,7 +84,7 @@ export function getSocketUrl() {
   if (!url) url = 'http://localhost:5000';
 
   if (!url.startsWith('http')) url = `https://${url}`;
-  
+
   cachedSocketUrl = url;
   return url;
 }
