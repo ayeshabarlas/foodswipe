@@ -1,8 +1,8 @@
-// Server.js - Render Deployment Fix - v2.2.42
+// Server.js - Render Deployment Fix - v2.2.45-FINAL-LOGIN-FIX
 const express = require('express');
 const path = require('path');
 
-console.log('🚀 Backend Server Starting v2.2.42...');
+console.log('🚀 Backend Server Starting v2.2.45-FINAL-LOGIN-FIX...');
 
 // Load environment variables
 require('dotenv').config();

@@ -20,10 +20,13 @@ export default function AdminLoginForm() {
         setError('');
 
         try {
+            const apiUrl = getApiUrl();
             console.log('=== ADMIN LOGIN ATTEMPT ===');
+            console.log('API URL:', apiUrl);
             console.log('Email:', email);
             console.log('Password length:', password.length);
-            const { data } = await axios.post(`${getApiUrl()}/api/admin/login`, {
+            
+            const { data } = await axios.post(`${apiUrl}/api/admin/login`, {
                 identifier: email.trim(),
                 password
             });
