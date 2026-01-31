@@ -352,14 +352,14 @@ const getDashboardStats = async (req, res) => {
         // 1. Parallelize core counts and complex aggregations
         const results = await Promise.allSettled([
             // [0-7] Basic Counts
-            User.countDocuments({ role: 'customer' }),
-            Restaurant.countDocuments({}),
-            Restaurant.countDocuments({ verificationStatus: 'pending' }),
-            Order.countDocuments({}),
-            Order.countDocuments({ createdAt: { $gte: todayStart } }),
-            Rider.countDocuments({}),
-            Rider.countDocuments({ verificationStatus: 'pending' }),
-            Rider.countDocuments({ isOnline: true, verificationStatus: 'approved' }),
+            User.countDocuments({ role: 'customer' }).maxTimeMS(5000),
+            Restaurant.countDocuments({}).maxTimeMS(5000),
+            Restaurant.countDocuments({ verificationStatus: 'pending' }).maxTimeMS(5000),
+            Order.countDocuments({}).maxTimeMS(5000),
+            Order.countDocuments({ createdAt: { $gte: todayStart } }).maxTimeMS(5000),
+            Rider.countDocuments({}).maxTimeMS(5000),
+            Rider.countDocuments({ verificationStatus: 'pending' }).maxTimeMS(5000),
+            Rider.countDocuments({ isOnline: true, verificationStatus: 'approved' }).maxTimeMS(5000),
 
             // [8] FINANCIALS & STATUS (All-in-one aggregation using $facet for speed)
             Order.aggregate([
@@ -396,11 +396,11 @@ const getDashboardStats = async (req, res) => {
                         ]
                     }
                 }
-            ]),
+            ]).option({ maxTimeMS: 10000 }),
 
             // [9] Payout Stats (Simplified)
-            RestaurantWallet.aggregate([{ $group: { _id: null, total: { $sum: '$pendingPayout' } } }]),
-            RiderWallet.aggregate([{ $group: { _id: null, total: { $sum: '$availableWithdraw' } } }])
+            RestaurantWallet.aggregate([{ $group: { _id: null, total: { $sum: '$pendingPayout' } } }]).option({ maxTimeMS: 5000 }),
+            RiderWallet.aggregate([{ $group: { _id: null, total: { $sum: '$availableWithdraw' } } }]).option({ maxTimeMS: 5000 })
         ]);
 
         console.log(`⏱️ [getDashboardStats] Core queries finished in ${Date.now() - queryStart}ms`);
@@ -1446,13 +1446,13 @@ const getNotificationCounts = async (req, res) => {
             newOrders,
             newUsers
         ] = await Promise.all([
-            Restaurant.countDocuments({ verificationStatus: 'pending' }),
-            Rider.countDocuments({ verificationStatus: 'pending' }),
-            Order.countDocuments({ status: 'Pending' }),
+            Restaurant.countDocuments({ verificationStatus: 'pending' }).maxTimeMS(5000),
+            Rider.countDocuments({ verificationStatus: 'pending' }).maxTimeMS(5000),
+            Order.countDocuments({ status: 'Pending' }).maxTimeMS(5000),
             User.countDocuments({
                 createdAt: { $gte: new Date(Date.now() - 24 * 60 * 60 * 1000) },
                 role: 'customer'
-            })
+            }).maxTimeMS(5000)
         ]);
 
         console.log(`✅ [getNotificationCounts] Finished in ${Date.now() - startTime}ms`);
