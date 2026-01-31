@@ -372,7 +372,7 @@ const getDashboardStats = async (req, res) => {
             timedQuery('pendingRiders', Rider.countDocuments({ verificationStatus: 'pending' }).maxTimeMS(5000)),
             timedQuery('onlineRiders', Rider.countDocuments({ isOnline: true, verificationStatus: 'approved' }).maxTimeMS(5000)),
             
-            // Simplified Finance (No $facet, just one group)
+            // Simplified Finance (Calculated from recent orders if possible, or simple group)
             timedQuery('financeGroup', Order.aggregate([
                 { $match: { status: { $nin: ['Cancelled', 'Rejected'] } } },
                 {
@@ -384,12 +384,10 @@ const getDashboardStats = async (req, res) => {
                         totalRestaurantEarnings: { $sum: '$restaurantEarning' },
                         totalServiceFees: { $sum: '$serviceFee' },
                         totalTax: { $sum: '$tax' },
-                        totalDeliveryFees: { $sum: '$deliveryFee' },
-                        totalGatewayFees: { $sum: '$gatewayFee' },
-                        totalDiscounts: { $sum: '$discount' }
+                        totalDeliveryFees: { $sum: '$deliveryFee' }
                     }
                 }
-            ]).option({ maxTimeMS: 10000 })),
+            ]).option({ maxTimeMS: 8000 })),
 
             timedQuery('todayRevenue', Order.aggregate([
                 { $match: { status: { $nin: ['Cancelled', 'Rejected'] }, createdAt: { $gte: todayStart } } },
@@ -439,9 +437,7 @@ const getDashboardStats = async (req, res) => {
             stats.netPlatformProfit = (gf.totalCommission || 0) +
                 ((gf.totalDeliveryFees || 0) - (gf.totalRiderEarnings || 0)) +
                 (gf.totalServiceFees || 0) +
-                (gf.totalTax || 0) -
-                (gf.totalGatewayFees || 0) -
-                (gf.totalDiscounts || 0);
+                (gf.totalTax || 0);
         }
 
         // Today Revenue [9]
@@ -475,10 +471,20 @@ const getDashboardStats = async (req, res) => {
 
         console.log(`✅ [getDashboardStats] FINISHED in ${Date.now() - startTime}ms`);
         
+        const debugInfo = {
+            queries: results.map((r, i) => ({
+                id: i,
+                status: r.status,
+                error: r.status === 'rejected' ? r.reason?.message : null
+            })),
+            totalTime: Date.now() - startTime,
+            dbStatus: mongoose.connection.readyState
+        };
+
         return res.status(200).json({ 
             ...stats, 
             _debug: debugInfo,
-            _version: '2.4.0-STABLE'
+            _version: '2.5.0-STABLE'
         });
 
     } catch (error) {

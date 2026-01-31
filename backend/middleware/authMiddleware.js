@@ -113,8 +113,11 @@ const requireRestaurant = async (req, res, next) => {
                 }
 
                 if (!restaurant && userEmail) {
-                    const allRests = await Restaurant.find({}).populate('owner');
-                    restaurant = allRests.find(r => r.owner?.email?.toLowerCase() === userEmail);
+                    // Optimized: Only fetch the restaurant belonging to this email instead of all
+                    const owner = await User.findOne({ email: userEmail }).select('_id');
+                    if (owner) {
+                        restaurant = await Restaurant.findOne({ owner: owner._id });
+                    }
                 }
 
                 if (restaurant) {
