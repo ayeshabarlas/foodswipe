@@ -394,14 +394,16 @@ const getDashboardStats = async (req, res) => {
 
         // Calculate Pending Payouts
         console.log('   - Aggregating pending payouts...');
-        const resWalletStats = await RestaurantWallet.aggregate([
-            { $group: { _id: null, totalPending: { $sum: { $convert: { input: { $ifNull: ['$pendingPayout', 0] }, to: 'double', onError: 0, onNull: 0 } } } } }
-        ]);
-        const riderWalletStats = await RiderWallet.aggregate([
-            { $group: { _id: null, totalPending: { $sum: { $convert: { input: { $ifNull: ['$availableWithdraw', 0] }, to: 'double', onError: 0, onNull: 0 } } } } }
+        const [resWalletStats, riderWalletStats] = await Promise.all([
+            RestaurantWallet.aggregate([
+                { $group: { _id: null, totalPending: { $sum: { $convert: { input: { $ifNull: ['$pendingPayout', 0] }, to: 'double', onError: 0, onNull: 0 } } } } }
+            ]),
+            RiderWallet.aggregate([
+                { $group: { _id: null, totalPending: { $sum: { $convert: { input: { $ifNull: ['$availableWithdraw', 0] }, to: 'double', onError: 0, onNull: 0 } } } } }
+            ])
         ]);
         const totalPendingPayouts = (resWalletStats[0]?.totalPending || 0) + (riderWalletStats[0]?.totalPending || 0);
-        console.log('   - Pending payouts aggregated');
+        console.log('   - Pending payouts done in', Date.now() - startTime, 'ms');
 
         // Revenue Graph Data (Last 7 days)
         const sevenDaysAgo = new Date();
@@ -492,16 +494,20 @@ const getDashboardStats = async (req, res) => {
         ]);
 
         // Recent Activity (Orders, New Restaurants, New Riders)
-        const recentOrders = await Order.find()
-            .sort({ createdAt: -1 })
-            .limit(5)
-            .populate('restaurant', 'name')
-            .populate({
-                path: 'rider',
-                populate: { path: 'user', select: 'name' }
-            });
-        const recentRestaurants = await Restaurant.find().sort({ createdAt: -1 }).limit(3).populate('owner', 'name email status');
-        const recentRiders = await Rider.find().sort({ createdAt: -1 }).limit(3).populate('user', 'name email status');
+        console.log('   - Fetching recent activity...');
+        const [recentOrders, recentRestaurants, recentRiders] = await Promise.all([
+            Order.find()
+                .sort({ createdAt: -1 })
+                .limit(5)
+                .populate('restaurant', 'name')
+                .populate({
+                    path: 'rider',
+                    populate: { path: 'user', select: 'name' }
+                }),
+            Restaurant.find().sort({ createdAt: -1 }).limit(3).populate('owner', 'name email status'),
+            Rider.find().sort({ createdAt: -1 }).limit(3).populate('user', 'name email status')
+        ]);
+        console.log('   - Recent activity done in', Date.now() - startTime, 'ms');
 
         const recentActivity = [
             ...recentOrders.map(o => ({
@@ -534,15 +540,17 @@ const getDashboardStats = async (req, res) => {
             .slice(0, 10);
 
         // Rider Stats
-        const totalRiders = await Rider.countDocuments({}); // Count all riders
-        const pendingRiders = await Rider.countDocuments({ verificationStatus: 'pending' });
-        const onlineRiders = await Rider.countDocuments({ isOnline: true, verificationStatus: 'approved' });
-
-        // Calculate average rider rating
-        const riderRatings = await Rider.aggregate([
-            { $match: { verificationStatus: 'approved' } },
-            { $group: { _id: null, avgRating: { $avg: '$stats.rating' } } }
+        console.log('   - Fetching rider stats...');
+        const [totalRiders, pendingRiders, onlineRiders, riderRatings] = await Promise.all([
+            Rider.countDocuments({}),
+            Rider.countDocuments({ verificationStatus: 'pending' }),
+            Rider.countDocuments({ isOnline: true, verificationStatus: 'approved' }),
+            Rider.aggregate([
+                { $match: { verificationStatus: 'approved' } },
+                { $group: { _id: null, avgRating: { $avg: '$stats.rating' } } }
+            ])
         ]);
+        console.log('   - Rider stats done in', Date.now() - startTime, 'ms');
         const avgRiderRating = riderRatings[0]?.avgRating || 0;
 
         res.json({
