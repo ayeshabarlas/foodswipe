@@ -1,6 +1,6 @@
 'use client';
 
-// Force Redeploy: 2026-01-24 16:45
+// Force Redeploy: 2026-01-31 18:15 - Loading Fix
 import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import dynamic from 'next/dynamic';
