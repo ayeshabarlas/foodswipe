@@ -79,13 +79,13 @@ export default function AdminDashboard() {
         newOrders: 0,
         newUsers: 0
     });
-
-    // Initialize from localStorage on mount
     const [showNotifications, setShowNotifications] = useState(false);
     const [loading, setLoading] = useState(true);
     const [mounted, setMounted] = useState(false);
     const isMountedRef = useRef(true);
     const router = useRouter();
+
+    console.log('📦 [AdminDashboard] Render - loading:', loading, 'mounted:', mounted);
 
     useEffect(() => {
         isMountedRef.current = true;
@@ -462,10 +462,16 @@ export default function AdminDashboard() {
         }
     };
 
-    if (!mounted || loading) {
+    if (loading) {
         return (
-            <div className="min-h-screen bg-gray-50 flex items-center justify-center overflow-y-auto">
+            <div className="min-h-screen bg-gray-50 flex flex-col items-center justify-center overflow-y-auto">
                 <ModernLoader size="lg" text="Initializing Admin Panel..." />
+                <button 
+                    onClick={() => setLoading(false)}
+                    className="mt-8 text-xs text-gray-400 opacity-20 hover:opacity-100"
+                >
+                    Taking too long? Click here to bypass
+                </button>
             </div>
         );
     }
