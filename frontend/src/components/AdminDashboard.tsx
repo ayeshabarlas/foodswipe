@@ -1,7 +1,7 @@
 'use client';
 
 // Force Redeploy: 2026-01-24 16:45
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import dynamic from 'next/dynamic';
 
@@ -84,7 +84,15 @@ export default function AdminDashboard() {
     const [showNotifications, setShowNotifications] = useState(false);
     const [loading, setLoading] = useState(true);
     const [mounted, setMounted] = useState(false);
+    const isMountedRef = useRef(true);
     const router = useRouter();
+
+    useEffect(() => {
+        isMountedRef.current = true;
+        return () => {
+            isMountedRef.current = false;
+        };
+    }, []);
 
     useEffect(() => {
         if (typeof window !== 'undefined') {
@@ -324,7 +332,7 @@ export default function AdminDashboard() {
             
             // Set a safety timeout to force stop loading if things hang at network level
             const safetyTimeout = setTimeout(() => {
-                if (mounted) {
+                if (isMountedRef.current) {
                     console.warn('⚠️ [fetchStats] Safety timeout reached (30s)');
                     setLoading(false);
                 }
@@ -381,12 +389,12 @@ export default function AdminDashboard() {
             Promise.allSettled([fetchQuickStats, fetchCountsPromise]).finally(() => {
                 clearTimeout(safetyTimeout);
                 console.log('🏁 [fetchStats] Initial critical data settled');
-                if (mounted) setLoading(false);
+                if (isMountedRef.current) setLoading(false);
             });
         } catch (error: any) {
             console.error('Error in fetchStats wrapper:', error);
             toast.error('Connection issue. Please check if backend is online.');
-            if (mounted) setLoading(false);
+            if (isMountedRef.current) setLoading(false);
         }
     };
 
